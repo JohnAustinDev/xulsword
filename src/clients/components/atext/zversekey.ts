@@ -11,6 +11,7 @@ import {
   getMaxVerse,
   getLocalizedChapterTerm,
   doWhenRenderPromisesDone,
+  getExtRefHTML,
 } from '../../common.tsx';
 import { G, GI } from '../../G.ts';
 import { delayHandler } from '../libxul/xul.tsx';
@@ -231,7 +232,6 @@ export function getNoteHTML(
                     )
                     .join('; ');
                 } else {
-                  const info = {} as Partial<LookupInfo>;
                   const keepNotes = false;
                   let tmod = /^[\w\d]+:/.test(innerHtmlValue)
                     ? innerHtmlValue.split(':')[0]
@@ -254,8 +254,9 @@ export function getNoteHTML(
                       tmod in G.Config &&
                       G.Config[tmod].AssociatedLocale) ||
                     G.i18n.language;
-                  html += GI.getExtRefHTML(
-                    '',
+                  html += getExtRefHTML(
+                    G,
+                    GI,
                     renderPromise,
                     innerHtmlValue,
                     tmod || '',
@@ -263,7 +264,6 @@ export function getNoteHTML(
                     location,
                     openCRs,
                     keepNotes,
-                    info,
                   );
                 }
               }

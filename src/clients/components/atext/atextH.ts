@@ -11,8 +11,10 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
-import { G } from '../../G.ts';
-import { doUntilDone } from '../../common.tsx';
+import { G, GI } from '../../G.ts';
+import { doUntilDone, getExtRefHTML } from '../../common.tsx';
+import RenderPromise from '../../renderPromise.ts';
+import analytics from '../../analytics.ts';
 import { getElementData } from '../../htmlData.ts';
 import log from '../../log.ts';
 import { delayHandler } from '../libxul/xul.tsx';
@@ -84,27 +86,20 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
                 const el = col5.element;
                 const refs = el.dataset.reflist;
                 if (refs) {
-                  G.callBatch([
-                    [
-                      'getExtRefHTML',
-                      null,
-                      [
-                        refs,
-                        module,
-                        G.i18n.language,
-                        location,
-                        row.classList.contains('cropened'),
-                        false,
-                      ],
-                    ],
-                  ])
-                    .then((result) => {
-                      const [html] = result;
-                      sanitizeHTML(el, html);
-                    })
-                    .catch((er) => {
-                      log.error(er);
-                    });
+                  doUntilDone((renderPromise: RenderPromise) => {
+                    const html = getExtRefHTML(
+                      G,
+                      GI,
+                      renderPromise,
+                      refs,
+                      module,
+                      G.i18n.language,
+                      location,
+                      row.classList.contains('cropened'),
+                      false,
+                    );
+                    if (!renderPromise.waiting()) sanitizeHTML(el, html);
+                  });
                 }
               }
               if (id) scroll2Note(atext, id);

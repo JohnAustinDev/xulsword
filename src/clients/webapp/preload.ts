@@ -71,6 +71,7 @@ export const socketConnect = (port: number, origin?: string): Socket => {
     .replace(/^http(s?)/, 'ws$1')
     .replace(/(:\d+)?$/, `:${port}`);
   socket = io(hosturl);
+  window.ProcessInfo.socket = true;
   return socket;
 };
 export default socketConnect;

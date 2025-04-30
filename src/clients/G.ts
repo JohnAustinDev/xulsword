@@ -1,5 +1,5 @@
 import C from '../constant.ts';
-import analytics, { Analytics } from '../analytics.ts';
+import analytics, { Analytics } from './analytics.ts';
 import {
   JSON_stringify,
   GCacheKey,
@@ -9,16 +9,14 @@ import {
   gcallResultCompression,
 } from '../common.ts';
 import Cache from '../cache.ts';
+import Subscription from '../subscription.ts';
 import { GBuilder } from '../type.ts';
 import { callResultDecompress, getWaitRetry } from './common.tsx';
 import { GCallsOrPromise } from './renderPromise.ts';
 import log from './log.ts';
 import CookiePrefs from './webapp/prefs.ts';
 
-import type {
-  AnalyticsInfo,
-  BibleBrowserEventInfo,
-} from '../analytics.ts';
+import type { AnalyticsInfo, BibleBrowserEventInfo } from './analytics.ts';
 import type Viewport from './webapp/viewport.ts';
 import type {
   GCallType,
@@ -43,13 +41,14 @@ import type RenderPromise from './renderPromise.ts';
 // - Although IPC via Internet is asynchronous, it is possible to preload
 // data to the cache asynchronously and then retrieve it synchronously using G.
 // This is done using callBatchThenCache(). If a synchronous G method call is
-// made in a web app, without it having first having been cached, an exception
-// is thrown.
-// - The GI object shares the same interface as G, but only has the synchronous
-// Internet-allowed G methods available and so is always safe to use in any
-// environment; but additionally, two extra initial arguments are required for
-// each GI call (and even G getters require these two arguments) plus a
-// renderPromise must be added to the parent component. Extra arguments are:
+// made in a web app, without it having first been cached, an exception is
+// thrown.
+// - The GI object shares the same interface as G, but only has G's synchronous
+// Internet-allowed G methods available (but calling them anynchronously) and
+// so is always safe to use in any environment; but additionally, two extra
+// initial arguments are required for each GI call (and even G getters require
+// these two arguments) plus a renderPromise must be supplied.
+// Extra argumentsare:
 //   1) A default value to use when the requested value cannot be obtained
 //      synchronously via the cache.
 //   2) A RenderPromise to collect all un-cached synchronous calls, to dispatch
@@ -58,15 +57,11 @@ import type RenderPromise from './renderPromise.ts';
 //
 // THE UPSHOT:
 // - Electron App Clients: can use G or GI, but should prefer G, since it is
-// simpler and faster, requiring fewer arguments and supporting synchronous
-// calls.
+// simpler requiring fewer arguments and supporting synchronous calls.
 // - Web app clients can always use GI and may use G for Internet-allowed
-// methods but only after callBatchThenCache() was made for any synchronous
-// calls. For common calls like G.Tabs etc. cache preloading should be used,
-// because it is simpler and faster than GI. When promises can be awaited (such
-// as in event handlers) then doUntilDone() may be used, or another approach is
-// using await G.callBatch([theCall]) which allows a web app client to make
-// allowed G synchronous calls asynchronously.
+// methods but only after cache preloading them with callBatchThenCache(). For
+// common calls like G.Tabs, cache preloading should be used. When promises can
+// be awaited (such as in event handlers) doUntilDone() may be used.
 // - Electron App Server must only use G, or an exception is thrown.
 // - Web App Server must only use GI, or an excetion is thrown. The Web App
 // server's GI object is used to respond to clients' G and GI calls.
@@ -309,7 +304,7 @@ function request(call: GCallType) {
       );
     else
       throw new Error(
-        `This uncacheable call requires G.callBatch in browser context: ${JSON_stringify(call)} at ${new Error().stack}`,
+        `This uncacheable call requires GI in browser context: ${JSON_stringify(call)} at ${new Error().stack}`,
       );
   }
   log.silly(
@@ -384,12 +379,11 @@ const ReportAnalyticsG: Partial<
     MyFuncData | Partial<Record<keyof GType['LibSword'], MyFuncData>>
   >
 > = {
-  getExtRefHTML: { event: 'verse', targ: 'extref' },
-  locationVKText: { event: 'verse', targ: 'locationvk'},
+  locationVKText: { event: 'verse', targ: 'extref' },
   LibSword: {
     getChapterText: { event: 'chapter', targ: 'locationvk' },
     getChapterTextMulti: { event: 'chapter', targ: 'locationvk' },
-    getGenBookChapterText: { event: 'chapter' , targ: 'locationky'},
+    getGenBookChapterText: { event: 'chapter', targ: 'locationky' },
     getDictionaryEntry: { event: 'glossary', targ: 'locationky' },
     getFirstDictionaryEntry: { event: 'glossary', targ: 'locationky' },
     getVerseText: { event: 'verse', targ: 'locationvk' },
@@ -409,42 +403,49 @@ function reportAnalytics(call: GCallType) {
   if (ReportAnalyticsG && p in ReportAnalyticsG) {
     const ms = ReportAnalyticsG[p];
     if (ms) {
-      let info: AnalyticsInfo | undefined;
-      // LibSword methods parameters are all [module(s), target, ...]
-      if (p === 'LibSword' && args) {
-        if (m && m in ms) {
-          const { event, targ } = (ms as any)[m];
-          const mod = Array.isArray(args[0]) ? args[0][0] : args[0];
-          const targv = Array.isArray(args[1]) ? args[1][0] : args[1];
+      const [appState] = Subscription.publish.getControllerState();
+      // Don't record the many events that occur during print preview
+      if (
+        appState &&
+        !appState.print &&
+        (!appState.card || appState.card.name != 'printPassage')
+      ) {
+        let info: AnalyticsInfo | undefined;
+        // LibSword methods parameters are all [module(s), target, ...]
+        if (p === 'LibSword' && args) {
+          if (m && m in ms) {
+            const { event, targ } = (ms as any)[m];
+            const mod = Array.isArray(args[0]) ? args[0][0] : args[0];
+            const targv = Array.isArray(args[1]) ? args[1][0] : args[1];
+            info = {
+              event,
+              module: mod || '',
+              [targ]: targv || '',
+            };
+          }
+        } else if (p === 'locationVKText' && 'event' in ms && args) {
+          // locationVKText is [locationVK[], module, ...]
+          const { event, targ } = ms;
           info = {
             event,
-            module: mod || '',
-            [targ]: targv || '',
+            module: args[1] || '',
+            [targ]: (args[0] as LocationVKType[])
+              .map(
+                (l) =>
+                  `${l.book} ${l.chapter}${
+                    l.verse
+                      ? ':' + l.verse
+                      : ''}${
+                    l.lastverse && l.lastverse !== l.verse
+                      ? '-' + l.lastverse
+                      : ''
+                  }`,
+              )
+              .filter(Boolean)
+              .join(' '),
           };
         }
-      } else if (p === 'getExtRefHTML' && 'event' in ms && args) {
-        // getExtRefHTML is [extref, module, ...]
-        const { event, targ } = ms;
-        info = {
-          event,
-          module: args[1] || '',
-          [targ]: args[0] || '',
-        };
-      } else if (p === 'locationVKText' && 'event' in ms && args) {
-        // locationVKText is [locationVK, module, ...]
-        const { event, targ } = ms;
-        const l = args[0] as LocationVKType;
-        info = {
-          event,
-          module: args[1] || '',
-          [targ]: `${l.book}.${l.chapter}.${l.verse}`,
-        };
-      }
-      if (info) {
-        const { event } = info;
-        Analytics.getAnalytics(info)
-          .then((result) => analytics.recordEvent(event, result))
-          .catch((er) => log.error(er));
+        if (info) analytics.record(info);
       }
     }
   }

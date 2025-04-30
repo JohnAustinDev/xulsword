@@ -1,7 +1,7 @@
 import C from '../../../constant.ts';
 import RefParser from '../../../refParser.ts';
 import Subscription from '../../../subscription.ts';
-import analytics from '../../../analytics.ts';
+import analytics from '../../analytics.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
@@ -25,7 +25,7 @@ import type {
   VerseKeyAudioFile,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
-import type { AnalyticsInfo } from '../../../analytics.ts';
+import type { AnalyticsInfo } from '../../analytics.ts';
 import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 

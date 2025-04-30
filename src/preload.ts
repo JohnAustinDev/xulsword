@@ -1,5 +1,3 @@
-import type { LogLevel } from 'electron-log';
-
 // This has nothing to do with G cache preload. This preload is Electron's way
 // of injecting Inter Process Communication and process information into
 // clients, and was adapted to do the same for web apps.
@@ -27,6 +25,7 @@ export function getProcessInfo(
       return process.argv;
     },
     platform: process.platform,
+    socket: false,
   };
 }
 

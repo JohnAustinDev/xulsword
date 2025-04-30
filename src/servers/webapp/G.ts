@@ -1,6 +1,6 @@
 import i18next from 'i18next';
+import { locationVKText } from '../versetext.ts';
 import LibSword from '../components/libsword.ts';
-import { getExtRefHTML, locationVKText } from '../versetext.ts';
 import {
   getBooks,
   getBook,
@@ -175,12 +175,6 @@ export const GI: GITypeMain = {
     ...args: Parameters<GType['genBookTreeNodes']>
   ): ReturnType<GType['genBookTreeNodes']> {
     return genBookTreeNodes(...args);
-  },
-
-  getExtRefHTML(
-    ...args: Parameters<GType['getExtRefHTML']>
-  ): ReturnType<GType['getExtRefHTML']> {
-    return getExtRefHTML(GI, ...args);
   },
 
   locationVKText(

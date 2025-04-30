@@ -12,12 +12,14 @@ import {
   localizeString,
   randomID,
   findTreeNodeOrder,
+  clone,
+  JSON_attrib_stringify,
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import { G, GI } from './G.ts';
 import RenderPromise from './renderPromise.ts';
-import { getElementData } from './htmlData.ts';
+import { getElementData, HTMLData } from './htmlData.ts';
 import verseKey from './verseKey.ts';
 import log from './log.ts';
 
@@ -27,7 +29,11 @@ import type {
   GenBookAudio,
   GenBookAudioConf,
   GenBookAudioFile,
+  GIType,
+  GITypeMain,
+  GType,
   LocationVKType,
+  LookupInfo,
   ModTypes,
   OSISBookType,
   PrefObject,
@@ -36,12 +42,15 @@ import type {
   Repository,
   SwordConfLocalized,
   SwordConfType,
+  TabTypes,
+  TextVKType,
   V11nType,
   VerseKeyAudio,
   VerseKeyAudioFile,
   WindowDescriptorPrefType,
 } from '../type.ts';
 import type { XulswordState } from './components/xulsword/xulsword.tsx';
+import parseExtendedVKRef from '../extrefParser.ts';
 
 window.webAppTextScroll = -1;
 
@@ -771,6 +780,114 @@ export function i18nApplyOpts(
     r = r.replace(new RegExp(`\\{\\{\\s*${k}\\s*\\}\\}`, 'g'), v);
   });
   return r;
+}
+
+// Return an HTML Scripture reference list representing an extended reference.
+// An extended reference is a textual reference comprising a list of Scripture
+// references separated by semicolons and/or commas. If showText is false, only
+// a list of reference links will be returned, without the contents of each
+// reference.
+export function getExtRefHTML(
+  G: GType | GITypeMain,
+  GI: GIType,
+  renderPromise: RenderPromise,
+  extref: string,
+  targetmod: string,
+  locale: string,
+  context: LocationVKType,
+  showText: boolean,
+  keepNotes: boolean,
+): string {
+  // Find alternate modules associated with the locale and tab settings.
+  const am = G.LocaleConfigs[locale].AssociatedModules;
+  const alts = new Set(am ? am.split(',') : undefined);
+  if ('Prefs' in G) {
+    const tabs = G.Prefs.getComplexValue(
+      'xulsword.tabs',
+    ) as typeof S.prefs.xulsword.tabs;
+    tabs.forEach((tbk) => {
+      if (tbk) tbk.forEach((t) => alts.add(t));
+    });
+  }
+  const alternates = Array.from(alts);
+
+  const list = parseExtendedVKRef(
+    verseKey,
+    extref,
+    context,
+    [locale],
+    renderPromise,
+  );
+
+  const mod = targetmod || alternates[0] || '';
+  const html: string[] = [];
+  const texts = GI.locationVKText(
+    [],
+    renderPromise,
+    list.map((x) => {
+      return typeof x !== 'string' && (showText || x.subid) ? x : null;
+    }),
+    mod,
+    alternates,
+    keepNotes,
+    false,
+    true,
+  );
+  list.forEach((locOrStr, i) => {
+    let h = '';
+    if (typeof locOrStr === 'string') {
+      h += `
+      <bdi>
+        <span class="crref-miss">${locOrStr}</span>: ?
+      </bdi>`;
+    } else {
+      let resolve: TextVKType = {
+        location: locOrStr,
+        vkMod: mod,
+        text: '',
+      };
+      let info: Partial<LookupInfo> = {};
+      if (texts.length && texts[i]) [resolve, info] = texts[i];
+      const { location, vkMod: module, text } = resolve;
+      if (module && module in G.Tab && location.book) {
+        const { direction, label, labelClass } = G.Tab[module];
+        const crref = ['crref'];
+        const crtext = ['crtext'];
+        if (direction !== G.ProgramConfig.direction) {
+          crtext.push('opposing-program-direction');
+        }
+        const fntext = ['fntext'];
+        if (direction !== G.ProgramConfig.direction) {
+          fntext.push('opposing-program-direction');
+        }
+        const altlabel = ['altlabel', labelClass];
+        const cc: Array<keyof LookupInfo> = ['alternate', 'anytab'];
+        cc.forEach((c) => {
+          if (info[c]) altlabel.push(c);
+        });
+        const alt = cc.some((c) => info[c])
+          ? ` <bdi><span class="${altlabel.join(' ')}">(${label})</span></bdi>`
+          : '';
+        const crdata: HTMLData = { type: 'crref', location, context: module };
+        const crd = JSON_attrib_stringify(crdata);
+        const q = info.possibleV11nMismatch
+          ? '<span class="possibleV11nMismatch">?</span>'
+          : '';
+        h += `
+          <bdi>
+            <a class="${crref.join(' ')}" data-data="${crd}">
+              ${verseKey(location, renderPromise).readable(locale)}
+            </a>
+            ${q}${text ? ': ' : ''}
+          </bdi>
+          <bdi>
+            <span class="${crtext.join(' ')}">${text}${alt}</span>
+          </bdi>`;
+      }
+    }
+    html.push(h);
+  });
+  return html.join('<span class="cr-sep"></span>');
 }
 
 export function moduleInfoHTML(

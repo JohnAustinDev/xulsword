@@ -488,7 +488,7 @@ export default class Xulsword
           title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
           disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
         />
-        {!Build.isWebApp && (
+        {Build.isElectronApp && (
           <Button
             id="crossrefs"
             checked={show.crossrefs}

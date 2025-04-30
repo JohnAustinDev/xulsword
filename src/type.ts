@@ -41,6 +41,7 @@ import type {
   getModuleConfs,
   getModuleConf,
 } from './servers/common.ts';
+import type { LocationVKTextG } from './servers/versetext.ts';
 import type { publishSubscription } from './servers/app/components/window.ts';
 import type DiskCache from './servers/components/diskcache.ts';
 import type Commands from './servers/app/components/commands.ts';
@@ -57,7 +58,6 @@ import type { CallBatch } from './servers/handleG.ts';
 import type ViewportElectron from './servers/app/viewport.ts';
 import type { AtextPropsType } from './clients/components/atext/atext.tsx';
 import type ViewportBrowser from './clients/webapp/viewport.ts';
-import type { GetExtRefHTML, LocationVKText } from './servers/versetext.ts';
 import type RenderPromise from './clients/renderPromise.ts';
 
 // This file contains global TypeScript types used throughout xulsword.
@@ -777,8 +777,7 @@ export type GType = {
   callBatchSync: CallBatch;
   getAllDictionaryKeyList: typeof getAllDictionaryKeyList;
   genBookTreeNodes: typeof genBookTreeNodes;
-  getExtRefHTML: GetExtRefHTML;
-  locationVKText: LocationVKText;
+  locationVKText: LocationVKTextG;
   getLanguageName: typeof getLanguageName;
 
   // Objects
@@ -843,7 +842,6 @@ export type GIType = {
     | 'callBatchSync'
     | 'getAllDictionaryKeyList'
     | 'genBookTreeNodes'
-    | 'getExtRefHTML'
     | 'locationVKText'
     | 'getLanguageName'
   >]: (...args: RenderPromiseArgs<GType[name]>) => ReturnType<GType[name]>;
@@ -921,7 +919,6 @@ export const GBuilder: GType & {
     [keyof GType, Array<keyof GType['callBatch']>],
     [keyof GType, Array<keyof GType['getAllDictionaryKeyList']>],
     [keyof GType, Array<keyof GType['genBookTreeNodes']>],
-    [keyof GType, Array<keyof GType['getExtRefHTML']>],
     [keyof GType, Array<keyof GType['locationVKText']>],
     [keyof GType, Array<keyof GType['getLanguageName']>],
     [keyof GType, Array<keyof GType['i18n']>],
@@ -985,7 +982,6 @@ export const GBuilder: GType & {
     ['callBatch', []],
     ['getAllDictionaryKeyList', []],
     ['genBookTreeNodes', []],
-    ['getExtRefHTML', []],
     ['locationVKText', []],
     ['getLanguageName', []],
     ['i18n', ['t', 'exists', 'language']],
@@ -1040,7 +1036,6 @@ export const GBuilder: GType & {
   getLocaleDigits: CACHEfunc as any,
   getAllDictionaryKeyList: CACHEfunc as any,
   genBookTreeNodes: CACHEfunc as any,
-  getExtRefHTML: CACHEfunc as any,
   locationVKText: CACHEfunc as any,
   getLanguageName: CACHEfunc as any,
   resetMain: func as any,

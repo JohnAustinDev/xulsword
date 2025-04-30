@@ -67,7 +67,7 @@ const builds = {
   library: [
     'web',
     [
-      './src/analytics.ts',
+      './src/clients/analytics.ts',
     ]
   ]
 };

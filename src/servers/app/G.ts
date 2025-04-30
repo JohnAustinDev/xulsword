@@ -31,7 +31,7 @@ import {
   getModuleConf,
 } from '../common.ts';
 import { callBatch } from '../handleG.ts';
-import { getExtRefHTML, locationVKText } from '../versetext.ts';
+import { locationVKText } from '../versetext.ts';
 import Prefs from './prefs.ts';
 import { canRedo, canUndo } from '../components/bookmarks.ts';
 import Dirs from '../components/dirs.ts';
@@ -244,12 +244,6 @@ export const G: GTypeMain = {
     ...args: Parameters<GType['genBookTreeNodes']>
   ): ReturnType<GType['genBookTreeNodes']> {
     return genBookTreeNodes(...args);
-  },
-
-  getExtRefHTML(
-    ...args: Parameters<GType['getExtRefHTML']>
-  ): ReturnType<GType['getExtRefHTML']> {
-    return getExtRefHTML(G, ...args);
   },
 
   locationVKText(

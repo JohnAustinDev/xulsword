@@ -17,6 +17,7 @@ const subscriptionsNames: Record<keyof SubscriptionTypes, null> = {
   asyncTaskComplete: null,
   resetMain: null,
   setControllerState: null,
+  getControllerState: null,
 };
 
 type SubscriptionTypes = {
@@ -29,6 +30,8 @@ type SubscriptionTypes = {
     state: Partial<ControllerState>,
     mergeValue?: boolean,
   ) => void;
+  // result is undefined when publish happens before subscribe!
+  getControllerState: () => ControllerState | undefined;
 };
 
 export type SubscriptionType = {
@@ -44,6 +47,9 @@ export type SubscriptionType = {
     resetMain: (func: SubscriptionTypes['resetMain']) => () => void;
     setControllerState: (
       func: SubscriptionTypes['setControllerState'],
+    ) => () => void;
+    getControllerState: (
+      func: SubscriptionTypes['getControllerState'],
     ) => () => void;
   };
 
@@ -66,6 +72,9 @@ export type SubscriptionType = {
     setControllerState: (
       ...args: Parameters<SubscriptionTypes['setControllerState']>
     ) => Array<ReturnType<SubscriptionTypes['setControllerState']>>;
+    getControllerState: (
+      ...args: Parameters<SubscriptionTypes['getControllerState']>
+    ) => Array<ReturnType<SubscriptionTypes['getControllerState']>>;
   };
 
   doSubscribe: (

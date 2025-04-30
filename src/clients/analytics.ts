@@ -1,8 +1,10 @@
-import { JSON_parse, JSON_stringify } from './common.ts';
+/* eslint-disable no-console */
+import { JSON_parse, JSON_stringify } from '../common.ts';
+import log from './log.ts';
 
 // The Analytics class allows analytics data to be collected during use of the
 // App or WebApp. The class must be initialized with a globalThis tag function
-// that aggregates analytics data, or else if initialized with null, recorded
+// that aggregates analytics data, or if initialized with null, then recorded
 // events will simply be logged to the console.
 
 // Each event is assigned an action.
@@ -43,32 +45,16 @@ type AnalyticsActions = (typeof analyticsEventActionMap)[AnalyticsEvents];
 export type AnalyticsInfoFinal = AnalyticsInfo & {
   origin: string;
   webapp: boolean;
-}
+};
 
 // One of these AnalyticsInfo types is required to generate a standardized
 // label. The info is sent to the server which will respond with an informative
 // label. Since events happen absolutely everywhere, varied and different data
 // is available at the source of the event, thus relying on the all knowing
 // server is the best way to produce complete and standardized labels.
-export type DownloadLinkInfo = {
-  event: keyof Pick<typeof analyticsEventActionMap, 'download'>;
-  link: string;
-  url: string;
-  nid: number | string;
-};
-export type BibleBrowserEventInfo = {
-  event: keyof Pick<
-    typeof analyticsEventActionMap,
-    'chapter' | 'verse' | 'search' | 'print' | 'glossary'
-  >;
-  module: string;
-  locationvk?: string;
-  locationky?: string;
-  extref?: string;
-  searchtxt?: string;
-};
 export type AnalyticsInfo = {
   event: AnalyticsEvents;
+  setting?: string;
 } & (
   | DownloadLinkInfo
   | BibleBrowserEventInfo
@@ -103,9 +89,30 @@ export type AnalyticsInfo = {
       url?: string;
     }
 );
+export type DownloadLinkInfo = {
+  event: keyof Pick<typeof analyticsEventActionMap, 'download'>;
+  link: string;
+  url: string;
+  nid: number | string;
+  setting?: string;
+};
+export type BibleBrowserEventInfo = {
+  event: keyof Pick<
+    typeof analyticsEventActionMap,
+    'chapter' | 'verse' | 'search' | 'print' | 'glossary'
+  >;
+  module: string;
+  setting?: string;
+  locationvk?: string;
+  locationky?: string;
+  extref?: string;
+  searchtxt?: string;
+};
 
 export class Analytics {
   private tag: AnalyticsTag | null;
+
+  private settings: { [key: string]: Partial<AnalyticsInfo> };
 
   // A data-info attribute may have been encoded as JSON or as key value
   // pairs like data-info="mid: 1234, chapter1: 8".
@@ -231,9 +238,48 @@ export class Analytics {
     return Analytics.validateInfo(info) || {};
   };
 
+  // A null tag will log hits to the console, instead of reporting them.
+  constructor(tag: AnalyticsTag | null) {
+    this.tag = tag;
+    this.settings = {};
+
+    // GT will not send data to GA from a third-party iframe without this:
+    if (tag) {
+      (tag as any)('set', 'cookie_flags', 'SameSite=None;Secure');
+    }
+  }
+
+  set(key: string, value: Partial<AnalyticsInfo>) {
+    this.settings[key] = value;
+  }
+
+  record(info: AnalyticsInfo) {
+    this.getAnalytics(info)
+      .then((analytics) => {
+        const { event } = analytics;
+        // Send it!
+        if (typeof this.tag === 'function') this.tag('event', event, analytics);
+        else if (Build.isDevelopment) {
+          console.log('recordEvent: ', event, analytics);
+        }
+      })
+      .catch((er) => this.error(er));
+  }
+
+  // Record an event triggered by any HTML element.
+  recordElementEvent(info: Partial<AnalyticsInfo>, elem: HTMLElement) {
+    let i = Analytics.elementInfo(elem);
+    if (info) i = { ...i, ...info } as AnalyticsInfo;
+    // The combination of the element's attribute info ('i') and 'info' must be
+    // a complete AnalyticsInfo object or an error may result. But object
+    // completeness is not checked here.
+    const fullInfo = i as AnalyticsInfo;
+    this.record(fullInfo);
+  }
+
   // Send an AnalyticsInfo object to the server which will respond
   // with a complete analytics object to report.
-  static async getAnalytics(info: AnalyticsInfo): Promise<AnalyticsObject> {
+  async getAnalytics(info: AnalyticsInfo): Promise<AnalyticsObject> {
     const infoValToString = (
       val: string | number | boolean | undefined,
     ): string => {
@@ -251,12 +297,25 @@ export class Analytics {
     const origins = window.location.ancestorOrigins;
     const origin = origins[origins.length - 1];
 
+    // Apply any Analytics settings specified by our info.
+    const setting =
+      info.setting && info.setting in this.settings
+        ? this.settings[info.setting]
+        : {};
+    info.setting = undefined;
+
     const send: AnalyticsInfoFinal & { action: AnalyticsActions } = {
+      ...setting,
       ...info,
       action: analyticsEventActionMap[event],
       webapp: Build.isWebApp,
       origin,
     };
+    Object.entries(send).forEach((entry) => {
+      if (typeof entry[1] === 'undefined') delete (send as any)[entry[0]];
+    });
+
+    if (Build.isElectronApp) return send;
 
     return new Promise((resolve) => {
       const ajax = new XMLHttpRequest();
@@ -287,42 +346,9 @@ export class Analytics {
     });
   }
 
-  // A null tag will log hits to the console, instead of reporting them.
-  constructor(tag: AnalyticsTag | null) {
-    this.tag = tag;
-
-    // GT will not send data to GA from a third-party iframe without this:
-    if (tag) {
-      (tag as any)('set', 'cookie_flags', 'SameSite=None;Secure');
-    }
-  }
-
-  // Record an event triggered by any HTML element.
-  recordElementEvent(info: Partial<AnalyticsInfo>, elem: HTMLElement) {
-    let i = Analytics.elementInfo(elem);
-    if (info) i = { ...i, ...info } as AnalyticsInfo;
-    // The combination of the element's attribute info ('i') and 'info' must be
-    // a complete AnalyticsInfo object or an error may result during
-    // getAnalytics. But object completeness is not checked here.
-    const fullInfo = i as AnalyticsInfo;
-    const { event } = fullInfo;
-    Analytics.getAnalytics(fullInfo)
-      .then((label) => {
-        this.recordEvent(event, label);
-      })
-      .catch((er) => {
-        // eslint-disable-next-line no-console
-        console.log(er);
-      });
-  }
-
-  recordEvent(event: AnalyticsEvents, analytics: AnalyticsObject) {
-    // Send it!
-    if (typeof this.tag === 'function') this.tag('event', event, analytics);
-    else if (Build.isDevelopment) {
-      // eslint-disable-next-line no-console
-      console.log('recordEvent: ', event, analytics);
-    }
+  error(er: any) {
+    if (window.ProcessInfo.socket) log.error(er);
+    else console.log('Error', er);
   }
 }
 

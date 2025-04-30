@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import React, { useEffect, useState } from 'react';
-import { Analytics } from '../../../analytics.ts';
 import { randomID } from '../../../common.ts';
 import log from '../../log.ts';
 import { G } from '../../G.ts';
+import { Analytics } from '../../analytics.ts';
 import Menulist from '../../components/libxul/menulist.tsx';
 import { getProps } from '../common.ts';
 
 import type { ChangeEvent } from 'react';
-import type { AnalyticsInfo } from '../../../analytics.ts';
+import type { AnalyticsInfo } from '../../analytics.ts';
 import type { MenulistProps } from '../../components/libxul/menulist.tsx';
 import type { FileItem, WidgetMenulistData } from './defaultSettings.ts';
 

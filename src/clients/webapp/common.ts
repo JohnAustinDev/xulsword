@@ -1,7 +1,7 @@
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
 import { clone, drupalSetting, hierarchy } from '../../common.ts';
-import { Analytics } from '../../analytics.ts';
+import { Analytics } from '../analytics.ts';
 import Prefs from './prefs.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
@@ -11,7 +11,7 @@ import type {
   PrefValue,
   TreeNodeInfoPref,
 } from '../../type.ts';
-import type { AnalyticsInfo } from '../../analytics.ts';
+import type { AnalyticsInfo } from '../analytics.ts';
 import type {
   SelectORMType,
   SelectORProps,

@@ -1,9 +1,11 @@
 import type React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
-import { G } from '../../G.ts';
-import { delayHandler } from '../libxul/xul.tsx';
+import { G, GI } from '../../G.ts';
 import log from '../../log.ts';
+import { doUntilDone } from '../../common.tsx';
+import RenderPromise from '../../renderPromise.ts';
+import { delayHandler } from '../libxul/xul.tsx';
 
 import type { BookGroupType } from '../../../type.ts';
 import type Chooser from './chooser.tsx';
@@ -87,18 +89,16 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
           const hd = /<h\d([^>]*class="head1[^"]*"[^>]*>)(.*?)<\/h\d>/i;
           // Rexgex parses verse number from array member strings
           const vs = /<sup[^>]*>(\d+)<\/sup>/i; // Get verse from above
-          G.callBatch([
-            [
-              'LibSword',
-              'getChapterText',
-              [headingsModule, `${book}.${chapter}`, options],
-            ],
-          ])
-            .then((result) => {
-              const [gct] = result as Array<
-                ReturnType<typeof G.LibSword.getChapterText>
-              >;
-              const { text } = gct;
+          doUntilDone((renderPromise: RenderPromise) => {
+            const result = GI.LibSword.getChapterText(
+              { text: '', notes: '' },
+              renderPromise,
+              headingsModule,
+              `${book}.${chapter}`,
+              options,
+            );
+            if (!renderPromise.waiting()) {
+              const { text } = result;
               const headings = text.match(hdplus);
               if (headings) {
                 let hr = false;
@@ -141,10 +141,8 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
                   chapterMenu.element.classList.add('show');
                 }
               }
-            })
-            .catch((er) => {
-              log.error(er);
-            });
+            }
+          });
           break;
         }
         default:

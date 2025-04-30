@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { diff } from '../../../common.ts';
-import { Analytics } from '../../../analytics.ts';
+import { Analytics } from '../../analytics.ts';
 import log from '../../log.ts';
 import {
   getProps,

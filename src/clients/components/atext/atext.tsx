@@ -479,12 +479,12 @@ class Atext extends React.Component implements RenderPromiseComponent {
           const id = `${stringHash(modkey)}.${panelIndex}`;
           const keyelem = document.getElementById(id);
           if (keyelem) {
-            if (!Build.isWebApp) {
+            if (Build.isElectronApp) {
               scrollIntoView(keyelem, nbe, 40);
             }
             const dictlist = keyelem.parentNode
               ?.parentNode as HTMLElement | null;
-            if (!Build.isWebApp && dictlist) {
+            if (Build.isElectronApp && dictlist) {
               const dki = dictlist.getElementsByClassName(
                 'dictkeyinput',
               ) as unknown as HTMLInputElement[] | null;

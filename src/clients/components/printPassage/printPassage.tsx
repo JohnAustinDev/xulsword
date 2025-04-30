@@ -12,6 +12,7 @@ import {
   printRefs,
 } from '../../common.tsx';
 import log from '../../log.ts';
+import analytics from '../../analytics.ts';
 import RenderPromise, {
   RenderPromiseComponent,
   RenderPromiseState,
@@ -391,6 +392,11 @@ export default class PrintPassage
 
     const { book: b, chapter: c1, lastchapter: c2 } = chapters;
     const keySelectVK = [vkMod, b, c1, c2].join('.');
+
+    analytics.set('printPassage', {
+      module: vkMod,
+      locationvk: `${chapters.book} ${chapters.chapter}-${chapters.lastchapter}`,
+    });
 
     return (
       <>
