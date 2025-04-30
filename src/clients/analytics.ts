@@ -191,19 +191,23 @@ export class Analytics {
   static elementInfo = (element: HTMLElement) => {
     // element specific info
     let info = {} as Partial<AnalyticsInfo>;
-    switch (element.localName) {
-      case 'a': {
-        info = {
-          link: element.textContent || '',
-          url: (element as HTMLAnchorElement).href,
-        };
-        break;
-      }
-      case 'iframe': {
-        info = {
-          url: (element as HTMLIFrameElement).src,
-        };
-        break;
+    let el: HTMLElement | null = element;
+    findTypeBlock: {
+      for (; el; ) {
+        switch (el.localName) {
+          case 'a': {
+            info = {
+              link: el.textContent || '',
+              url: (el as HTMLAnchorElement).href,
+            };
+            break findTypeBlock;
+          }
+          case 'iframe': {
+            info = { url: (el as HTMLIFrameElement).src };
+            break findTypeBlock;
+          }
+        }
+        el = el.parentElement;
       }
     }
 
