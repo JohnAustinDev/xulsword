@@ -131,15 +131,13 @@ function Controller(props: ControllerProps) {
 
   // Get Window State:
   useEffect(() => {
-    return Subscription.subscribe.getControllerState(
-      () => {
-        return Object.entries(s).reduce((p, c) => {
-          const [k, sa] = c as [keyof ControllerState, StateArray<any>];
-          [(p as any)[k]] = sa;
-          return p;
-        }, {} as ControllerState);
-      },
-    );
+    return Subscription.subscribe.getControllerState(() => {
+      return Object.entries(s).reduce((p, c) => {
+        const [k, sa] = c as [keyof ControllerState, StateArray<any>];
+        [(p as any)[k]] = sa;
+        return p;
+      }, {} as ControllerState);
+    });
   });
 
   // Set Window State:

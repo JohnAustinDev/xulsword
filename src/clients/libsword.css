@@ -593,6 +593,6 @@ span.foreign {
 .cs-StrongsHebrew .orth {
   font-family: 'Ezra SIL';
 }
-.cs-StrongsGreek .orth[data-type="writing"] {
+.cs-StrongsGreek .orth[data-type='writing'] {
   display: none;
 }

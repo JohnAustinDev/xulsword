@@ -44,10 +44,12 @@ export type FileItem = {
   typeLabels?: { [type: string]: string };
   field_type?: string[];
   field_bible_scope?: string;
-}
+};
 
 export type ChaplistVKType = {
-  [bk in OSISBookType]?: Array<[chapnum: number, url: string, size: number, mid: string]>;
+  [bk in OSISBookType]?: Array<
+    [chapnum: number, url: string, size: number, mid: string]
+  >;
 };
 
 export type ChaplistORType = Array<

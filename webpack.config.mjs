@@ -275,10 +275,12 @@ export default function (opts) {
         publicPath: ['webappClients', 'library'].includes(build)
           ? env('WEBAPP_PUBLIC_DIST')
           : './',
-        ...(build === 'library' ? {
-          library: 'xulsword',
-          globalObject: 'globalThis'
-        } : {}),
+        ...(build === 'library'
+          ? {
+              library: 'xulsword',
+              globalObject: 'globalThis',
+            }
+          : {}),
       },
 
       module: {

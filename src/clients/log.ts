@@ -11,7 +11,10 @@ function rlog(level: LogLevel, ...args: unknown[]) {
   if (levels.indexOf(level) <= levels.indexOf(C.LogLevel)) {
     const windowID = Cache.has('windowID') ? Cache.read('windowID') : '?:?';
     // Browser can only log error or warn to server.
-    if (Build.isElectronApp || levels.indexOf(level) <= levels.indexOf('warn')) {
+    if (
+      Build.isElectronApp ||
+      levels.indexOf(level) <= levels.indexOf('warn')
+    ) {
       window.IPC.send('log', level, `[${windowID}]`, JSON_stringify(args));
     }
     if (Build.isDevelopment) {

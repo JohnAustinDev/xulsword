@@ -16,8 +16,8 @@
   --dark: #222222;
   --border: #dbdbd3;
   --shadow: 0 0 8px 1px #cccccc;
-  --font-text: "Open Sans", sans-serif;
-  --font-heading: "Roboto", sans-serif;
+  --font-text: 'Open Sans', sans-serif;
+  --font-heading: 'Roboto', sans-serif;
 }
 
 /* By default layouts should fill their windows without scrollbars */

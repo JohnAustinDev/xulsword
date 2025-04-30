@@ -220,7 +220,10 @@ export function getElementData(elemx: string | Element): HTMLData {
 
   // StrongsHebrew 3.0 in CrossWire Beta repo includes 'sr' links that are
   // really sn links, so convert them so they will parse as such.
-  if (className?.split(' ').includes('sr') && title?.startsWith('StrongsHebrew:')) {
+  if (
+    className?.split(' ').includes('sr') &&
+    title?.startsWith('StrongsHebrew:')
+  ) {
     const sclass = `S_H${pad(title.substring(14, title.indexOf('.')), 5, '0')}`;
     className = `sn ${sclass}`;
     title = `StrongsHebrew.${sclass}`;

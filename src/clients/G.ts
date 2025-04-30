@@ -432,10 +432,7 @@ function reportAnalytics(call: GCallType) {
             [targ]: (args[0] as LocationVKType[])
               .map(
                 (l) =>
-                  `${l.book} ${l.chapter}${
-                    l.verse
-                      ? ':' + l.verse
-                      : ''}${
+                  `${l.book} ${l.chapter}${l.verse ? ':' + l.verse : ''}${
                     l.lastverse && l.lastverse !== l.verse
                       ? '-' + l.lastverse
                       : ''
