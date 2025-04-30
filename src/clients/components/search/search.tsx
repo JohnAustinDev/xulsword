@@ -241,7 +241,7 @@ export default class Search
     // want the search chain running twice.
     if (module) {
       delayHandler(
-        this,
+        globalThis,
         () => search(this).catch((er) => log.error(er)),
         [],
         50,

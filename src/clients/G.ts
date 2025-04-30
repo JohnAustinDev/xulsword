@@ -442,7 +442,7 @@ function reportAnalytics(call: GCallType) {
                   }`,
               )
               .filter(Boolean)
-              .join(' '),
+              .join('; '),
           };
         }
         if (info) analytics.record(info);

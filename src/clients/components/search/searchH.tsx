@@ -740,14 +740,13 @@ export async function lexicon(
 
         const sns: string[] = [];
         stsa.forEach((sts: Sts) => {
-          const strongNum = sts.strongs.replace('S_', '');
-          const sti = getStrongsModAndKey(sts.strongs, renderPromise);
-          const cls = sti.mod && sti.key ? ` class="sn ${sts.strongs}"` : '';
           sns.push(
-            `<span${cls} data-title="${[
+            `<span class="sn ${sts.strongs}" data-title="${[
               displayModule,
               ...sts.strongs.split(' '),
-            ].join('.')}">${strongNum}</span>(${sts.count.toString()})`,
+            ].join(
+              '.',
+            )}">${sts.strongs.replace('S_', '')}</span>(${sts.count.toString()})`,
           );
         });
         sanitizeHTML(
