@@ -130,56 +130,14 @@ function optionText(data: string | FileItem, isMenulistText: boolean): string {
 function getEBookTitle(data: FileItem, menu: boolean): string {
   const {
     ntitle,
-    field_type: ts,
-    field_bible_scope: s,
     full,
-    typeLabels,
+    label,
   } = data;
-  const Book = G.Book(G.i18n.language);
-
   if (full)
     return menu ? G.i18n.t('Full publication', { ns: 'widgets' }) : ntitle;
 
-  let field_type = ts;
-  let field_bible_scope = s;
+  if (label)
+    return menu ? label : `${label}: ${ntitle}`
 
-  // For some types, scope should be ignored.
-  if (
-    ts?.filter((t) =>
-      [
-        'glossary',
-        'introduction',
-        'supplemental',
-        'dictionary',
-        'diglot',
-        'other',
-        'bible_koran',
-        'gospel_parables',
-        'stories_of_christ',
-        'lives_prophets',
-        'bible_stories',
-        'childrens_bible',
-      ].includes(t),
-    ).length
-  )
-    field_bible_scope = '';
-
-  // If there is still a scope, all types other than 'preliminary' should be
-  // ignored.
-  if (field_bible_scope)
-    field_type = ts?.filter((t) => ['preliminary'].includes(t));
-
-  const book =
-    field_bible_scope?.replace(/[^-\s_]+/g, (m) =>
-      m in Book ? (Book as any)[m].name : m,
-    ) ?? '';
-  const ptls =
-    field_type?.map((pt) =>
-      typeLabels && pt in typeLabels ? typeLabels[pt] : '',
-    ) ?? [];
-  const prefix = [book, ...ptls].filter(Boolean).join(', ');
-
-  if (!prefix) return ntitle;
-
-  return menu ? prefix : `${prefix}: ${ntitle}`;
+  return ntitle;
 }

@@ -41,9 +41,7 @@ export type FileItem = {
   size?: string;
   relurl?: string;
   full?: boolean;
-  typeLabels?: { [type: string]: string };
-  field_type?: string[];
-  field_bible_scope?: string;
+  label?: string;
 };
 
 export type ChaplistVKType = {
