@@ -13,7 +13,6 @@ export type BibleBrowserData = {
   langcode: string; // the fallback language if prefs.global.local is invalid.
   settings: {
     storageId: string;
-    frame: string;
     css: string;
     prefs: {
       xulsword: Partial<(typeof S)['prefs']['xulsword']>;
@@ -93,7 +92,6 @@ const defaultSettings: AllComponentsData = {
       langcode: 'en',
       settings: {
         storageId: 'after:user.0', // load user settings after prefs
-        frame: '0', // is this a third party iframe?
         css: '',
         prefs: {
           xulsword: {
