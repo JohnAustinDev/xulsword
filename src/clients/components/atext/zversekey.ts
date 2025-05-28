@@ -12,6 +12,7 @@ import {
   getLocalizedChapterTerm,
   doWhenRenderPromisesDone,
   getExtRefHTML,
+  scrollIntoView,
 } from '../../common.tsx';
 import { G, GI } from '../../G.ts';
 import { delayHandler } from '../libxul/xul.tsx';
@@ -702,7 +703,10 @@ export function highlight(
             av.id = sv;
             doWhenRenderPromisesDone(() => {
               const elem = document.getElementById('sv');
-              elem?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              if (elem)
+                scrollIntoView(elem, sbe, {
+                  block: 'center',
+                });
             });
             sv = '';
           }

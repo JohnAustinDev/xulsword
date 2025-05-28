@@ -4,7 +4,11 @@ import { clone, gbAncestorIDs, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { audioGenBookNode, chooserGenbks } from '../../common.tsx';
+import {
+  audioGenBookNode,
+  chooserGenbks,
+  scrollIntoView,
+} from '../../common.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import { xulPropTypes, addClass } from '../libxul/xul.tsx';
 import TreeView, { forEachNode } from '../libxul/treeview.tsx';
@@ -126,15 +130,22 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
   ) {
     const props = this.props as GenbookChooserProps;
     const { panels, keys } = props;
-    const { expandKeyParents, treeRef } = this;
+    const { expandKeyParents, treeRef, loadingRef } = this;
     const m = panels[panelIndex];
     const k = keys[panelIndex];
     if (m && k) {
       const func = () => {
         const treekey = [m, panelIndex].join('.');
-        treeRef[treekey]?.current
-          ?.getNodeContentElement(k)
-          ?.scrollIntoView(options || { block: 'center', behavior: 'auto' });
+        if (treekey) {
+          const elem = treeRef[treekey]?.current?.getNodeContentElement(k);
+          if (elem && loadingRef.current) {
+            scrollIntoView(
+              elem,
+              loadingRef.current,
+              options || { block: 'center' },
+            );
+          }
+        }
       };
       expandKeyParents(panelIndex);
       if (timeout) setTimeout(func, timeout);

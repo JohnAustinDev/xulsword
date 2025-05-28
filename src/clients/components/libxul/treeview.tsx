@@ -7,6 +7,7 @@ import { xulPropTypes } from './xul.tsx';
 
 import type { TreeEventHandler, TreeNodeInfo } from '@blueprintjs/core';
 import type { XulProps } from './xul.tsx';
+import { scrollIntoView } from '../../common.tsx';
 
 // The initialState of all nodes in the tree is required. If selectedIDs is defined
 // then onSelection must also be defined and the selection will be controlled by the
@@ -224,7 +225,14 @@ const TreeView = ({
         if (elem) {
           const el = elem.getBoundingClientRect();
           if (el.top < 100 || el.bottom > window.innerHeight - 100) {
-            elem.scrollIntoView({ block: 'center', behavior: 'auto' });
+            let treeElem = elem.parentElement as HTMLElement;
+            while (
+              !treeElem.classList.contains('treeview') &&
+              treeElem.parentElement
+            ) {
+              treeElem = treeElem.parentElement;
+            }
+            scrollIntoView(elem, treeElem, { block: 'center' });
           }
         }
       }

@@ -480,7 +480,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
           const keyelem = document.getElementById(id);
           if (keyelem) {
             if (Build.isElectronApp) {
-              scrollIntoView(keyelem, nbe, 40);
+              scrollIntoView(keyelem, nbe, undefined, 40);
             }
             const dictlist = keyelem.parentNode
               ?.parentNode as HTMLElement | null;

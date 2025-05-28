@@ -516,7 +516,7 @@ export default function handler(
               ) as HTMLCollectionOf<HTMLElement>;
               Array.from(gfns).forEach((gfn) => {
                 if (gfn !== elem && gfn.dataset.title === p.title)
-                  scrollIntoView(gfn, parent.element);
+                  scrollIntoView(gfn, parent.element, undefined, 30);
               });
             }
           }

@@ -271,7 +271,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
             Array.from(gfns).forEach((gfn) => {
               const gfne = gfn as HTMLElement;
               if (gfn !== elem && gfne.dataset.title === data.title)
-                scrollIntoView(gfne, parent);
+                scrollIntoView(gfne, parent, undefined, 30);
             });
           }
           break;

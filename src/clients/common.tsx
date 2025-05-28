@@ -220,21 +220,31 @@ export function clearPending(
 
 // Javascript's scrollIntoView() also scrolls ancestors in ugly
 // ways. So this util sets scrollTop of all ancestors greater than
-// ancestor away, to zero. At this time (Jan 2022) Electron (Chrome)
-// scrollIntoView() arguments do not work. So percent 0 scrolls elem
-// to the top, 50 to the middle and 100 to the bottom.
+// ancestor away, to zero. If percent is provided, the element will be
+// scrolled to that percent of the client height.
 export function scrollIntoView(
   elem: HTMLElement,
   ancestor: HTMLElement,
-  percent = 30,
+  arg?: ScrollIntoViewOptions,
+  percent?: number,
 ) {
-  elem.scrollIntoView();
+  // Only behaviour instant is supported, since any smooth animation would
+  // need to be completed before ancestor adjustments could be made.
+  const arg2: ScrollIntoViewOptions = arg ?? {};
+  arg2.behavior = 'instant';
+  elem.scrollIntoView(arg2);
   let st: HTMLElement | null = elem;
   let setToZero = false;
   let adjust = true;
   while (st) {
     const max = st.scrollHeight - st.clientHeight;
-    if (!setToZero && adjust && st.scrollTop > 0 && st.scrollTop < max) {
+    if (
+      percent &&
+      !setToZero &&
+      adjust &&
+      st.scrollTop > 0 &&
+      st.scrollTop < max
+    ) {
       st.scrollTop -= (st.clientHeight - elem.offsetHeight) * (percent / 100);
       adjust = false;
     }
