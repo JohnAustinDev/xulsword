@@ -1,36 +1,41 @@
+/* body height is iframe's height and scrollable */
+body {
+  height: 100%;
+  overflow-y: auto;
+}
+/* root is this fixed height for multi-panel and print, otherwise it's unset */
+:root {
+  --browser-height: 800px;
+}
+#root:has(.textarea.multi-panel),
+#root:has(.print) {
+  height: var(--browser-height);
+}
+#root {
+  height: unset;
+}
+/* root descendent containers are 100% height for multi-panel or print, otherwise unset */
+#root > #reset:has(.textarea.multi-panel),
+#root > #reset > .xulsword:has(.textarea.multi-panel),
+#root > .print {
+  height: 100%;
+}
+#root > #reset,
+#root > #reset > .xulsword,
+#root > .card {
+  height: unset;
+}
+/* for iframes this height must not collapse while also body becomes
+ scrollable */
+#root > #reset .textarea.single-panel .sb {
+  flex-basis: 100%;
+  overflow-y: hidden;
+}
+
 .bibleBrowser .xsinput,
 .bibleBrowser .button-box,
 .bibleBrowser button {
   height: 38px;
-}
-
-/* The following rules allow y scrolling of an iframe top div, which although
-never desireable in Electron window mode, is desireable in single panel browser
-mode. This CSS results in the following iframe scrolling behaviour:
-BrowserBible multi panel -  fit to iframe by making each text scrollable
-                            (original behaviour).
-BrowserBible single panel - scroll iframe
-Search/Print cards - scroll iframe
-*/
-#root:has(.card),
-#root:has(.print),
-#reset:has(.textarea.single-panel) {
-  overflow-y: auto;
-}
-#reset .textarea.single-panel .sb {
-  overflow-y: hidden;
-}
-#reset:has(.card),
-#reset:has(.print),
-.card,
-.print,
-.xulsword:has(.textarea.single-panel) {
-  height: unset;
-}
-/* for iframes this height must not collapse while also root becomes
- scrollable */
-.textarea.single-panel .sb {
-  flex-basis: 100%;
 }
 
 #controls {

@@ -272,7 +272,7 @@ export function audioConfig(
   return audioConf ?? undefined;
 }
 
-// Send a message to the iframe parent with the scrollheight of a selected div.
+// Send a message to the iframe parent with the clientHeight of a selected div.
 // If elem is provided, any images it contains will be loaded before the height
 // is reported. If clear is set then -1 is sent.
 export function iframeAutoHeight(
@@ -288,7 +288,7 @@ export function iframeAutoHeight(
           window.parent.postMessage(
             {
               type: 'iframeHeight',
-              height: so.scrollHeight,
+              height: so.clientHeight,
             },
             '*',
           );

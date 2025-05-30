@@ -491,7 +491,11 @@ export default class PrintSettings extends React.Component {
       const realPaperW = paperSize[landscape ? 'h' : 'w'];
       const realPaperH = paperSize[landscape ? 'w' : 'h'];
 
-      const pageViewMaxH = window.innerHeight - 2 * C.UI.Print.viewMargin;
+      // WebApp window may scroll in the y direction, so use #root height
+      // instead of window.innerHeight to calculate pageViewMaxH.
+      const rootH = document.getElementById('root');
+      const winHeight = rootH ? rootH.offsetHeight : window.innerHeight;
+      const pageViewMaxH = winHeight - 2 * C.UI.Print.viewMargin;
       const pagebuttonsW = pagebuttons?.current?.offsetWidth || 200;
 
       let pageToContentScale = 1;
