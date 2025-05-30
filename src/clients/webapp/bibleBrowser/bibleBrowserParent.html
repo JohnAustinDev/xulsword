@@ -9,6 +9,7 @@
     <script>
       window.bibleBrowserIsLoading = true;
     </script>
+    <script defer src="http://localhost:1212/src/clients/webapp/bibleBrowser/bibleBrowserParent.js"></script>
     <style>
       iframe {
         width: 100%;
@@ -18,14 +19,14 @@
   </head>
   <body>
     <div>
-      <iframe src="http://localhost:1212/bibleBrowser.html"></iframe>
+      <iframe
+        class="fixed-height"
+        src="http://localhost:1212/bibleBrowser.html"
+      ></iframe>
     </div>
 
     <div>
-      <iframe
-        class="auto-height"
-        src="http://localhost:1212/bibleBrowser.html"
-      ></iframe>
+      <iframe src="http://localhost:1212/bibleBrowser.html"></iframe>
     </div>
   </body>
 </html>

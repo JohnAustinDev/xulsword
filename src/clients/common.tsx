@@ -272,30 +272,26 @@ export function audioConfig(
   return audioConf ?? undefined;
 }
 
-// Change an auto-height iframe's height to match the height of a selected
-// div. If elem is provided, any images it contains will be loaded before
-// the height is changed. If clear is set then any height value previously
-// placed set on the iframe is removed.
-let OriginalHeight: string | null | undefined = null;
+// Send a message to the iframe parent with the scrollheight of a selected div.
+// If elem is provided, any images it contains will be loaded before the height
+// is reported. If clear is set then -1 is sent.
 export function iframeAutoHeight(
   selector: string,
   clear?: boolean,
   elem?: HTMLElement,
 ) {
-  if (
-    Build.isWebApp &&
-    frameElement &&
-    frameElement.classList.contains('auto-height')
-  ) {
-    if (OriginalHeight === null) {
-      OriginalHeight = (frameElement as HTMLIFrameElement).style.height;
-    }
+  if (Build.isWebApp) {
     if (!clear) {
       const so = document.querySelector(selector);
       const resize = () => {
         if (so) {
-          (frameElement as HTMLIFrameElement).style.height =
-            `${so.clientHeight}px`;
+          window.parent.postMessage(
+            {
+              type: 'iframeHeight',
+              height: so.scrollHeight,
+            },
+            '*',
+          );
         }
       };
       if (elem) {
@@ -304,7 +300,7 @@ export function iframeAutoHeight(
       }
       resize();
     } else {
-      (frameElement as HTMLIFrameElement).style.height = OriginalHeight || '';
+      window.parent.postMessage({ type: 'iframeHeight', height: -1 }, '*');
     }
   }
 }

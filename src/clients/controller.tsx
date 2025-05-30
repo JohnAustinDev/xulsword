@@ -534,10 +534,8 @@ export default async function renderToRoot(
   });
   classes.push('cs-locale');
   classes.push(G.i18n.language);
+  // Adding is-vagrant class only works for same origin iframe.
   if (frameElement) {
-    classes.push('iframe');
-    if (frameElement.classList.contains('auto-height'))
-      classes.push('auto-height');
     const parentHTML =
       frameElement.ownerDocument?.getElementsByTagName('html')[0];
     if (parentHTML)

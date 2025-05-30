@@ -96,11 +96,6 @@ html[dir='rtl'] .atext .origselect {
   display: flow-root;
   overflow-wrap: anywhere;
 }
-/* for iframes this height must not collapse while also root becomes
- scrollable */
-.iframe .textarea.single-panel .sb {
-  flex-basis: 100%;
-}
 .atext.columns1 .sb {
   overflow: auto;
 }
@@ -188,7 +183,7 @@ html[dir='rtl'] .notebox-maximizer {
 }
 @media (max-width: 768px) {
   /* Dictionary nb must have max-width for mobile multi-panel
-  or long dict entries will cause the entire display to skew. 
+  or long dict entries will cause the entire display to skew.
   50vw works because multi-panel is always 2 on mobile. */
   .multi-panel .atext .nb {
     max-width: calc(50vw - 22px);
