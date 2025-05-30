@@ -6,6 +6,6 @@ window.addEventListener('message', (e) => {
         !x.classList.contains('fixed-height'),
     );
     if (f)
-      f.style.height = e.data.height === -1 ? '' : e.data.height + 'px';
+      f.style.height = e.data.height === -1 ? '' : 10 + e.data.height + 'px';
   }
 });
