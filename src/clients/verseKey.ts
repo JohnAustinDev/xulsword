@@ -1,4 +1,5 @@
-// If renderPromise is null, convertLocation will return the input
+// If renderPromise is null, convertLocation will return the input, and only
+// the global locale will be used for parsing.
 
 import C from '../constant.ts';
 import { G, GI } from './G.ts';
@@ -23,6 +24,40 @@ export default function verseKey(
   }
   options.locales = locales;
 
+  const locs = Build.isElectronApp
+    ? C.Locales.map((l) => l[0])
+    : options.locales;
+  let digits: Record<string, string[] | null>;
+  let books: ReturnType<typeof GI.getLocalizedBooks>;
+  if (Build.isElectronApp) {
+    digits = locs.reduce(
+    (p, c) => {
+      p[c] = G.getLocaleDigits(c);
+      return p;
+    },
+    {} as Record<string, string[] | null>,
+  );
+    books = G.getLocalizedBooks(true);
+  } else if (renderPromise) {
+    digits = locs.reduce(
+    (p, c) => {
+      p[c] = GI.getLocaleDigits(null, renderPromise, c);
+      return p;
+    },
+    {} as Record<string, string[] | null>,
+  );
+    books = GI.getLocalizedBooks({}, renderPromise, locs);
+  } else {
+    options.locales = [G.i18n.language];
+    digits = { [G.i18n.language]: G.getLocaleDigits() };
+    books = G.getLocalizedBooks([G.i18n.language]);
+  }
+  if (renderPromise?.waiting()) {
+    options.locales = [G.i18n.language];
+    digits = { [G.i18n.language]: G.getLocaleDigits() };
+    books = G.getLocalizedBooks([G.i18n.language]);
+  }
+
   let convertLocation;
   if (renderPromise !== null) {
     convertLocation = (
@@ -42,19 +77,7 @@ export default function verseKey(
   }
 
   return new VerseKey(
-    new RefParser(
-      Build.isElectronApp
-        ? C.Locales.reduce(
-            (p, c) => {
-              p[c[0]] = G.getLocaleDigits(c[0]);
-              return p;
-            },
-            {} as Record<string, string[] | null>,
-          )
-        : { [G.i18n.language]: G.getLocaleDigits() },
-      G.getLocalizedBooks(Build.isElectronApp ? true : [G.i18n.language]),
-      options,
-    ),
+    new RefParser(digits, books, options),
     {
       convertLocation,
       Book: () => G.Book(G.i18n.language),
