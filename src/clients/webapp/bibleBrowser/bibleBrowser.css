@@ -1,15 +1,17 @@
-/* body height is iframe's height and scrollable */
+/* body height is the iframe's height and is scrollable */
 body {
   height: 100%;
   overflow-y: auto;
 }
-/* root is this fixed height for multi-panel and print, otherwise it's unset */
+/* root is --min-height for multi-panel and print, otherwise it's unset */
 :root {
-  --browser-height: 800px;
+  --min-height: 800px;
 }
-#root:has(.textarea.multi-panel),
+#root:has(.textarea.multi-panel) {
+  height: var(--min-height);
+}
 #root:has(.print) {
-  height: var(--browser-height);
+  min-height: var(--min-height);
 }
 #root {
   height: unset;
@@ -138,6 +140,10 @@ body {
   z-index: 8;
   margin: 0;
   padding: 20px;
+}
+
+.printControls .vk-vkmod > select {
+  max-width: calc(100vw - 87px);
 }
 
 @media (max-width: 300px) {
