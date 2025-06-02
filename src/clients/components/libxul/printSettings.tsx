@@ -752,128 +752,126 @@ export default class PrintSettings extends React.Component {
 
         <div className="printControls" ref={customSettingsRef} />
 
-        {Build.isElectronApp && (
-          <Groupbox
-            className="printSettings"
-            caption={GI.i18n.t('', renderPromise, 'menu.print')}
-            domref={settingsRef}
-          >
-            <Vbox pack="center" align="center">
-              <Hbox align="center">
-                <Menulist
-                  id="pageSize"
-                  value={pageSize}
-                  options={paperSizes.map((p) => (
-                    <option key={p.type} value={p.type}>
-                      {p.type}
-                    </option>
-                  ))}
-                  onChange={handler}
-                />
-                <Spacer width="15" />
-                <Button
-                  id="portrait"
-                  checked={!landscape}
-                  icon="document"
-                  onClick={handler}
-                />
-                <Button
-                  id="landscape"
-                  checked={landscape}
-                  icon="document"
-                  onClick={handler}
-                />
-                {pageable && (
-                  <>
-                    <Spacer width="10" />
-                    <Button
-                      id="columns.1"
-                      checked={!twoColumns}
-                      icon="one-column"
-                      onClick={handler}
-                    />
-                    <Button
-                      id="columns.2"
-                      checked={twoColumns}
-                      icon="two-columns"
-                      onClick={handler}
-                    />
-                  </>
-                )}
-              </Hbox>
-              <Vbox className="margins" pack="center" align="center">
-                <Hbox align="center" pack="start">
-                  <Icon icon="bring-data" />
-                  <Textbox
-                    id="margins.top"
-                    value={margins.top.toString()}
-                    maxLength="3"
-                    pattern={/^\d*$/}
-                    onBlur={handler}
-                    onKeyDown={handler}
-                    inputRef={selectRefs.margins.top}
+        <Groupbox
+          className="printSettings"
+          caption={GI.i18n.t('', renderPromise, 'menu.print')}
+          domref={settingsRef}
+        >
+          <Vbox pack="center" align="center">
+            <Hbox align="center">
+              <Menulist
+                id="pageSize"
+                value={pageSize}
+                options={paperSizes.map((p) => (
+                  <option key={p.type} value={p.type}>
+                    {p.type}
+                  </option>
+                ))}
+                onChange={handler}
+              />
+              <Spacer width="15" />
+              <Button
+                id="portrait"
+                checked={!landscape}
+                icon="document"
+                onClick={handler}
+              />
+              <Button
+                id="landscape"
+                checked={landscape}
+                icon="document"
+                onClick={handler}
+              />
+              {pageable && (
+                <>
+                  <Spacer width="10" />
+                  <Button
+                    id="columns.1"
+                    checked={!twoColumns}
+                    icon="one-column"
+                    onClick={handler}
                   />
-                  <Label value="mm" />
-                </Hbox>
-                <Hbox>
-                  <Hbox align="center" pack="start">
-                    <Icon icon="bring-data" />
-                    <Textbox
-                      id="margins.left"
-                      value={margins.left.toString()}
-                      maxLength="3"
-                      pattern={/^\d*$/}
-                      onBlur={handler}
-                      onKeyDown={handler}
-                      inputRef={selectRefs.margins.left}
-                    />
-                    <Label value="mm" />
-                  </Hbox>
-                  <Spacer />
-                  <Hbox align="center" pack="start">
-                    <Icon icon="bring-data" />
-                    <Textbox
-                      id="margins.right"
-                      value={margins.right.toString()}
-                      maxLength="3"
-                      pattern={/^\d*$/}
-                      onBlur={handler}
-                      onKeyDown={handler}
-                      inputRef={selectRefs.margins.right}
-                    />
-                    <Label value="mm" />
-                  </Hbox>
-                </Hbox>
-                <Hbox align="center" pack="start">
-                  <Icon icon="bring-data" />
-                  <Textbox
-                    id="margins.bottom"
-                    value={margins.bottom.toString()}
-                    maxLength="3"
-                    pattern={/^\d*$/}
-                    onBlur={handler}
-                    onKeyDown={handler}
-                    inputRef={selectRefs.margins.bottom}
+                  <Button
+                    id="columns.2"
+                    checked={twoColumns}
+                    icon="two-columns"
+                    onClick={handler}
                   />
-                  <Label value="mm" />
-                </Hbox>
-              </Vbox>
+                </>
+              )}
+            </Hbox>
+            <Vbox className="margins" pack="center" align="center">
               <Hbox align="center" pack="start">
-                <Icon icon="font" />
+                <Icon icon="bring-data" />
                 <Textbox
-                  id="font.size"
-                  value={scale.toString()}
+                  id="margins.top"
+                  value={margins.top.toString()}
                   maxLength="3"
                   pattern={/^\d*$/}
                   onBlur={handler}
                   onKeyDown={handler}
-                  inputRef={selectRefs.scale}
+                  inputRef={selectRefs.margins.top}
                 />
-                <Label value="%" />
+                <Label value="mm" />
+              </Hbox>
+              <Hbox>
+                <Hbox align="center" pack="start">
+                  <Icon icon="bring-data" />
+                  <Textbox
+                    id="margins.left"
+                    value={margins.left.toString()}
+                    maxLength="3"
+                    pattern={/^\d*$/}
+                    onBlur={handler}
+                    onKeyDown={handler}
+                    inputRef={selectRefs.margins.left}
+                  />
+                  <Label value="mm" />
+                </Hbox>
+                <Spacer />
+                <Hbox align="center" pack="start">
+                  <Icon icon="bring-data" />
+                  <Textbox
+                    id="margins.right"
+                    value={margins.right.toString()}
+                    maxLength="3"
+                    pattern={/^\d*$/}
+                    onBlur={handler}
+                    onKeyDown={handler}
+                    inputRef={selectRefs.margins.right}
+                  />
+                  <Label value="mm" />
+                </Hbox>
+              </Hbox>
+              <Hbox align="center" pack="start">
+                <Icon icon="bring-data" />
+                <Textbox
+                  id="margins.bottom"
+                  value={margins.bottom.toString()}
+                  maxLength="3"
+                  pattern={/^\d*$/}
+                  onBlur={handler}
+                  onKeyDown={handler}
+                  inputRef={selectRefs.margins.bottom}
+                />
+                <Label value="mm" />
               </Hbox>
             </Vbox>
-          </Groupbox>
-        )}
+            <Hbox align="center" pack="start">
+              <Icon icon="font" />
+              <Textbox
+                id="font.size"
+                value={scale.toString()}
+                maxLength="3"
+                pattern={/^\d*$/}
+                onBlur={handler}
+                onKeyDown={handler}
+                inputRef={selectRefs.scale}
+              />
+              <Label value="%" />
+            </Hbox>
+          </Vbox>
+        </Groupbox>
 
         <Hbox className="dialog-buttons" pack="end" align="end">
           {
