@@ -29,7 +29,7 @@ const C = {
 
   URL: 'https://github.com/JohnAustinDev/xulsword',
 
-  SWORDEngineVersion: '1.8.1',
+  SWORDEngineVersion: '1.9.0',
 
   MAXVERSE: 176,
   MAXCHAPTER: 150,

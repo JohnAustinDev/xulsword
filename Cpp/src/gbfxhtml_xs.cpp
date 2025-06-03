@@ -195,7 +195,12 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       buf += "\">";
     }
     else if (!strcmp(tag.getName(), "RF")) {
+      SWBuf type = tag.getAttribute("type");
       SWBuf footnoteNumber = tag.getAttribute("swordFootnote");
+      SWBuf classExtras = "";
+      if (type.size()) {
+        classExtras.append(" ").append(type);
+      }
       VerseKey *vkey = NULL;
       // see if we have a VerseKey * or descendant
       SWTRY {
@@ -203,13 +208,15 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       }
       SWCATCH ( ... ) { }
       if (vkey) {
-        buf.appendFormatted("<span class=\"fn\" data-title=\"%s.%s.%s\"></span>",
+        buf.appendFormatted("<span class=\"fn%s\" data-title=\"%s.%s.%s\"></span>",
+              classExtras.c_str(),
               footnoteNumber.c_str(),
               vkey->getOSISRef(),
               userData->module->getName());
       }
       else {
-        buf.appendFormatted("<span class=\"gfn\" data-title=\"%s.fn.%s\"></span>",
+        buf.appendFormatted("<span class=\"gfn%s\" data-title=\"%s.fn.%s\"></span>",
+              classExtras.c_str(),
               footnoteNumber.c_str(),
               userData->module->getName());
       }

@@ -86,6 +86,7 @@ void savePercentComplete(char percent, void *userData) {
 /********************************************************************
 Custom derivative classes
 *********************************************************************/
+#define SWDYNAMIC_CAST(className, object) (className *)((object)?((object->getClass()->isAssignableFrom(#className))?object:0):0)
 
 #include "osisxhtml_xs.cpp"
 #include "teixhtml_xs.cpp"

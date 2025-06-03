@@ -669,7 +669,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
     }
 
     // <catchWord> & <rdg> tags (italicize)
-    else if (!strcmp(tag.getName(), "rdg") || !strcmp(tag.getName(), "catchWord")) {
+    else if (!strcmp(tag.getName(), "rdg") || !strcmp(tag.getName(), "catchWord") || !strcmp(tag.getName(), "inscription")) {
       if ((!tag.isEndTag()) && (!tag.isEmpty())) {
         outHtmlTag("<i>", buf, u);
       }
@@ -685,6 +685,19 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
       }
       else if (tag.isEndTag()) {
         outHtmlTag("</span>", buf, u);
+      }
+    }
+
+    // <seg>
+    else if (!strcmp(tag.getName(), "seg")) {
+      if ((!tag.isEndTag()) && (!tag.isEmpty())) {
+        SWBuf type = tag.getAttribute("type");
+        outText("<span class=\"", buf, u);
+        outText(type, buf, u);
+        outText("\">", buf, u);
+      }
+      else if (tag.isEndTag()) {
+        outText("</span>", buf, u);
       }
     }
 
