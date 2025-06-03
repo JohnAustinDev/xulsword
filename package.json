@@ -17,9 +17,9 @@
     "package-32win": "cross-env PKLIB=32win yarn install-libxulsword && yarn package --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
     "package-64win": "cross-env PKLIB=64win yarn install-libxulsword && yarn package --win --x64 && cross-env PKLIB=linux yarn install-libxulsword",
     "release": "yarn release-linux && yarn release-32win",
-    "release-linux": "yarn && cross-env PKLIB=linux yarn install-libxulsword && yarn build && electron-builder build --publish always --linux",
-    "release-32win": "yarn && cross-env PKLIB=32win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
-    "release-64win": "yarn && cross-env PKLIB=64win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --x64 && cross-env PKLIB=linux yarn install-libxulsword",
+    "release-linux": "yarn && cross-env PKLIB=linux yarn install-libxulsword && yarn build:app && electron-builder build --publish always --linux",
+    "release-32win": "yarn && cross-env PKLIB=32win yarn install-libxulsword && yarn build:app && electron-builder build --publish always --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
+    "release-64win": "yarn && cross-env PKLIB=64win yarn install-libxulsword && yarn build:app && electron-builder build --publish always --win --x64 && cross-env PKLIB=linux yarn install-libxulsword",
     "postinstall": "electron-builder install-app-deps && yarn ./build/app && yarn ./build/webapp"
   },
   "build": {
@@ -51,12 +51,7 @@
       "category": "Education",
       "extraFiles": [
         {
-          "from": "./Cpp/lib/libxulsword-static.so",
-          "to": "libxulsword-static.so"
-        },
-        {
-          "from": "./Cpp/lib/libstdc++.so.6",
-          "to": "libstdc++.so.6"
+          "from": "./Cpp/lib"
         }
       ]
     },
@@ -258,5 +253,5 @@
     "webpack-cli": "^4.6.0",
     "webpack-dev-server": "^3.11.2"
   },
-  "packageManager": "yarn@4.5.0"
+  "packageManager": "yarn@4.9.1"
 }

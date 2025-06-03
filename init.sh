@@ -261,8 +261,8 @@ fi
 
 ########################################################################
 # COMPILE LIBSWORD
-# svn rev 3563 is sword-1.8.1
-swordRev=3563
+# svn rev 3900 is 2025-03-03
+swordRev=3900
 url="http://crosswire.org/svn/sword/trunk"
 gzfile="sword-rev-${swordRev}.tar.gz"
 dirin="sword-$swordRev"
@@ -304,9 +304,12 @@ if [ ! -e "$CPP/build" ]; then
   if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
   mkdir "$LIBDIR"
   cp "$CPP/install/usr/local/lib/libxulsword-static.so" "$LIBDIR"
-  stdc="/lib/x86_64-linux-gnu/libstdc++.so.6"
-  if [[ ! -e $stdc ]]; then stdc="/usr/lib/i386-linux-gnu/libstdc++.so.6"; fi
-  cp "$stdc" "$LIBDIR"
+  for lib in libstdc++.so.6 libm.so.6 libc.so.6 libgcc_s.so.1
+  do
+    stdc="/lib/x86_64-linux-gnu/$lib"
+    if [[ ! -e $stdc ]]; then stdc="/usr/lib/i386-linux-gnu/$lib"; fi
+    cp "$stdc" "$LIBDIR"
+  done
   if [ -z "$DBG" ]; then
     strip "$LIBDIR/"*
   fi
