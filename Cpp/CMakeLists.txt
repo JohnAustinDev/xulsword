@@ -11,8 +11,8 @@ set(CMAKE_INSTALL_RPATH "")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 
 # -Wl,--no-undefined flags are required by GCC to make it check shared library dependencies
-set(CMAKE_LINKER_FLAGS "-Wl,-undefined,error ${CMAKE_SHARED_LINKER_FLAGS}")
-set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-undefined,error ${CMAKE_SHARED_LINKER_FLAGS}")
+set(CMAKE_LINKER_FLAGS "-Wl,-undefined,error -static-libgcc -static-libstdc++ ${CMAKE_SHARED_LINKER_FLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-undefined,error -static-libgcc -static-libstdc++ ${CMAKE_SHARED_LINKER_FLAGS}")
 
 # sword does not install all the sword headers, so use the local include dir
 include_directories(./src/include ./sword/include ${CMAKE_INCLUDE_PATH})

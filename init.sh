@@ -190,7 +190,7 @@ if [ ! -e "$CPP/$dirout" ]; then
   cmake "$DBG" -G "Unix Makefiles" -D CMAKE_C_FLAGS="-fPIC" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
   # create a symlink to zconf.h (which was just renamed by cmake) so CLucene will compile
-  ln -s ./build/zconf.h ../zconf.h
+  ##ln -s ./build/zconf.h ../zconf.h
 fi
 # CROSS COMPILE ZLIB TO WINDOWS
 if [ "$WINMACHINE" != "no" ]; then
@@ -235,9 +235,7 @@ if [ ! -e "$CPP/$dirout" ]; then
    # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
   sed -i 's/!allowLeadingWildcard/!true/g' "$CPP/$dirout/src/core/CLucene/queryParser/QueryParser.cpp"
   # -D DISABLE_MULTITHREADING=ON causes compilation to fail
-  if [[ "$DEBVERS" == "bookworm" ]]; then
-    sed -i '11i #include <ctime>' "$CPP/$dirout/src/core/CLucene/document/DateTools.cpp"
-  fi
+  sed -i '11i #include <ctime>' "$CPP/$dirout/src/core/CLucene/document/DateTools.cpp"
   cmake "$DBG" -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=ON -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" ..
   make DESTDIR="$CPP/install" install
 fi
@@ -270,8 +268,8 @@ dirout="sword"
 if [ ! -e "$CPP/$dirout" ]; then
   getSource
   # SWORD's CMakeLists.txt requires clucene-config.h be located in a weird directory:
-  cp -r "$CPP/install/usr/local/include/CLucene" "$CPP/install/usr/local/lib"
-  cmake "$DBG" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$CPP/install/usr/local/lib/libclucene-core.so" -D ZLIB_LIBRARY="$CPP/install/usr/local/lib/libz.so" -D CLUCENE_LIBRARY_DIR="$CPP/install/usr/local/include" -D CLUCENE_INCLUDE_DIR="$CPP/install/usr/local/include" -D ZLIB_INCLUDE_DIR="$CPP/install/usr/local/include" -DSWORD_BUILD_UTILS="Yes" ..
+  ##cp -r "$CPP/install/usr/local/include/CLucene" "$CPP/install/usr/local/lib"
+  cmake "$DBG" -D SWORD_NO_ICU="Yes" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$CPP/install/usr/local/lib/libclucene-core.so" -D ZLIB_LIBRARY="$CPP/install/usr/local/lib/libz.so" -D CLUCENE_LIBRARY_DIR="$CPP/install/usr/local/include" -D CLUCENE_INCLUDE_DIR="$CPP/install/usr/local/include" -D ZLIB_INCLUDE_DIR="$CPP/install/usr/local/include" -DSWORD_BUILD_UTILS="Yes" ..
   make DESTDIR="$CPP/install" install
 fi
 # CROSS COMPILE LIBSWORD TO WINDOWS
@@ -284,7 +282,7 @@ if [ "$WINMACHINE" != "no" ]; then
     cd "$CPP" || exit 5
     patch -s -p0 -d "$CPP/$dirout" < "$CPP/windows/libsword-src.patch"
     cd "$CPP/$dirout/build" || exit 5
-    cmake "$DBG" -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$CPP/install.$XCWD/usr/local/include" -D CLUCENE_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -D ZLIB_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
+    cmake "$DBG" -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="Yes" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$CPP/install.$XCWD/usr/local/include" -D CLUCENE_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -D ZLIB_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
     make DESTDIR="$CPP/install.$XCWD" install
   fi
 fi
@@ -296,7 +294,7 @@ fi
 if [ ! -e "$CPP/build" ]; then
   mkdir "$CPP/build"
   cd "$CPP/build" || exit 5
-  cmake "$DBG" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install/usr/local/lib" ..
+  cmake "$DBG" -D SWORD_NO_ICU="Yes" -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install/usr/local/lib" ..
   make install
 
   # Install the lib and all dependencies and strip them
@@ -304,7 +302,7 @@ if [ ! -e "$CPP/build" ]; then
   if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
   mkdir "$LIBDIR"
   cp "$CPP/install/usr/local/lib/libxulsword-static.so" "$LIBDIR"
-  for lib in libstdc++.so.6 libm.so.6 libc.so.6 libgcc_s.so.1
+  for lib in libm.so.6 libc.so.6
   do
     stdc="/lib/x86_64-linux-gnu/$lib"
     if [[ ! -e $stdc ]]; then stdc="/usr/lib/i386-linux-gnu/$lib"; fi
@@ -327,7 +325,7 @@ if [ "$WINMACHINE" != "no" ]; then
   if [ ! -e "$CPP/build.$XCWD" ]; then
     mkdir "$CPP/build.$XCWD"
     cd "$CPP/build.$XCWD" || exit 5
-    cmake "$DBG" -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$CPP/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install.$XCWD/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install.$XCWD/usr/local/lib" ..
+    cmake "$DBG" -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="Yes" -D CMAKE_INCLUDE_PATH="$CPP/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install.$XCWD/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install.$XCWD/usr/local/lib" ..
     make install
 
     # Install the DLL and all ming dependencies beyond the node executable and strip them
@@ -373,6 +371,10 @@ if [ -n "$COPY_TO_HOST" ]; then
   fi
 fi
 ########################################################################
+
+#sudo snap install snapcraft --classic
+##sudo snap install lxd
+##lxd init
 
 # Old Darwin Clucene
 #if [ $(uname | grep Darwin) ]; then

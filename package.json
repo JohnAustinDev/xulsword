@@ -4,6 +4,7 @@
   "description": "Электронная Библия",
   "type": "module",
   "scripts": {
+    "dist": "electron-builder --linux snap",
     "start:app": "webpack serve --env development --env appClients",
     "start:appSrv": "webpack --env development --env appSrv --env preload && cross-env LD_LIBRARY_PATH='./Cpp/lib' electron ./build/app/dist/appSrv/server.cjs",
     "start:webapp": "webpack serve --env development --env webappClients",
@@ -44,9 +45,13 @@
     "extraResources": [
       "./assets/**"
     ],
+    "snap": {
+      "base": "core22",
+      "allowNativeWayland": true,
+    },
     "linux": {
       "target": [
-        "AppImage"
+        "snap"
       ],
       "category": "Education",
       "extraFiles": [
@@ -253,5 +258,5 @@
     "webpack-cli": "^4.6.0",
     "webpack-dev-server": "^3.11.2"
   },
-  "packageManager": "yarn@4.9.1"
+  "packageManager": "yarn@4.9.2"
 }
