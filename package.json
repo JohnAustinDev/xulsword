@@ -47,7 +47,7 @@
     ],
     "snap": {
       "base": "core22",
-      "allowNativeWayland": true,
+      "allowNativeWayland": true
     },
     "linux": {
       "target": [

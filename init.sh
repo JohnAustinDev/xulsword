@@ -16,15 +16,12 @@ if [[ $EUID -eq 0 ]]; then
    exit 1
 fi
 
-if [ -e /vagrant ]; then VAGRANT="guest"; else VAGRANT="host"; fi
+if [[ -e "/vagrant" ]]; then VAGRANT="guest"; else VAGRANT="host"; fi
 
-if [ "$VAGRANT" = "guest" ]; then
-  if [[ -e "/vagrant/scripts/setenv" ]]; then
-    XULSWORD=/vagrant
-  fi
-fi
+if [[ "$VAGRANT" == "guest" ]]; then XULSWORD=/vagrant; fi
 if [[ ! -e "$XULSWORD/setenv" ]]; then cp "$XULSWORD/scripts/setenv" "$XULSWORD"; fi
 source "$XULSWORD/setenv"
+if [[ "$VAGRANT" == "guest" ]]; then XULSWORD=/vagrant; fi
 
 DEBVERS="$(lsb_release -cs 2>/dev/null)"
 
@@ -34,15 +31,15 @@ DBG=
 # BUILD DEPENDENCIES (Ubuntu Xenial & Bionic)
 PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip curl"
 # for xulsword
-PKG_DEPS="debhelper binutils gcc-multilib dpkg-dev debhelper libboost-dev"
+PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev debhelper libboost-dev"
 # for ZLib build
 PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev"
 # for Clucene build
 PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
 # for VM build
-if [ "$VAGRANT" = "guest" ]; then PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1 libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev libasound2"; fi
+if [[ "$VAGRANT" == "guest" ]]; then PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1 libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev libasound2"; fi
 
-if [ "$WINMACHINE" != "no" ]; then
+if [[ "$WINMACHINE" != "no" ]]; then
   # BUILD DEPENDENCIES (for cross compiling libxulsword as a Windows dll)
   PKG_DEPS="$PKG_DEPS mingw-w64 mingw-w64-tools wine wine32-preloader"
 fi
@@ -51,7 +48,7 @@ fi
 # PKG_DEPS="$PKG_DEPS llvm-12 llvm-12-linker-tools llvm-12-tools clang-12 lldb-12 lld-12"
 
 if [ "$(dpkg -l $PKG_DEPS 2>&1 | grep "no packages" | wc -m)" -ne 0 ]; then
-  if [ "$VAGRANT" = "guest" ]; then
+  if [[ "$VAGRANT" == "guest" ]]; then
     sudo dpkg --add-architecture i386
     sudo apt-get update
     sudo apt-get install -y $PKG_DEPS
@@ -71,7 +68,7 @@ fi
 # Also git must be used (vs. copied from host) so that line endings will
 # be correct on both the host and the guest.
 COPY_TO_HOST=
-if [ "$XULSWORD" = "/vagrant" ]; then
+if [[ "$XULSWORD" == "/vagrant" ]]; then
   COPY_TO_HOST=1
   if [ ! -e "$HOME/src" ]; then
     mkdir "$HOME/src";
@@ -82,12 +79,14 @@ if [ "$XULSWORD" = "/vagrant" ]; then
     git pull
   fi
   XULSWORD="$HOME/src/xulsword"
+  if [[ ! -e "$XULSWORD/setenv" ]]; then cp "$XULSWORD/scripts/setenv" "$XULSWORD"; fi
 fi
 
+echo "XULSWORD IS $XULSWORD"
 cd "$XULSWORD" || exit 5
 CPP="$XULSWORD/Cpp"
 
-if [ "$LIBXULSWORD_ONLY" = "no" ]; then
+if [[ "$LIBXULSWORD_ONLY" == "no" ]]; then
   # Install node.js using nvm so our dev environment can use the latest
   # LTS version of node.js. Then install yarn and dependant node modules.
   NVM_DIR="$HOME/.nvm"
@@ -105,13 +104,13 @@ fi
 # Create a local Cpp installation directory where compiled libraries will
 # be installed for libxulsword linking.
 if [ ! -e "$XULSWORD/Cpp/install" ]; then mkdir "$XULSWORD/Cpp/install"; fi
-if [ "$WINMACHINE" != "no" ]; then
+if [[ "$WINMACHINE" != "no" ]]; then
   if [ ! -e "$XULSWORD/Cpp/install.$XCWD" ]; then mkdir "$XULSWORD/Cpp/install.$XCWD"; fi
 fi
 
 # Create a local lib directory where libxulsword will be installed
 if [ ! -e "$XULSWORD/Cpp/lib" ]; then mkdir "$XULSWORD/Cpp/lib"; fi
-if [ "$WINMACHINE" != "no" ]; then
+if [[ "$WINMACHINE" != "no" ]]; then
   if [ ! -e "$XULSWORD/Cpp/lib.$XCWD" ]; then mkdir "$XULSWORD/Cpp/lib.$XCWD"; fi
 fi
 
@@ -141,7 +140,7 @@ function getSource() {
       echo "Using archived file: $gzfile"
       cp "$ARCHHOST/$gzfile" "$ARCHIVEDIR/$gzfile"
     # Otherwise if it's sword, use subversion to get the rev needed.
-    elif [ "$url" = "http://crosswire.org/svn/sword/trunk" ]; then
+    elif [[ "$url" == "http://crosswire.org/svn/sword/trunk" ]]; then
       cd "$ARCHIVEDIR" || exit 5
       svn checkout -r "$swordRev" "$url" "$dirin"
       rm -rf "$dirin/.svn"
@@ -193,7 +192,7 @@ if [ ! -e "$CPP/$dirout" ]; then
   ##ln -s ./build/zconf.h ../zconf.h
 fi
 # CROSS COMPILE ZLIB TO WINDOWS
-if [ "$WINMACHINE" != "no" ]; then
+if [[ "$WINMACHINE" != "no" ]]; then
   dirout="zlib.$XCWD"
   if [ ! -e "$CPP/$dirout" ]; then
     getSource
@@ -206,7 +205,7 @@ fi
 
 ########################################################################
 # CROSS-COMPILE BOOST TO WINDOWS FOR CLUCENE
-if [ "$WINMACHINE" != "no" ]; then
+if [[ "$WINMACHINE" != "no" ]]; then
   url=
   gzfile="boost_1_80_0.tar.gz"
   dirin="boost_1_80_0"
@@ -240,7 +239,7 @@ if [ ! -e "$CPP/$dirout" ]; then
   make DESTDIR="$CPP/install" install
 fi
 # CROSS COMPILE LIBCLUCENE TO WINDOWS
-if [ "$WINMACHINE" != "no" ]; then
+if [[ "$WINMACHINE" != "no" ]]; then
   dirout="clucene.$XCWD"
   if [ ! -e "$CPP/$dirout" ]; then
     getSource
@@ -273,7 +272,7 @@ if [ ! -e "$CPP/$dirout" ]; then
   make DESTDIR="$CPP/install" install
 fi
 # CROSS COMPILE LIBSWORD TO WINDOWS
-if [ "$WINMACHINE" != "no" ]; then
+if [[ "$WINMACHINE" != "no" ]]; then
   dirout="sword.$XCWD"
   if [ ! -e "$CPP/$dirout" ]; then
     getSource
@@ -321,7 +320,7 @@ if [ ! -e "$CPP/build" ]; then
   fi
 fi
 # CROSS COMPILE LIBXULSWORD TO WINDOWS
-if [ "$WINMACHINE" != "no" ]; then
+if [[ "$WINMACHINE" != "no" ]]; then
   if [ ! -e "$CPP/build.$XCWD" ]; then
     mkdir "$CPP/build.$XCWD"
     cd "$CPP/build.$XCWD" || exit 5
@@ -355,7 +354,7 @@ if [ "$WINMACHINE" != "no" ]; then
   fi
 fi
 ########################################################################
-if [ "$LIBXULSWORD_ONLY" = "yes" ]; then exit 0; fi
+if [[ "$LIBXULSWORD_ONLY" == "yes" ]]; then exit 0; fi
 
 ########################################################################
 # WRAP UP
