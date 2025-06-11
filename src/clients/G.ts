@@ -429,16 +429,16 @@ function reportAnalytics(call: GCallType) {
           info = {
             event,
             module: args[1] || '',
-            [targ]: (args[0] as LocationVKType[])
+            [targ]: (args[0] as (LocationVKType | null)[])
+              .filter(Boolean)
               .map(
-                (l) =>
+                (l: any) =>
                   `${l.book} ${l.chapter}${l.verse ? ':' + l.verse : ''}${
                     l.lastverse && l.lastverse !== l.verse
                       ? '-' + l.lastverse
                       : ''
                   }`,
               )
-              .filter(Boolean)
               .join('; '),
           };
         }

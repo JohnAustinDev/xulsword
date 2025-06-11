@@ -115,7 +115,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
             whichTab: value,
             doWhat: 'toggle',
           },
-          renderPromise2,
+          Build.isElectronApp ? undefined : renderPromise2,
         );
         if (!renderPromise2.waiting()) {
           const tabBank = xs.tabs[panelIndex];
