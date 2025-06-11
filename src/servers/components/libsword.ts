@@ -178,6 +178,12 @@ const LibSword = {
 
     log.verbose(`module directories: ${this.moduleDirectories.join(', ')}`);
 
+    if (!this.clearConfigCache()) {
+      log.error(
+        `FAILED to delete config cache file(s) in: ${this.moduleDirectories.join(', ')}`,
+      );
+    }
+
     // Get our xulsword instance...
     this.libxulsword.GetXulsword(this.moduleDirectories.join(', '));
     log.verbose(`CREATED libxulsword object`);
@@ -204,6 +210,7 @@ const LibSword = {
       this.libxulsword.FreeLibXulsword();
       log.verbose('DELETED libxulsword object');
     }
+    this.clearConfigCache();
     this.initialized = false;
   },
 
@@ -215,6 +222,26 @@ const LibSword = {
       log.error(`libsword was called while uninitialized: ${stack}`);
     }
     return false;
+  },
+
+  // Returns false on failure to remove all cache file(s).
+  clearConfigCache(): boolean {
+    const { moduleDirectories } = this;
+    moduleDirectories.forEach((dir) => {
+      const cacheFile = new LocalFile(dir)
+        .append('mods.d')
+        .append('modules-conf.cache');
+      if (cacheFile.exists()) {
+        cacheFile.remove();
+        log.verbose(`Cleared cache file: ${cacheFile.path}`);
+      }
+    });
+    return moduleDirectories.reduce((p, c) => {
+      const cacheFile = new LocalFile(c)
+        .append('mods.d')
+        .append('modules-conf.cache');
+      return !cacheFile.exists() && p;
+    }, true);
   },
 
   /* ******************************************************************************
