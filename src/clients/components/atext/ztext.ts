@@ -290,7 +290,7 @@ export function genbookChange(
   module: string,
   modkey: string,
   next: boolean,
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): string | null {
   if (module) {
     const toc = GI.genBookTreeNodes([], renderPromise, module);
@@ -325,7 +325,7 @@ export function genbookChange(
 export function textChange(
   atext: HTMLElement,
   next: boolean,
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
   prevState?: PinPropsType,
 ): PinPropsType | Partial<PinPropsType> | null {
   const { columns: cx, module } = atext.dataset;

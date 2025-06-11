@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import React, { useEffect, useState } from 'react';
 import { randomID } from '../../../common.ts';
 import log from '../../log.ts';

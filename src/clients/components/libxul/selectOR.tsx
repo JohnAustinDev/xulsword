@@ -191,10 +191,11 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
           } else {
             throw new Error(`Unrecognized select: '${targ.type}'`);
           }
-          if (renderPromise2.waiting()) return null;
-
-          onSelection(selection, props.id);
-          return { selection } as Partial<SelectORState>;
+          if (!renderPromise2?.waiting()) {
+            onSelection(selection, props.id);
+            return { selection } as Partial<SelectORState>;
+          }
+          return null;
         });
       });
     }

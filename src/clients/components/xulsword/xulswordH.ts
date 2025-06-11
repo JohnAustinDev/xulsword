@@ -94,7 +94,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                     selection: null,
                     scroll: { verseAt: 'top' },
                   };
-                  return renderPromise2.waiting() ? null : s;
+                  return renderPromise2?.waiting() ? null : s;
                 }
               }
               return null;
@@ -119,7 +119,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                     selection: newloc,
                     scroll: { verseAt: 'center' },
                   };
-                  return renderPromise2.waiting() ? null : s;
+                  return renderPromise2?.waiting() ? null : s;
                 }
               }
               return null;
@@ -245,7 +245,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                   scroll: { verseAt: 'top' },
                   bsreset: prevState.bsreset + 1,
                 };
-                return renderPromise2.waiting() ? null : s;
+                return renderPromise2?.waiting() ? null : s;
               }
               return null;
             });
@@ -282,10 +282,10 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                     scroll: { verseAt: 'center' },
                     bsreset: prevState.bsreset + 1,
                   };
-                  return renderPromise2.waiting() ? null : s;
+                  return renderPromise2?.waiting() ? null : s;
                 }
               }
-              return renderPromise2.waiting()
+              return renderPromise2?.waiting()
                 ? null
                 : { bsreset: prevState.bsreset + 1 };
             });
@@ -315,10 +315,10 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                     scroll: { verseAt: 'top' },
                     bsreset,
                   };
-                  return renderPromise2.waiting() ? null : s;
+                  return renderPromise2?.waiting() ? null : s;
                 }
               }
-              return renderPromise2.waiting() ? null : { bsreset };
+              return renderPromise2?.waiting() ? null : { bsreset };
             });
             break;
           }
@@ -411,7 +411,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             }
           }
         }
-        if (!renderPromise2.waiting())
+        if (!renderPromise2?.waiting())
           Commands.playAudio(afile, rootRenderPromise()); // null closes the player
       });
       break;

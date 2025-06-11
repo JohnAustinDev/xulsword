@@ -1,5 +1,5 @@
-// If renderPromise is null, convertLocation will return the input, and only
-// the global locale will be used for parsing.
+// If renderPromise is null, and not in an Electron app, convertLocation will
+// return the input, and also only the global locale will be used for parsing.
 
 import C from '../constant.ts';
 import { G, GI } from './G.ts';
@@ -13,7 +13,7 @@ import type { RefParserOptionsType } from '../refParser.ts';
 
 export default function verseKey(
   versekey: LocationVKType | { parse: string; v11n: V11nType },
-  renderPromise: RenderPromise | null,
+  renderPromise?: RenderPromise | null,
   optionsx?: RefParserOptionsType,
 ): VerseKey {
   // Minimal parser options are 'locales: [locale]'
@@ -59,7 +59,7 @@ export default function verseKey(
   }
 
   let convertLocation;
-  if (renderPromise !== null) {
+  if (Build.isElectronApp || renderPromise !== null) {
     convertLocation = (
       fromv11n: V11nType,
       vkeytext: string,

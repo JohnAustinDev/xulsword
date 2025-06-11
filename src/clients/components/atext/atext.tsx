@@ -526,7 +526,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
               doUntilDone((renderPromise2) => {
                 const prev = textChange(atext, false, renderPromise2);
                 const next = textChange(atext, true, renderPromise2);
-                if (!renderPromise2.waiting()) {
+                if (!renderPromise2?.waiting()) {
                   if (prev) atext.classList.remove('prev-disabled');
                   else atext.classList.add('prev-disabled');
                   if (next) atext.classList.remove('next-disabled');

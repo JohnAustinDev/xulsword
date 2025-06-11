@@ -258,13 +258,13 @@ export function getNoteHTML(
                   html += getExtRefHTML(
                     G,
                     GI,
-                    renderPromise,
                     innerHtmlValue,
                     tmod || '',
                     locale,
                     location,
                     openCRs,
                     keepNotes,
+                    renderPromise,
                   );
                 }
               }
@@ -636,7 +636,7 @@ export function aTextWheelScroll(
 
 export function getScrollVerse(
   atext: HTMLElement,
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): LocationVKType | null {
   const { module } = atext.dataset;
   if (module) {
@@ -806,7 +806,7 @@ export function findVerseElement(
 export function chapterChange(
   location: LocationVKType | null,
   chDelta: number,
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): LocationVKType | null {
   if (!location?.v11n) return null;
   const { book } = location;
@@ -827,7 +827,7 @@ export function chapterChange(
 export function verseChange(
   location: LocationVKType | null,
   vsDelta: number,
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): LocationVKType | null {
   if (!location) return null;
   let { book, chapter, verse } = location;
@@ -867,7 +867,7 @@ export function verseChange(
 export function pageChange(
   atext: HTMLElement,
   next: boolean,
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): LocationVKType | null {
   if (!next) {
     let firstVerse: HTMLElement | undefined;

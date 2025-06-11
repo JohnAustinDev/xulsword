@@ -115,9 +115,9 @@ class Tabs extends React.Component implements RenderPromiseComponent {
             whichTab: value,
             doWhat: 'toggle',
           },
-          Build.isElectronApp ? undefined : renderPromise2,
+          renderPromise2,
         );
-        if (!renderPromise2.waiting()) {
+        if (!renderPromise2?.waiting()) {
           const tabBank = xs.tabs[panelIndex];
           if (tabBank && tabBank.includes(value)) {
             xulswordState((prevState) => {

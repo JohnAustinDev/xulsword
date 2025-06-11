@@ -16,7 +16,7 @@ export default function parseExtendedVKRef(
   extref: string,
   context?: LocationVKType,
   locales?: string[],
-  renderPromise?: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): Array<LocationVKType | string> {
   const NoterefRE = /^\s*([^!]+)!(.*?)\s*$/;
   const reflistA = extref.split(/\s*;\s*/);

@@ -156,7 +156,7 @@ export default class Xulsword
           renderPromise2,
         );
         if (
-          !renderPromise2.waiting() &&
+          !renderPromise2?.waiting() &&
           stringHash(keys) !== stringHash(keys2)
         ) {
           if (Build.isDevelopment) {

@@ -71,10 +71,15 @@ export function functionalComponentRenderPromise(loadingSelector?: string) {
 // the render promise waiting. The function may run any number of times but is
 // guaranteed to run once from beginning to end with renderPromise.waiting()
 // being zero. This means the function must check renderPromise.waiting()
-// before any code that should only be run once.
+// before any code that should only be run once. In Electron, where GI
+// functions are synchronous, the passed renderPromise will be null.
 export function doUntilDone(
-  func: (renderPromise: RenderPromise) => void,
+  func: (renderPromise: RenderPromise | null) => void,
 ): void {
+  if (Build.isElectronApp) {
+    func(null);
+    return;
+  }
   const renderPromise = new RenderPromise(() => {
     func(renderPromise);
     renderPromise.dispatch();
@@ -256,7 +261,7 @@ export function scrollIntoView(
 
 export function audioConfig(
   module: string,
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): SwordConfType | undefined {
   let audioConf;
   if (module) {
@@ -307,7 +312,7 @@ export function iframeAutoHeight(
 
 export function isIBTChildrensBible(
   tocOrModule: TreeNodeInfo[] | string,
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): boolean {
   if (tocOrModule) {
     let toc: TreeNodeInfo[] = [];
@@ -318,7 +323,7 @@ export function isIBTChildrensBible(
     } else {
       toc = tocOrModule;
     }
-    if (!renderPromise.waiting() && toc.length === 1) {
+    if (!renderPromise?.waiting() && toc.length === 1) {
       const [top] = toc;
       if (top && top.childNodes) {
         const [, ot, nt] = top.childNodes;
@@ -338,7 +343,7 @@ export function syncChildrensBibles(
   panels: XulswordState['panels'],
   prevKeys: XulswordState['keys'],
   keys: XulswordState['keys'],
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): (string | null)[] {
   const cbTocs: Array<TreeNodeInfo[] | null> = panels.map(() => null);
   panels.forEach((m, i) => {
@@ -350,7 +355,7 @@ export function syncChildrensBibles(
   });
 
   const ks = keys.slice();
-  if (!renderPromise.waiting()) {
+  if (!renderPromise?.waiting()) {
     // Find the index order of a CB key, prefering any that changed compared
     // to previous state.
     let order = -1;
@@ -381,7 +386,7 @@ export function verseKeyAudioFile(
   swordModule: string,
   book: OSISBookType,
   chapter: number,
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): VerseKeyAudioFile | null {
   const audioConf = audioConfig(swordModule, renderPromise);
   if (audioConf) {
@@ -440,7 +445,7 @@ export function chooserGenbks(panels: Array<string | null>): number[][] {
 export function genBookAudioFile(
   swordModule: string,
   key: string,
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): GenBookAudioFile | null {
   const audioConf = audioConfig(swordModule, renderPromise);
   if (audioConf) {
@@ -487,7 +492,7 @@ export function audioGenBookNode(
 export function getGenBookAudio(
   audio: GenBookAudioConf,
   gbmod: string,
-  renderPromise?: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): GenBookAudio {
   const treeNodes = GI.genBookTreeNodes([], renderPromise, gbmod);
   if (treeNodes.length) {
@@ -625,7 +630,7 @@ export function moduleIncludesStrongs(
 export function getMaxChapter(
   v11n: V11nType,
   vkeytext: string,
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ) {
   const [book] = vkeytext.split(/[\s.:]/);
   const bkChsInV11n = GI.getBkChsInV11n([], renderPromise, v11n);
@@ -640,7 +645,7 @@ export function getMaxChapter(
 export function getMaxVerse(
   v11n: V11nType,
   vkeytext: string,
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): number {
   const { chapter } = verseKey({ parse: vkeytext, v11n }, renderPromise);
   const maxch = getMaxChapter(v11n, vkeytext, renderPromise);
@@ -796,13 +801,13 @@ export function i18nApplyOpts(
 export function getExtRefHTML(
   G: GType | GITypeMain,
   GI: GIType,
-  renderPromise: RenderPromise,
   extref: string,
   targetmod: string,
   locale: string,
   context: LocationVKType,
   showText: boolean,
   keepNotes: boolean,
+  renderPromise?: RenderPromise | null,
 ): string {
   // Find alternate modules associated with the locale and tab settings.
   const am = G.LocaleConfigs[locale].AssociatedModules;

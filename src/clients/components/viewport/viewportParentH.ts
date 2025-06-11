@@ -366,7 +366,7 @@ export default function handler(
                 0,
                 renderPromise2,
               );
-              if (newloc && !renderPromise2.waiting()) {
+              if (newloc && !renderPromise2?.waiting()) {
                 this.setState({
                   location: newloc,
                   selection: null,
@@ -472,7 +472,7 @@ export default function handler(
         case 'prevchaplink':
         case 'nextchaplink': {
           doUntilDone((renderPromise2) => {
-            if (atext && !renderPromise2.waiting()) {
+            if (atext && !renderPromise2?.waiting()) {
               setState(this, atext, (prevState: PinPropsType) => {
                 return textChange(
                   atext,
@@ -608,7 +608,7 @@ function handleDictKeyInput(
     delayHandler(
       xthis,
       (select: HTMLInputElement) => {
-        if (!renderPromise2.waiting()) {
+        if (!renderPromise2?.waiting()) {
           const { value } = select;
           select.style.color = '';
           if (value) {

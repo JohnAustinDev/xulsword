@@ -124,7 +124,7 @@ export class Viewport {
   getTabChange<T extends TabChangeState>(
     options: Partial<TabChangeOptions>,
     state: T,
-    renderPromise?: RenderPromise,
+    renderPromise?: RenderPromise | null,
   ): T {
     const { panels, mtModules, tabs } = state;
     const defaults: TabChangeOptions = {
@@ -449,7 +449,7 @@ export class Viewport {
       skipCallbacks?: boolean;
       clearRendererCaches?: boolean;
     },
-    renderPromise?: RenderPromise,
+    renderPromise?: RenderPromise | null,
   ): Pick<
     typeof S.prefs.xulsword,
     'panels' | 'mtModules' | 'tabs' | 'location'

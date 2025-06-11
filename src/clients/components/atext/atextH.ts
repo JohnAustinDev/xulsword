@@ -86,19 +86,19 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
                 const el = col5.element;
                 const refs = el.dataset.reflist;
                 if (refs) {
-                  doUntilDone((renderPromise: RenderPromise) => {
+                  doUntilDone((renderPromise) => {
                     const html = getExtRefHTML(
                       G,
                       GI,
-                      renderPromise,
                       refs,
                       module,
                       G.i18n.language,
                       location,
                       row.classList.contains('cropened'),
                       false,
+                      renderPromise,
                     );
-                    if (!renderPromise.waiting()) sanitizeHTML(el, html);
+                    if (!renderPromise?.waiting()) sanitizeHTML(el, html);
                   });
                 }
               }
@@ -392,7 +392,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
                     if (oldloc) {
                       const newloc = getScrollVerse(atext, renderPromise2);
                       if (
-                        !renderPromise2.waiting() &&
+                        !renderPromise2?.waiting() &&
                         newloc &&
                         oldloc.verse !== newloc.verse
                       ) {

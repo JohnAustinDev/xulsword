@@ -89,7 +89,7 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
           const hd = /<h\d([^>]*class="head1[^"]*"[^>]*>)(.*?)<\/h\d>/i;
           // Rexgex parses verse number from array member strings
           const vs = /<sup[^>]*>(\d+)<\/sup>/i; // Get verse from above
-          doUntilDone((renderPromise: RenderPromise) => {
+          doUntilDone((renderPromise) => {
             const result = GI.LibSword.getChapterText(
               { text: '', notes: '' },
               renderPromise,
@@ -97,7 +97,7 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
               `${book}.${chapter}`,
               options,
             );
-            if (!renderPromise.waiting()) {
+            if (!renderPromise?.waiting()) {
               const { text } = result;
               const headings = text.match(hdplus);
               if (headings) {
