@@ -52,7 +52,8 @@
     "hash_map": "cpp",
     "hash_set": "cpp",
     "cstddef": "cpp",
-    "set": "cpp"
+    "set": "cpp",
+    "regex": "cpp"
   },
 
   "editor.defaultFormatter": "esbenp.prettier-vscode",

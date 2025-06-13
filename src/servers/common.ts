@@ -643,10 +643,10 @@ export function getFeatureModules(): FeatureMods {
       // Until xulsword updates the SWORD engine, only SynodalProt and KJV versifications
       // can be supported.
       xulswordFeatureMods.greek = xulswordFeatureMods.greek.filter((m) =>
-        Object.keys(C.SupportedV11nMaps).includes(Tab[m].v11n),
+        !Tab[m].v11n || C.SupportedV11nMaps.includes(Tab[m].v11n),
       );
       xulswordFeatureMods.hebrew = xulswordFeatureMods.hebrew.filter((m) =>
-        Object.keys(C.SupportedV11nMaps).includes(Tab[m].v11n),
+        !Tab[m].v11n || C.SupportedV11nMaps.includes(Tab[m].v11n),
       );
 
       // These Strongs feature modules do not have Strongs number keys, and so cannot be used

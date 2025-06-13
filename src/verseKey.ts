@@ -117,8 +117,8 @@ export default class VerseKey {
   #allowConvertLocation(tov11n: V11nType) {
     const fromv11n = this.#loc.v11n;
     if (!fromv11n || !tov11n) return false;
-    if (!(fromv11n in C.SupportedV11nMaps)) return false;
-    if (!C.SupportedV11nMaps[fromv11n].includes(tov11n)) return false;
+    if (!C.SupportedV11nMaps.includes(fromv11n)) return false;
+    if (!C.SupportedV11nMaps.includes(tov11n)) return false;
     const { book, chapter, verse, lastverse } = this.#loc;
     const toBks = this.#gfunctions.getBkChsInV11n(tov11n);
     const fromBks = this.#gfunctions.getBkChsInV11n(fromv11n);

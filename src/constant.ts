@@ -308,15 +308,26 @@ const C = {
   ] as V11nType[],
 
   // SupportedV11nMaps show which verse-systems may currently be mapped to
-  // other verse systems by libxulsword. The SWORD C++ engine is not currently
-  // being used for mapping. TODO: Investigate whether SWORD can now do the
-  // mapping that's needed or not- it seems SWORD had (has?) limitations caused
-  // by incorrect assumptions about mapping requirements.
-  SupportedV11nMaps: {
-    KJV: ['Synodal', 'SynodalProt'],
-    Synodal: ['KJV'],
-    SynodalProt: ['KJV'],
-  } as { [key in V11nType]: V11nType[] },
+  // other verse systems.
+  SupportedV11nMaps: [
+    'KJV',
+    // From C++ SWORD
+    'Calvin',
+    'DarbyFr',
+    'NRSV',
+    'Segond',
+    'Synodal',
+    'Vulg',
+    // From JSword
+    'Catholic',
+    'Catholic2',
+    'German',
+    'Leningrad',
+    'Luther',
+    'MT',
+    'NRSVA',
+    'SynodalProt',
+   ] as V11nType[],
 
   // SupportedBookGroups and SupportedBooks lists were taken from:
   // wiki.crosswire.org/OSIS_Book_Abbreviations (11/19/20)
