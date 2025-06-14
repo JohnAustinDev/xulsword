@@ -308,9 +308,10 @@ const C = {
   ] as V11nType[],
 
   // SupportedV11nMaps show which verse-systems may currently be mapped to
-  // other verse systems.
+  // other verse systems. Only LXX and Orthodox currently lack maps.
   SupportedV11nMaps: [
     'KJV',
+    'KJVA',
     // From C++ SWORD
     'Calvin',
     'DarbyFr',

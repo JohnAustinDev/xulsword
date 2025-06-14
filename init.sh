@@ -267,7 +267,7 @@ dirout="sword"
 if [ ! -e "$CPP/$dirout" ]; then
   getSource
   # Use custom Versification maps
-  cp -r "$CPP/sword-versification-maps/sword"* "$CPP/sword"
+  cp -r "$CPP/sword-versification-maps/sword/"* "$CPP/sword"
   cmake "$DBG" -D SWORD_NO_ICU="Yes" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$CPP/install/usr/local/lib/libclucene-core.so" -D ZLIB_LIBRARY="$CPP/install/usr/local/lib/libz.so" -D CLUCENE_LIBRARY_DIR="$CPP/install/usr/local/include" -D CLUCENE_INCLUDE_DIR="$CPP/install/usr/local/include" -D ZLIB_INCLUDE_DIR="$CPP/install/usr/local/include" -DSWORD_BUILD_UTILS="Yes" ..
   make DESTDIR="$CPP/install" install
 fi
@@ -277,7 +277,7 @@ if [[ "$WINMACHINE" != "no" ]]; then
   if [ ! -e "$CPP/$dirout" ]; then
     getSource
     # Use custom Versification maps
-    cp -r "$CPP/sword-versification-maps/sword"* "$CPP/sword"
+    cp -r "$CPP/sword-versification-maps/sword/"* "$CPP/sword"
     # SWORD's CMakeLists.txt requires clucene-config.h be located in a weird directory:
     cp -r "$CPP/install.$XCWD/usr/local/include/CLucene" "$CPP/install.$XCWD/usr/local/lib"
     cd "$CPP" || exit 5
