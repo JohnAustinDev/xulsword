@@ -4,29 +4,92 @@ use strict;
 use Sword;
 use Data::Dumper;
 
+my $ConvertExistingCppMaps = shift;
+
+# JSword maps that are missing in SWORD are converted and added to SWORD, with
+# the corrections below (which this script discovered).
+
+# The following SWORD maps do not fit their v11ns, but the JSword maps do, so
+# corrected JSword maps will be used to replace the SWORD maps.
+my $OverwriteExistingCppMapAP = ['NRSV', 'Segond'];
+
+# The Synodal SWORD/JSword map differences are:
+# - SWORD is missing 1Sam.20.43=1Sam.20.42
+# - SWORD is missing 2Cor.11.32=2Cor.11.33
+# - SWORD has Acts.19.40=Acts.19.40-Acts.19.41
+# - SWORD has 3John.1.14-3John.1.15=3John.1.14
+# - SWORD includes the extra books and Daniel mappings
+# - SWORD and JSword Psalms maps seem to be the same other than verse 0 handling.
+# For these reasons, the JSword map is NOT being used to replace Synodal, and
+# instead the missing rules are simply added to the SWORD map.
+
+# Since SWORD Synodal map (with additions) is being used, the SynodalProt map
+# will come from SWORD Synodal, with the following changes:
+# - extra books are removed
+# - Daniel mappings are removed
+# - Added Dan.3.31-Dan.3.33=Dan.4.1-Dan.4.3
+# - book numbers are then updated
+my %JustUpdateSwordRules = (
+  'Synodal' => {
+    'from' => 'Synodal',
+    'addRules' => [
+      "9,   20,  43,  0,   20,  42,  0,",
+      "66,  11,  32,  0,   11,  33,  0,"
+    ]
+  },
+  'SynodalProt' => {
+    'from' => 'Synodal',
+    'removeExtraBooks' => 1,
+    'removeBooks' => [15, 18, 29, 20, 27, 28, 32, 33, 35, 48, 49, 50, 51],
+    'addRules' => [
+      "9,   20,  43,  0,   20,  42,  0,",
+      "35,   3,  31,  33,   4,   1,  3,",
+      "66,  11,  32,  0,   11,  33,  0,"
+    ],
+  }
+);
+
 my $SWORDSRC = "../Cpp/sword-versification-maps";
 my $SWORDIN = "$SWORDSRC/sword-commit-3900";
 my $SWORDOUT = "$SWORDSRC/sword";
 my $INCLUDEJS = "../../jsword/src/main/resources/org/crosswire/jsword/versification";
+my $MGRSRC = "src/mgr/versificationmgr.cpp";
 
-my %JSwordMapChanges = (
+my $JSwordSynodalAndSynodalProtFixes = [
+  ["Ps.12.6=Ps.13.5-Ps.12.6", "Ps.12.6=Ps.13.5-Ps.13.6"],
+  [
+    "Ps.89.1-Ps.89.17=Ps.90.0-Ps.90.17",
+    "Ps.89.1-Ps.89.5=Ps.90.0-Ps.90.4\nPs.89.6=Ps.90.5-Ps.90.6"
+  ],
+  ["Hos.14.10=Hos.14.9", ""] # unnecessary since included in previous Hos entry
+];
+
+my %JSwordMapCorrections = (
+  'Segond' => [
+    # JSword Segond 2Chr 13 and 14 mappings are missing from the existing Cpp
+    # map, but JSword also needs fixes and removals that do not fit the Cpp
+    # v11n and are additions to the Cpp map.
+    # Fixes:
+    ["Ps.22.1=Ps.21.1!pv", "Ps.22.1=Ps.22.1!pv"],
+    ["Ps.22.2=Ps.21.1!v", "Ps.22.2=Ps.22.1!v"],
+    ["Ps.68.2=Ps.68.2!v", "Ps.68.2=Ps.68.1!v"],
+    ["Ps.69.2=Ps.69.2!v", "Ps.69.2=Ps.69.1!v"],
+    # Removals:
+    ["Mark.10.52=Mark.10.52!a", ""],
+    ["Mark.10.53=Mark.10.52!b". ""]
+  ],
+  'Synodal' => [@{$JSwordSynodalAndSynodalProtFixes}],
   'SynodalProt' => [
-      # Fixes:
-      ["Ps.12.6=Ps.13.5-Ps.12.6", "Ps.12.6=Ps.13.5-Ps.13.6"],
-      [
-        "Ps.89.1-Ps.89.17=Ps.90.0-Ps.90.17",
-        "Ps.89.1-Ps.89.5=Ps.90.0-Ps.90.4\nPs.89.6=Ps.90.5-Ps.90.6"
-      ],
-      # Additions:
-      [
-        "Num.13.1-Num.13.34=Num.12.16-Num.13.33",
-        "Lev.14.55=Lev.14.55-Lev.14.56\nNum.13.1-Num.13.34=Num.12.16-Num.13.33"
-      ],
-      # Removals:
-      ["1Sam.20.43=1Sam.20.42", ""],
-      ["1Kgs.18.33=1Kgs.18.33!a", ""],
-      ["1Kgs.18.34=1Kgs.18.33!b-1Kgs.18.34", ""]
+    @{$JSwordSynodalAndSynodalProtFixes},
+    # Additions:
+    [
+      "Num.13.1-Num.13.34=Num.12.16-Num.13.33", # <- this is just to insert Lev additions
+      "Lev.14.55=Lev.14.55-Lev.14.56\nNum.13.1-Num.13.34=Num.12.16-Num.13.33"
     ],
+    # Removals:
+    ["1Kgs.18.33=1Kgs.18.33!a", ""],
+    ["1Kgs.18.34=1Kgs.18.33!b-1Kgs.18.34", ""]
+  ],
   'Catholic' => [
     # Fixes:
     ["Hos.12.2-Hos.12.15=Hos.1.1-Hos.1.14", "Hos.12.2-Hos.12.15=Hos.12.1-Hos.12.14"]
@@ -37,37 +100,47 @@ my %JSwordMapChanges = (
   ]
 );
 
-my $mgrsrc = "src/mgr/versificationmgr.cpp";
-open(VMGI, "<:encoding(UTF-8)", "$SWORDIN/$mgrsrc") || die "$SWORDIN/$mgrsrc";
-if (-e "$SWORDOUT/$mgrsrc") {unlink "$SWORDOUT/$mgrsrc";}
-open(VMGO, ">:encoding(UTF-8)", "$SWORDOUT/$mgrsrc") || die "$SWORDOUT/$mgrsrc";
+###############################################################################
 
-my ($CANON, $CNEW, $COT, $CNT, $JMAP);
+open(VMGI, "<:encoding(UTF-8)", "$SWORDIN/$MGRSRC") || die "$SWORDIN/$MGRSRC";
+if (-e "$SWORDOUT") {`rm -rf "$SWORDOUT/"*`}
+`mkdir -p "$SWORDOUT/src/mgr"`;
+`mkdir -p "$SWORDOUT/include"`;
+open(VMGO, ">:encoding(UTF-8)", "$SWORDOUT/$MGRSRC") || die "$SWORDOUT/$MGRSRC";
+
+my ($CANON, $CNEW, $JMAP);
 while (<VMGI>) {
   my $line = $_;
-  if ($line =~ /^\s*systemVersificationMgr\->registerVersificationSystem\("(.*?)", (\w+), (\w+), \w+\);/) {
+  if ($line =~ /^\s*systemVersificationMgr\->registerVersificationSystem\("(.*?)", (\w+), (\w+), \w+(, \w+)?\);/) {
     $CANON = $1;
-    $COT = "$SWORDIN/include/canon" . ($2 eq 'otbooks' ? '' : '_' . lc(substr($2, 8))) . ".h";
-    $CNT = "$SWORDIN/include/canon" . ($3 eq 'ntbooks' ? '' : '_' . lc(substr($3, 8))) . ".h";
+    my $hasCppMap = $4;
 
     $CNEW = "$SWORDIN/include/canon_" . lc($CANON) . ".h";
     $JMAP = "$INCLUDEJS/$CANON.properties";
 
-    if (substr($CANON, 0, 3) eq 'KJV') {print VMGO $line; next}
-    if (-e "$JMAP") {
-      print "\nINFO: CREATING $CANON MAP: canon_" . lc($CANON) . ".h\n";
+    my $skipJSword = !grep($_ eq $CANON, @{$OverwriteExistingCppMapAP}) &&
+      (substr($CANON, 0, 3) eq 'KJV' || ($hasCppMap && !$ConvertExistingCppMaps));
 
-      if ($line !~ s/\);/my $r = ", mappings_" . lc($CANON) . ");";/e) {
-        print "ERROR: Failed to update versificationmgr to use $CANON map.\n";
+    if (!$skipJSword || exists($JustUpdateSwordRules{$CANON})) {
+      print "\nINFO: CREATING $CANON MAP: canon_" . lc($CANON) . ".h\n";
+    }
+
+    if (exists($JustUpdateSwordRules{$CANON})) {
+      if (!$hasCppMap) {&addCanonMapToMgr(\$line);}
+      &updateSwordRules($JustUpdateSwordRules{$CANON});
+    }
+    elsif ($skipJSword) {}
+    elsif (-e "$JMAP") {
+      if (!$hasCppMap) {&addCanonMapToMgr(\$line);}
+      if ($hasCppMap) {
+        print "WARNING: Overwriting original SWORD C++ map for $CANON.\n";
       }
 
-      my $otBooksHP = &readCanonHeaderBooks($COT, 'otbooks_');
-      my $ntBooksHP = &readCanonHeaderBooks($CNT, 'ntbooks_');
-      # print Dumper($otBooksHP);
-      # print Dumper($ntBooksHP);
+      my $canonBooksHP = &readCanonHeaderBooks($CANON);
+      # print Dumper($canonBooksHP);
 
-      my $mapAP = &convertJSwordMap($JMAP, $otBooksHP, $ntBooksHP);
-      $mapAP = &pruntVerseMap($mapAP);
+      my $mapAP = &convertJSwordMap($JMAP, $canonBooksHP);
+      $mapAP = &pruneVerseMap($mapAP);
       # print Dumper($mapAP);
 
       my $file = $CNEW; $file =~ s/^.*\/([^\/]+)$/$1/;
@@ -106,31 +179,56 @@ close(VMGO);
 ###############################################################################
 ###############################################################################
 
-# Read C++ canon header to determine indexes of the books in the canon.
+sub addCanonMapToMgr {
+  my $lineP = shift;
+  if ($$lineP !~ s/\);/my $r = ", mappings_" . lc($CANON) . ");";/e) {
+    print "ERROR: Failed to update versificationmgr to use $CANON map.\n";
+  }
+}
+
+# Read C++ canon headers to determine indexes of the books in the canon.
+my $MGR;
 sub readCanonHeaderBooks {
-  my $file = shift;
-  my $ident = shift;
+  my $canon = shift;
 
-  open(HFL, "<:encoding(UTF-8)", $file) || die $file;
+  if (!$MGR) {
+    open(XMGR, "<:encoding(UTF-8)", "$SWORDIN/$MGRSRC") || die "$SWORDIN/$MGRSRC";
+    $MGR = join('', <XMGR>);
+    close(XMGR);
+  }
 
-  my $re = "struct sbook $ident";
-  print "INFO: Looking for '$re' in $file\n";
+  if ($MGR !~ /^\s*systemVersificationMgr\->registerVersificationSystem\("$canon", (\w+), (\w+), \w+(, \w+)?\);/m) {
+    print "ERROR: Failed to find $canon in $SWORDIN/$MGRSRC\n";
+  }
+  my $fileOT = "$SWORDIN/include/canon" . ($1 eq 'otbooks' ? '' : '_' . lc(substr($1, 8))) . ".h";
+  my $fileNT = "$SWORDIN/include/canon" . ($2 eq 'ntbooks' ? '' : '_' . lc(substr($2, 8))) . ".h";
 
-  my $start = 0;
   my %result;
-  my $bkn = 1;
-  while (<HFL>) {
-    if (/$re/) {$start = 1; next;}
-    #   {"Genesis", "Gen", "Gen", 50},
-    if ($start && /^\s*\{\s*"([^"]*)",\s*"([^"]*)",\s*"([^"]*)",\s*(\d+)\s*\},?\s*$/) {
-      my $osis = $3; my $numchaps = $4;
-      if (!$numchaps) {$start = 0; next;}
-      $result{$osis} = $bkn++;
+  my $bkn = 0;
+  foreach my $ident ('otbooks', 'ntbooks') {
+    my $file = $ident eq 'otbooks' ? $fileOT : $fileNT;
+    open(HFL, "<:encoding(UTF-8)", $file) || die $file;
+    my @hfl = (<HFL>);
+    close(HFL);
+
+    my $re = "struct sbook $ident";
+
+    my $start = 0;
+    foreach (@hfl) {
+      if (/$re/) {$start = 1; next;}
+      #   {"Genesis", "Gen", "Gen", 50},
+      if ($start && /^\s*\{\s*"([^"]*)",\s*"([^"]*)",\s*"([^"]*)",\s*(\d+)\s*\},?\s*$/) {
+        my $osis = $3; my $numchaps = $4;
+        if (!$numchaps) {$start = 0; next;}
+        $bkn++;
+        $result{$osis} = $bkn;
+      }
+    }
+
+    if (!$bkn && $file !~ /canon_null\.h$/) {
+      print "ERROR: Failed to find books in header: $file\n";
     }
   }
-  close(HFL);
-
-  $result{'count'} = $bkn - 1;
 
   return \%result;
 }
@@ -138,8 +236,8 @@ sub readCanonHeaderBooks {
 # Parse a JSword canon map file and convert it into its C++ map implentation.
 sub convertJSwordMap {
   my $file = shift;
-  my $otBooksHP = shift;
-  my $ntBooksHP = shift;
+  my $canonBooksHP = shift;
+
 
   open(JSF, "<:encoding(UTF-8)", $file) || die $file;
   my $filec = join('', <JSF>);
@@ -148,8 +246,8 @@ sub convertJSwordMap {
   print "INFO: Reading JSword mapping file: $file\n";
 
   # Apply any fixes/changes/additions to the JSword map.
-  if (exists($JSwordMapChanges{$CANON})) {
-    foreach my $changeAP (@{$JSwordMapChanges{$CANON}}) {
+  if (exists($JSwordMapCorrections{$CANON})) {
+    foreach my $changeAP (@{$JSwordMapCorrections{$CANON}}) {
       my $a = quotemeta($changeAP->[0]);
       my $b = $changeAP->[1];
       if ($filec =~ s/^$a\s*$/$b/gm) {
@@ -180,14 +278,11 @@ sub convertJSwordMap {
         print "WARNING: SKIPPED map entry (mapped books are different: $_)\n";
         next;
       }
-      my $bkn = exists($otBooksHP->{$kjvHP->{'bk'}})
-        ? $otBooksHP->{$kjvHP->{'bk'}}
-        : $otBooksHP->{'count'} + $ntBooksHP->{$kjvHP->{'bk'}};
       for (;;) {
         my $ckjv = &verseCount($kjvHP);
         my $csys = &verseCount($sysHP);
         my @rule = (
-          $bkn,
+          $canonBooksHP->{$kjvHP->{'bk'}},
           $sysHP->{'chs'},
           $sysHP->{'vss'},
           $csys != 1 && $csys != $ckjv ? $sysHP->{'vss'} + $csys - 1 : 0,
@@ -247,13 +342,13 @@ sub incrementStartVerse {
   return 1;
 }
 
-# Parse an individual JSword map verse range.
+# Parse an individual JSword map entry verse range.
 sub parseVerses {
   my $vstr = shift;
   my $v11n = shift;
 
   my %result;
-  if ($vstr =~ /^([^.]+)\.(\d+)\.(\d+)(!(a|b|intro|verse))?(-\1\.(\d+)\.(\d+)(!(a|b|intro|verse))?)?$/) {
+  if ($vstr =~ /^([^.]+)\.(\d+)\.(\d+)(!(a|b|v|pv|intro|verse))?(-\1\.(\d+)\.(\d+)(!(a|b|v|pv|intro|verse))?)?$/) {
     $result{'bk'} = $1;
     $result{'chs'} = $2;
     $result{'vss'} = $3;
@@ -298,8 +393,9 @@ sub verseCount {
       last;
     }
     if (!&incrementStartVerse($pHP)) {
-      print "ERROR: No increment progress: " .
-        $pHP->{'bk'} . '.' . $pHP->{'chs'} . '.' . $pHP->{'vss'} . "\n";
+      print "ERROR: No increment progress during verse count at: " .
+        $pHP->{'bk'} . '.' . $pHP->{'chs'} . '.' . $pHP->{'vss'};
+      print ", starting with: \n" . Dumper($ppHP);
       last;
     }
     #print $pHP->{'v11n'} . ": $before -> " . $vkey->getOSISRef() . "\n";
@@ -320,8 +416,8 @@ sub isOsisRefInV11n {
   return $vk->getOSISRef() eq $osisRef;
 }
 
-# Remove redundant and unnecessary C++ map rules.
-sub pruntVerseMap {
+# Remove redundant C++ map rules.
+sub pruneVerseMap {
   my $mapAP = shift;
 
   # When book, chapter and delta are the same for consecutive rules, only the
@@ -356,4 +452,97 @@ sub pruntVerseMap {
   my @pruned = grep { $_ != 0 } @{$mapAP};
 
   return \@pruned;
+}
+
+# Update the mapping rules from a SWORD Cpp header.
+sub updateSwordRules {
+  my $upHP = shift;
+
+  my $filename = $CNEW; $filename =~ s/^.*\/([^\/]+)$/$1/;
+  my $outfile = "$SWORDOUT/include/$filename";
+
+  my $sourceBooksHP = &readCanonHeaderBooks($upHP->{'from'});
+  my $source = "$SWORDIN/include/canon_" . lc($upHP->{'from'}) . ".h";
+  open(INF, "<:encoding(UTF-8)", "$source") || die $source;
+  my $src = join('', <INF>);
+  close(INF);
+  $src =~ s/^.*(unsigned char mappings[^}]+\};).*$/$1/s;
+  if ($src !~ s/(?<=unsigned char mappings_)\w+/lc($CANON)/e) {
+    print "ERROR: Failed to replace mappings name: $CANON\n";
+  }
+
+  if ($upHP->{'removeExtraBooks'}) {
+    $src =~ s/(?<=\{\s{0,5}\n).*?\n(\s*0,)/$1/s;
+    $src =~ s/\n( *(\d+),){8} *//g;
+  }
+
+  if (exists($upHP->{"removeBooks"})) {
+    print "INFO: Removing SWORD books in $outfile\n";
+    foreach my $bkn (@{$upHP->{"removeBooks"}}) {
+      $src =~ s/^\s*$bkn,[^\n]+\n//gm;
+    }
+  }
+
+  if (exists($upHP->{"addRules"})) {
+    print "INFO: Adding SWORD rules to $outfile\n";
+    my $ruleRE = '^\s*(\d+),\s+(\d+),\s+(\d+),\s+(\d+),\s+(\d+),\s+(\d+),\s+(\d+),\s*$';
+    my @rules = split(/\n/, $src);
+    foreach my $srcRule (@rules) {
+      if ($srcRule =~ /$ruleRE/) {
+        my $bk = $1; my $ch = $2; my $vs = $3;
+        foreach my $rule (@{$upHP->{"addRules"}}) {
+          if ($rule =~ /$ruleRE/) {
+            my $mbk = $1; my $mch = $2; my $mvs = $3;
+            if (
+              $bk > $mbk ||
+              ($bk == $mbk && $ch > $mch) ||
+              ($bk == $mbk && $ch == $mch && $vs > $mvs)
+            ) {
+              $srcRule = '    ' . $rule . "\n" . $srcRule;
+              $rule = '';
+            }
+          }
+        }
+      }
+    }
+    foreach my $rule (@{$upHP->{"addRules"}}) {
+      if ($rule ne '') {
+        print "ERROR: Failed to add rule to $CANON SWORD map: $rule\n";
+      }
+    }
+    $src = join("\n", @rules);
+  }
+
+  print "INFO: Updating rule book indexes in $outfile\n";
+  my $canonBooksHP = &readCanonHeaderBooks($CANON);
+  my @rules = split(/\n/, $src);
+  foreach my $rule (@rules) {
+    $rule =~ s/^(\s*)(\d+)(?=,(\s+\d+,){6}\s*$)/my $r = $1 . $canonBooksHP->{&bookAtIndex($2, $sourceBooksHP)};/mge;
+  }
+  $src = join("\n", @rules);
+
+  open(INF, "<:encoding(UTF-8)", $CNEW) || die $CNEW;
+  open(OUTF, ">:encoding(UTF-8)", $outfile) || die $outfile;
+  my $outf = join('', <INF>);
+  if ($outf !~ s/unsigned char mappings[^}]+\};/$src/s) {
+    if ($outf !~ s/(?=\nSWORD_NAMESPACE_END)/$src/) {
+      print "ERROR: failed to replace char mappings in $outfile\n";
+    }
+  }
+  print OUTF $outf;
+  close(INF);
+  close(OUTF);
+}
+
+sub bookAtIndex {
+  my $index = shift;
+  my $canonBooksHP = shift;
+
+  foreach my $osis (keys %{$canonBooksHP}) {
+    if ($canonBooksHP->{$osis} == $index) {
+      return $osis;
+    }
+  }
+
+  return '';
 }

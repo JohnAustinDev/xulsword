@@ -11,6 +11,7 @@ Cpp/zlib*
 Cpp/boost*
 Cpp/clucene*
 Cpp/sword*
+!Cpp/sword-versification-maps
 Cpp/build*
 Cpp/phpsword
 setenv

@@ -1,8 +1,8 @@
 /******************************************************************************
  *
- * canon_nrsva.h -	Versification data for the NRSVA system
+ * canon_nrsv.h -	Versification data for the NRSV system
  *
- * $Id: canon_nrsva.h 3765 2020-07-26 10:31:09Z scribe $
+ * $Id: canon_nrsv.h 3765 2020-07-26 10:31:09Z scribe $
  *
  * Copyright 2009-2013 CrossWire Bible Society (http://www.crosswire.org)
  *	CrossWire Bible Society
@@ -19,85 +19,28 @@
  * General Public License for more details.
  */
 
-#ifndef CANON_NRSVA_H
-#define CANON_NRSVA_H
+#ifndef CANON_NRSV_H
+#define CANON_NRSV_H
 
 SWORD_NAMESPACE_START
 
-// Versification system: NRSVA
-// Book order: Gen Exod Lev Num Deut Josh Judg Ruth 1Sam 2Sam 1Kgs 2Kgs 1Chr 2Chr Ezra Neh Esth Job Ps Prov Eccl Song Isa Jer Lam Ezek Dan Hos Joel Amos Obad Jonah Mic Nah Hab Zeph Hag Zech Mal Tob Jdt EsthGr Wis Sir Bar PrAzar Sus Bel 1Macc 2Macc 1Esd PrMan AddPs 3Macc 2Esd 4Macc Matt Mark Luke John Acts Rom 1Cor 2Cor Gal Eph Phil Col 1Thess 2Thess 1Tim 2Tim Titus Phlm Heb Jas 1Pet 2Pet 1John 2John 3John Jude Rev
+
+// Versification system: NRSV
+// Book order: Gen Exod Lev Num Deut Josh Judg Ruth 1Sam 2Sam 1Kgs 2Kgs 1Chr 2Chr Ezra Neh Esth Job Ps Prov Eccl Song Isa Jer Lam Ezek Dan Hos Joel Amos Obad Jonah Mic Nah Hab Zeph Hag Zech Mal Matt Mark Luke John Acts Rom 1Cor 2Cor Gal Eph Phil Col 1Thess 2Thess 1Tim 2Tim Titus Phlm Heb Jas 1Pet 2Pet 1John 2John 3John Jude Rev
 
 /******************************************************************************
- * [on]tbooks_nrsva - initialize static instance for all canonical
+ * [on]tbooks_nrsv - initialize static instance for all canonical
  *		 text names and chapmax
  */
-struct sbook otbooks_nrsva[] = {
-  {"Genesis", "Gen", "Gen", 50},
-  {"Exodus", "Exod", "Exod", 40},
-  {"Leviticus", "Lev", "Lev", 27},
-  {"Numbers", "Num", "Num", 36},
-  {"Deuteronomy", "Deut", "Deut", 34},
-  {"Joshua", "Josh", "Josh", 24},
-  {"Judges", "Judg", "Judg", 21},
-  {"Ruth", "Ruth", "Ruth", 4},
-  {"I Samuel", "1Sam", "1Sam", 31},
-  {"II Samuel", "2Sam", "2Sam", 24},
-  {"I Kings", "1Kgs", "1Kgs", 22},
-  {"II Kings", "2Kgs", "2Kgs", 25},
-  {"I Chronicles", "1Chr", "1Chr", 29},
-  {"II Chronicles", "2Chr", "2Chr", 36},
-  {"Ezra", "Ezra", "Ezra", 10},
-  {"Nehemiah", "Neh", "Neh", 13},
-  {"Esther", "Esth", "Esth", 10},
-  {"Job", "Job", "Job", 42},
-  {"Psalms", "Ps", "Ps", 150},
-  {"Proverbs", "Prov", "Prov", 31},
-  {"Ecclesiastes", "Eccl", "Eccl", 12},
-  {"Song of Solomon", "Song", "Song", 8},
-  {"Isaiah", "Isa", "Isa", 66},
-  {"Jeremiah", "Jer", "Jer", 52},
-  {"Lamentations", "Lam", "Lam", 5},
-  {"Ezekiel", "Ezek", "Ezek", 48},
-  {"Daniel", "Dan", "Dan", 12},
-  {"Hosea", "Hos", "Hos", 14},
-  {"Joel", "Joel", "Joel", 3},
-  {"Amos", "Amos", "Amos", 9},
-  {"Obadiah", "Obad", "Obad", 1},
-  {"Jonah", "Jonah", "Jonah", 4},
-  {"Micah", "Mic", "Mic", 7},
-  {"Nahum", "Nah", "Nah", 3},
-  {"Habakkuk", "Hab", "Hab", 3},
-  {"Zephaniah", "Zeph", "Zeph", 3},
-  {"Haggai", "Hag", "Hag", 2},
-  {"Zechariah", "Zech", "Zech", 14},
-  {"Malachi", "Mal", "Mal", 4},
-  {"Tobit", "Tob", "Tob", 14},
-  {"Judith", "Jdt", "Jdt", 16},
-  {"Esther (Greek)", "EsthGr", "EsthGr", 16},
-  {"Wisdom", "Wis", "Wis", 19},
-  {"Sirach", "Sir", "Sir", 51},
-  {"Baruch", "Bar", "Bar", 6},
-  {"Prayer of Azariah", "PrAzar", "PrAzar", 1},
-  {"Susanna", "Sus", "Sus", 1},
-  {"Bel and the Dragon", "Bel", "Bel", 1},
-  {"I Maccabees", "1Macc", "1Macc", 16},
-  {"II Maccabees", "2Macc", "2Macc", 15},
-  {"I Esdras", "1Esd", "1Esd", 9},
-  {"Prayer of Manasses", "PrMan", "PrMan", 1},
-  {"Additional Psalm", "AddPs", "AddPs", 1},
-  {"III Maccabees", "3Macc", "3Macc", 7},
-  {"II Esdras", "2Esd", "2Esd", 16},
-  {"IV Maccabees", "4Macc", "4Macc", 18},
-  {"", "", "", 0}
-};
+// for otbooks_nrsv, use otbooks
 
-// for ntbooks_nrsva, use ntbooks
+// for ntbooks_nrsv, use ntbooks
 
 /******************************************************************************
  *	Maximum verses per chapter
  */
 
-int vm_nrsva[] = {
+int vm_nrsv[] = {
   // Genesis
   31, 25, 24, 26, 32, 22, 24, 22, 29, 32,
   32, 20, 18, 24, 21, 16, 27, 33, 38, 18,
@@ -250,53 +193,6 @@ int vm_nrsva[] = {
   17, 14, 9, 21,
   // Malachi
   14, 17, 18, 6,
-  // Tobit
-  22, 14, 17, 21, 22, 18, 16, 21, 6, 13,
-  18, 22, 17, 15,
-  // Judith
-  16, 28, 10, 15, 24, 21, 32, 36, 14, 23,
-  23, 20, 20, 19, 14, 25,
-  // Esther (Greek)
-  22, 23, 15, 17, 14, 14, 10, 17, 32, 13,
-  12, 6, 18, 19, 16, 24,
-  // Wisdom
-  16, 24, 19, 20, 23, 25, 30, 21, 18, 21,
-  26, 27, 19, 31, 19, 29, 21, 25, 22,
-  // Sirach
-  30, 18, 31, 31, 15, 37, 36, 19, 18, 31,
-  34, 18, 26, 27, 20, 30, 32, 33, 30, 31,
-  28, 27, 27, 34, 26, 29, 30, 26, 28, 25,
-  31, 24, 33, 31, 26, 31, 31, 34, 35, 30,
-  22, 25, 33, 23, 26, 20, 25, 25, 16, 29,
-  30,
-  // Baruch
-  22, 35, 37, 37, 9, 73,
-  // Prayer of Azariah
-  68,
-  // Susanna
-  64,
-  // Bel and the Dragon
-  42,
-  // I Maccabees
-  64, 70, 60, 61, 68, 63, 50, 32, 73, 89,
-  74, 53, 53, 49, 41, 24,
-  // II Maccabees
-  36, 32, 40, 50, 27, 31, 42, 36, 29, 38,
-  38, 45, 26, 46, 39,
-  // I Esdras
-  58, 30, 24, 63, 73, 34, 15, 96, 55,
-  // Prayer of Manasses
-  15,
-  // Additional Psalm
-  7,
-  // III Maccabees
-  29, 33, 30, 21, 51, 41, 23,
-  // II Esdras
-  40, 48, 36, 52, 56, 59, 140, 63, 47, 59,
-  46, 51, 58, 48, 63, 78,
-  // IV Maccabees
-  35, 24, 21, 26, 38, 35, 23, 29, 32, 21,
-  27, 19, 27, 20, 32, 25, 24, 24,
   // Matthew
   25, 23, 17, 25, 48, 34, 29, 34, 38, 42,
   30, 50, 58, 36, 39, 28, 27, 35, 30, 34,
@@ -369,10 +265,11 @@ int vm_nrsva[] = {
 };
 
 
-unsigned char mappings_nrsva[] = {
+
+unsigned char mappings_nrsv[] = {
     0,
-    81,  1,   15,  0,   1,   14,  0,
-    83,  12,  18,  0,   13,  1,   0,
+    64,  1,   15,  0,   1,   14,  0,
+    66,  12,  18,  0,   13,  1,   0,
     0
 };
 SWORD_NAMESPACE_END

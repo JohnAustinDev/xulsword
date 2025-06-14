@@ -314,8 +314,8 @@ const C = {
     // From C++ SWORD
     'Calvin',
     'DarbyFr',
-    'NRSV',
-    'Segond',
+    //'NRSV', SWORD was incorrect so replaced by JSword
+    //'Segond',  SWORD was incorrect so replaced by JSword
     'Synodal',
     'Vulg',
     // From JSword
@@ -325,7 +325,9 @@ const C = {
     'Leningrad',
     'Luther',
     'MT',
+    'NRSV',
     'NRSVA',
+    'Segond',
     'SynodalProt',
    ] as V11nType[],
 
