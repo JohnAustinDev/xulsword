@@ -770,13 +770,10 @@ const char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *v
       const char * toVS = mainkey->getVersificationSystem();
       delete(testkey2);
 
-      VerseKey fromKey;
-      fromKey.copyFrom(myVerseKey);
-
       VerseKey readKey;
       readKey.setVersificationSystem(toVS);
       readKey.setAutoNormalize(0); // Non-existant calls should return empty string!
-      mapVersifications(&fromKey, &readKey);
+      readKey.setText(convertLocation(myVerseKey->getVersificationSystem(), myVerseKey->getOSISRef(), toVS));
 
       int vFirst = vNum;
       int vLast = vNum;
@@ -1598,7 +1595,7 @@ const char *xulsword::getSearchResults(const char *mod, int first, int num, bool
     while (!resultList->popError()&&(written<num)) {
       fromkey.copyFrom(resultList);
       tokey.setVersificationSystem(toVS);
-      mapVersifications(&fromkey, &tokey);
+      tokey.setText(convertLocation(fromkey.getVersificationSystem(), fromkey.getOSISRef(), toVS));
 
       MySearchTexts.appendFormatted("<div class=\"slist\" data-title=\"%s.%s\">", tokey.getOSISRef(), mod);
       MySearchTexts.appendFormatted("<span class=\"cs-%s%s\">%s</span>",

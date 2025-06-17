@@ -5,6 +5,7 @@
   position: relative; /* For Menulist */
   width: fit-content;
   height: fit-content;
+  background-color: var(--light);
 }
 
 .button.fill-x .button-box,

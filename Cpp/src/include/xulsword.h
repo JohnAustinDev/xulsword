@@ -125,7 +125,6 @@ class xulsword {
   int textToMaxChapter(const char *vkeytext, VerseKey *vkey);
   int textToMaxVerse(const char *vkeytext, VerseKey *vkey);
   virtual void updateGlobalOptions(bool disableFootCrossRed);
-  void mapVersifications(VerseKey *vkin, VerseKey *vkout);
   const char *getBookName(SWBuf *Chapter);
   void saveFootnotes(SWModule *module, bool includeNumberedMarkers = false);
   void getTreeContents(TreeKey *key, SWBuf *retval);

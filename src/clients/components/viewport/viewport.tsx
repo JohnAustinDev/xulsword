@@ -252,7 +252,7 @@ class Viewport extends React.Component implements PopupParent {
     // The interlinear tab is hidden if the panel has no ilModuleOption
     //   (see logic above). Otherwise:
     // It is visible and disabled if selected module/bookGroup does
-    //   not support ilModuleOption or if ilModule is the selected module.
+    //   not support ilModuleOption.
     // It is visible and active if ilModule is set to an ilModuleOption.
     // It is visible but inactive otherwise.
     const ilModules = ilModules0.slice();
@@ -263,8 +263,7 @@ class Viewport extends React.Component implements PopupParent {
       if (
         panelHasILOptions[i] &&
         (!ilModuleOptions[i] ||
-          (panel && G.Tab[panel].type !== C.BIBLE) ||
-          (panel && panel === ilModuleOptions[i][0]))
+          (panel && G.Tab[panel].type !== C.BIBLE))
       ) {
         ilModules[i] = 'disabled'; // visible and disabled
       } else if (

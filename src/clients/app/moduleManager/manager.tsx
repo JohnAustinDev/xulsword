@@ -631,7 +631,7 @@ export default class ModuleManager
     H.setTableState(
       this,
       'module',
-      null,
+      { selection: [] }, // reset selection which may not fit new rows
       this.filterModuleTable(languageSelection, null),
       true,
     );

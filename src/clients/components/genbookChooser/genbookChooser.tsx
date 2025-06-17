@@ -240,6 +240,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
         <Hbox className="chooser-container" flex="20">
           <div className="scroll-parent">
             {genbkPanels.map((group, i) => {
+              const [panelIndex] = group;
               const tks = treekeys(i);
               const treekey = tks.join('.');
               const [m] = tks;
@@ -248,7 +249,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
                 let childNodes: TreeNodeInfo[] = treeNodes[treekey];
                 // If there are multiple genbks in the chooser, each genbk root
                 // node must have a single child.
-                if (needsTreeParent(group[0])) {
+                if (needsTreeParent(panelIndex)) {
                   childNodes = [
                     {
                       id: m,
@@ -259,15 +260,15 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
                     },
                   ];
                 }
-                const key = keys[group[0]] || m;
+                const key = keys[panelIndex] || m;
                 return (
                   <TreeView
-                    key={stringHash(group[0], i, childNodes)}
+                    key={stringHash(panelIndex, i, childNodes)}
                     initialState={childNodes}
                     selectedIDs={key ? [key] : []}
-                    expandedIDs={expandedIDs[i]}
+                    expandedIDs={expandedIDs[panelIndex]}
                     onSelection={(sel) => {
-                      xulswordStateHandler(newState(i, sel));
+                      xulswordStateHandler(newState(panelIndex, sel));
                     }}
                     onExpansion={(exids) => {
                       this.setState((prevState: GenbookChooserState) => {

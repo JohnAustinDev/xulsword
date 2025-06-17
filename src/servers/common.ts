@@ -640,8 +640,6 @@ export function getFeatureModules(): FeatureMods {
       ) {
         xulswordFeatureMods.hebrew.push(module);
       }
-      // Until xulsword updates the SWORD engine, only SynodalProt and KJV versifications
-      // can be supported.
       xulswordFeatureMods.greek = xulswordFeatureMods.greek.filter((m) =>
         !Tab[m].v11n || C.SupportedV11nMaps.includes(Tab[m].v11n),
       );
