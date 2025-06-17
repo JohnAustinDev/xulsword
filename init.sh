@@ -4,6 +4,7 @@ export XULSWORD
 export CPP
 export NVM_DIR
 export VAGRANT
+export BOOSTDIR
 
 cd "$( dirname "${BASH_SOURCE[0]}" )" || exit 5
 XULSWORD=$( pwd )
@@ -40,8 +41,14 @@ PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
 if [[ "$VAGRANT" == "guest" ]]; then PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1 libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev libasound2"; fi
 
 if [[ "$WINMACHINE" != "no" ]]; then
-  # BUILD DEPENDENCIES (for cross compiling libxulsword as a Windows dll)
-  PKG_DEPS="$PKG_DEPS mingw-w64 mingw-w64-tools wine wine32-preloader"
+  if [[ -z "$(which wine)" ]]; then
+    # BUILD DEPENDENCIES (for cross compiling libxulsword as a Windows dll)
+    sudo dpkg --add-architecture i386
+    sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+    sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources
+    sudo apt-get update
+    sudo apt install --install-recommends winehq-stable
+  fi
 fi
 
 # BUILD DEPENDENCIES (for cross compiling libxulsword as MacOS dylib)
@@ -277,7 +284,7 @@ if [[ "$WINMACHINE" != "no" ]]; then
   if [ ! -e "$CPP/$dirout" ]; then
     getSource
     # Use custom Versification maps
-    cp -r "$CPP/sword-versification-maps/sword/"* "$CPP/sword"
+    cp -r "$CPP/sword-versification-maps/sword/"* "$CPP/$dirout"
     # SWORD's CMakeLists.txt requires clucene-config.h be located in a weird directory:
     cp -r "$CPP/install.$XCWD/usr/local/include/CLucene" "$CPP/install.$XCWD/usr/local/lib"
     cd "$CPP" || exit 5
@@ -325,20 +332,21 @@ if [ -n "$COPY_TO_HOST" ]; then
   if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
   cp -r "$LIBDIR" "$HLIBDIR"
 fi
+
 if [[ "$WINMACHINE" != "no" ]]; then
   # Install the DLL and all ming dependencies beyond the node executable and strip them
   LIBDIR="$CPP/lib.$XCWD"
   if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
   GCCDLL=libgcc_s_seh-1.dll
   if [[ "$XCWD" == "32win" ]]; then
-    GCCDLL=libgcc_s_sjlj-1.dll
+    GCCDLL=libgcc_s_dw2-1.dll
   fi
   mkdir "$LIBDIR"
-  cp "$CPP/install.$XCWD/usr/local/bin/libxulsword-static.dll" "$LIBDIR"
-  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/$GCCDLL" "$LIBDIR"
-  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/libstdc++-6.dll" "$LIBDIR"
+  cp "$CPP/install.$XCWD/usr/local/lib/libxulsword-static.dll" "$LIBDIR"
+  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/13-${GCCSTD}/$GCCDLL" "$LIBDIR"
+  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/13-${GCCSTD}/libstdc++-6.dll" "$LIBDIR"
   cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$LIBDIR"
-  gendef - "$CPP/install.$XCWD/usr/local/bin/libxulsword-static.dll" > "$LIBXULSWORD/lib/libxulsword.def"
+  gendef - "$CPP/install.$XCWD/usr/local/lib/libxulsword-static.dll" > "$LIBXULSWORD/lib/libxulsword.def"
   if [ -z "$DBG" ]; then
     strip "$LIBDIR/"*
   fi
@@ -366,6 +374,10 @@ if [ -n "$COPY_TO_HOST" ]; then
   if [ ! -e "/vagrant/node_modules" ]; then
     cp -r "$XULSWORD/node_modules" "/vagrant"
   fi
+fi
+
+if [[ "$WINMACHINE" != "no" ]]; then
+  winecfg
 fi
 ########################################################################
 

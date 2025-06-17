@@ -1,7 +1,7 @@
 diff -ru CMakeLists.txt CMakeLists.txt
---- CMakeLists.txt	2022-11-30 17:40:44.698731851 -0800
-+++ CMakeLists.txt	2022-11-30 17:53:44.546698415 -0800
-@@ -271,13 +271,14 @@
+--- CMakeLists.txt	2025-06-02 14:21:05.000000000 -0700
++++ CMakeLists.txt	2025-06-17 14:17:30.654227846 -0700
+@@ -276,13 +276,14 @@
  ##############################################################################################
  # Our build test
  #
@@ -23,10 +23,10 @@ diff -ru CMakeLists.txt CMakeLists.txt
  
  ##############################################################################################
  # Installing the library, headers, utilies, etc
-@@ -316,3 +317,25 @@
- IF(SWORD_BUILD_TESTS STREQUAL "Yes")
+@@ -323,3 +324,25 @@
+ 	INCLUDE(CTest)
  	ADD_SUBDIRECTORY("${CMAKE_CURRENT_SOURCE_DIR}/tests")
- ENDIF(SWORD_BUILD_TESTS STREQUAL "Yes")
+ ENDIF(SWORD_BUILD_TESTS)
 +
 +# For Linux cross-compilation to Windows
 +IF(CMAKE_TOOLCHAIN_FILE MATCHES "windows")
@@ -49,15 +49,3 @@ diff -ru CMakeLists.txt CMakeLists.txt
 +    target_link_libraries(sword ${SOCKLIB})
 +  ENDIF(TARGET sword)
 +ENDIF(CMAKE_TOOLCHAIN_FILE MATCHES "windows")
-
-diff -ru include/ftplib.h include/ftplib.h
---- include/ftplib.h	2022-11-30 17:40:49.410731649 -0800
-+++ include/ftplib.h	2022-11-30 17:52:19.574702058 -0800
-@@ -94,7 +94,6 @@
- #endif /* (_FTPLIB_NO_COMPAT) */
- /* end v1 compatibility stuff */
- 
--GLOBALREF int ftplib_debug;
- GLOBALREF void FtpInit(void);
- GLOBALREF char *FtpLastResponse(netbuf *nControl);
- GLOBALREF int FtpConnect(const char *host, netbuf **nControl);
