@@ -109,7 +109,7 @@ void xulsword::xsThrow(const char *msg, const char *param) {
   }
   else strcpy(fmsg, "(xsThrow no message)");
 
-  SWLog::getSystemLog()->logDebug("xsThrow: %s", fmsg);
+  SWLog::getSystemLog()->logError("xsThrow: %s", fmsg);
 
   if (ThrowJS) ThrowJS((const char *)fmsg);
 
@@ -405,8 +405,8 @@ xulsword::xulsword(char *path, void (*throwJS)(const char *), char *(*toUpperCas
     MySWLogXS = new SWLogXS();
     SWLog::setSystemLog(MySWLogXS);
   }
-  SWLog::getSystemLog()->setLogLevel(4); // set SWORD log reporting... 5 is all stuff
-  SWLog::getSystemLog()->logDebug("XULSWORD CONSTRUCTOR");
+  SWLog::getSystemLog()->setLogLevel(2); // 2 is warn, 5 is all stuff
+  SWLog::getSystemLog()->logInformation("XULSWORD CONSTRUCTOR");
 
   ThrowJS = throwJS;
   if (reportProgress) ReportProgress = reportProgress;
@@ -439,7 +439,7 @@ xulsword::xulsword(char *path, void (*throwJS)(const char *), char *(*toUpperCas
 
 
 xulsword::~xulsword() {
-  SWLog::getSystemLog()->logDebug("XULSWORD DESTRUCTOR");
+  SWLog::getSystemLog()->logInformation("XULSWORD DESTRUCTOR");
   //delete(SWLogXS); deleted by _staticSystemLog
   //delete(StringMgrXS); deleted by _staticsystemStringMgr
 

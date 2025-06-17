@@ -112,6 +112,20 @@ const Dirs = {
         : path.join(dirname, '..', '..', '..', 'Cpp', 'lib');
 
       if (!pathOnly) {
+        // Install default resources?
+        if (Dirs.xsResDefD.exists()) {
+          if (!Dirs.xsResD.exists()) {
+            Dirs.xsResD.create(LocalFile.DIRECTORY_TYPE, { recursive: true });
+          }
+          Dirs.xsResDefD.directoryEntries.forEach((sub) => {
+            const to = Dirs.xsResD.clone().append(sub);
+            if (!to.exists()) {
+              const from = Dirs.xsResDefD.clone().append(sub);
+              from.copyTo(to.parent, from.leafName, true);
+            }
+          });
+        }
+
         // Create these directories if they don't exist.
         (
           [
@@ -137,17 +151,6 @@ const Dirs = {
             Dirs[d].clone().append('modules').create(LocalFile.DIRECTORY_TYPE);
           }
         });
-
-        // Install default resources?
-        if (Dirs.xsResDefD.exists()) {
-          Dirs.xsResDefD.directoryEntries.forEach((sub) => {
-            const to = Dirs.xsResD.clone().append(sub);
-            if (!to.exists()) {
-              const from = Dirs.xsResDefD.clone().append(sub);
-              from.copyTo(to.parent, from.leafName, true);
-            }
-          });
-        }
       }
     }
     Dirs.initialized = true;

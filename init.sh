@@ -297,29 +297,6 @@ if [ ! -e "$CPP/build" ]; then
   cd "$CPP/build" || exit 5
   cmake "$DBG" -D SWORD_NO_ICU="Yes" -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install/usr/local/lib" ..
   make install
-
-  # Install the lib and all dependencies and strip them
-  LIBDIR="$CPP/lib"
-  if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
-  mkdir "$LIBDIR"
-  cp "$CPP/install/usr/local/lib/libxulsword-static.so" "$LIBDIR"
-  for lib in libm.so.6 libc.so.6
-  do
-    stdc="/lib/x86_64-linux-gnu/$lib"
-    if [[ ! -e $stdc ]]; then stdc="/usr/lib/i386-linux-gnu/$lib"; fi
-    cp "$stdc" "$LIBDIR"
-  done
-  if [ -z "$DBG" ]; then
-    strip "$LIBDIR/"*
-  fi
-  chmod ugo+x "$LIBDIR/"*
-
-  # If COPY_TO_HOST then copy the finished library to the host machine
-  if [ -n "$COPY_TO_HOST" ]; then
-    HLIBDIR="/vagrant/Cpp/lib"
-    if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
-    cp -r "$LIBDIR" "$HLIBDIR"
-  fi
 fi
 # CROSS COMPILE LIBXULSWORD TO WINDOWS
 if [[ "$WINMACHINE" != "no" ]]; then
@@ -328,34 +305,59 @@ if [[ "$WINMACHINE" != "no" ]]; then
     cd "$CPP/build.$XCWD" || exit 5
     cmake "$DBG" -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="Yes" -D CMAKE_INCLUDE_PATH="$CPP/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install.$XCWD/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install.$XCWD/usr/local/lib" ..
     make install
-
-    # Install the DLL and all ming dependencies beyond the node executable and strip them
-    LIBDIR="$CPP/lib.$XCWD"
-    if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
-    GCCDLL=libgcc_s_seh-1.dll
-    if [[ "$XCWD" == "32win" ]]; then
-      GCCDLL=libgcc_s_sjlj-1.dll
-    fi
-    mkdir "$LIBDIR"
-    cp "$CPP/install.$XCWD/usr/local/bin/libxulsword-static.dll" "$LIBDIR"
-    cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/$GCCDLL" "$LIBDIR"
-    cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/libstdc++-6.dll" "$LIBDIR"
-    cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$LIBDIR"
-    gendef - "$CPP/install.$XCWD/usr/local/bin/libxulsword-static.dll" > "$LIBXULSWORD/lib/libxulsword.def"
-    if [ -z "$DBG" ]; then
-      strip "$LIBDIR/"*
-    fi
-    chmod ugo+x "$LIBDIR/"*
-
-    # If COPY_TO_HOST then copy the finished library to the host machine
-    if [ -n "$COPY_TO_HOST" ]; then
-      HLIBDIR="/vagrant/Cpp/lib.$XCWD"
-      if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
-      cp -r "$LIBDIR" "$HLIBDIR"
-    fi
   fi
 fi
 ########################################################################
+
+# Install the lib and all dependencies and strip them
+LIBDIR="$CPP/lib"
+if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
+mkdir "$LIBDIR"
+cp "$CPP/install/usr/local/lib/libxulsword-static.so" "$LIBDIR"
+for lib in libm.so.6 libc.so.6
+do
+  stdc="/lib/x86_64-linux-gnu/$lib"
+  if [[ ! -e $stdc ]]; then stdc="/usr/lib/i386-linux-gnu/$lib"; fi
+  cp "$stdc" "$LIBDIR"
+done
+if [ -z "$DBG" ]; then
+  strip "$LIBDIR/"*
+fi
+chmod ugo+x "$LIBDIR/"*
+
+# If COPY_TO_HOST then copy the finished library to the host machine
+if [ -n "$COPY_TO_HOST" ]; then
+  HLIBDIR="/vagrant/Cpp/lib"
+  if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
+  cp -r "$LIBDIR" "$HLIBDIR"
+fi
+if [[ "$WINMACHINE" != "no" ]]; then
+  # Install the DLL and all ming dependencies beyond the node executable and strip them
+  LIBDIR="$CPP/lib.$XCWD"
+  if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
+  GCCDLL=libgcc_s_seh-1.dll
+  if [[ "$XCWD" == "32win" ]]; then
+    GCCDLL=libgcc_s_sjlj-1.dll
+  fi
+  mkdir "$LIBDIR"
+  cp "$CPP/install.$XCWD/usr/local/bin/libxulsword-static.dll" "$LIBDIR"
+  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/$GCCDLL" "$LIBDIR"
+  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/libstdc++-6.dll" "$LIBDIR"
+  cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$LIBDIR"
+  gendef - "$CPP/install.$XCWD/usr/local/bin/libxulsword-static.dll" > "$LIBXULSWORD/lib/libxulsword.def"
+  if [ -z "$DBG" ]; then
+    strip "$LIBDIR/"*
+  fi
+  chmod ugo+x "$LIBDIR/"*
+
+  # If COPY_TO_HOST then copy the finished library to the host machine
+  if [ -n "$COPY_TO_HOST" ]; then
+    HLIBDIR="/vagrant/Cpp/lib.$XCWD"
+    if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
+    cp -r "$LIBDIR" "$HLIBDIR"
+  fi
+fi
+
 if [[ "$LIBXULSWORD_ONLY" == "yes" ]]; then exit 0; fi
 
 ########################################################################
