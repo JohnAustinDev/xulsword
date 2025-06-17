@@ -590,21 +590,20 @@ export function getModuleFonts(): FontFaceType[] {
 // fonts via URL or LocalFile.
 export async function getSystemFonts(): Promise<string[]> {
   if (!Cache.has('fontList')) {
+    let fonts: ConcatArray<string>;
     try {
-      const fonts = await fontList.getFonts();
-      let allfonts = getModuleFonts()
-        .map((f) => f.fontFamily)
-        .concat(fonts);
-      allfonts = Array.from(
-        new Set(allfonts.map((f) => normalizeFontFamily(f))),
-      );
-      if (!Cache.has('fontList')) {
-        Cache.write(allfonts, 'fontList');
-      }
-      return allfonts;
+      fonts = await fontList.getFonts();
     } catch (err: any) {
+      fonts = [];
       log.error(err);
     }
+    let allfonts = getModuleFonts()
+      .map((f) => f.fontFamily)
+      .concat(fonts);
+    allfonts = Array.from(
+      new Set(allfonts.map((f) => normalizeFontFamily(f))),
+    );
+    Cache.write(allfonts, 'fontList');
   }
   return await Promise.resolve(Cache.read('fontList') as string[]);
 }
