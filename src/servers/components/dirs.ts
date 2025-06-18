@@ -3,8 +3,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import LocalFile from './localFile.ts';
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-
 const dirs = {
   TmpD: '',
   xsLib: '',
@@ -43,9 +41,17 @@ const Dirs = {
 
   init: (pathOnly = false) => {
     if (!Dirs.initialized) {
+      Dirs.path.TmpD = app?.getPath('temp') || '/tmp';
+
+      // This local dirname path must only be read when NOT packaged!
+      const dirname = !Build.isPackaged
+        ? path.dirname(fileURLToPath(import.meta.url))
+        : Dirs.path.TmpD;
+
       const profD =
         (Build.isElectronApp && app?.getPath('userData')) ||
-        (process.env.WEBAPP_PROFILE_DIR as string);
+        (Build.isWebApp && (process.env.WEBAPP_PROFILE_DIR as string)) ||
+        Dirs.path.TmpD;
 
       Dirs.path.LogDir = path.join(process.env.LOG_DIR || profD, 'xulsword');
 
@@ -61,8 +67,6 @@ const Dirs = {
       Dirs.path.xsAsar = Build.isPackaged
         ? path.join(process.resourcesPath, 'app')
         : path.join(dirname, '..', '..', '..', 'build', 'app');
-
-      Dirs.path.TmpD = app?.getPath('temp') || '/tmp';
 
       Dirs.path.xsPrefDefD = path.join(
         Dirs.path.xsAsset,
