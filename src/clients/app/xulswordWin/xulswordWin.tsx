@@ -7,7 +7,7 @@ import './xulswordWin.css';
 
 renderToRoot(<Xulsword />, {
   onload: () => {
-    log.verbose('Loading Xulsword!');
+    log.verbose('Loaded xulsword window');
     setTimeout(() => {
       G.Window.moveToBack();
     }, 100);

@@ -6,30 +6,27 @@ export NVM_DIR
 export VAGRANT
 export BOOSTDIR
 
-cd "$( dirname "${BASH_SOURCE[0]}" )" || exit 5
-XULSWORD=$( pwd )
-
 # This script installs dependencies and builds the libxulsword
 # dynamic library and libxulsword native node-module.
+
+# When run in Vagrant this script should run in Ubuntu 22 because snap
+# core22 is currently the latest working snap core (June 2025) .
 
 if [[ $EUID -eq 0 ]]; then
    echo "This script should not be run as root. Exiting..."
    exit 1
 fi
 
-if [[ -e "/vagrant" ]]; then VAGRANT="guest"; else VAGRANT="host"; fi
+cd "$( dirname "${BASH_SOURCE[0]}" )" || exit 5
 
-if [[ "$VAGRANT" == "guest" ]]; then XULSWORD=/vagrant; fi
-if [[ ! -e "$XULSWORD/setenv" ]]; then cp "$XULSWORD/scripts/setenv" "$XULSWORD"; fi
-source "$XULSWORD/setenv"
-if [[ "$VAGRANT" == "guest" ]]; then XULSWORD=/vagrant; fi
+if [[ -e "/vagrant" ]]; then VAGRANT="guest"; else VAGRANT="host"; fi
 
 DEBVERS="$(lsb_release -cs 2>/dev/null)"
 
 DBG=
 # DBG='-D CMAKE_BUILD_TYPE=Debug'
 
-# BUILD DEPENDENCIES (Ubuntu Xenial & Bionic)
+# BUILD DEPENDENCIES
 PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip curl"
 # for xulsword
 PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev debhelper libboost-dev"
@@ -40,57 +37,81 @@ PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
 # for VM build
 if [[ "$VAGRANT" == "guest" ]]; then PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1 libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev libasound2"; fi
 
-if [[ "$WINMACHINE" != "no" ]]; then
-  if [[ -z "$(which wine)" ]]; then
-    # BUILD DEPENDENCIES (for cross compiling libxulsword as a Windows dll)
-    sudo dpkg --add-architecture i386
-    sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
-    sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources
-    sudo apt-get update
-    sudo apt install --install-recommends winehq-stable
-  fi
-fi
-
 # BUILD DEPENDENCIES (for cross compiling libxulsword as MacOS dylib)
 # PKG_DEPS="$PKG_DEPS llvm-12 llvm-12-linker-tools llvm-12-tools clang-12 lldb-12 lld-12"
 
 if [ "$(dpkg -l $PKG_DEPS 2>&1 | grep "no packages" | wc -m)" -ne 0 ]; then
+  echo "INSTALLING LINUX BUILD DEPENDENCIES"
   if [[ "$VAGRANT" == "guest" ]]; then
-    sudo dpkg --add-architecture i386
     sudo apt-get update
     sudo apt-get install -y $PKG_DEPS
   else
-    echo First, you need to install missing packages with:
+    echo "You need to install missing linux packages with:"
     echo .
     echo "sudo apt-get install ${PKG_DEPS}"
     echo .
-    echo Then run this script again.
+    echo "Then run this script again."
     exit;
   fi
 fi
 
-# If XULSWORD is /vagrant, then clone the host code to VM and build
-# everything within the VM so as not to fill the host with build files
-# for another machine. Then copy only the output files to the host.
+if [[ "$WINMACHINE" != "no" ]]; then
+  if [[ -z "$(which wine)" ]]; then
+    echo "INSTALLING WINE AND WINDOWS X-COMPILE BUILD DEPENDENCIES"
+    if [[ "$VAGRANT" == "guest" ]]; then
+      sudo dpkg --add-architecture i386
+      sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+      sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources
+      sudo apt-get update
+      sudo apt install -y --install-recommends winehq-stable gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix
+    else
+      echo "You need to install missing windows32 packages with:"
+      echo .
+      echo "sudo dpkg --add-architecture i386"
+      echo "sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key"
+      echo "sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/$DEBVERS/winehq-$DEBVERS.sources"
+      echo "sudo apt-get update"
+      echo "sudo apt install --install-recommends winehq-stable gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix"
+      echo .
+      echo "Then run this script again."
+      exit;
+    fi
+  fi
+fi
+
+# If running in Vagrant, then clone the host code to VM and build
+# everything within the VM so as not to contaminate the host's own build
+# files. Then copy only the finished output libraries to the host.
 # Also git must be used (vs. copied from host) so that line endings will
 # be correct on both the host and the guest.
 COPY_TO_HOST=
-if [[ "$XULSWORD" == "/vagrant" ]]; then
+if [[ "$VAGRANT" == "guest" ]]; then
+  XULSWORD="$HOME/src/xulsword"
   COPY_TO_HOST=1
   if [ ! -e "$HOME/src" ]; then
     mkdir "$HOME/src";
     cd "$HOME/src" || exit 5
     git clone https://github.com/JohnAustinDev/xulsword
   else
-    cd "$HOME/src/xulsword" ||exit 5
+    cd "$XULSWORD" ||exit 5
     git pull
   fi
-  XULSWORD="$HOME/src/xulsword"
-  if [[ ! -e "$XULSWORD/setenv" ]]; then cp "$XULSWORD/scripts/setenv" "$XULSWORD"; fi
+  if [[ -e "/vagrant/setenv" ]]; then cp "/vagrant/setenv" "$XULSWORD"; fi
+else
+  XULSWORD=$( pwd )
 fi
 
+if [[ ! -e "$XULSWORD/setenv" ]]; then cp "$XULSWORD/scripts/setenv" "$XULSWORD"; fi
 echo "XULSWORD IS $XULSWORD"
 cd "$XULSWORD" || exit 5
+source "./setenv"
+
+# Vagrant is only used to create the Ubuntu 22 libxulsword.so file
+if [[ "$VAGRANT" == "guest" ]]; then
+  WINMACHINE=no
+  LIBXULSWORD_ONLY=yes
+fi
+
 CPP="$XULSWORD/Cpp"
 
 if [[ "$LIBXULSWORD_ONLY" == "no" ]]; then
@@ -110,21 +131,24 @@ fi
 
 # Create a local Cpp installation directory where compiled libraries will
 # be installed for libxulsword linking.
-if [ ! -e "$XULSWORD/Cpp/install" ]; then mkdir "$XULSWORD/Cpp/install"; fi
+if [[ ! -e "$XULSWORD/Cpp/install" ]]; then mkdir "$XULSWORD/Cpp/install"; fi
 if [[ "$WINMACHINE" != "no" ]]; then
-  if [ ! -e "$XULSWORD/Cpp/install.$XCWD" ]; then mkdir "$XULSWORD/Cpp/install.$XCWD"; fi
+  if [[ ! -e "$XULSWORD/Cpp/install.$XCWD" ]]; then mkdir "$XULSWORD/Cpp/install.$XCWD"; fi
 fi
 
 # Create a local lib directory where libxulsword will be installed
 if [ ! -e "$XULSWORD/Cpp/lib" ]; then mkdir "$XULSWORD/Cpp/lib"; fi
 if [[ "$WINMACHINE" != "no" ]]; then
-  if [ ! -e "$XULSWORD/Cpp/lib.$XCWD" ]; then mkdir "$XULSWORD/Cpp/lib.$XCWD"; fi
+  if [[ ! -e "$XULSWORD/Cpp/lib.$XCWD" ]]; then mkdir "$XULSWORD/Cpp/lib.$XCWD"; fi
+fi
+if [[ "$VAGRANT" == "guest" ]]; then
+  if [[ ! -e "$XULSWORD/Cpp/lib-core22" ]]; then mkdir "$XULSWORD/Cpp/lib-core22"; fi
 fi
 
 # Create an archive directory to cache source code
 ARCHIVEDIR="$XULSWORD/archive"
-if [ ! -e "$ARCHIVEDIR" ]; then mkdir "$ARCHIVEDIR"; fi
-if [ -e "/vagrant/archive" ]; then ARCHHOST="/vagrant/archive"; else ARCHHOST=$ARCHIVEDIR; fi
+if [[ ! -e "$ARCHIVEDIR" ]]; then mkdir "$ARCHIVEDIR"; fi
+if [[ -e "/vagrant/archive" ]]; then ARCHHOST="/vagrant/archive"; else ARCHHOST=$ARCHIVEDIR; fi
 
 function getSource() {
   echo "Getting source code:"
@@ -191,17 +215,15 @@ url="http://archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib_1.2.8.dfsg.orig.tar.
 gzfile="zlib_1.2.8.dfsg.orig.tar.gz"
 dirin="zlib-1.2.8"
 dirout="zlib"
-if [ ! -e "$CPP/$dirout" ]; then
+if [ ! -e "$CPP/zlib" ]; then
   getSource
   cmake "$DBG" -G "Unix Makefiles" -D CMAKE_C_FLAGS="-fPIC" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
-  # create a symlink to zconf.h (which was just renamed by cmake) so CLucene will compile
-  ##ln -s ./build/zconf.h ../zconf.h
 fi
 # CROSS COMPILE ZLIB TO WINDOWS
 if [[ "$WINMACHINE" != "no" ]]; then
   dirout="zlib.$XCWD"
-  if [ ! -e "$CPP/$dirout" ]; then
+  if [ ! -e "$CPP/zlib.$XCWD" ]; then
     getSource
     cmake "$DBG" -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" ..
     make DESTDIR="$CPP/install.$XCWD" install
@@ -236,27 +258,27 @@ url="http://archive.ubuntu.com/ubuntu/pool/main/c/clucene-core/clucene-core_2.3.
 gzfile="clucene-core_2.3.3.4.orig.tar.gz"
 dirin="clucene-core-2.3.3.4"
 dirout="clucene"
-if [ ! -e "$CPP/$dirout" ]; then
+if [ ! -e "$CPP/clucene" ]; then
   getSource
    # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
-  sed -i 's/!allowLeadingWildcard/!true/g' "$CPP/$dirout/src/core/CLucene/queryParser/QueryParser.cpp"
+  sed -i 's/!allowLeadingWildcard/!true/g' "$CPP/clucene/src/core/CLucene/queryParser/QueryParser.cpp"
   # -D DISABLE_MULTITHREADING=ON causes compilation to fail
-  sed -i '11i #include <ctime>' "$CPP/$dirout/src/core/CLucene/document/DateTools.cpp"
+  sed -i '11i #include <ctime>' "$CPP/clucene/src/core/CLucene/document/DateTools.cpp"
   cmake "$DBG" -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=ON -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" ..
   make DESTDIR="$CPP/install" install
 fi
 # CROSS COMPILE LIBCLUCENE TO WINDOWS
 if [[ "$WINMACHINE" != "no" ]]; then
   dirout="clucene.$XCWD"
-  if [ ! -e "$CPP/$dirout" ]; then
+  if [ ! -e "$CPP/clucene.$XCWD" ]; then
     getSource
     # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
-    sed -i 's/!allowLeadingWildcard/!true/g' "$CPP/$dirout/src/core/CLucene/queryParser/QueryParser.cpp"
+    sed -i 's/!allowLeadingWildcard/!true/g' "$CPP/clucene.$XCWD/src/core/CLucene/queryParser/QueryParser.cpp"
     cd "$CPP" || exit 5
-    patch -s -p0 -d "$CPP/$dirout" < "$CPP/windows/clucene-src.patch"
-    cd "$CPP/$dirout/build" || exit 5
+    patch -s -p0 -d "$CPP/clucene.$XCWD" < "$CPP/windows/clucene-src.patch"
+    cd "$CPP/clucene.$XCWD/build" || exit 5
     cmake "$DBG" -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -C "$CPP/windows/clucene-TryRunResult-${GCCSTD}.cmake" -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -D Boost_INCLUDE_DIR="$BOOSTDIR/$XCWD/include" -D ZLIB_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libzlibstatic.a" ..
-    patch -s -p0 -d "$CPP/$dirout" < "$CPP/windows/clucene-build.patch"
+    patch -s -p0 -d "$CPP/clucene.$XCWD" < "$CPP/windows/clucene-build.patch"
     make DESTDIR="$CPP/install.$XCWD" install
   fi
 fi
@@ -271,7 +293,7 @@ url="http://crosswire.org/svn/sword/trunk"
 gzfile="sword-rev-${swordRev}.tar.gz"
 dirin="sword-$swordRev"
 dirout="sword"
-if [ ! -e "$CPP/$dirout" ]; then
+if [ ! -e "$CPP/sword" ]; then
   getSource
   # Use custom Versification maps
   cp -r "$CPP/sword-versification-maps/sword/"* "$CPP/sword"
@@ -281,15 +303,15 @@ fi
 # CROSS COMPILE LIBSWORD TO WINDOWS
 if [[ "$WINMACHINE" != "no" ]]; then
   dirout="sword.$XCWD"
-  if [ ! -e "$CPP/$dirout" ]; then
+  if [ ! -e "$CPP/sword.$XCWD" ]; then
     getSource
     # Use custom Versification maps
-    cp -r "$CPP/sword-versification-maps/sword/"* "$CPP/$dirout"
+    cp -r "$CPP/sword-versification-maps/sword/"* "$CPP/sword.$XCWD"
     # SWORD's CMakeLists.txt requires clucene-config.h be located in a weird directory:
     cp -r "$CPP/install.$XCWD/usr/local/include/CLucene" "$CPP/install.$XCWD/usr/local/lib"
     cd "$CPP" || exit 5
-    patch -s -p0 -d "$CPP/$dirout" < "$CPP/windows/libsword-src.patch"
-    cd "$CPP/$dirout/build" || exit 5
+    patch -s -p0 -d "$CPP/sword.$XCWD" < "$CPP/windows/libsword-src.patch"
+    cd "$CPP/sword.$XCWD/build" || exit 5
     cmake "$DBG" -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="Yes" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$CPP/install.$XCWD/usr/local/include" -D CLUCENE_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -D ZLIB_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
     make DESTDIR="$CPP/install.$XCWD" install
   fi
@@ -317,7 +339,9 @@ fi
 ########################################################################
 
 # Install the lib and all dependencies and strip them
-LIBDIR="$CPP/lib"
+LIBDIRNAME=lib
+if [[ "$VAGRANT" == "guest" ]]; then LIBDIRNAME=lib-core22; fi
+LIBDIR="$CPP/$LIBDIRNAME"
 if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
 mkdir "$LIBDIR"
 cp "$CPP/install/usr/local/lib/libxulsword-static.so" "$LIBDIR"
@@ -328,7 +352,7 @@ chmod ugo+x "$LIBDIR/"*
 
 # If COPY_TO_HOST then copy the finished library to the host machine
 if [ -n "$COPY_TO_HOST" ]; then
-  HLIBDIR="/vagrant/Cpp/lib"
+  HLIBDIR="/vagrant/Cpp/$LIBDIRNAME"
   if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
   cp -r "$LIBDIR" "$HLIBDIR"
 fi
@@ -365,11 +389,11 @@ if [[ "$LIBXULSWORD_ONLY" == "yes" ]]; then exit 0; fi
 ########################################################################
 # WRAP UP
 
-# Now initialize node.js
+echo "Initializing node.js"
 cd "$XULSWORD" || exit 5
 yarn
 
-# If COPY_TO_HOST then copy node_modules to host to save download time
+echo "Copying node_modules to host"
 if [ -n "$COPY_TO_HOST" ]; then
   if [ ! -e "/vagrant/node_modules" ]; then
     cp -r "$XULSWORD/node_modules" "/vagrant"
@@ -377,7 +401,9 @@ if [ -n "$COPY_TO_HOST" ]; then
 fi
 
 if [[ "$WINMACHINE" != "no" ]]; then
-  winecfg
+  if [[ "$VAGRANT" != "guest" ]]; then
+    winecfg
+  fi
 fi
 ########################################################################
 

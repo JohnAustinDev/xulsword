@@ -839,7 +839,8 @@ const ModuleDownloads = {
 function logdls() {
   const ongoing = Object.keys(ModuleDownloads.ongoing);
   const example = ongoing.slice(-5).map((x) => logid(x));
-  return `ongoing=${ongoing.length}(${example.join(', ')}) finished=${
+  return `ongoing=${ongoing.length}${
+    example.length ? `(${example.join(', ')})` : ''} finished=${
     Object.keys(ModuleDownloads.finished).length
   }`;
 }

@@ -9,13 +9,14 @@
     "start:appSrv": "webpack --env development --env appSrv --env preload && cross-env LD_LIBRARY_PATH='./Cpp/lib' electron ./build/app/dist/appSrv/server.cjs",
     "start:webapp": "webpack serve --env development --env webappClients",
     "start:webappSrv": "webpack --env development --env webappSrv && cross-env LD_LIBRARY_PATH='./Cpp/lib' node ./build/webapp",
-    "build:app": "node ./scripts/clean.mjs dist release && webpack --env packaged --env production --env preload --env appSrv --env appClients",
+    "build:app": "yarn build:clean && webpack --env packaged --env production --env preload --env appSrv --env appClients",
     "build:webapp": "webpack --env production --env webappSrv --env webappClients",
+    "build:clean": "node ./scripts/clean.mjs dist release",
     "lint": "eslint . --cache",
     "install-libxulsword": "node ./build/app/node_modules/libxulsword/install.mjs",
     "postinstall": "electron-builder install-app-deps && yarn ./build/app && yarn ./build/webapp",
-    "package": "yarn build:app && electron-builder build --publish never",
-    "package-publish": "yarn build:app && electron-builder build --publish always",
+    "package": "yarn build:clean && yarn build:app && electron-builder build --publish never",
+    "package-publish": "yarn build:clean && yarn build:app && electron-builder build --publish always",
     "package-linux": "cross-env PKLIB=linux yarn install-libxulsword && yarn package --linux",
     "package-32win": "cross-env PKLIB=32win yarn install-libxulsword && yarn package --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
     "package-64win": "cross-env PKLIB=64win yarn install-libxulsword && yarn package --win --x64 && cross-env PKLIB=linux yarn install-libxulsword",
@@ -57,7 +58,7 @@
       "category": "Education",
       "extraFiles": [
         {
-          "from": "./Cpp/lib"
+          "from": "./Cpp/lib-core22"
         }
       ]
     },
