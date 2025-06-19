@@ -368,9 +368,14 @@ export async function installZIPs(
         });
         const confs = {} as Record<string, SwordConfType>;
         sortedZipEntries.forEach((entry) => {
-          if (!entry.entryName.endsWith('/')) {
-            log.silly(`Processing Entry: ${entry.entryName}`);
-            const type = entry.entryName.split('/').shift();
+          let { entryName, name } = entry;
+          // Zip entryName is \ delimited on MS-Windows!
+          entryName = entryName.replaceAll('\\', '/');
+          // Zip name is full path on MK-Windows! (Bug- should be filename)
+          name = name.replace(/^.*\\/, '');
+          if (!entryName.endsWith('/')) {
+            log.silly(`Processing Entry: ${entryName}`);
+            const type = entryName.split('/').shift();
             switch (type) {
               case 'mods.d': {
                 const confstr = entry.getData().toString('utf8');
@@ -381,7 +386,7 @@ export async function installZIPs(
                 );
                 const conf = parseSwordConf({
                   confString: confstr,
-                  filename: entry.name,
+                  filename: name,
                   sourceRepository: dest.path,
                 });
                 // Look for any problems with the module itself
@@ -420,7 +425,7 @@ export async function installZIPs(
                   if (!confdest.exists()) {
                     confdest.create(LocalFile.DIRECTORY_TYPE);
                   }
-                  confdest.append(entry.name);
+                  confdest.append(name);
                   if (confdest.exists()) {
                     if (swmodpath === 'XSM_audio') {
                       // Audio is not treated as a single module but as an updatable set of audio
@@ -508,7 +513,7 @@ export async function installZIPs(
                 const conf = Object.values(confs).find((c) => {
                   const swmodpath = confModulePath(c.DataPath);
                   return (
-                    swmodpath && entry.entryName.startsWith(`${swmodpath}/`)
+                    swmodpath && entryName.startsWith(`${swmodpath}/`)
                   );
                 });
                 const swmodpath = conf && confModulePath(conf.DataPath);
@@ -518,7 +523,7 @@ export async function installZIPs(
                   // If this module is to be installed, the destination directory has already been
                   // succesfully created, otherwise silently skip.
                   if (moddest.exists()) {
-                    const parts = entry.entryName
+                    const parts = entryName
                       .substring(swmodpath.length + 1)
                       .split('/');
                     parts.forEach((p, ix) => {
@@ -544,17 +549,17 @@ export async function installZIPs(
 
               case 'fonts': {
                 const fontsdir = Dirs.xsFonts;
-                fontsdir.append(entry.name);
+                fontsdir.append(name);
                 fontsdir.writeFile(entry.getData());
-                newmods.fonts.push(entry.name);
+                newmods.fonts.push(name);
                 break;
               }
 
               case 'bookmarks': {
                 const bmdir = Dirs.xsBookmarks;
-                bmdir.append(entry.name);
+                bmdir.append(name);
                 bmdir.writeFile(entry.getData());
-                newmods.bookmarks.push(entry.name);
+                newmods.bookmarks.push(name);
                 break;
               }
 
@@ -583,7 +588,7 @@ export async function installZIPs(
                 // Bible SWORD modules (the only SWORD GenBook audio published so far).
                 // Finally, general-book indexes need 1 to be subtracted from each index.
                 const audio = Dirs.xsAudio;
-                const pobj = fpath.posix.parse(entry.entryName);
+                const pobj = fpath.posix.parse(entryName);
                 let dirs = pobj.dir.split(fpath.posix.sep);
                 let chapter = Number(pobj.name.replace(/^(\d+).*?$/, '$1'));
                 dirs.shift(); // remove ./audio
@@ -692,7 +697,7 @@ export async function installZIPs(
 
               default:
                 newmods.reports.push({
-                  warning: `Unknown module component ${entry.name}.`,
+                  warning: `Unknown module component ${name}.`,
                 });
             }
           }
@@ -1135,7 +1140,10 @@ const Module = {
         // The conf file is required, so add it to the zip if not already present.
         let hasConf = false;
         zip.forEach((ze) => {
-          if (ze.entryName.endsWith(confname)) hasConf = true;
+          let { entryName } = ze;
+          // Zip entryName is \ delimited on MS-Windows
+          entryName = entryName.replaceAll('\\', '/');
+          if (entryName.endsWith(confname)) hasConf = true;
         });
         if (!hasConf) {
           const confs = await downloadRepoConfs(

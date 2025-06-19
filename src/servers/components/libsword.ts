@@ -1027,6 +1027,7 @@ export function moduleUnsupported(
 export type LibSwordType = Omit<
   typeof LibSword,
   | 'initialized'
+  | 'clearConfigCache'
   | 'moduleDirectories'
   | 'checkCipherKeys'
   | 'libxulsword'
