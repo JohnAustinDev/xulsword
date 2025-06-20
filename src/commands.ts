@@ -8,7 +8,7 @@ import type S from './defaultPrefs.ts';
 import type PrefsElectron from './servers/app/prefs.ts';
 import type PrefsBrowser from './clients/webapp/prefs.ts';
 import type {
-  GAddCaller,
+  GAddWindowId,
   GenBookAudioFile,
   GIType,
   GType,
@@ -41,8 +41,8 @@ export default class Commands {
   ) {
     this.#G = G;
     this.#Prefs = prefs;
-    this.#Prefs2 = prefs as GAddCaller['Prefs'];
-    this.#Viewport = new Viewport(G, GI, prefs);
+    this.#Prefs2 = prefs as GAddWindowId['Prefs'];
+    this.#Viewport = new Viewport(G, GI, prefs, undefined); // this Viewport's usage must not use Window
   }
 
   goToLocationGB(

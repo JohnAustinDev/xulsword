@@ -28,7 +28,7 @@ import type {
   BookmarkFolderType,
   BookmarkItemType,
   ContextDataType,
-  MethodAddCaller,
+  MethodAddWindowId,
   GType,
   LocationORType,
   LocationVKType,
@@ -292,7 +292,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
           G.Commands.print({ pageable: true, dialogEnd: 'cancel' })
             .then(() => {
               (
-                G.Prefs.setComplexValue as MethodAddCaller<
+                G.Prefs.setComplexValue as MethodAddWindowId<
                   typeof G.Prefs.setComplexValue
                 >
               )(

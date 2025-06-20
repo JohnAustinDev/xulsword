@@ -632,7 +632,9 @@ export function completePanelPrefDefaultArrays(numPanels: number) {
   C.PanelPrefArrays.forEach((p) => {
     const vf = [];
     for (let i = 0; i < numPanels; i++) {
-      vf.push(S.prefs.xulsword[p][0]);
+      let [v] = S.prefs.xulsword[p];
+      if (p === 'panels' && i > 1) v = null;
+      vf.push(v);
     }
     (S.prefs.xulsword as any)[p] = vf;
   });

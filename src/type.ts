@@ -55,9 +55,8 @@ import type {
 import type LibSword from './servers/components/libsword.ts';
 import type { canRedo, canUndo } from './servers/components/bookmarks.ts';
 import type { CallBatch } from './servers/handleG.ts';
-import type ViewportElectron from './servers/app/viewport.ts';
+import type Viewport from './viewport.ts';
 import type { AtextPropsType } from './clients/components/atext/atext.tsx';
-import type ViewportBrowser from './clients/webapp/viewport.ts';
 import type RenderPromise from './clients/renderPromise.ts';
 
 // This file contains global TypeScript types used throughout xulsword.
@@ -721,17 +720,17 @@ export type ParamShift<T extends unknown[]> = T extends [any, ...infer U]
   ? U
   : never;
 
-export type MethodAddCaller<M extends (...args: any[]) => any> = (
-  ...args2: [...Parameters<M>, number]
+export type MethodAddWindowId<M extends (...args: any[]) => any> = (
+  ...args2: [...Parameters<M>, windowId: number]
 ) => ReturnType<M>;
 
-export type ObjectAddCaller<T extends Record<string, (...args: any[]) => any>> =
+export type ObjectAddWindowId<T extends Record<string, (...args: any[]) => any>> =
   {
-    [K in keyof T]: MethodAddCaller<T[K]>;
+    [K in keyof T]: MethodAddWindowId<T[K]>;
   };
 
-export type GAddCaller = {
-  [obj in (typeof GBuilder)['includeCallingWindow'][number]]: ObjectAddCaller<
+export type GAddWindowId = {
+  [obj in (typeof GBuilder)['includeCallingWindow'][number]]: ObjectAddWindowId<
     GType[obj]
   >;
 };
@@ -795,7 +794,7 @@ export type GType = {
   Shell: Pick<Shell, 'beep'>;
   Data: typeof Data;
   Module: typeof Module;
-  Viewport: Omit<typeof ViewportElectron | typeof ViewportBrowser, '#prefs'>;
+  Viewport: Omit<Viewport, '#prefs'>;
   Window: typeof Window;
 };
 
@@ -874,13 +873,14 @@ if (typeof window !== 'undefined') window.renderPromises = [];
 export const GBuilder: GType & {
   // IMPORTANT: Methods of includeCallingWindow classes must not use rest
   // parameters or default values in their function definition's argument
-  // lists, nor may they be getter functions. This is because Function.length
-  // is used to append the calling window in server G, and Function.length does
-  // not include rest parameters or default arguments. Additionally getter
-  // functions have zero arguments or Function.length. Using rest parameters
-  // or default arguments will thus result in overwriting the last argument
-  // with the calling window id!
-  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'];
+  // lists nor may they be getter functions (although optional parameters of
+  // TypeScript are ok) . This is because Function.length is used to append the
+  // calling window in server G, and Function.length does not include rest
+  // parameters or default arguments. Additionally getter functions have zero
+  // arguments or Function.length. Using rest parameters or default arguments
+  // will thus result in overwriting the last argument with the calling window
+  // id!
+  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module', 'Viewport'];
 
   // async functions must be listed in asyncFuncs or runtime
   // errors will result!
@@ -925,7 +925,7 @@ export const GBuilder: GType & {
     [keyof GType, Array<keyof GType['LibSword']>],
   ];
 } = {
-  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'],
+  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module', 'Viewport'],
 
   asyncFuncs: [
     ['getSystemFonts', []],
@@ -1173,6 +1173,7 @@ export const GBuilder: GType & {
     // uses includeCallingWindow
     descriptions: func as any,
     open: func as any,
+    getComplexValue: func as any,
     setComplexValue: func as any,
     mergeValue: func as any,
     setContentSize: func as any,

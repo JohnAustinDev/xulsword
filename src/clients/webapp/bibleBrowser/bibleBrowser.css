@@ -21,6 +21,7 @@ body {
 #root > #reset > .xulsword:has(.textarea.multi-panel),
 #root > .print {
   height: 100%;
+  width: 100%;
 }
 #root > #reset,
 #root > #reset > .xulsword,

@@ -48,18 +48,20 @@ const statePrefDefault = drop(S.prefs.xulsword, vpWindowState) as Omit<
   (typeof vpWindowState)[number]
 >;
 
-// Window arguments that are used to set initial state must be updated locally
-// and in Prefs, so that component reset or program restart won't cause
-// reversion to initial state.
-let windowState:
-  | Pick<typeof S.prefs.xulsword, (typeof vpWindowState)[number]>
-  | undefined;
+type VPWindowState = Pick<
+  typeof S.prefs.xulsword,
+  (typeof vpWindowState)[number]
+>;
+G.Window.setComplexValue(
+  'xulswordState',
+  windowArguments('xulswordState') as VPWindowState,
+);
 
 let WindowTitle = '';
 
 export type ViewportWinState = typeof statePrefDefault &
   typeof notStatePrefDefault &
-  typeof windowState &
+  VPWindowState &
   RenderPromiseState;
 
 export default class ViewportWin
@@ -87,17 +89,10 @@ export default class ViewportWin
   constructor(props: ViewportWinProps) {
     super(props);
 
-    if (typeof windowState === 'undefined') {
-      windowState = windowArguments('xulswordState') as Pick<
-        typeof S.prefs.xulsword,
-        (typeof vpWindowState)[number]
-      >;
-    }
-
     const s: ViewportWinState = {
       ...getStatePref('prefs', 'xulsword', statePrefDefault),
       ...notStatePrefDefault,
-      ...windowState,
+      ...(G.Window.getComplexValue('xulswordState') as VPWindowState),
       renderPromiseID: 0,
     };
     validateViewportModulePrefs(G.Tabs, s);
@@ -177,7 +172,7 @@ export default class ViewportWin
   }
 
   persistState(prevState: ViewportWinState, state: ViewportWinState) {
-    windowState = keep(state, vpWindowState) as typeof windowState;
+    const windowState = keep(state, vpWindowState) as VPWindowState;
     const { scroll } = state;
     if (!scroll?.skipWindowUpdate) {
       setStatePref(
@@ -209,8 +204,10 @@ export default class ViewportWin
   }
 
   xulswordStateHandler(s: XulswordStateArgType): void {
-    const state = this.state as ViewportWinState;
-    this.persistState(state, { ...state, ...s });
+    const prevState = this.state as ViewportWinState;
+    const state = typeof s === 'function' ? s(prevState) : this.state;
+    if (state)
+      this.persistState(prevState, { ...state, ...s } as ViewportWinState);
   }
 
   render() {

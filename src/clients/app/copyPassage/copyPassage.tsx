@@ -1,6 +1,7 @@
 import React from 'react';
+import { Intent, Position, OverlayToaster } from '@blueprintjs/core';
 import { sanitizeHTML } from '../../../common.ts';
-import { G } from '../../G.ts';
+import { G, GI } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import verseKey from '../../verseKey.ts';
 import {
@@ -29,12 +30,15 @@ import '../../libsword.css';
 import '../../components/atext/atext.css';
 import './copyPassage.css';
 
+import type { Toaster, ToastProps } from '@blueprintjs/core';
 import type S from '../../../defaultPrefs.ts';
 import type VerseKey from '../../../verseKey.ts';
 import type { XulProps } from '../../components/libxul/xul.tsx';
 import type { SelectVKType } from '../../components/libxul/selectVK.tsx';
 
 // TODO: CopyPassage font is underlined when viewed in LibreOffice.
+
+const MaxChaptersToCopy = 10;
 
 const propTypes = xulPropTypes;
 
@@ -57,6 +61,8 @@ export default class CopyPassageWin
   renderPromise: RenderPromise;
 
   loadingRef: React.RefObject<HTMLDivElement>;
+
+  toaster: Toaster | undefined;
 
   constructor(props: CopyPassageProps) {
     super(props);
@@ -97,6 +103,7 @@ export default class CopyPassageWin
     this.state = s;
 
     this.passageToClipboard = this.passageToClipboard.bind(this);
+    this.addToast = this.addToast.bind(this);
   }
 
   componentDidMount() {
@@ -113,16 +120,24 @@ export default class CopyPassageWin
     renderPromise.dispatch();
   }
 
+  addToast(toast: ToastProps) {
+    if (this.toaster) this.toaster.show(toast);
+  }
+
   passageToClipboard() {
     const { renderPromise } = this;
     const state = this.state as CopyPassageState;
     const { passage, checkboxes } = state;
     const testdiv = document.getElementById('testdiv');
     if (testdiv && passage) {
+      passage.verse = undefined;
+      passage.lastverse = undefined;
       testdiv.innerHTML = '';
+      let ch = 0;
       for (
-        let ch = passage.chapter;
-        ch <= (passage?.lastchapter || passage.chapter);
+        ch = passage.chapter;
+        ch <= (passage?.lastchapter || passage.chapter) &&
+        ch < passage.chapter + MaxChaptersToCopy;
         ch += 1
       ) {
         const lsresp = libswordText(
@@ -161,12 +176,23 @@ export default class CopyPassageWin
         const div = testdiv.appendChild(document.createElement('div'));
         div.classList.add('text');
         sanitizeHTML(div, lsresp.textHTML);
+        /* always showing full chapters
         htmlVerses(
           div,
           ch === passage.chapter ? passage.verse || 1 : 1,
           ch === passage.lastchapter ? passage.lastverse || null : null,
-        );
+        );*/
         computed2inlineStyle(div);
+      }
+      if (ch === passage.chapter + MaxChaptersToCopy) {
+        passage.lastchapter = ch - 1;
+        this.addToast({
+          message: `${
+            GI.i18n.t('', renderPromise, 'menu.copyPassage')
+            }: ${passage.chapter}-${passage.lastchapter}`,
+          timeout: 5000,
+          intent: Intent.WARNING,
+        });
       }
       const refdiv = testdiv.appendChild(document.createElement('div'));
       const vks: VerseKey[] = [];
@@ -198,7 +224,7 @@ export default class CopyPassageWin
         refdiv,
         `
         <span class="cs-locale">
-          (${vks.map((vk) => vk.readable(G.i18n.language)).join('-')})
+          (${vks.map((vk) => vk.readable(G.i18n.language)).join(' - ')})
         </span>`,
       );
       G.clipboard.write({
@@ -214,11 +240,19 @@ export default class CopyPassageWin
     const { loadingRef, passageToClipboard } = this;
     return (
       <Vbox domref={loadingRef}>
+        <OverlayToaster
+          canEscapeKeyClear
+          position={Position.TOP}
+          usePortal
+          ref={(ref: Toaster | null) => {
+            this.toaster = ref ?? undefined;
+          }}
+        />
         <div id="testdiv" />
         <Groupbox caption={G.i18n.t('passage.label')}>
           <SelectVK
             initialVK={passage || { book: 'Gen', chapter: 1, v11n: 'KJV' }}
-            options={{ lastchapters: [] }}
+            options={{ verses: [], lastverses: [] }}
             onSelection={(selection: SelectVKType) => {
               this.setState({ passage: selection });
             }}

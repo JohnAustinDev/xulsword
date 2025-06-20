@@ -598,6 +598,7 @@ export default class Prefs {
         }
       });
     }
+
     // Check the current value and set to the new value only if needed.
     let valueChanged = true;
     if (k !== null && value === undefined) {
@@ -605,9 +606,32 @@ export default class Prefs {
       else valueChanged = false;
     } else if (k !== null && diff(p[k], value) === undefined) {
       valueChanged = false;
-    } else if (k === null || type === 'merge') {
-      // already asserted the type <=> merge connection above
-      const pp = k === null ? this.stores[store].data : p[k];
+    } else if (type === 'merge' || k === null) {
+      // When merging with a pref value that has never been read before, that
+      // pref's default value may not have been loaded yet, so insure it has
+      // been, by calling getPrefOrCreate when the pref value is undefined.
+      let pp: PrefValue | undefined;
+      if (k === null || key === null) {
+        pp = this.stores[store].data ?? {};
+        if (valueobj)
+          Object.keys(valueobj).forEach((vk) => {
+            if (pp && typeof pp === 'object' && !(vk in pp)) {
+              (pp as PrefObject)[vk] = this.getPrefOrCreate(
+                vk,
+                'complex',
+                undefined,
+                store,
+              );
+            }
+          });
+      } else {
+        if (!(k in p)) {
+          pp = this.getPrefOrCreate(key, 'complex', undefined, store);
+        } else {
+          pp = p[k];
+        }
+      }
+      // Merge the valueobj with the current pref value
       if (typeof pp === 'object' && !Array.isArray(pp)) {
         valueobj = diff(pp, valueobj);
         if (valueobj !== undefined) {
@@ -617,7 +641,7 @@ export default class Prefs {
         } else valueChanged = false;
       } else {
         throw new Error(
-          `Prefs merge failed because the key does not contain a PrefObject (key-value='${pp?.toString()}', key='${key}', store='${store}').`,
+          `Prefs merge failed because the key does not contain a PrefObject (key-value='${pp?.toString()}', key='${key}', store='${store}', k='${k?.toString()}').`,
         );
       }
     } else p[k] = clone(value);

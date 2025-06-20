@@ -6,16 +6,15 @@ import S from '../../defaultPrefs.ts';
 import { G } from './G.ts';
 import ComCommands from './commands.ts';
 import CommandsX from './components/commands.ts';
-import Viewport from './viewport.ts';
 import Data from '../components/data.ts';
 
 import type { BrowserWindow } from 'electron';
-import type { GAddCaller, ContextDataType, SwordConfType } from '../../type.ts';
+import type { GAddWindowId, ContextDataType, SwordConfType } from '../../type.ts';
 import type { AboutWinState } from '../../clients/app/about/about.tsx';
 
 // Require the calling window argument, since G will not add it when
 // Commands are called from the main process.
-const Commands = CommandsX as GAddCaller['Commands'];
+const Commands = CommandsX as GAddWindowId['Commands'];
 
 const defaultContextData: ContextDataType = { type: 'general' };
 
@@ -117,7 +116,7 @@ export default function contextMenu(
             click: () => {
               const mod = d.tab || d.context;
               if (mod && d.panelIndex !== undefined)
-                Viewport.setXulswordTabs({
+                G.Viewport.setXulswordTabs({
                   panelIndex: d.panelIndex,
                   whichTab: mod,
                   doWhat: 'hide',

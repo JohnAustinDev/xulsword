@@ -1,11 +1,14 @@
+/* eslint-disable prefer-rest-params */
 import RenderPromise from './clients/renderPromise.ts';
 import { getPanelWidths, keep } from './common.ts';
 import C from './constant.ts';
 
 import type S from './defaultPrefs.ts';
 import type PrefsElectron from './servers/app/prefs.ts';
+import type Window from './servers/app/components/window.ts';
 import type PrefsBrowser from './clients/webapp/prefs.ts';
 import type {
+  GAddWindowId,
   GIType,
   GType,
   LocationORType,
@@ -13,6 +16,7 @@ import type {
   TabType,
   TabTypes,
 } from './type.ts';
+import { XulswordState } from './clients/components/xulsword/xulsword.tsx';
 
 // This file contains functions for manipulating the panels and tab-banks of
 // a viewport. A viewport consists of one or more text panels plus a 'chooser'
@@ -54,15 +58,19 @@ export class Viewport {
 
   #GI;
 
+  #window;
+
   constructor(
-    // These web app G calls must be cache preloaded.
+    // These web app G calls must be either cache preloaded or only used by Electron.
     G: Pick<GType, 'Tab' | 'Tabs' | 'Books' | 'i18n'>,
     GI: Pick<GIType, 'getBooksInVKModule'>,
     prefs: typeof PrefsElectron | typeof PrefsBrowser,
+    window?: typeof Window,
   ) {
     this.#G = G;
     this.#GI = GI;
     this.#Prefs = prefs;
+    this.#window = window;
   }
 
   // Sort tabslist in place by type and then by language relevance to a locale.
@@ -454,26 +462,39 @@ export class Viewport {
     typeof S.prefs.xulsword,
     'panels' | 'mtModules' | 'tabs' | 'location'
   > {
+    const id = (arguments[2] as number) ?? -1;
     const { skipCallbacks, clearRendererCaches } = {
       skipCallbacks: false,
       clearRendererCaches: true,
       ...options,
     };
 
-    const xulsword = this.#Prefs.getComplexValue(
-      'xulsword',
-    ) as typeof S.prefs.xulsword;
+    let isViewportWin = null;
+    if (Build.isElectronApp && id !== -1 && this.#window) {
+      const [d] = this.#window.descriptions({ id });
+      if (d?.type === 'viewportWin')
+        isViewportWin = this.#window as GAddWindowId['Window'];
+    }
+
+    const xulsword = !isViewportWin
+      ? (this.#Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword)
+      : (isViewportWin.getComplexValue('xulswordState', id) as XulswordState);
 
     this.getTabChange(options, xulsword, renderPromise);
     const result = keep(xulsword, ['panels', 'mtModules', 'tabs', 'location']);
 
-    this.#Prefs.mergeValue(
-      'xulsword',
-      result,
-      'prefs',
-      skipCallbacks,
-      clearRendererCaches,
-    );
+    if (!isViewportWin)
+      this.#Prefs.mergeValue(
+        'xulsword',
+        result,
+        'prefs',
+        skipCallbacks,
+        clearRendererCaches,
+      );
+    else {
+      isViewportWin.setComplexValue('xulswordState', xulsword, id);
+      isViewportWin.reset('all', 'self', id);
+    }
 
     return result;
   }

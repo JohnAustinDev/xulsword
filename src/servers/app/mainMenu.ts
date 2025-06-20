@@ -13,7 +13,6 @@ import { G } from './G.ts';
 import ComCommands from './commands.ts';
 import Window, { getBrowserWindows } from './components/window.ts';
 import Commands from './components/commands.ts';
-import Viewport from './viewport.ts';
 
 import type S from '../../defaultPrefs.ts';
 import type { BrowserWindow, MenuItemConstructorOptions } from 'electron';
@@ -118,7 +117,7 @@ function updateModuleMenus(menux?: Menu) {
               type: 'checkbox',
               // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
               click: d(() => {
-                Viewport.setXulswordTabs({
+                G.Viewport.setXulswordTabs({
                   panelIndex,
                   whichTab: t.module,
                   doWhat: 'toggle',
@@ -648,7 +647,7 @@ export default class MainMenuBuilder {
                   id: `showAll_${typekey}_${pl}`,
                   label: ts('menu.view.showAll'),
                   click: d(() => {
-                    Viewport.setXulswordTabs({
+                    G.Viewport.setXulswordTabs({
                       panelIndex,
                       whichTab: type,
                       doWhat: 'show',
@@ -659,7 +658,7 @@ export default class MainMenuBuilder {
                   id: `hideAll_${typekey}_${pl}`,
                   label: ts('menu.view.hideAll'),
                   click: d(() => {
-                    Viewport.setXulswordTabs({
+                    G.Viewport.setXulswordTabs({
                       panelIndex,
                       whichTab: type,
                       doWhat: 'hide',
@@ -712,7 +711,7 @@ export default class MainMenuBuilder {
               id: `menu_showAll_${pl}`,
               enabled: panelIndex === -1 || Boolean(panels[panelIndex]),
               click: d(() => {
-                Viewport.setXulswordTabs({
+                G.Viewport.setXulswordTabs({
                   panelIndex,
                   whichTab: 'all',
                   doWhat: 'show',
@@ -733,7 +732,7 @@ export default class MainMenuBuilder {
               id: `menu_hideAll_${pl}`,
               enabled: panelIndex === -1 || Boolean(panels[panelIndex]),
               click: d(() => {
-                Viewport.setXulswordTabs({
+                G.Viewport.setXulswordTabs({
                   panelIndex,
                   whichTab: 'all',
                   doWhat: 'hide',

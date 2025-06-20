@@ -38,7 +38,7 @@ import Dirs from '../../components/dirs.ts';
 import type { OpenDialogSyncOptions } from 'electron';
 import type ZIP from 'adm-zip';
 import type {
-  GAddCaller,
+  GAddWindowId,
   AudioPath,
   BookmarkItemType,
   GenBookAudio,
@@ -64,7 +64,7 @@ import type { BMPropertiesStateWinArg } from '../../../clients/app/bmProperties/
 // Prefs2 requires the calling window argument so that window -2 may be
 // passed. The value -2 means the Pref changes should be pushed to all
 // windows and the main process.
-const Prefs2 = Prefs as GAddCaller['Prefs'];
+const Prefs2 = Prefs as GAddWindowId['Prefs'];
 
 const Commands = {
   openModuleManager(): void {

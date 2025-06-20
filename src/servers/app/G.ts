@@ -49,7 +49,6 @@ import type {
   WindowDescriptorType,
 } from '../../type.ts';
 import type { SubscriptionType } from '../../subscription.ts';
-import type AppViewport from './viewport.ts';
 
 if (!Build.isElectronApp)
   throw new Error(`This module should only be used with an Electron server.`);
@@ -83,7 +82,7 @@ export const G: GTypeMain = {
   Module,
 
   // To avoid a dependency cycle, this is set right after G is set.
-  Viewport: null as unknown as typeof AppViewport,
+  Viewport: null as unknown as Viewport,
 
   get Tabs() {
     return getTabs();
@@ -265,7 +264,10 @@ const GI: Pick<GIType, 'getBooksInVKModule'> = {
   },
 };
 
-G.Viewport = new Viewport(G, GI, Prefs);
+G.Viewport = new Viewport(G, GI, Prefs, Window);
 
 Cache.write(G, 'G');
 Cache.noclear('G');
+
+Cache.write(GI, 'GI');
+Cache.noclear('GI');

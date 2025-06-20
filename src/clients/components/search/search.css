@@ -90,6 +90,8 @@
 }
 
 .indexing-dialog {
+  position: relative;
+  top: 60px;
   padding: 3em;
 }
 

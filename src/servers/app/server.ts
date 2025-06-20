@@ -28,7 +28,6 @@ import LibSword from '../components/libsword.ts';
 import DiskCache from '../components/diskcache.ts';
 import LocalFile from '../components/localFile.ts';
 import Prefs from './prefs.ts';
-import Viewport from './viewport.ts';
 import Window from './components/window.ts';
 import {
   getCipherFailConfs,
@@ -50,6 +49,7 @@ import type { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import type { LogLevel } from 'electron-log';
 import type {
   GCallType,
+  GType,
   NewModulesType,
   WindowDescriptorPrefType,
   WindowDescriptorType,
@@ -73,6 +73,9 @@ log.transports.console.level = C.LogLevel;
 log.transports.file.level = C.LogLevel;
 log.transports.file.resolvePath = () => logfile.path;
 log.info(`Starting ${app.getName()} isDevelopment='${Build.isDevelopment}'`);
+
+const G = Cache.has('G') ? Cache.read('G') as GType : null;
+if (!G) log.error(`G was not read from Cache.`);
 
 addBookmarkTransaction(
   -1,
@@ -313,16 +316,17 @@ const openXulswordWindow = () => {
           // reference only installed modules. We just need to add new tabs and
           // new modules to panels.
           if (callingWinID === xulswordWindow.id) {
-            Prefs.mergeValue(
-              'xulsword',
-              Viewport.getModuleChange(
-                newmods.modules.map((c) => c.module),
-                Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword,
-              ),
-              'prefs',
-              false,
-              true,
-            );
+            if (G)
+              Prefs.mergeValue(
+                'xulsword',
+                G.Viewport.getModuleChange(
+                  newmods.modules.map((c) => c.module),
+                  Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword,
+                ),
+                'prefs',
+                false,
+                true,
+              );
           } else {
             setTimeout(() => {
               publishSubscription(
@@ -500,10 +504,10 @@ const init = async () => {
   // (preferring the locale language), and show that tab.
   const xulsword = Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword;
   const { tabs } = xulsword;
-  if (tabs.every((tb) => !tb?.length)) {
-    const modules = Viewport.sortTabsByLocale(getTabs().map((t) => t.module));
+  if (G && tabs.every((tb) => !tb?.length)) {
+    const modules = G.Viewport.sortTabsByLocale(getTabs().map((t) => t.module));
     if (modules[0]) {
-      Viewport.getPanelChange(
+      G.Viewport.getPanelChange(
         {
           whichModuleOrLocGB: modules,
           maintainWidePanels: true,
@@ -551,7 +555,7 @@ const init = async () => {
               submitIssue(
                 'https://github.com/JohnAustinDev/xulsword/issues/new',
                 {
-                  title: `Error report for ${versions?.app || 'unknown'}`,
+                  title: `Error report for ${versions?.app || 'unknown'} ${Data.read('buildInfo')}`,
                   body:
                     `Error:\n\`\`\`${error.stack}\n\`\`\`\n` +
                     `OS: ${versions?.os || 'unknown'}`,

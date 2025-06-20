@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import { Icon, Intent, Position, OverlayToaster } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
 import analytics, {
-  Analytics,
   BibleBrowserEventInfo,
 } from '../../analytics.ts';
 import { clone, randomID } from '../../../common.ts';
@@ -17,7 +16,6 @@ import {
   setStatePref,
   windowArguments,
 } from '../../common.tsx';
-import log from '../../log.ts';
 import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';
 import Spacer from './spacer.tsx';
@@ -295,12 +293,13 @@ export default class PrintSettings extends React.Component {
                   );
                 })
                 .catch((er) => {
-                  if (this.toaster) {
-                    this.toaster.show({
-                      message: er,
-                      intent: Intent.WARNING,
-                    });
-                  }
+                  this.addToast({
+                    message: er
+                      .toString()
+                      .replace(/^error: promise rejection.*?:([^:]+)$/is, '$1'),
+                    intent: Intent.DANGER,
+                    timeout: -1,
+                  });
                 });
             } else {
               window.print();
@@ -327,9 +326,12 @@ export default class PrintSettings extends React.Component {
                 );
               })
               .catch((er) => {
-                this.toaster?.show({
-                  message: er,
-                  intent: Intent.WARNING,
+                this.addToast({
+                  message: er
+                    .toString()
+                    .replace(/^error: promise rejection.*?:([^:]+)$/is, '$1'),
+                  intent: Intent.DANGER,
+                  timeout: -1,
                 });
               });
             break;
@@ -356,9 +358,12 @@ export default class PrintSettings extends React.Component {
                 );
               })
               .catch((er) => {
-                this.toaster?.show({
-                  message: er,
-                  intent: Intent.WARNING,
+                this.addToast({
+                  message: er
+                    .toString()
+                    .replace(/^error: promise rejection.*?:([^:]+)$/is, '$1'),
+                  intent: Intent.DANGER,
+                  timeout: -1,
                 });
               });
             break;
@@ -717,7 +722,7 @@ export default class PrintSettings extends React.Component {
           position={Position.TOP}
           usePortal
           ref={(ref: Toaster | null) => {
-            if (ref) this.toaster = ref;
+            this.toaster = ref ?? undefined;
           }}
         />
 
@@ -874,13 +879,9 @@ export default class PrintSettings extends React.Component {
         </Groupbox>
 
         <Hbox className="dialog-buttons" pack="end" align="end">
-          {
-            // Printing in at least Ubuntu 20 core dumps! So Disallow
-            // in linux for now (the PDF can be created and then printed
-            // separately)
-          }
-          {(!Build.isElectronApp ||
-            window.ProcessInfo.platform !== 'linux') && (
+
+          {/* Native print is problematic in MS-Windows and doesn't work well
+          in Linux either, plus it's not needed since print-to-pdf works well.
             <Button
               id="print"
               icon="print"
@@ -890,8 +891,9 @@ export default class PrintSettings extends React.Component {
               onClick={handler}
             >
               {GI.i18n.t('', renderPromise, 'menu.print')}
-            </Button>
-          )}
+            </Button>*/
+          }
+
           {Build.isElectronApp && (
             <>
               <Button
@@ -904,6 +906,7 @@ export default class PrintSettings extends React.Component {
               >
                 PDF
               </Button>
+
               <Button
                 id="printPreview"
                 flex="1"

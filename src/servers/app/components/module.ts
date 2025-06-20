@@ -3,7 +3,6 @@ import fpath from 'path';
 import { BrowserWindow } from 'electron';
 import ZIP from 'adm-zip';
 import log from 'electron-log';
-import i18n from 'i18next';
 import Cache from '../../../cache.ts';
 import {
   clone,
@@ -16,13 +15,10 @@ import {
   pad,
   mergeNewModules,
   unknown2String,
-  validateViewportModulePrefs,
-  validateGlobalModulePrefs,
-  keep,
 } from '../../../common.ts';
 import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
-import { CipherKeyModules, getFeatureModules, getTabs } from '../../common.ts';
+import { CipherKeyModules } from '../../common.ts';
 import parseSwordConf from '../../parseSwordConf.ts';
 import {
   getFile,
@@ -42,7 +38,6 @@ import DiskCache from '../../components/diskcache.ts';
 import LocalFile from '../../components/localFile.ts';
 import Dirs from '../../components/dirs.ts';
 import LibSword, { moduleUnsupported } from '../../components/libsword.ts';
-import Prefs from '../prefs.ts';
 import Window, { getBrowserWindows } from './window.ts';
 
 import type {

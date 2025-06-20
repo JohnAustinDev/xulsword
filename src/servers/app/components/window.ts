@@ -3,7 +3,13 @@ import log from 'electron-log';
 import path from 'path';
 import i18n from 'i18next';
 import { BrowserWindow, dialog, shell } from 'electron';
-import { drop, keep, randomID, unknown2String } from '../../../common.ts';
+import {
+  clone,
+  drop,
+  keep,
+  randomID,
+  unknown2String,
+} from '../../../common.ts';
 import Cache from '../../../cache.ts';
 import C from '../../../constant.ts';
 import S from '../../../defaultPrefs.ts';
@@ -510,6 +516,28 @@ const Window = {
     });
 
     return win.id;
+  },
+
+  // Get a caller window's pref key value.
+  getComplexValue(key: string): PrefValue {
+    const id = (arguments[1] as number) ?? -1;
+    if (id !== -1) {
+      const prefs = Prefs.getComplexValue(
+        'OpenWindows',
+        'windows',
+      ) as typeof S.windows.OpenWindows;
+      const pk = `w${id}`;
+      const descriptor = WindowRegistry[id];
+      if (descriptor && !(pk in prefs))
+        prefs[pk] = descriptorToPref(descriptor);
+      if (pk in prefs) {
+        const { additionalArguments } = prefs[pk];
+        if (additionalArguments && key in additionalArguments)
+          return clone(additionalArguments[key]);
+      }
+    }
+
+    return {};
   },
 
   // Set the caller window's window prefs, or if calling window is undefined,
