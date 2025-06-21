@@ -13,8 +13,6 @@ import {
   subtractVerseKeyAudioChapters,
   subtractGenBookAudioChapters,
   genBookAudio2TreeNodes,
-  getDeprecatedVerseKeyAudioConf,
-  getDeprecatedGenBookAudioConf,
   diff,
   builtinRepos,
   repositoryModuleKey,
@@ -22,6 +20,8 @@ import {
   querablePromise,
   gbPaths,
   localizeString,
+  resolveAudioDataPathURL,
+  audioParametersForIBT,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
@@ -1240,7 +1240,7 @@ export function getModuleDownload(modrepkey: string): Download | null {
 async function promptAudioChapters(
   xthis: ModuleManager,
   conf: SwordConfType,
-): Promise<string> {
+): Promise<SelectVKType | SelectORMType | null> {
   if (conf.xsmType === 'XSM_audio') {
     const { AudioChapters } = conf;
     if (AudioChapters) {
@@ -1345,24 +1345,14 @@ async function promptAudioChapters(
         showAudioDialog.push(d);
         xthis.setState({ showAudioDialog });
       });
-      if (audio) {
-        // TODO: Implement swordzip API on server.
-        let bkchs: DeprecatedAudioChaptersConf;
-        if ('otherMod' in audio) {
-          bkchs = getDeprecatedGenBookAudioConf(audio);
-        } else {
-          bkchs = getDeprecatedVerseKeyAudioConf(audio);
-        }
-        const { bk, ch1, ch2 } = bkchs;
-        return `&bk=${bk}&ch=${ch1}&cl=${ch2}`;
-      }
+      return audio;
     } else {
       throw new Error(
         `Audio config is missing AudioChapters: '${conf.module}'`,
       );
     }
   }
-  return '';
+  return null;
 }
 
 function handleError(xthis: ModuleManager, er: any, modrepkeys: string[]) {
@@ -1413,9 +1403,13 @@ export async function download(
       });
       if ('http' in dlobj && conf.xsmType === 'XSM_audio') {
         try {
-          const urlfrag = await promptAudioChapters(xthis, conf);
-          if (urlfrag) dlobj.http += urlfrag;
-          else throw new Error(C.UI.Manager.cancelMsg);
+          const audio = await promptAudioChapters(xthis, conf);
+          if (audio) {
+            dlobj.http = resolveAudioDataPathURL(
+              dlobj.http,
+              audioParametersForIBT(G, audio),
+            );
+          } else throw new Error(C.UI.Manager.cancelMsg);
         } catch (er) {
           handleError(xthis, er, [modkey]);
           return null;

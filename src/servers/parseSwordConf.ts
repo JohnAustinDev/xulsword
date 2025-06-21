@@ -7,13 +7,10 @@ import {
   builtinRepos,
   isAudioVerseKey,
   JSON_parse,
-  readDeprecatedGenBookAudioConf,
-  readDeprecatedVerseKeyAudioConf,
   readVerseKeyAudioConf,
 } from '../common.ts';
 
 import type {
-  DeprecatedAudioChaptersConf,
   GenBookAudioConf,
   NewModuleReportType,
   Repository,
@@ -148,25 +145,11 @@ export default function parseSwordConf(
           }
         } else if (entryBase === 'AudioChapters') {
           const ac = JSON_parse(value);
-          if (Array.isArray(ac) && 'bk' in ac[0]) {
-            // Deprecated bk, ch1, ch2 API
-            const acx = ac as DeprecatedAudioChaptersConf[];
-            if (
-              Object.values(C.SupportedBooks).some((bg: any) =>
-                bg.includes(acx[0].bk),
-              )
-            ) {
-              r.AudioChapters = readDeprecatedVerseKeyAudioConf(acx);
-            } else {
-              r.AudioChapters = readDeprecatedGenBookAudioConf(acx);
-            }
+          const acy = ac as VerseKeyAudioConf | GenBookAudioConf;
+          if (isAudioVerseKey(acy)) {
+            r.AudioChapters = readVerseKeyAudioConf(acy);
           } else {
-            const acy = ac as VerseKeyAudioConf | GenBookAudioConf;
-            if (isAudioVerseKey(acy)) {
-              r.AudioChapters = readVerseKeyAudioConf(acy);
-            } else {
-              r.AudioChapters = acy;
-            }
+            r.AudioChapters = acy;
           }
         } else if (
           Object.keys(C.SwordConf.delimited).includes(entry as never)

@@ -1182,70 +1182,6 @@ export function xulswordLocation(
   return r;
 }
 
-// Convert a range-form string array into a number array.
-// Ex: ['1-3', '2-4', '7'] => [1,2,3,4,7]
-export function audioConfNumbers(strings: string[]): number[] {
-  const r: number[] = [];
-  strings.forEach((str) => {
-    const m = str.match(/^(\d+)-(\d+)$/);
-    if (m) {
-      const [, f, t] = m;
-      for (let x = Number(f); x <= Number(t); x += 1) {
-        r.push(x);
-      }
-    } else if (!Number.isNaN(Number(str))) {
-      r.push(Number(str));
-    }
-  });
-  return r.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-}
-
-// Convert long form number or boolean arrays into the short form strings
-// for use in human readable or text files.
-// Ex: [1,2,3,4,7] => ['1-4', '7'] or [false, true, true, true] => ['1-3']
-export function audioConfStrings(chapters: number[] | boolean[]): string[] {
-  let nums: number[];
-  if (chapters.some((ch) => typeof ch === 'number')) {
-    nums = chapters.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)) as number[];
-  } else {
-    nums = chapters.map((ch, i) => (ch === true ? i : -1));
-    nums = nums.filter((ch) => ch !== -1);
-  }
-  const ranges: Array<[number, number]> = [];
-  nums.forEach((n) => {
-    if (!ranges.length) ranges.push([n, n]);
-    else if (n === ranges[ranges.length - 1][1] + 1) {
-      ranges[ranges.length - 1][1] = n;
-    } else ranges.push([n, n]);
-  });
-  return ranges.map((r) => {
-    if (r[0] === r[1]) return `${r[0]}`;
-    return `${r[0]}-${r[1]}`;
-  });
-}
-
-// Audio conf DataPath may be an http(s) URL containing placeholder strings.
-// This function returns the completed URL by replacing the placeholders,
-// or else empty string is returned if they could not be replaced.
-export function resolveAudioDataPathURL(
-  url: string,
-  audio: VerseKeyAudioFile | GenBookAudioFile,
-): string {
-  const phs = { XSBOOK: '', XSCHAPTER: -1, XSKEY: '' };
-  if ('key' in audio) phs.XSKEY = audio.key;
-  if ('book' in audio) phs.XSBOOK = audio.book;
-  if ('chapter' in audio) phs.XSCHAPTER = audio.chapter;
-  let r = url;
-  Object.entries(phs).forEach((entry) => {
-    const [ph, value] = entry;
-    if (r.includes(ph)) {
-      if (!value || (ph === 'XSCHAPTER' && value === -1)) return '';
-      r = r.replaceAll(ph, value.toString());
-    }
-  });
-  return r;
-}
-
 // Find the module associated with any location or bookmark item,
 // or return null if there is none.
 export function getModuleOfObject(
@@ -1569,7 +1505,49 @@ export function localizeBookmarks(
   });
 }
 
-// Find the node having the id, or return undefined.
+// Convert a range-form string array into a number array.
+// Ex: ['1-3', '2-4', '7'] => [1,2,3,4,7]
+export function audioConfNumbers(strings: string[]): number[] {
+  const r: number[] = [];
+  strings.forEach((str) => {
+    const m = str.match(/^(\d+)-(\d+)$/);
+    if (m) {
+      const [, f, t] = m;
+      for (let x = Number(f); x <= Number(t); x += 1) {
+        r.push(x);
+      }
+    } else if (!Number.isNaN(Number(str))) {
+      r.push(Number(str));
+    }
+  });
+  return r.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+}
+
+// Convert long form number or boolean arrays into the short form strings
+// for use in human readable or text files.
+// Ex: [1,2,3,4,7] => ['1-4', '7'] or [false, true, true, true] => ['1-3']
+export function audioConfStrings(chapters: number[] | boolean[]): string[] {
+  let nums: number[];
+  if (chapters.some((ch) => typeof ch === 'number')) {
+    nums = chapters.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)) as number[];
+  } else {
+    nums = chapters.map((ch, i) => (ch === true ? i : -1));
+    nums = nums.filter((ch) => ch !== -1);
+  }
+  const ranges: Array<[number, number]> = [];
+  nums.forEach((n) => {
+    if (!ranges.length) ranges.push([n, n]);
+    else if (n === ranges[ranges.length - 1][1] + 1) {
+      ranges[ranges.length - 1][1] = n;
+    } else ranges.push([n, n]);
+  });
+  return ranges.map((r) => {
+    if (r[0] === r[1]) return `${r[0]}`;
+    return `${r[0]}-${r[1]}`;
+  });
+}
+
+// Return the node having the id, or return undefined.
 export function findTreeNode(
   id: string | number,
   searchIn: TreeNodeInfo[],
@@ -1588,6 +1566,7 @@ export function findTreeNode(
   return undefined;
 }
 
+// Provide the id (or order) and return both id and order.
 export function findTreeNodeOrder(
   searchIn: TreeNodeInfo[],
   idOrOrder: { id?: string | number; order?: number },
@@ -1635,6 +1614,19 @@ export function gbAncestorIDs(
   });
   ancestors.pop();
   return ancestors;
+}
+
+// Convert a Genbook key such as parent-title/sub-chapter/chapter to its
+// hierarchical order, such as 0/2/5
+export function genbkIdToOrd(G: GType, id: string, module: string): string {
+  const nodes = G.genBookTreeNodes(module);
+  const ords = id.split('/').map((_k, i) => {
+    const parent = findTreeNode(ords.slice(0, i).join('/'), nodes, true);
+    return (parent ? parent.childNodes : nodes)?.findIndex((n) => n.id === id);
+  });
+  const r = ords.join('/');
+
+  return r.includes('-') ? '0' : r;
 }
 
 export function findTreeAncestors(
@@ -1875,75 +1867,6 @@ export function readVerseKeyAudioConf(audio: VerseKeyAudioConf): VerseKeyAudio {
   return r;
 }
 
-export function readDeprecatedVerseKeyAudioConf(
-  audio: DeprecatedAudioChaptersConf[],
-): VerseKeyAudio {
-  const r: VerseKeyAudio = {};
-  audio.forEach((entry) => {
-    const { bk, ch1, ch2 } = entry;
-    if (Object.values(C.SupportedBooks).some((bg: any) => bg.includes(bk))) {
-      const book = bk as OSISBookType;
-      if (!(book in r)) r[book] = [];
-      const rb = r[book];
-      if (rb) {
-        for (let x = ch1; x <= ch2; x += 1) {
-          rb[x] = true;
-        }
-        for (let i = 0; i < rb.length; i += 1) {
-          rb[i] = !!rb[i];
-        }
-      }
-    }
-  });
-  return r;
-}
-
-// The deprecated GenBook audio conf does not consider all levels
-// of a module, only the 2nd, and indexing starts with 1. So these
-// must be updated to the new scheme.
-export function readDeprecatedGenBookAudioConf(
-  audio: DeprecatedAudioChaptersConf[],
-): GenBookAudioConf {
-  const r: GenBookAudioConf = {};
-  audio.forEach((entry) => {
-    const { bk, ch1, ch2 } = entry;
-    const m = bk.match(/^(\d+)(.*?)$/);
-    if (m) {
-      const bk2 = `000/${pad(Number(m[1]) - 1, 3, 0) + m[2]}/`;
-      if (!(bk2 in r)) r[bk2] = [];
-      r[bk2].push(`${Number(ch1) - 1}-${Number(ch2) - 1}`);
-    }
-  });
-  Object.values(r).forEach((v) => audioConfStrings(audioConfNumbers(v)));
-  return r;
-}
-
-export function getDeprecatedVerseKeyAudioConf(
-  vkey: SelectVKType,
-): DeprecatedAudioChaptersConf {
-  const { book, chapter, lastchapter } = vkey;
-  return { bk: book, ch1: chapter, ch2: lastchapter || chapter };
-}
-
-// The deprecated GenBook audio conf does not consider all levels
-// of a module, only the 2nd, and indexing starts with 1. So these
-// must be updated from the new scheme. IMPORTANT: the gbsel arg
-// selection must be a key to GenBookAudioConf and not GenBookAudio.
-export function getDeprecatedGenBookAudioConf(
-  gbsel: SelectORMType,
-): DeprecatedAudioChaptersConf {
-  const { keys } = gbsel;
-  const k = keys[0].split(C.GBKSEP);
-  if (!k[k.length - 1]) k.pop(); // remove any leaf dir mark
-  k.pop(); // remove leaf
-  let bk = k.pop() || '';
-  const m = bk.match(/^(\d+)(.*?)$/);
-  if (m) bk = pad(Number(m[1]) + 1, 3, 0) + m[2];
-  const ch1 = Number(keys[0].split(C.GBKSEP).pop()) + 1;
-  const ch2 = Number(keys[keys.length - 1].split(C.GBKSEP).pop()) + 1;
-  return { bk, ch1, ch2 };
-}
-
 export function subtractVerseKeyAudioChapters(
   audio: VerseKeyAudio,
   subtract: VerseKeyAudio,
@@ -1991,6 +1914,69 @@ export function subtractGenBookAudioChapters(
       });
       if (is.length) r[audiokey] = audioConfStrings(is);
       else delete r[audiokey];
+    }
+  });
+  return r;
+}
+
+// Convert any audio selection to the XSBOOK, XSCHAPTERS and XSKEYS parameters
+// required for IBT's audio download URLs.
+export function audioParametersForIBT(
+  G: GType,
+  audio: SelectVKType | SelectORMType,
+) {
+  const params: Parameters<typeof resolveAudioDataPathURL>[1] = {};
+  if ('otherMod' in audio) {
+    const { otherMod, keys } = audio;
+    if (keys.length && keys[0]) {
+      let p = '';
+      let ch = -1;
+      let cl = 0;
+      keys.forEach((k) => {
+        const ords = genbkIdToOrd(G, k, otherMod).split('/');
+        const c = ords.pop();
+        if (!p && ords.length) p = ords.join('/');
+        if (ch === -1) ch = Number(c);
+        else cl = Number(c);
+      });
+      if (ch > -1) {
+        params.chapter = `/${p + (p ? '/' : '')}${ch}${
+        cl && cl > ch ? '-' + cl.toString() : ''}`;
+      }
+    }
+  } else {
+    const { book, chapter, lastchapter } = audio;
+    params.book = book;
+    params.chapter = `${chapter}${
+      typeof lastchapter !== 'undefined' && lastchapter > chapter
+        ? '-' + lastchapter.toString()
+        : ''
+    };`;
+  }
+
+  return params;
+}
+
+// Audio conf DataPath may be an http(s) URL containing placeholder strings.
+// This function returns the completed URL by replacing the placeholders,
+// or else empty string is returned if they could not be replaced.
+export function resolveAudioDataPathURL(
+  url: string,
+  audio: { book?: string; chapter?: number | string; key?: string },
+): string {
+  const phs = { XSBOOK: '', XSCHAPTERS: -1 as number | string, XSKEYS: '' };
+  if ('key' in audio && audio.key) phs.XSKEYS = audio.key;
+  if ('book' in audio && audio.book) phs.XSBOOK = audio.book;
+  if ('chapter' in audio) {
+    const { chapter } = audio;
+    if (typeof chapter !== 'undefined') phs.XSCHAPTERS = chapter;
+  }
+  let r = url;
+  Object.entries(phs).forEach((entry) => {
+    const [ph, value] = entry;
+    if (r.includes(ph)) {
+      if (!value || (ph === 'XSCHAPTERS' && value === -1)) return '';
+      r = r.replaceAll(ph, value.toString());
     }
   });
   return r;
