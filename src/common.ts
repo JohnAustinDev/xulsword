@@ -1925,7 +1925,9 @@ export function audioParametersForIBT(
   G: GType,
   audio: SelectVKType | SelectORMType,
 ) {
-  const params: Parameters<typeof resolveAudioDataPathURL>[1] = {};
+  const params: Parameters<typeof resolveAudioDataPathURL>[1] = {
+    package: 'zip',
+  };
   if ('otherMod' in audio) {
     const { otherMod, keys } = audio;
     if (keys.length && keys[0]) {
@@ -1941,7 +1943,8 @@ export function audioParametersForIBT(
       });
       if (ch > -1) {
         params.chapter = `/${p + (p ? '/' : '')}${ch}${
-          cl && cl > ch ? '-' + cl.toString() : ''}`;
+          cl && cl > ch ? '-' + cl.toString() : ''
+        }`;
       }
     }
   } else {
@@ -1962,9 +1965,19 @@ export function audioParametersForIBT(
 // or else empty string is returned if they could not be replaced.
 export function resolveAudioDataPathURL(
   url: string,
-  audio: { book?: string; chapter?: number | string; key?: string },
+  audio: {
+    book?: OSISBookType;
+    chapter?: number | string;
+    key?: string;
+    package?: 'none' | 'zip';
+  },
 ): string {
-  const phs = { XSBOOK: '', XSCHAPTERS: -1 as number | string, XSKEYS: '' };
+  const phs = {
+    XSBOOK: '' as OSISBookType | '',
+    XSCHAPTERS: -1 as number | string,
+    XSKEYS: '',
+    XSPACKAGE: 'none' as 'none' | 'zip',
+  };
   if ('key' in audio && audio.key) {
     phs.XSKEYS = (!audio.key.startsWith('/') ? '/' : '') + audio.key;
   }
