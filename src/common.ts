@@ -1941,7 +1941,7 @@ export function audioParametersForIBT(
       });
       if (ch > -1) {
         params.chapter = `/${p + (p ? '/' : '')}${ch}${
-        cl && cl > ch ? '-' + cl.toString() : ''}`;
+          cl && cl > ch ? '-' + cl.toString() : ''}`;
       }
     }
   } else {
@@ -1965,7 +1965,9 @@ export function resolveAudioDataPathURL(
   audio: { book?: string; chapter?: number | string; key?: string },
 ): string {
   const phs = { XSBOOK: '', XSCHAPTERS: -1 as number | string, XSKEYS: '' };
-  if ('key' in audio && audio.key) phs.XSKEYS = audio.key;
+  if ('key' in audio && audio.key) {
+    phs.XSKEYS = (!audio.key.startsWith('/') ? '/' : '') + audio.key;
+  }
   if ('book' in audio && audio.book) phs.XSBOOK = audio.book;
   if ('chapter' in audio) {
     const { chapter } = audio;
