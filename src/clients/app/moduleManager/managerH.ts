@@ -492,7 +492,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                   if (!r)
                     this.addToast({
                       message: `Failed to remove module: '${removeMods[i].name}'`,
-                      timeout: 5000,
+                      timeout: -1,
                       intent: Intent.DANGER,
                     });
                 });
@@ -530,7 +530,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                 if (!r)
                   this.addToast({
                     message: `Failed to move module: '${removeMods[i].name}'`,
-                    timeout: 5000,
+                    timeout: -1,
                     intent: Intent.DANGER,
                   });
               });
@@ -917,7 +917,7 @@ export function handleListings(
             : Intent.DANGER;
           xthis.addToast({
             message: l,
-            timeout: 5000,
+            timeout: newintent === Intent.WARNING ? 5000 : -1,
             intent: newintent,
           });
           repoRowEnableDisable(false, drow, disabled, newintent);
@@ -1381,7 +1381,7 @@ function handleError(xthis: ModuleManager, er: any, modrepkeys: string[]) {
   if (message) {
     xthis.addToast({
       message: er.message,
-      timeout: 5000,
+      timeout: newintent === Intent.WARNING ? 5000 : -1,
       intent: newintent,
     });
   }
@@ -1462,7 +1462,7 @@ export async function download(
             newintent = Intent.DANGER;
             xthis.addToast({
               message: result,
-              timeout: 5000,
+              timeout: -1,
               intent: newintent,
             });
           }

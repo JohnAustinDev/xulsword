@@ -55,30 +55,6 @@ if [ "$(dpkg -l $PKG_DEPS 2>&1 | grep "no packages" | wc -m)" -ne 0 ]; then
   fi
 fi
 
-if [[ "$WINMACHINE" != "no" ]]; then
-  if [[ -z "$(which wine)" ]]; then
-    echo "INSTALLING WINE AND WINDOWS X-COMPILE BUILD DEPENDENCIES"
-    if [[ "$VAGRANT" == "guest" ]]; then
-      sudo dpkg --add-architecture i386
-      sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
-      sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources
-      sudo apt-get update
-      sudo apt install -y --install-recommends winehq-stable gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix
-    else
-      echo "You need to install missing windows32 packages with:"
-      echo .
-      echo "sudo dpkg --add-architecture i386"
-      echo "sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key"
-      echo "sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/$DEBVERS/winehq-$DEBVERS.sources"
-      echo "sudo apt-get update"
-      echo "sudo apt install --install-recommends winehq-stable gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix"
-      echo .
-      echo "Then run this script again."
-      exit;
-    fi
-  fi
-fi
-
 # If running in Vagrant, then clone the host code to VM and build
 # everything within the VM so as not to contaminate the host's own build
 # files. Then copy only the finished output libraries to the host.
@@ -110,6 +86,30 @@ source "./setenv"
 if [[ "$VAGRANT" == "guest" ]]; then
   WINMACHINE=no
   LIBXULSWORD_ONLY=yes
+fi
+
+if [[ "$WINMACHINE" != "no" ]]; then
+  if [[ -z "$(which wine)" ]]; then
+    echo "INSTALLING WINE AND WINDOWS X-COMPILE BUILD DEPENDENCIES"
+    if [[ "$VAGRANT" == "guest" ]]; then
+      sudo dpkg --add-architecture i386
+      sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+      sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources
+      sudo apt-get update
+      sudo apt install -y --install-recommends winehq-stable gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix
+    else
+      echo "You need to install missing windows32 packages with:"
+      echo .
+      echo "sudo dpkg --add-architecture i386"
+      echo "sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key"
+      echo "sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/$DEBVERS/winehq-$DEBVERS.sources"
+      echo "sudo apt-get update"
+      echo "sudo apt install --install-recommends winehq-stable gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix"
+      echo .
+      echo "Then run this script again."
+      exit;
+    fi
+  fi
 fi
 
 CPP="$XULSWORD/Cpp"
@@ -340,7 +340,7 @@ fi
 
 # Install the lib and all dependencies and strip them
 LIBDIRNAME=lib
-if [[ "$VAGRANT" == "guest" ]]; then LIBDIRNAME=lib-core22; fi
+if [[ "$(lsb_release -cs)" == "jammy" ]]; then LIBDIRNAME=lib-core22; fi
 LIBDIR="$CPP/$LIBDIRNAME"
 if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
 mkdir "$LIBDIR"
