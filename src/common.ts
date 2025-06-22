@@ -1954,7 +1954,7 @@ export function audioParametersForIBT(
       typeof lastchapter !== 'undefined' && lastchapter > chapter
         ? '-' + lastchapter.toString()
         : ''
-    };`;
+    }`;
   }
 
   return params;
@@ -1986,6 +1986,7 @@ export function resolveAudioDataPathURL(
     const { chapter } = audio;
     if (typeof chapter !== 'undefined') phs.XSCHAPTERS = chapter;
   }
+  if ('package' in audio && audio.package) phs.XSPACKAGE = audio.package;
   let r = url;
   Object.entries(phs).forEach((entry) => {
     const [ph, value] = entry;
@@ -1995,6 +1996,17 @@ export function resolveAudioDataPathURL(
     }
   });
   return r;
+}
+
+// Download http is a URL, but audio download URLs are modified whenever
+// book and chapter are selected/changed. So this function returns a
+// new download object with a URL that does not change.
+export function normalizeDownloadURL(download: Download): Download {
+  const dl = clone(download);
+  if (dl.type === 'http' && dl.http.includes('&chapters=')) {
+    dl.http = dl.http.replace(/&chapters=.*$/, '');
+  }
+  return dl;
 }
 
 // Compare \d.\d.\d type version numbers (like SWORD modules).

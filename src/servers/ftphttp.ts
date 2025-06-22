@@ -5,7 +5,12 @@ import FTP from 'ftp';
 import GUNZIP from 'gunzip-maybe';
 import TAR from 'tar-stream';
 import { Readable } from 'stream';
-import { keyToDownload, randomID, unknown2String } from '../common.ts';
+import {
+  keyToDownload,
+  randomID,
+  normalizeDownloadURL,
+  unknown2String,
+} from '../common.ts';
 import C from '../constant.ts';
 import LocalFile from './components/localFile.ts';
 
@@ -208,15 +213,13 @@ export function httpCancel(cancelkey?: string | string[]): number {
   }
   const keys = Array.isArray(cancelkey) ? cancelkey : [cancelkey];
   keys.forEach((k) => {
-    const cancelkeydl = keyToDownload(k);
+    const cancelkeydl = normalizeDownloadURL(keyToDownload(k));
     if ('http' in cancelkeydl) {
-      const truncated = !cancelkeydl.http.includes('&bk=');
       Object.entries(HttpCancelable).forEach((entry) => {
-        const keyobj = keyToDownload(entry[0]) as HTTPDownload;
-        if (
-          cancelkeydl.http ===
-          (truncated ? keyobj.http.replace(/&bk=.*$/, '') : keyobj.http)
-        ) {
+        const keyobj = normalizeDownloadURL(
+          keyToDownload(entry[0]),
+        ) as HTTPDownload;
+        if (cancelkeydl.http === keyobj.http) {
           log.debug(`Canceled HTTP '${keyobj.http}'`);
           callCallback(entry[1]);
         }

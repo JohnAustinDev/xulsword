@@ -22,6 +22,7 @@ import {
   localizeString,
   resolveAudioDataPathURL,
   audioParametersForIBT,
+  normalizeDownloadURL,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
@@ -30,7 +31,6 @@ import log from '../../log.ts';
 import { forEachNode } from '../../components/libxul/treeview.tsx';
 
 import type {
-  DeprecatedAudioChaptersConf,
   Download,
   FTPDownload,
   GType,
@@ -548,15 +548,12 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                         let [downloadkey] = entry;
                         const [, result] = entry;
                         if (typeof result === 'number' && result > 0) {
-                          // Find the moduleData row associated with this download. The moduleData
-                          // audio download URLs do not include the chapter range, so it must be
-                          // removed from the download URL (and don't change original download object!).
                           const dl = keyToDownload(downloadkey);
-                          if ('http' in dl) {
-                            const adl = clone(dl);
-                            adl.http = adl.http.replace(/&bk=.*$/, '');
-                            downloadkey = downloadKey(adl);
-                          }
+                          // Find the moduleData row associated with this
+                          // download. The moduleData audio download URLs
+                          // do not include the chapter range, so it must be
+                          // removed from the download URL.
+                          downloadkey = downloadKey(normalizeDownloadURL(dl));
                           const key = Object.keys(moduleData).find(
                             (k) =>
                               downloadKey(getModuleDownload(k)) === downloadkey,
@@ -1402,21 +1399,20 @@ export async function download(
         moduleData[k][ModCol.iInfo].loading = loading(ModCol.iInstalled);
       });
       if ('http' in dlobj && conf.xsmType === 'XSM_audio') {
-        try {
-          const audio = await promptAudioChapters(xthis, conf);
-          if (audio) {
-            dlobj.http = resolveAudioDataPathURL(
-              dlobj.http,
-              audioParametersForIBT(G, audio),
-            );
-          } else throw new Error(C.UI.Manager.cancelMsg);
-        } catch (er) {
+        return promptAudioChapters(xthis, conf).then((audio) => {
+          if (!audio) throw new Error(C.UI.Manager.cancelMsg);
+          dlobj.http = resolveAudioDataPathURL(
+            dlobj.http,
+            audioParametersForIBT(G, audio),
+          );
+          return dlobj;
+        }).catch((er) => {
           handleError(xthis, er, [modkey]);
           return null;
-        }
+        });
       }
     }
-    return dlobj;
+    return null;
   });
   let dlobjs: Array<Download | null>;
   try {

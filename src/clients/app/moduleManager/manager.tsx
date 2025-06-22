@@ -18,6 +18,7 @@ import {
   stringHash,
   keyToDownload,
   localizeString,
+  normalizeDownloadURL,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
@@ -351,16 +352,16 @@ export default class ModuleManager
             H.setTableState(this, 'repository', null, repository.data, true);
           }
           // Set individual module progress bars
-          const dl = keyToDownload(id);
-          if (dl.type === 'http' && dl.http.includes('&bk=')) {
-            dl.http = dl.http.replace(/&bk=.*$/, '');
-          }
-          const dlkey = downloadKey(dl);
+          const dlkey = downloadKey(normalizeDownloadURL(keyToDownload(id)));
           if (prog === -1) {
             Object.entries(moduleData)
               .filter((e) => {
                 const [k] = e;
-                return downloadKey(H.getModuleDownload(k)) === dlkey;
+                const medl = H.getModuleDownload(k);
+                if (medl) {
+                  return downloadKey(normalizeDownloadURL(medl)) === dlkey;
+                }
+                return false;
               })
               .forEach((e) => {
                 const [, r] = e;
