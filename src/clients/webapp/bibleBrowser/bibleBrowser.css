@@ -48,11 +48,16 @@ body {
 #control-rows {
   padding: 0 10px;
   flex-basis: 0;
+  max-width: 100vw;
 }
 #main-controlbar {
   padding: 10px 0;
   flex-wrap: wrap;
   align-items: center;
+}
+div:has(> #optionButtons),
+div:has(> #historyButtons) {
+  overflow-x: auto;
 }
 #choosermenu {
   margin-right: 10px;
