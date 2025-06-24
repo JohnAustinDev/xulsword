@@ -15,6 +15,8 @@ import {
   pad,
   mergeNewModules,
   unknown2String,
+  resolveAudioDataPathURL,
+  audioParametersForIBT,
 } from '../../../common.ts';
 import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
@@ -54,7 +56,6 @@ import type {
   VerseKeyAudioFile,
   OSISBookType,
 } from '../../../type.ts';
-import type S from '../../../defaultPrefs.ts';
 import type { ListingElementR } from '../../ftphttp.ts';
 
 // CrossWire SWORD Standard TODOS:
@@ -507,9 +508,7 @@ export async function installZIPs(
               case 'modules': {
                 const conf = Object.values(confs).find((c) => {
                   const swmodpath = confModulePath(c.DataPath);
-                  return (
-                    swmodpath && entryName.startsWith(`${swmodpath}/`)
-                  );
+                  return swmodpath && entryName.startsWith(`${swmodpath}/`);
                 });
                 const swmodpath = conf && confModulePath(conf.DataPath);
                 if (conf && swmodpath) {
@@ -840,9 +839,8 @@ function logdls() {
   const ongoing = Object.keys(ModuleDownloads.ongoing);
   const example = ongoing.slice(-5).map((x) => logid(x));
   return `ongoing=${ongoing.length}${
-    example.length ? `(${example.join(', ')})` : ''} finished=${
-    Object.keys(ModuleDownloads.finished).length
-  }`;
+    example.length ? `(${example.join(', ')})` : ''
+  } finished=${Object.keys(ModuleDownloads.finished).length}`;
 }
 
 const Module = {
@@ -930,7 +928,7 @@ const Module = {
           const cancelkey = downloadKey(manifest);
           if (ftpCancelableInit(cancelkey)) {
             return await Promise.resolve(
-              failCause(cancelkey, C.UI.Manager.cancelMsg),
+              failCause(manifest, C.UI.Manager.cancelMsg),
             );
           }
           let threshProgress = 0;
@@ -951,14 +949,14 @@ const Module = {
             repconfs = await downloadRepoConfs(manifest, cancelkey, progress);
           } catch (er) {
             return await Promise.resolve(
-              failCause(cancelkey, unknown2String(er, ['message'])),
+              failCause(manifest, unknown2String(er, ['message'])),
             );
           }
           try {
             ftpCancelable(cancelkey);
           } catch (er) {
             return await Promise.resolve(
-              failCause(cancelkey, C.UI.Manager.cancelMsg),
+              failCause(manifest, C.UI.Manager.cancelMsg),
             );
           }
           return repconfs.map((rc) => rc.conf);
@@ -994,7 +992,7 @@ const Module = {
       if (dl !== null) {
         const downloadkey = downloadKey(dl);
         if (ftpCancelableInit(downloadkey)) {
-          return failCause(downloadkey, C.UI.Manager.cancelMsg);
+          return failCause(dl, C.UI.Manager.cancelMsg);
         }
       }
       return dl;
@@ -1036,7 +1034,7 @@ const Module = {
     if (typeof winID === 'number') callingWinID = winID;
     const key = downloadKey(download);
     if (!alreadyReset && ftpCancelableInit(key)) {
-      return failCause(key, C.UI.Manager.cancelMsg);
+      return failCause(download, C.UI.Manager.cancelMsg);
     }
     let dl = ModuleDownloads.finished[key];
     if (!dl) {
@@ -1101,7 +1099,7 @@ const Module = {
     const returnMsg = (msg: string | Error) => {
       progress(-1);
       log.debug(`Failed download: ${logid(downloadkey)} ${logdls()}`);
-      return failCause(downloadkey, msg);
+      return failCause(download, msg);
     };
 
     const returnZIP = (zip: ZIP) => {
@@ -1113,57 +1111,64 @@ const Module = {
     try {
       // Audio XSM modules (HTTP download)
       if (type === 'http') {
-        const { http, confname } = download;
-        progress(0);
-        const tmpdir = new LocalFile(Window.tmpDir({ id: callingWinID })[0]);
-        if (!tmpdir.exists()) {
-          return await Promise.resolve(
-            returnMsg(`Could not create tmp directory '${tmpdir.path}'.`),
-          );
-        }
-        const dlfile = await getFileHTTP(
-          http,
-          tmpdir.append(randomID()),
-          downloadkey,
-          (p: number) => {
-            if (p && p !== -1) progress(p * (3 / 4));
-          },
-        );
-        ftpCancelable(downloadkey);
-
-        const zip = new ZIP(dlfile.path);
-        // The conf file is required, so add it to the zip if not already present.
-        let hasConf = false;
-        zip.forEach((ze) => {
-          let { entryName } = ze;
-          // Zip entryName is \ delimited on MS-Windows
-          entryName = entryName.replaceAll('\\', '/');
-          if (entryName.endsWith(confname)) hasConf = true;
-        });
-        if (!hasConf) {
-          const confs = await downloadRepoConfs(
-            { ...download, file: C.SwordRepoManifest, type: 'ftp' },
+        const { data } = download;
+        if (data) {
+          const { http, confname } = download;
+          progress(0);
+          const tmpdir = new LocalFile(Window.tmpDir({ id: callingWinID })[0]);
+          if (!tmpdir.exists()) {
+            return await Promise.resolve(
+              returnMsg(`Could not create tmp directory '${tmpdir.path}'.`),
+            );
+          }
+          const dlfile = await getFileHTTP(
+            resolveAudioDataPathURL(http, audioParametersForIBT(data)),
+            tmpdir.append(randomID()),
             downloadkey,
             (p: number) => {
-              if (p && p !== -1) progress(3 / 4 + p / 4);
+              if (p && p !== -1) progress(p * (3 / 4));
             },
           );
           ftpCancelable(downloadkey);
-          const strconf = confs.find(
-            (rc) => rc.conf.filename === confname,
-          )?.strconf;
-          if (strconf) {
-            zip.addFile(
-              fpath.posix.join('mods.d', confname),
-              Buffer.from(strconf),
+
+          const zip = new ZIP(dlfile.path);
+          // The conf file is required. Add it to the zip if not already there
+          let hasConf = false;
+          zip.forEach((ze) => {
+            let { entryName } = ze;
+            // Zip entryName is \ delimited on MS-Windows
+            entryName = entryName.replaceAll('\\', '/');
+            if (entryName.endsWith(confname)) hasConf = true;
+          });
+          if (!hasConf) {
+            const confs = await downloadRepoConfs(
+              { ...download, file: C.SwordRepoManifest, type: 'ftp' },
+              downloadkey,
+              (p: number) => {
+                if (p && p !== -1) progress(3 / 4 + p / 4);
+              },
             );
-          } else {
-            return await Promise.resolve(
-              returnMsg(`Could not locate ${confname}.`),
-            );
+            ftpCancelable(downloadkey);
+            const strconf = confs.find(
+              (rc) => rc.conf.filename === confname,
+            )?.strconf;
+            if (strconf) {
+              zip.addFile(
+                fpath.posix.join('mods.d', confname),
+                Buffer.from(strconf),
+              );
+            } else {
+              return await Promise.resolve(
+                returnMsg(`Could not locate ${confname}.`),
+              );
+            }
           }
+          return await Promise.resolve(returnZIP(zip));
+        } else {
+          return await Promise.resolve(
+            returnMsg(`No data for ${download.http}.`),
+          );
         }
-        return await Promise.resolve(returnZIP(zip));
       }
 
       // Other XSM modules are ZIP files

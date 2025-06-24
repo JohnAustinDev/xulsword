@@ -16,9 +16,7 @@ import {
   builtinRepos,
   repositoryModuleKey,
   stringHash,
-  keyToDownload,
   localizeString,
-  normalizeDownloadURL,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
@@ -352,16 +350,12 @@ export default class ModuleManager
             H.setTableState(this, 'repository', null, repository.data, true);
           }
           // Set individual module progress bars
-          const dlkey = downloadKey(normalizeDownloadURL(keyToDownload(id)));
           if (prog === -1) {
             Object.entries(moduleData)
               .filter((e) => {
                 const [k] = e;
                 const medl = H.getModuleDownload(k);
-                if (medl) {
-                  return downloadKey(normalizeDownloadURL(medl)) === dlkey;
-                }
-                return false;
+                return medl ? downloadKey(medl) === id : false;
               })
               .forEach((e) => {
                 const [, r] = e;

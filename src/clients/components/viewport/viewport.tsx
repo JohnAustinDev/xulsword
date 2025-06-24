@@ -152,6 +152,7 @@ class Viewport extends React.Component implements PopupParent {
     audioFile: VerseKeyAudioFile | GenBookAudioFile,
     e: React.SyntheticEvent,
   ) {
+    const { xulswordStateHandler } = this.props as ViewportProps;
     const atextClick = !!ofClass(['textarea'], e.target)?.element;
     const prevAudio = G.Prefs.getComplexValue(
       'xulsword.audio',
@@ -166,10 +167,7 @@ class Viewport extends React.Component implements PopupParent {
         ),
       );
     if (!audioFile || (atextClick && prevAudio.open)) {
-      G.Prefs.setBoolPref(
-        'xulsword.audio.open',
-        false,
-      ) as typeof S.prefs.xulsword.audio.open;
+      xulswordStateHandler({ audio: { open: false, file: null } });
     }
   }
 

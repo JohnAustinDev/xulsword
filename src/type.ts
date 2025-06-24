@@ -58,6 +58,8 @@ import type { CallBatch } from './servers/handleG.ts';
 import type Viewport from './viewport.ts';
 import type { AtextPropsType } from './clients/components/atext/atext.tsx';
 import type RenderPromise from './clients/renderPromise.ts';
+import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
+import type { SelectORMType } from './clients/components/libxul/selectOR.tsx';
 
 // This file contains global TypeScript types used throughout xulsword.
 
@@ -622,6 +624,7 @@ export type HTTPDownload = {
   type: 'http';
   http: string; // https?://...
   confname: string;
+  data?: SelectVKType | SelectORMType
 } & Repository;
 export type Download = FTPDownload | ModFTPDownload | HTTPDownload;
 

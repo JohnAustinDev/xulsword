@@ -6,9 +6,11 @@ import GUNZIP from 'gunzip-maybe';
 import TAR from 'tar-stream';
 import { Readable } from 'stream';
 import {
+  audioParametersForIBT,
+  downloadKey,
   keyToDownload,
   randomID,
-  normalizeDownloadURL,
+  resolveAudioDataPathURL,
   unknown2String,
 } from '../common.ts';
 import C from '../constant.ts';
@@ -16,7 +18,7 @@ import LocalFile from './components/localFile.ts';
 
 import type { ListingElement } from 'ftp';
 import type { Stream } from 'stream';
-import type { HTTPDownload } from '../type.ts';
+import type { Download, HTTPDownload } from '../type.ts';
 
 export type ListingElementR = ListingElement & { subdir: string };
 
@@ -39,28 +41,45 @@ const HttpCancelable: Record<
 > = {};
 
 export function logid(
-  downloadkey: string,
+  downloadOrKey: string | Download,
   id?: string | null,
   printCancelInfo?: boolean,
 ): string {
-  const dl = keyToDownload(downloadkey);
-  const { type } = dl;
-  let did = dl.domain;
-  if (type === 'ftp') did = dl.file;
-  else if (type === 'module') did = dl.module;
-  else if (type === 'http') did = dl.http;
+  const download =
+    typeof downloadOrKey === 'string'
+      ? keyToDownload(downloadOrKey)
+      : downloadOrKey;
+  const key =
+    typeof downloadOrKey === 'string'
+      ? downloadOrKey
+      : downloadKey(downloadOrKey);
+  const { type } = download;
+  let did = download.domain;
+  if (type === 'ftp') {
+    const { domain, path, file } = download;
+    did = `ftp://${domain}${path}/${file}`;
+  }
+  else if (type === 'module') did = download.module;
+  else if (type === 'http') {
+    did = download.http;
+    if (download.data)
+      did = resolveAudioDataPathURL(
+        did,
+        audioParametersForIBT(download.data),
+      );
+  }
   let cbi = '';
   if (printCancelInfo) {
-    if (downloadkey in FtpCancelable) {
-      const { callbacks, cause } = FtpCancelable[downloadkey];
+    if (key in FtpCancelable) {
+      const { callbacks, cause } = FtpCancelable[key];
       const s0: string[] = [];
       callbacks.forEach((x) => {
         s0.push(`${x[1].length}`);
       });
       const causestr = cause ? cause.toString() : 'null';
       cbi = `cause=${causestr} cb='${s0.join(' ')}'`;
-    } else if (downloadkey in HttpCancelable) {
-      const { canceled, callback } = HttpCancelable[downloadkey];
+    } else if (key in HttpCancelable) {
+      const { canceled, callback } = HttpCancelable[key];
       cbi = `canceled=${canceled} cb=${Boolean(callback)}`;
     }
   }
@@ -213,12 +232,10 @@ export function httpCancel(cancelkey?: string | string[]): number {
   }
   const keys = Array.isArray(cancelkey) ? cancelkey : [cancelkey];
   keys.forEach((k) => {
-    const cancelkeydl = normalizeDownloadURL(keyToDownload(k));
+    const cancelkeydl = keyToDownload(k);
     if ('http' in cancelkeydl) {
       Object.entries(HttpCancelable).forEach((entry) => {
-        const keyobj = normalizeDownloadURL(
-          keyToDownload(entry[0]),
-        ) as HTTPDownload;
+        const keyobj = keyToDownload(entry[0]) as HTTPDownload;
         if (cancelkeydl.http === keyobj.http) {
           log.debug(`Canceled HTTP '${keyobj.http}'`);
           callCallback(entry[1]);
@@ -232,7 +249,11 @@ export function httpCancel(cancelkey?: string | string[]): number {
 // When some async error throws, it usually causes all operations associated with
 // the cancelkey to be canceled, throwing other cancelation errors which may
 // arrive first. In this case, failCause reports the root error.
-export function failCause(cancelkey: string, er?: Error | string): string {
+export function failCause(
+  cancelDownload: Download,
+  er?: Error | string,
+): string {
+  const cancelkey = downloadKey(cancelDownload);
   let ret: Error | string = er || 'unknown';
   if (cancelkey && cancelkey in FtpCancelable) {
     const { cause } = FtpCancelable[cancelkey];
@@ -242,8 +263,8 @@ export function failCause(cancelkey: string, er?: Error | string): string {
     }
   }
   const str = typeof ret === 'string' ? ret : ret.message;
-  const { domain } = keyToDownload(cancelkey);
-  const cause = `(${domain} ${logid(cancelkey)}) ${str}`;
+  const { domain } = cancelDownload;
+  const cause = `(${domain} ${logid(cancelDownload)}) ${str}`;
   log.debug(cause);
   if (str === C.UI.Manager.cancelMsg) return C.UI.Manager.cancelMsg;
   return cause;
@@ -535,7 +556,7 @@ async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
       buf.push(chunk);
     });
     stream.on('end', () => {
-      resolve(Buffer.concat(buf));
+      resolve(Buffer.concat(buf as any));
     });
     stream.on('error', (er) => {
       reject(er);

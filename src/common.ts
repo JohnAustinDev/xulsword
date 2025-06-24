@@ -1616,19 +1616,6 @@ export function gbAncestorIDs(
   return ancestors;
 }
 
-// Convert a Genbook key such as parent-title/sub-chapter/chapter to its
-// hierarchical order, such as 0/2/5
-export function genbkIdToOrd(G: GType, id: string, module: string): string {
-  const nodes = G.genBookTreeNodes(module);
-  const ords = id.split('/').map((_k, i) => {
-    const parent = findTreeNode(ords.slice(0, i).join('/'), nodes, true);
-    return (parent ? parent.childNodes : nodes)?.findIndex((n) => n.id === id);
-  });
-  const r = ords.join('/');
-
-  return r.includes('-') ? '0' : r;
-}
-
 export function findTreeAncestors(
   id: string | number,
   nodes: TreeNodeInfo[],
@@ -1921,30 +1908,25 @@ export function subtractGenBookAudioChapters(
 
 // Convert any audio selection to the XSBOOK, XSCHAPTERS and XSKEYS parameters
 // required for IBT's audio download URLs.
-export function audioParametersForIBT(
-  G: GType,
-  audio: SelectVKType | SelectORMType,
-) {
+export function audioParametersForIBT(audio: SelectVKType | SelectORMType) {
   const params: Parameters<typeof resolveAudioDataPathURL>[1] = {
     package: 'zip',
   };
   if ('otherMod' in audio) {
-    const { otherMod, keys } = audio;
-    if (keys.length && keys[0]) {
+    const { keys } = audio;
+    if (keys.length) {
+      const chs = keys.map((k) =>
+        k.split('/').map((x) => {
+          const m = x.match(/^(\d\d\d)( .*$|$)/);
+          return m ? Number(m[1]) : -1;
+        }),
+      );
       let p = '';
-      let ch = -1;
-      let cl = 0;
-      keys.forEach((k) => {
-        const ords = genbkIdToOrd(G, k, otherMod).split('/');
-        const c = ords.pop();
-        if (!p && ords.length) p = ords.join('/');
-        if (ch === -1) ch = Number(c);
-        else cl = Number(c);
-      });
+      if (chs[0].length > 1) p = chs[0].slice(0, -1).join('/') + '/';
+      const ch = chs[0].at(-1) ?? -1;
+      const cl = chs.at(-1)?.at(-1) ?? -1;
       if (ch > -1) {
-        params.chapter = `/${p + (p ? '/' : '')}${ch}${
-          cl && cl > ch ? '-' + cl.toString() : ''
-        }`;
+        params.key = `/${p}${ch}${cl > ch ? '-' + cl.toString() : ''}`;
       }
     }
   } else {
@@ -1998,17 +1980,6 @@ export function resolveAudioDataPathURL(
   return r;
 }
 
-// Download http is a URL, but audio download URLs are modified whenever
-// book and chapter are selected/changed. So this function returns a
-// new download object with a URL that does not change.
-export function normalizeDownloadURL(download: Download): Download {
-  const dl = clone(download);
-  if (dl.type === 'http' && dl.http.includes('&chapters=')) {
-    dl.http = dl.http.replace(/&chapters=.*$/, '');
-  }
-  return dl;
-}
-
 // Compare \d.\d.\d type version numbers (like SWORD modules).
 // Returns -1 if v1 < v2, 1 of v1 > v2 and 0 if they are the same.
 export function versionCompare(v1: string | number, v2: string | number) {
@@ -2044,21 +2015,22 @@ export function downloadKey(dl: Download | null): string {
     keyof HTTPDownload | keyof ModFTPDownload | keyof FTPDownload,
     'disabled'
   >;
-  const ms: Record<DLkeys, 1> = {
-    type: 1,
-    http: 1,
-    file: 1,
-    module: 1,
-    name: 1,
-    domain: 1,
-    path: 1,
-    confname: 1,
-    custom: 1,
-    builtin: 1,
+  const ms: Record<DLkeys, boolean> = {
+    type: true,
+    http: true,
+    file: true,
+    module: true,
+    name: true,
+    domain: true,
+    path: true,
+    confname: true,
+    custom: true,
+    builtin: true,
+    data: false,
   };
-  const inner = Object.keys(ms)
-    .filter((m) => m in dl && dl[m as keyof typeof dl])
-    .map((m) => `${m}:${dl[m as keyof typeof dl]}`)
+  const inner = Object.entries(ms)
+    .filter((e) => e[1] && e[0] in dl && dl[e[0] as keyof typeof dl])
+    .map((e) => `${e[0]}:${dl[e[0] as keyof typeof dl]}`)
     .join('][');
   return `[${inner}]`;
 }

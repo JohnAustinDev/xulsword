@@ -20,9 +20,6 @@ import {
   querablePromise,
   gbPaths,
   localizeString,
-  resolveAudioDataPathURL,
-  audioParametersForIBT,
-  normalizeDownloadURL,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
@@ -550,10 +547,8 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                         if (typeof result === 'number' && result > 0) {
                           const dl = keyToDownload(downloadkey);
                           // Find the moduleData row associated with this
-                          // download. The moduleData audio download URLs
-                          // do not include the chapter range, so it must be
-                          // removed from the download URL.
-                          downloadkey = downloadKey(normalizeDownloadURL(dl));
+                          // download.
+                          downloadkey = downloadKey(dl);
                           const key = Object.keys(moduleData).find(
                             (k) =>
                               downloadKey(getModuleDownload(k)) === downloadkey,
@@ -1401,16 +1396,14 @@ export async function download(
       if ('http' in dlobj && conf.xsmType === 'XSM_audio') {
         return promptAudioChapters(xthis, conf).then((audio) => {
           if (!audio) throw new Error(C.UI.Manager.cancelMsg);
-          dlobj.http = resolveAudioDataPathURL(
-            dlobj.http,
-            audioParametersForIBT(G, audio),
-          );
+          dlobj.data = audio;
           return dlobj;
         }).catch((er) => {
           handleError(xthis, er, [modkey]);
           return null;
         });
       }
+      return dlobj;
     }
     return null;
   });
