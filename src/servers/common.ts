@@ -12,7 +12,7 @@ import {
   hierarchy,
   getSwordOptions,
   JSON_stringify,
-  resolveAudioDataPathURL,
+  resolveTemplateURL,
   stringHash,
   clone,
 } from '../common.ts';
@@ -959,7 +959,7 @@ export function inlineAudioFile(
         const [, conf] = confe;
         const { DataPath } = conf;
         if (DataPath.startsWith('http')) {
-          return resolveAudioDataPathURL(DataPath, audio);
+          return resolveTemplateURL(DataPath, audio);
         } else if (DataPath.startsWith('.')) {
           file.append(DataPath);
           const leaf = pad(apath.pop() || 0, 3, 0);

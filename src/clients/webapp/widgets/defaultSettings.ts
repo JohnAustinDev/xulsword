@@ -6,27 +6,29 @@ import type { SelectORProps } from '../../components/libxul/selectOR.tsx';
 import type { SelectVKProps } from '../../components/libxul/selectVK.tsx';
 import type { AllComponentsData } from '../common.ts';
 
+export type WidgetActions = 'bible_audio_Play' | 'genbk_audio_Play' | 'update_url';
+
 export type WidgetVKData = {
   component: 'selectVK';
-  action?: 'bible_audio_Play';
+  actions?: WidgetActions[];
   langcode: (typeof C.Locales)[number][0];
   props: Omit<SelectVKProps, 'onSelection'>;
-  data?: ChaplistVKType;
-  data2?: ZipAudioDataType;
+  data?: ChaplistType;
+  update_url?: UpdateLUrlDataType;
 };
 
 export type WidgetORData = {
   component: 'selectOR';
-  action?: 'genbk_audio_Play';
+  actions?: WidgetActions[];
   langcode: (typeof C.Locales)[number][0];
   props: Omit<SelectORProps, 'onSelection'>;
-  data: ChaplistORType;
-  data2?: ZipAudioDataType;
+  data: ChaplistType;
+  update_url?: UpdateLUrlDataType;
 };
 
 export type WidgetMenulistData = {
   component: 'selectMenulist';
-  action?: 'update_url';
+  actions?: WidgetActions[];
   langcode: (typeof C.Locales)[number][0];
   props: Omit<MenulistProps, 'onChange'>;
   data: {
@@ -44,28 +46,24 @@ export type FileItem = {
   label?: string;
 };
 
-export type ChaplistVKType = {
-  [bk in OSISBookType]?: Array<
-    [chapnum: number, url: string, size: number, mid: string]
+export type ZipData = [ch1: number, ch2: number, size: number];
+
+export type ChaplistType = {
+  [parent: string]: Array<
+    [
+      chapter: number | string,
+      url: string,
+      size: number,
+      mid: number,
+      zip: ZipData,
+      dlkey: 'book' | 'chapters',
+    ]
   >;
 };
 
-export type ChaplistORType = Array<
-  [
-    orderSlashDelimited: string,
-    chapterSlashDelimited: string,
-    url: string,
-    size: number,
-    mid: string,
-  ]
->;
-
-export type ZipAudioDataType = {
-  link: string;
-  linkbook: string;
-  linkmulti: string;
-  downloadUrl: string;
-  zips: { [parent: string]: Array<[ch1: number, ch2: number, size: number]> };
+export type UpdateLUrlDataType = {
+  [className: string]: string | { [dlkey: string]: string };
+  urlTemplate: string;
 };
 
 const defaultSettings: AllComponentsData = {
@@ -91,10 +89,12 @@ const defaultSettings: AllComponentsData = {
           keys: ['First chapter'],
         },
       },
-      data: [
-        ['0', 'First chapter', '', 1000000, '0'],
-        ['1', 'Second chapter', '', 1000000, '0'],
-      ],
+      data: {
+        '': [
+          ['000 First chapter', '', 1000000, 0, [1, 2, 200000], 'chapters'],
+          ['001 Second chapter', '', 1000000, 0, [1, 2, 200000], 'chapters']
+        ],
+      },
     },
 
     selectMenulist_1: {

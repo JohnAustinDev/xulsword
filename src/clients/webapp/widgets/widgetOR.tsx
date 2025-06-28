@@ -1,12 +1,9 @@
+/* eslint-disable react/prop-types */
 import React, { useState } from 'react';
+import { findTreeNode } from '../../../common.ts';
 import { Analytics } from '../../analytics.ts';
 import log from '../../log.ts';
-import {
-  createNodeList,
-  getProps,
-  updateAudioDownloadLinks,
-  updateHrefParams,
-} from '../common.ts';
+import { createNodeList, getProps, updateLinks } from '../common.ts';
 import SelectOR from '../../components/libxul/selectOR.tsx';
 
 import type {
@@ -27,61 +24,78 @@ export type WidgetORState = Omit<SelectORProps, 'onSelection'>;
 
 export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
   const { compid, settings } = wprops;
-  const { action, props, data, data2 } = settings;
+  const { actions, props, data, update_url: updateUrl } = settings;
 
-  data.forEach((x) => {
-    x[0] = x[0].toString();
-  });
-  if (Array.isArray(data)) {
-    createNodeList(data, props);
+  const nodes = createNodeList(data);
+  const { initialORM } = props;
+  if (initialORM) {
+    props.nodeLists = [
+      {
+        otherMod: initialORM.otherMod,
+        label: 'genbk',
+        labelClass: 'cs-LTR_DEFAULT',
+        nodes,
+      },
+    ];
+    if (findTreeNode(initialORM.keys[0], nodes) === undefined) {
+      initialORM.keys = [nodes[0].id.toString()];
+    }
   }
 
   const onSelectOR = (selection?: SelectORMType): void => {
-    if (action && selection) {
+    if (actions && selection) {
       const { keys } = selection;
       const [key] = keys;
-      switch (action) {
-        case 'genbk_audio_Play': {
-          updateAnalyticsInfo(selection);
-          const comParent = document.getElementById(compid)?.parentElement;
-          const player = comParent?.querySelector('audio') as
-            | HTMLAudioElement
-            | undefined;
-          if (player) {
-            const da = data.find((x) => x[1] === key);
-            if (da) {
-              player.setAttribute('src', da[2].replace(/^base:/, ''));
-              player.play().catch(() => {});
+      const segs = key.split('/');
+      const chapter = segs.pop();
+      const parent = segs.join('/');
+      actions.forEach((action) => {
+        switch (action) {
+          case 'genbk_audio_Play': {
+            updateAnalyticsInfo(selection);
+            const comParent = document.getElementById(compid)?.parentElement;
+            const player = comParent?.querySelector('audio') as
+              | HTMLAudioElement
+              | undefined;
+            if (player) {
+              const da = data[parent].find((x) => x[0] === chapter);
+              if (da) {
+                player.setAttribute('src', da[1].replace(/^base:/, ''));
+                player.play().catch(() => {});
+              }
             }
+            break;
           }
-          updateLinks(selection);
-          break;
+          case 'update_url': {
+            updateLinksOR(selection);
+            break;
+          }
+          default: {
+            log.error(`Unknown selectOR action: '${actions}'`);
+          }
         }
-        default: {
-          log.error(`Unknown selectOR action: '${action}'`);
-        }
-      }
+      });
     }
   };
 
-  const updateLinks = (selection: SelectORMType, isReset = false) => {
-    const { keys } = selection;
-    const [key] = keys;
+  const updateLinksOR = (selection: SelectORMType, isReset = false) => {
     const comParent = document.getElementById(compid)?.parentElement;
-    const link = comParent?.querySelector('.update_url a, a.update_url') as
-      | HTMLAnchorElement
-      | undefined;
-    if (link) updateHrefParams(link, { key: `${key}` });
-    if (comParent && data2)
-      updateAudioDownloadLinks(comParent, selection, data, data2, isReset);
+    const anchors = comParent?.querySelectorAll('.update_url a, a.update_url');
+    if (anchors && updateUrl)
+      (Array.from(anchors) as HTMLAnchorElement[]).forEach((anchor) => {
+        updateLinks(selection, anchor, data, updateUrl, isReset);
+      });
   };
 
   const updateAnalyticsInfo = (selection: SelectORMType) => {
     const { keys } = selection;
     const [key] = keys;
-    const da = data.find((x) => x[1] === key);
+    const segs = key.split('/');
+    const chapter = segs.pop();
+    const parent = segs.join('/');
+    const da = data[parent].find((x) => x[0] === chapter);
     if (da) {
-      const [, , , , mid] = da;
+      const [, , , mid] = da;
       const elem = document.getElementById(compid)?.parentElement;
       if (elem) {
         Analytics.addInfo({ mid: Number(mid) }, Analytics.topInfoElement(elem));
@@ -99,7 +113,7 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
       enableParentSelection: false,
     }) as WidgetORState;
 
-    updateLinks(s.initialORM, true);
+    updateLinksOR(s.initialORM, true);
     updateAnalyticsInfo(s.initialORM);
 
     return s;

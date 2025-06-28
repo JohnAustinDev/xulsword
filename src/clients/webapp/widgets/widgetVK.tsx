@@ -2,11 +2,7 @@ import React, { useState } from 'react';
 import { diff } from '../../../common.ts';
 import { Analytics } from '../../analytics.ts';
 import log from '../../log.ts';
-import {
-  getProps,
-  updateAudioDownloadLinks,
-  updateHrefParams,
-} from '../common.ts';
+import { getProps, updateLinks } from '../common.ts';
 import SelectVK from '../../components/libxul/selectVK.tsx';
 
 import type {
@@ -31,7 +27,7 @@ export type WidgetVKState = Omit<SelectVKProps, 'onSelection'>;
 
 export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
   const { compid, settings } = wprops;
-  const { action, props, data, data2 } = settings;
+  const { actions, props, data, update_url: updateUrl } = settings;
 
   const onSelectVK = (selection?: SelectVKType): void => {
     if (selection) {
@@ -46,53 +42,61 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
             initialVK: selection,
             options: {
               ...prevState.options,
-              chapters: chapterArray.map((x) => x[0]).sort((a, b) => a - b),
+              chapters: chapterArray
+                .map((x) => (Array.isArray(x[0]) ? x[0][0] : x[0]))
+                .sort((a, b) => a - b),
             },
           };
           if (prevState.initialVK.book !== book) s.initialVK.chapter = 1;
           if (typeof diff(s, prevState) !== 'undefined') newState = s;
         }
-        if (action && newState !== prevState) {
-          switch (action) {
-            case 'bible_audio_Play': {
-              updateAnalyticsInfo(selection);
-              const comParent = document.getElementById(compid)?.parentElement;
-              const player = comParent?.querySelector('audio') as
-                | HTMLAudioElement
-                | undefined;
-              if (player) {
-                const chaparray =
-                  data && data[book]?.find((ca) => ca[0] === chapter);
-                if (chaparray) {
-                  player.setAttribute(
-                    'src',
-                    chaparray[1].replace(/^base:/, ''),
-                  );
-                  player.play().catch(() => {});
+        if (actions && newState !== prevState) {
+          actions.forEach((action) => {
+            switch (action) {
+              case 'bible_audio_Play': {
+                updateAnalyticsInfo(selection);
+                const comParent =
+                  document.getElementById(compid)?.parentElement;
+                const player = comParent?.querySelector('audio') as
+                  | HTMLAudioElement
+                  | undefined;
+                if (player) {
+                  const chaparray =
+                    data && data[book]?.find((ca) => ca[0] === chapter);
+                  if (chaparray) {
+                    player.setAttribute(
+                      'src',
+                      chaparray[1].replace(/^base:/, ''),
+                    );
+                    player.play().catch(() => {});
+                  }
                 }
+                break;
               }
-              updateLinks(selection);
-              break;
+              case 'update_url': {
+                updateLinksVK(selection);
+                break;
+              }
+              default: {
+                log.error(`Unknown selectVK action: '${actions}'`);
+              }
             }
-            default: {
-              log.error(`Unknown selectVK action: '${action}'`);
-            }
-          }
+          });
         }
+
         return newState;
       });
     }
   };
 
-  const updateLinks = (selection: SelectVKType, isReset = false) => {
-    const { book, chapter } = selection;
+  const updateLinksVK = (selection: SelectVKType, isReset = false) => {
     const comParent = document.getElementById(compid)?.parentElement;
-    const anchor = comParent?.querySelector('.update_url a, a.update_url') as
-      | HTMLAnchorElement
-      | undefined;
-    if (anchor) updateHrefParams(anchor, { verse: `~${book}.${chapter}` });
-    if (comParent && data && data2)
-      updateAudioDownloadLinks(comParent, selection, data, data2, isReset);
+    const anchors = comParent?.querySelectorAll('.update_url a, a.update_url');
+    if (anchors && data && updateUrl) {
+      (Array.from(anchors) as HTMLAnchorElement[]).forEach((a) => {
+        updateLinks(selection, a, data, updateUrl, isReset);
+      });
+    }
   };
 
   const updateAnalyticsInfo = (selection: SelectVKType) => {
@@ -125,7 +129,10 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
         if (!books.includes(book)) {
           vk.book = books[0] as any;
           const ts = data[vk.book];
-          if (ts) [[vk.chapter]] = ts;
+          if (ts) {
+            const [[chx]] = ts;
+            vk.chapter = Array.isArray(chx) ? chx[0] : chx;
+          }
         }
         if (!data[vk.book]?.find((x) => x[0] === vk.chapter)) {
           vk.chapter = (data[vk.book] as any)[0][0] || 1;
@@ -133,12 +140,12 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
         if (typeof s.options === 'undefined') s.options = {};
         s.options.books = Object.keys(data);
         s.options.chapters = data[vk.book]
-          ?.map((x) => x[0])
+          ?.map((x) => (Array.isArray(x[0]) ? x[0][0] : x[0]))
           .sort((a, b) => a - b) ?? [vk.chapter];
       }
     }
 
-    updateLinks(s.initialVK, true);
+    updateLinksVK(s.initialVK, true);
     updateAnalyticsInfo(s.initialVK);
 
     return s;

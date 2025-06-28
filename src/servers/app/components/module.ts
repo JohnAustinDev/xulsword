@@ -15,8 +15,7 @@ import {
   pad,
   mergeNewModules,
   unknown2String,
-  resolveAudioDataPathURL,
-  audioParametersForIBT,
+  resolveTemplateURL,
 } from '../../../common.ts';
 import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
@@ -1122,7 +1121,7 @@ const Module = {
             );
           }
           const dlfile = await getFileHTTP(
-            resolveAudioDataPathURL(http, audioParametersForIBT(data)),
+            resolveTemplateURL(http, data),
             tmpdir.append(randomID()),
             downloadkey,
             (p: number) => {

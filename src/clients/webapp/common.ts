@@ -1,32 +1,27 @@
-import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
-import { clone, drupalSetting, hierarchy } from '../../common.ts';
+import {
+  clone,
+  drupalSetting,
+  hierarchy,
+  ofClass,
+  resolveTemplateURL,
+} from '../../common.ts';
 import { Analytics } from '../analytics.ts';
 import Prefs from './prefs.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type {
-  PrefObject,
-  PrefRoot,
-  PrefValue,
-  TreeNodeInfoPref,
-} from '../../type.ts';
-import type { AnalyticsInfo } from '../analytics.ts';
-import type {
-  SelectORMType,
-  SelectORProps,
-} from '../components/libxul/selectOR.tsx';
+import type { PrefObject, PrefRoot, PrefValue } from '../../type.ts';
+import type { SelectORMType } from '../components/libxul/selectOR.tsx';
 import {
   setDefaultBibleBrowserPrefs,
   type BibleBrowserData,
 } from './bibleBrowser/defaultSettings.ts';
 import type {
-  ChaplistORType,
-  ChaplistVKType,
+  ChaplistType,
   WidgetMenulistData,
   WidgetORData,
   WidgetVKData,
-  ZipAudioDataType,
+  UpdateLUrlDataType,
 } from './widgets/defaultSettings.ts';
 import type { SelectVKType } from '../components/libxul/selectVK.tsx';
 
@@ -171,288 +166,148 @@ export function mergePrefsRoots(
   return complete;
 }
 
-// Convert raw gen-book chaplist data from Drupal into a valid xulsword nodelist.
-export function createNodeList(
-  chaplist: ChaplistORType,
-  props: Omit<SelectORProps, 'onSelection'>,
-): void {
-  // chaplist members are like: ['2/4/5', The/chapter/titles', 'url', 1054765]
-  // The Drupal chaplist is file data, and so does not include any parent
-  // entries (as required by hierarchy()). So parents must be added before
-  // sorting.
-  const parent = (
-    ch: ChaplistORType[number],
-  ): ChaplistORType[number] | null => {
-    const n = ch[1].split('/');
-    const o = ch[0].split('/');
-    const fdn = n.pop();
-    o.pop();
-    if (!fdn) {
-      n.pop();
-      o.pop();
-    }
-    if (n.length) {
-      return [o.concat('').join('/'), n.concat('').join('/'), '', 1, '0'];
-    }
-    return null;
-  };
-  chaplist.forEach((xx) => {
-    let x = xx;
-    for (;;) {
-      const p = parent(x);
-      if (p === null) break;
-      if (!chaplist.find((c) => c[1] === p[1])) {
-        chaplist.push(p);
-      }
-      x = p;
-    }
-  });
-  const treenodes: Array<TreeNodeInfo<Record<string, unknown>>> = chaplist
-    .sort((a, b) => {
-      const ap = a[0].split('/').map((x) => Number(x));
-      const bp = b[0].split('/').map((x) => Number(x));
-      for (let x = 0; x < ap.length; x++) {
-        if (typeof ap[x] === 'undefined' && typeof bp[x] !== 'undefined') {
-          return -1;
-        } else if (
-          typeof ap[x] !== 'undefined' &&
-          typeof bp[x] === 'undefined'
-        ) {
-          return 1;
-        } else if (
-          typeof ap[x] !== 'undefined' &&
-          typeof bp[x] !== 'undefined'
-        ) {
-          if (ap[x] !== bp[x]) return ap[x] - bp[x];
-        }
-      }
-      return 0;
-    })
-    .map((x) => {
-      const [, key] = x;
-      return {
-        id: key,
-        label: key.replace(/\/$/, '').split('/').pop() ?? '',
+// Convert genbk chaplist data from Drupal into a valid xulsword nodelist.
+// This function assumes that chaplist contains fully qualified genbk paths
+// (ie. '001 My Title') which are necessary for proper sorting. But labels
+// have these three digit chapter numbers removed.
+export function createNodeList(chaplist: ChaplistType): TreeNodeInfo[] {
+  const flatNodesSorted: TreeNodeInfo[] = [];
+
+  Object.entries(chaplist)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .forEach((e) => {
+      const [parent, chapdata] = e;
+      const parentLabel = parent.replace(/(^|\/)\d\d\d /g, '$1');
+      flatNodesSorted.push({
+        id: `${parent}/`,
+        label: parentLabel.split('/').pop() ?? '',
         className: 'cs-LTR_DEFAULT',
-        hasCaret: key.endsWith(C.GBKSEP),
-      } satisfies TreeNodeInfoPref;
+        hasCaret: true,
+      });
+      chapdata
+        .sort((a, b) => {
+          if (typeof a[0] === 'number' && typeof b[0] === 'number')
+            return a[0] - b[0];
+          if (typeof a[0] === 'string' && typeof b[0] === 'string')
+            return a[0].localeCompare(b[0]);
+          return 0;
+        })
+        .forEach((d) => {
+          const [chapter] = d;
+          const chapterLabel = chapter
+            .toString()
+            .replace(/(^|\/)\d\d\d /g, '$1');
+          flatNodesSorted.push({
+            id: `${parent}/${chapter}`,
+            label: chapterLabel,
+            className: 'cs-LTR_DEFAULT',
+            hasCaret: false,
+          });
+        });
     });
-  const nodes = hierarchy(treenodes);
-  props.nodeLists = [
-    {
-      otherMod: props.initialORM.otherMod,
-      label: 'genbk',
-      labelClass: 'cs-LTR_DEFAULT',
-      nodes,
-    },
-  ];
-  if (!treenodes.find((n) => n.id === props.initialORM.keys[0])) {
-    props.initialORM.keys = [nodes[0].id.toString()];
-  }
+
+  return hierarchy(flatNodesSorted);
 }
 
-export function updateAudioDownloadLinks(
-  parentElement: HTMLElement,
+export function updateLinks(
   selection: SelectVKType | SelectORMType,
-  data: ChaplistVKType | ChaplistORType,
-  data2: ZipAudioDataType,
+  anchor: HTMLAnchorElement,
+  data: ChaplistType,
+  updateUrl: UpdateLUrlDataType,
   isReset: boolean,
 ) {
-  const { zips } = data2;
-  let parent: string | undefined;
-  let chapter: number | undefined;
-  let size: number | undefined;
-  let ch1: number | undefined;
-  let ch2: number | undefined;
-  let sizes: number | undefined;
-  if ('keys' in selection && Array.isArray(data)) {
-    const { keys } = selection;
-    const [key] = keys;
-    const da = data.find((x) => x[1] === key);
-    if (da) {
-      const [order, , , fsize] = da;
-      size = fsize;
-      const os = order.split('/');
-      chapter = Number(os.pop());
-      parent = os.join('/');
-      if (parent.startsWith('/')) parent = parent.substring(1);
-    }
-  } else if ('book' in selection && !Array.isArray(data)) {
-    const { book, chapter: ch } = selection;
-    parent = book;
-    chapter = ch;
-    if (book in data && Array.isArray(data[book])) {
-      const c = data[book].find((x) => x[0] == chapter);
-      if (typeof c !== 'undefined') [, , size] = c;
-    }
-  }
-  if (!parent) return;
-
-  if (parent in zips && typeof chapter === 'number') {
-    const file = zips[parent].find(
-      (x) => typeof chapter === 'number' && x[0] <= chapter && chapter <= x[1],
-    );
-    if (file) [ch1, ch2, sizes] = file;
+  let parent = '';
+  let chapter: number | string | undefined;
+  if ('otherMod' in selection) {
+    const segs = selection.keys[0].split('/');
+    chapter = segs.pop();
+    parent = segs.join('/');
+  } else {
+    ({ book: parent, chapter } = selection);
   }
 
-  if (typeof chapter === 'number' && typeof size === 'number') {
-    const slinkp = parentElement?.querySelector('.update_url_dls') as
-      | HTMLElement
-      | undefined;
-    if (slinkp) {
-      const slink = (
-        slinkp.tagName === 'A'
-          ? slinkp
-          : slinkp.querySelector('a[type="audio/mpeg"]')
-      ) as HTMLAnchorElement | undefined;
-      if (slink) {
-        updateAudioDownloadLink(
-          data,
-          data2,
-          slink,
-          parent,
-          chapter,
-          chapter,
-          size,
-          'none',
-        );
-        slinkp.removeAttribute('style');
-        if (!isReset)
-          jQuery(parentElement.querySelectorAll('.update_url_dls'))
-            .fadeTo(1, 0)
-            .fadeTo(1000, 1);
-      }
-    }
-  }
+  // Find data index of the selection
+  const index = data[parent].findIndex((x) => x[0] === chapter);
+  if (index !== -1) {
+    const [, , sizeSingle, , zip, dlkey] = data[parent][index];
+    const [ch1, ch2, sizeMultiple] = zip;
+    let { urlTemplate } = updateUrl;
+    let linkText = '';
 
-  if (
-    typeof ch1 === 'number' &&
-    typeof ch2 === 'number' &&
-    typeof sizes === 'number'
-  ) {
-    const mlinkp = parentElement?.querySelector('.update_url_dlm') as
-      | HTMLElement
-      | undefined;
-    if (mlinkp) {
-      const mlink = (
-        mlinkp.tagName === 'A'
-          ? mlinkp
-          : mlinkp.querySelector('a[type="audio/mpeg"]')
-      ) as HTMLAnchorElement | undefined;
-      if (mlink) {
-        updateAudioDownloadLink(
-          data,
-          data2,
-          mlink,
-          parent,
-          ch1,
-          ch2,
-          sizes,
-          'zip',
-        );
-        if (ch1 === ch2) mlinkp.setAttribute('style', 'display:none');
+    // Read Drupal update_url info for this anchor element
+    let myclass = '';
+    Object.entries(updateUrl).forEach((e) => {
+      const [k, v] = e;
+      const classElem = ofClass(k, anchor);
+      if (classElem) {
+        myclass = k;
+        if (k !== 'chapters' || ch1 !== ch2)
+          classElem.element.removeAttribute('style'); // remove display: none
+        if (typeof v === 'string') linkText = v;
         else {
-          mlinkp.removeAttribute('style');
-          if (!isReset)
-            jQuery(parentElement.querySelectorAll('.update_url_dlm'))
-              .fadeTo(1, 0)
-              .fadeTo(1000, 1);
+          if ('urlTemplate' in v) ({ urlTemplate } = v);
+          if ('all' in v) linkText = v.all;
+          else if (dlkey in v) linkText = v[dlkey];
+        }
+      }
+    });
+
+    // Update URL using the urlTemplate
+    if (urlTemplate) {
+      const sel = clone(selection);
+      if (myclass === 'dl_chapters') {
+        if ('book' in sel) {
+          sel.chapter = ch1;
+          sel.lastchapter = ch2;
+        } else {
+          const segsq = sel.keys[0].split('/') ?? '';
+          const qualParent = segsq.slice(0, -1).join('/');
+          const keys = [];
+          for (let i = ch1 - 1; i <= ch2 - 1; i++) {
+            const qualName = data[parent].find(
+              (q) =>
+                Number(q[0].toString().replace(/^(\d\d\d)( .*)?$/, '$1')) === i,
+            );
+            if (qualName) {
+              keys.push(`${qualParent}/${qualName[0]}`);
+            }
+          }
+          sel.keys = keys;
+        }
+      }
+      anchor.setAttribute('href', resolveTemplateURL(urlTemplate, sel));
+    }
+
+    // Update the link text
+    if (linkText) {
+      anchor.textContent = linkText
+        .replaceAll('CHAPTER1', ch1.toString())
+        .replaceAll('CHAPTER2', ch2.toString());
+      if (anchor.parentElement?.tagName === 'SPAN') {
+        const size = myclass === 'dl_chapters' ? sizeMultiple : sizeSingle;
+        const selem = anchor.parentElement.nextElementSibling;
+        if (selem && selem.tagName === 'SPAN') {
+          const fnum = size / 1000000;
+          const snum = fnum.toFixed(fnum > 10 ? 1 : 2);
+          selem.textContent = `(${snum} MB)`;
         }
       }
     }
-  }
-}
 
-function updateAudioDownloadLink(
-  data: ChaplistVKType | ChaplistORType,
-  data2: ZipAudioDataType,
-  anchor: HTMLAnchorElement,
-  parent: string,
-  chapter1: number,
-  chapter2: number,
-  bytes: number,
-  packType: 'zip' | 'none',
-) {
-  const { link, linkmulti, linkbook, downloadUrl } = data2;
-
-  let href = downloadUrl;
-  href = href.replace('PARENT', parent);
-  href = href.replace('CHAPTER1', chapter1.toString());
-  href = href.replace('CHAPTER2', chapter2.toString());
-  href = href.replace('PACKAGE', packType);
-  anchor.href = href;
-
-  const isBible = !Array.isArray(data);
-  let textContent = chapter1 === chapter2 ? link : linkmulti;
-  if (
-    isBible &&
-    chapter1 == 1 &&
-    !Array.isArray(data) &&
-    parent in data &&
-    chapter2 == (data as any)[parent].length
-  ) {
-    textContent = linkbook;
-  }
-  textContent = textContent.replace('PARENT', parent);
-  if (isBible) {
-    textContent = textContent.replace('CHAPTER1', chapter1.toString());
-    textContent = textContent.replace('CHAPTER2', chapter2.toString());
-  } else {
-    // General book chapters begin at zero, but this text is for end users who
-    // expect the first chapter to be one.
-    textContent = textContent.replace('CHAPTER1', (chapter1 + 1).toString());
-    textContent = textContent.replace('CHAPTER2', (chapter2 + 1).toString());
-  }
-  anchor.textContent = textContent;
-
-  if (anchor.parentElement?.tagName === 'SPAN') {
-    const selem = anchor.parentElement.nextElementSibling;
-    if (selem && selem.tagName === 'SPAN') {
-      const fnum = bytes / 1000000;
-      const snum = fnum.toFixed(fnum > 10 ? 1 : 2);
-      selem.textContent = `(${snum} MB)`;
+    // Animate the link so the user sees the change
+    const animate = ofClass('update_url', anchor);
+    if (!isReset && animate) {
+      jQuery(anchor).fadeTo(1, 0).fadeTo(1000, 1);
     }
-  }
 
-  const info: Partial<AnalyticsInfo> = {
-    event: 'download',
-    chapter1: chapter1 === chapter2 ? undefined : chapter1,
-    chapters: chapter1 === chapter2 ? undefined : 1 + chapter2 - chapter1,
-  };
-
-  Analytics.addInfo(info, anchor);
-}
-
-// Update the href of an anchor element by setting or changing the given
-// params to new values.
-export function updateHrefParams(
-  anchor: HTMLAnchorElement,
-  params: Record<string, string | number>,
-) {
-  const href = anchor.getAttribute('href');
-  if (href) {
-    const hrefMatched = href.match(/^([^?]+)\?(.*?)$/);
-    if (hrefMatched) {
-      const [, url, qps] = hrefMatched;
-      const updated: Record<string, string> = {};
-      const inputQueryParams = qps.split('&');
-      for (;;) {
-        const next = inputQueryParams.shift();
-        if (!next) break;
-        const [param, value] = next.split('=') as [string, string];
-        updated[param] = value;
-      }
-      Object.entries(params).forEach((entry) => {
-        const [param, value] = entry;
-        updated[param] = value.toString();
-      });
-      if (Object.keys(updated).length) {
-        const query = Object.entries(updated).reduce(
-          (p, c) => `${p}${p ? '&' : ''}${c[0]}=${c[1]}`,
-          '',
-        );
-        anchor.setAttribute('href', `${url}?${query}`);
-      }
-    }
+    // Update analytics info so it will be recorded when anchor is clicked.
+    Analytics.addInfo(
+      {
+        event: 'download',
+        chapter1: ch1 === ch2 ? undefined : ch1,
+        chapters: ch1 === ch2 ? undefined : 1 + ch2 - ch1,
+      },
+      anchor,
+    );
   }
 }

@@ -6,11 +6,10 @@ import GUNZIP from 'gunzip-maybe';
 import TAR from 'tar-stream';
 import { Readable } from 'stream';
 import {
-  audioParametersForIBT,
   downloadKey,
   keyToDownload,
   randomID,
-  resolveAudioDataPathURL,
+  resolveTemplateURL,
   unknown2String,
 } from '../common.ts';
 import C from '../constant.ts';
@@ -58,15 +57,10 @@ export function logid(
   if (type === 'ftp') {
     const { domain, path, file } = download;
     did = `ftp://${domain}${path}/${file}`;
-  }
-  else if (type === 'module') did = download.module;
+  } else if (type === 'module') did = download.module;
   else if (type === 'http') {
     did = download.http;
-    if (download.data)
-      did = resolveAudioDataPathURL(
-        did,
-        audioParametersForIBT(download.data),
-      );
+    if (download.data) did = resolveTemplateURL(did, download.data);
   }
   let cbi = '';
   if (printCancelInfo) {

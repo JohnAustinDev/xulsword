@@ -25,7 +25,7 @@ export default function WidgetMenulist(
   wprops: WidgetMenulistProps,
 ): React.JSX.Element {
   const { compid, settings } = wprops;
-  const { action, props, data } = settings;
+  const { actions: actions, props, data } = settings;
 
   const [state, setState] = useState(() => {
     return getProps(props, {
@@ -38,48 +38,50 @@ export default function WidgetMenulist(
   useEffect(() => {
     const { value } = state;
     const index = value && typeof value === 'string' ? Number(value) || 0 : 0;
-    if (action && data) {
+    if (actions && data) {
       const { urlroot, items } = data;
-      switch (action) {
-        case 'update_url': {
-          const item = items[index];
-          const elem = document.getElementById(compid)?.parentElement;
-          if (elem && typeof item !== 'string') {
-            const links = Array.isArray(item) ? item : [item];
-            const a = Array.from(
-              elem.querySelectorAll('.update_url a, a.update_url'),
-            );
-            links.forEach((link, x) => {
-              const { relurl, size, mid } = link;
-              const anchor = a[x] as HTMLElement;
-              if (anchor && relurl) {
-                const root = urlroot.replace(/\/$/, '');
-                const rel = relurl.replace(/^\//, '');
-                anchor.setAttribute('href', `${root}/${rel}`);
-                anchor.textContent = optionText(link, false);
-                const info: AnalyticsInfo = {
-                  event: 'download',
-                  mid,
-                };
-                Analytics.addInfo(info, anchor);
-                if (
-                  typeof size !== 'undefined' &&
-                  anchor.parentElement?.tagName === 'SPAN'
-                ) {
-                  const sizeSpan = anchor.parentElement.nextElementSibling;
-                  if (sizeSpan && sizeSpan.tagName === 'SPAN') {
-                    sizeSpan.textContent = size ? ` (${size})` : '';
+      actions.forEach((action) => {
+        switch (action) {
+          case 'update_url': {
+            const item = items[index];
+            const elem = document.getElementById(compid)?.parentElement;
+            if (elem && typeof item !== 'string') {
+              const links = Array.isArray(item) ? item : [item];
+              const a = Array.from(
+                elem.querySelectorAll('.update_url a, a.update_url'),
+              );
+              links.forEach((link, x) => {
+                const { relurl, size, mid } = link;
+                const anchor = a[x] as HTMLElement;
+                if (anchor && relurl) {
+                  const root = urlroot.replace(/\/$/, '');
+                  const rel = relurl.replace(/^\//, '');
+                  anchor.setAttribute('href', `${root}/${rel}`);
+                  anchor.textContent = optionText(link, false);
+                  const info: AnalyticsInfo = {
+                    event: 'download',
+                    mid,
+                  };
+                  Analytics.addInfo(info, anchor);
+                  if (
+                    typeof size !== 'undefined' &&
+                    anchor.parentElement?.tagName === 'SPAN'
+                  ) {
+                    const sizeSpan = anchor.parentElement.nextElementSibling;
+                    if (sizeSpan && sizeSpan.tagName === 'SPAN') {
+                      sizeSpan.textContent = size ? ` (${size})` : '';
+                    }
                   }
                 }
-              }
-            });
+              });
+            }
+            break;
           }
-          break;
+          default: {
+            log.error(`Unknown selectMenulist action: '${actions}'`);
+          }
         }
-        default: {
-          log.error(`Unknown selectMenulist action: '${action}'`);
-        }
-      }
+      });
     }
   }, [state.value]);
 
@@ -127,16 +129,11 @@ function optionText(data: string | FileItem, isMenulistText: boolean): string {
 
 // Return eBook link text and menulist text.
 function getEBookTitle(data: FileItem, menu: boolean): string {
-  const {
-    ntitle,
-    full,
-    label,
-  } = data;
+  const { ntitle, full, label } = data;
   if (full)
     return menu ? G.i18n.t('Full publication', { ns: 'widgets' }) : ntitle;
 
-  if (label)
-    return menu ? label : `${label}: ${ntitle}`
+  if (label) return menu ? label : `${label}: ${ntitle}`;
 
   return ntitle;
 }

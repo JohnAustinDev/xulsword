@@ -1906,78 +1906,126 @@ export function subtractGenBookAudioChapters(
   return r;
 }
 
-// Convert any audio selection to the XSBOOK, XSCHAPTERS and XSKEYS parameters
-// required for IBT's audio download URLs.
-export function audioParametersForIBT(audio: SelectVKType | SelectORMType) {
-  const params: Parameters<typeof resolveAudioDataPathURL>[1] = {
-    package: 'zip',
-  };
-  if ('otherMod' in audio) {
-    const { keys } = audio;
-    if (keys.length) {
+// Follow IBT's audio download API specification to convert a selection into
+// the necessary parameter values required by that API.
+function IBTtemplateURL(
+  selection:
+    | SelectVKType
+    | SelectORMType
+    | VerseKeyAudioFile
+    | GenBookAudioFile,
+  phs: {
+    XSKEY: string;
+    XSPARENT: string;
+    XSCHAPTER: string;
+    XSCHAPTERS: string;
+    XSPACKAGE: 'none' | 'zip';
+  },
+) {
+  if ('book' in selection) {
+    const { book, chapter } = selection;
+    const lastchapter =
+      'lastchapter' in selection && selection.lastchapter
+        ? selection.lastchapter
+        : chapter;
+    phs.XSKEY = book;
+    phs.XSPARENT = book;
+    phs.XSCHAPTER = chapter.toString();
+    const chl = lastchapter > chapter ? lastchapter : chapter;
+    phs.XSCHAPTERS = `${chapter.toString()}-${chl}`;
+    phs.XSPACKAGE = lastchapter > chapter ? 'zip' : 'none';
+  } else {
+    const keys = 'keys' in selection ? selection.keys : [selection.key];
+    // IBT requires that multiple genbk keys use path order or fully qualified
+    // keys! IBT also requires that multiple keys are always siblings of the
+    // same parent (which is guaranteed by SelectOR anyway). Keys from IBT web
+    // app widgetOR may not include any redundant root segments but IBT also
+    // requires that path order XSCHAPTERS values include any redundant root.
+    // So using path name for XSCHAPTER whenever possible remediates that
+    // problem since IBT's widgetOR includes path names.
+    const useOrd = /^\d+(\/\d+)*$/.test(keys[0]);
+    const segs = keys[0].split('/').map((seg) => {
+      if (useOrd) return Number(seg);
+      return seg.replace(/^\d\d\d /, '');
+    });
+    if (keys.length > 1) {
+      let failed = false;
       const chs = keys.map((k) =>
         k.split('/').map((x) => {
-          const m = x.match(/^(\d\d\d)( .*$|$)/);
-          return m ? Number(m[1]) : -1;
+          const n = Number(x);
+          if (Number.isNaN(n)) {
+            const m = x.match(/^(\d\d\d)( .*$|$)/);
+            if (!m) failed = true;
+            return m ? Number(m[1]) : -1;
+          }
+          return n;
         }),
       );
-      let p = '';
-      if (chs[0].length > 1) p = chs[0].slice(0, -1).join('/') + '/';
-      const ch = chs[0].at(-1) ?? -1;
-      const cl = chs.at(-1)?.at(-1) ?? -1;
-      if (ch > -1) {
-        params.key = `/${p}${ch}${cl > ch ? '-' + cl.toString() : ''}`;
-      }
+      if (failed) return false;
+      phs.XSKEY = segs.join('/');
+      segs[segs.length - 1] = '';
+      const parent = segs.join('/');
+      let ch = -1;
+      let cl = -1;
+      chs.forEach((cha) => {
+        const c = cha.pop();
+        if (typeof c !== 'undefined') {
+          if (ch === -1 || ch > c) ch = c;
+          if (cl === -1 || cl < c) cl = c;
+        }
+      });
+      phs.XSPARENT = `/${parent}`;
+      phs.XSCHAPTER = ch.toString();
+      const chl = cl > ch ? cl : ch;
+      phs.XSCHAPTERS = `${ch}-${chl.toString()}`;
+      phs.XSPACKAGE = 'zip';
+    } else {
+      phs.XSKEY = segs.join('/');
+      const chapter = segs[segs.length - 1];
+      segs[segs.length - 1] = '';
+      const parent = segs.join('/');
+      phs.XSPARENT = `/${parent}`;
+      phs.XSCHAPTER = chapter.toString();
+      phs.XSCHAPTERS = chapter.toString();
+      phs.XSPACKAGE = 'none';
     }
-  } else {
-    const { book, chapter, lastchapter } = audio;
-    params.book = book;
-    params.chapter = `${chapter}${
-      typeof lastchapter !== 'undefined' && lastchapter > chapter
-        ? '-' + lastchapter.toString()
-        : ''
-    }`;
   }
 
-  return params;
+  return true;
 }
 
-// Audio conf DataPath may be an http(s) URL containing placeholder strings.
-// This function returns the completed URL by replacing the placeholders,
-// or else empty string is returned if they could not be replaced.
-export function resolveAudioDataPathURL(
+// The url may be an http(s) URL containing XS___ placeholder strings. This
+// function returns the completed URL by replacing the placeholder strings
+// with appropriate values from the selection.
+export function resolveTemplateURL(
   url: string,
-  audio: {
-    book?: OSISBookType;
-    chapter?: number | string;
-    key?: string;
-    package?: 'none' | 'zip';
-  },
-): string {
+  selection:
+    | SelectVKType
+    | SelectORMType
+    | VerseKeyAudioFile
+    | GenBookAudioFile,
+) {
+  // Supported replacements
   const phs = {
-    XSBOOK: '' as OSISBookType | '',
-    XSCHAPTERS: -1 as number | string,
-    XSKEYS: '',
+    XSKEY: '',
+    XSPARENT: '',
+    XSCHAPTER: '',
+    XSCHAPTERS: '',
     XSPACKAGE: 'none' as 'none' | 'zip',
   };
-  if ('key' in audio && audio.key) {
-    phs.XSKEYS = (!audio.key.startsWith('/') ? '/' : '') + audio.key;
-  }
-  if ('book' in audio && audio.book) phs.XSBOOK = audio.book;
-  if ('chapter' in audio) {
-    const { chapter } = audio;
-    if (typeof chapter !== 'undefined') phs.XSCHAPTERS = chapter;
-  }
-  if ('package' in audio && audio.package) phs.XSPACKAGE = audio.package;
-  let r = url;
-  Object.entries(phs).forEach((entry) => {
-    const [ph, value] = entry;
-    if (r.includes(ph)) {
-      if (!value || (ph === 'XSCHAPTERS' && value === -1)) return '';
-      r = r.replaceAll(ph, value.toString());
-    }
-  });
-  return r;
+
+  if (!IBTtemplateURL(selection, phs)) return url;
+
+  let url2 = url;
+  Object.entries(phs)
+    .sort((ea, eb) => eb[0].length - ea[0].length)
+    .forEach((entry) => {
+      const [ph, value] = entry;
+      if (value && url2.includes(ph))
+        url2 = url2.replaceAll(ph, value.toString());
+    });
+
+  return url2;
 }
 
 // Compare \d.\d.\d type version numbers (like SWORD modules).
