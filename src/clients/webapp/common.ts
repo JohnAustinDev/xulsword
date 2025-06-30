@@ -234,7 +234,9 @@ export function updateLinks(
     let { urlTemplate } = updateUrl;
     let linkText = '';
 
-    // Read Drupal update_url info for this anchor element
+    // Read Drupal update_url info for this anchor element. The linkText string
+    // may contain 'CHAPTER', 'CHAPTER1' or 'CHAPTER2' placeholders to be
+    // replaced with current values.
     let myclass = '';
     Object.entries(updateUrl).forEach((e) => {
       const [k, v] = e;
@@ -251,6 +253,37 @@ export function updateLinks(
         }
       }
     });
+    Object.entries({
+      CHAPTER1: ch1,
+      CHAPTER2: ch2,
+      CHAPTER: chapter,
+    }).forEach((e) => {
+      const [placeholder, value] = e;
+      if (typeof value !== 'undefined')
+        linkText = linkText.replace(
+          new RegExp(`\\b${placeholder}\\b`, 'g'),
+          value.toString(),
+        );
+    });
+
+    // Update the link text, as well as any size text found in parenthesis.
+    if (linkText) {
+      anchor.textContent = linkText;
+      if (anchor.parentElement?.tagName === 'SPAN') {
+        const size = myclass === 'dl_chapters' ? sizeMultiple : sizeSingle;
+        const selem = anchor.parentElement.nextElementSibling;
+        if (
+          selem &&
+          selem.tagName === 'SPAN' &&
+          selem.textContent &&
+          /^\(.*\)$/.test(selem.textContent)
+        ) {
+          const fnum = size / 1000000;
+          const snum = fnum.toFixed(fnum > 10 ? 1 : 2);
+          selem.textContent = `(${snum} MB)`;
+        }
+      }
+    }
 
     // Update URL using the urlTemplate
     if (urlTemplate) {
@@ -276,22 +309,6 @@ export function updateLinks(
         }
       }
       anchor.setAttribute('href', resolveTemplateURL(urlTemplate, sel));
-    }
-
-    // Update the link text
-    if (linkText) {
-      anchor.textContent = linkText
-        .replaceAll('CHAPTER1', ch1.toString())
-        .replaceAll('CHAPTER2', ch2.toString());
-      if (anchor.parentElement?.tagName === 'SPAN') {
-        const size = myclass === 'dl_chapters' ? sizeMultiple : sizeSingle;
-        const selem = anchor.parentElement.nextElementSibling;
-        if (selem && selem.tagName === 'SPAN') {
-          const fnum = size / 1000000;
-          const snum = fnum.toFixed(fnum > 10 ? 1 : 2);
-          selem.textContent = `(${snum} MB)`;
-        }
-      }
     }
 
     // Animate the link so the user sees the change

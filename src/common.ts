@@ -1936,13 +1936,14 @@ function IBTtemplateURL(
     phs.XSPACKAGE = lastchapter > chapter ? 'zip' : 'none';
   } else {
     const keys = 'keys' in selection ? selection.keys : [selection.key];
-    // IBT requires that multiple genbk keys use path order or fully qualified
-    // keys! IBT also requires that multiple keys are always siblings of the
-    // same parent (which is guaranteed by SelectOR anyway). Keys from IBT web
-    // app widgetOR may not include any redundant root segments but IBT also
-    // requires that path order XSCHAPTERS values include any redundant root.
-    // So using path name for XSCHAPTER whenever possible remediates that
-    // problem since IBT's widgetOR includes path names.
+    if (!keys.length) return false;
+    // Multiple genbk keys are assumed to use path order or fully qualified
+    // keys and to be siblings of the same parent (which is guaranteed by
+    // SelectOR). In addition, keys from IBT's web app widgetOR may not include
+    // redundant root segments and IBT requires that path order XSPARENT and
+    // XSKEY values include any redundant root. Thus this problem is remediated
+    // by using path name for XSPARENT/XSKEY whenever possible, since IBT's
+    // widgetOR includes path names.
     const useOrd = /^\d+(\/\d+)*$/.test(keys[0]);
     const segs = keys[0].split('/').map((seg) => {
       if (useOrd) return Number(seg);
@@ -1954,7 +1955,7 @@ function IBTtemplateURL(
         k.split('/').map((x) => {
           const n = Number(x);
           if (Number.isNaN(n)) {
-            const m = x.match(/^(\d\d\d)( .*$|$)/);
+            const m = x.match(/^(\d\d\d)( .*)?$/);
             if (!m) failed = true;
             return m ? Number(m[1]) : -1;
           }
@@ -1963,7 +1964,7 @@ function IBTtemplateURL(
       );
       if (failed) return false;
       phs.XSKEY = segs.join('/');
-      segs[segs.length - 1] = '';
+      if (segs.length) segs[segs.length - 1] = '';
       const parent = segs.join('/');
       let ch = -1;
       let cl = -1;
@@ -1981,8 +1982,11 @@ function IBTtemplateURL(
       phs.XSPACKAGE = 'zip';
     } else {
       phs.XSKEY = segs.join('/');
-      const chapter = segs[segs.length - 1];
-      segs[segs.length - 1] = '';
+      let chapter = '';
+      if (segs.length) {
+        chapter = segs[segs.length - 1].toString();
+        segs[segs.length - 1] = '';
+      }
       const parent = segs.join('/');
       phs.XSPARENT = `/${parent}`;
       phs.XSCHAPTER = chapter.toString();
