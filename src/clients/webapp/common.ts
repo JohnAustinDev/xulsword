@@ -177,13 +177,15 @@ export function createNodeList(chaplist: ChaplistType): TreeNodeInfo[] {
     .sort((a, b) => a[0].localeCompare(b[0]))
     .forEach((e) => {
       const [parent, chapdata] = e;
-      const parentLabel = parent.replace(/(^|\/)\d\d\d /g, '$1');
-      flatNodesSorted.push({
-        id: `${parent}/`,
-        label: parentLabel.split('/').pop() ?? '',
-        className: 'cs-LTR_DEFAULT',
-        hasCaret: true,
-      });
+      if (parent !== '') {
+        const parentLabel = parent.replace(/(^|\/)\d\d\d /g, '$1');
+        flatNodesSorted.push({
+          id: `${parent}${parent === '' ? '' : '/'}`,
+          label: parentLabel.split('/').pop() ?? '',
+          className: 'cs-LTR_DEFAULT',
+          hasCaret: true,
+        });
+      }
       chapdata
         .sort((a, b) => {
           if (typeof a[0] === 'number' && typeof b[0] === 'number')
@@ -198,7 +200,7 @@ export function createNodeList(chaplist: ChaplistType): TreeNodeInfo[] {
             .toString()
             .replace(/(^|\/)\d\d\d /g, '$1');
           flatNodesSorted.push({
-            id: `${parent}/${chapter}`,
+            id: `${parent}${parent === '' ? '' : '/'}${chapter}`,
             label: chapterLabel,
             className: 'cs-LTR_DEFAULT',
             hasCaret: false,
@@ -292,18 +294,17 @@ export function updateLinks(
         if ('book' in sel) {
           sel.chapter = ch1;
           sel.lastchapter = ch2;
-        } else {
-          const segsq = sel.keys[0].split('/') ?? '';
-          const qualParent = segsq.slice(0, -1).join('/');
+        } else if (sel.keys.length) {
+          const segs = sel.keys[0].split('/');
+          if (segs.length) segs[segs.length - 1] = '';
+          const qualParent = segs.join('/');
           const keys = [];
           for (let i = ch1 - 1; i <= ch2 - 1; i++) {
             const qualName = data[parent].find(
               (q) =>
                 Number(q[0].toString().replace(/^(\d\d\d)( .*)?$/, '$1')) === i,
             );
-            if (qualName) {
-              keys.push(`${qualParent}/${qualName[0]}`);
-            }
+            if (qualName) keys.push(`${qualParent}${qualName[0]}`);
           }
           sel.keys = keys;
         }
