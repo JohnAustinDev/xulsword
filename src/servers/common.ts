@@ -8,7 +8,6 @@ import {
   isASCII,
   JSON_parse,
   normalizeFontFamily,
-  pad,
   hierarchy,
   getSwordOptions,
   JSON_stringify,
@@ -35,7 +34,6 @@ import type {
   BookType,
   ModTypes,
   V11nType,
-  LocationVKType,
   FeatureMods,
   SwordConfType,
   ConfigType,
@@ -48,6 +46,7 @@ import type {
   GenBookAudioFile,
   ModulesCache,
   TreeNodeInfoPref,
+  AudioPath,
 } from '../type.ts';
 import PrefsElectron from './app/prefs.ts';
 
@@ -600,9 +599,7 @@ export async function getSystemFonts(): Promise<string[]> {
     let allfonts = getModuleFonts()
       .map((f) => f.fontFamily)
       .concat(fonts);
-    allfonts = Array.from(
-      new Set(allfonts.map((f) => normalizeFontFamily(f))),
-    );
+    allfonts = Array.from(new Set(allfonts.map((f) => normalizeFontFamily(f))));
     Cache.write(allfonts, 'fontList');
   }
   return await Promise.resolve(Cache.read('fontList') as string[]);
@@ -639,11 +636,11 @@ export function getFeatureModules(): FeatureMods {
       ) {
         xulswordFeatureMods.hebrew.push(module);
       }
-      xulswordFeatureMods.greek = xulswordFeatureMods.greek.filter((m) =>
-        !Tab[m].v11n || C.SupportedV11nMaps.includes(Tab[m].v11n),
+      xulswordFeatureMods.greek = xulswordFeatureMods.greek.filter(
+        (m) => !Tab[m].v11n || C.SupportedV11nMaps.includes(Tab[m].v11n),
       );
-      xulswordFeatureMods.hebrew = xulswordFeatureMods.hebrew.filter((m) =>
-        !Tab[m].v11n || C.SupportedV11nMaps.includes(Tab[m].v11n),
+      xulswordFeatureMods.hebrew = xulswordFeatureMods.hebrew.filter(
+        (m) => !Tab[m].v11n || C.SupportedV11nMaps.includes(Tab[m].v11n),
       );
 
       // These Strongs feature modules do not have Strongs number keys, and so cannot be used
@@ -941,10 +938,9 @@ export function inlineFile(
     : `data:${contentType};${encoding},${rawbuf.toString(encoding)}`;
 }
 
-// Return the audio src attribute value for an audio file. The audio argument
-// provides the audio module and path that will be used. The module's In Electron mode, filepath is an absolute
-// path. In public server mode, it is a server path and must be public or else
-// empty string will be returned.
+// Return the audio src attribute value for an audio file. The audio file will
+// be retreived from the audioModule conf DataPath, which may be http(s) or
+// a local file.
 export function inlineAudioFile(
   audio: VerseKeyAudioFile | GenBookAudioFile | null,
 ): string {
@@ -962,21 +958,36 @@ export function inlineAudioFile(
           return resolveTemplateURL(DataPath, audio);
         } else if (DataPath.startsWith('.')) {
           file.append(DataPath);
-          const leaf = pad(apath.pop() || 0, 3, 0);
-          while (apath.length) {
-            const p = apath.shift() as string | number;
-            if (!Number.isNaN(Number(p))) {
-              file.append(pad(p, 3, 0));
-            } else file.append(p.toString());
-          }
-          for (let x = 0; x < C.SupportedAudio.length; x += 1) {
-            const ext = C.SupportedAudio[x];
-            const afile = file.clone().append(`${leaf}.${ext}`);
-            if (afile.exists()) {
-              const { path } = afile;
-              if (path) return inlineFile(path);
+          const findAudio = (audioCodeDir: LocalFile, aPath: AudioPath) => {
+            const i = aPath.shift();
+            let isSuccess = false;
+            if (audioCodeDir.isDirectory()) {
+              audioCodeDir.directoryEntries.forEach((f) => {
+                const t = audioCodeDir.clone().append(f);
+                const myi =
+                  typeof i === 'number'
+                    ? Number(t.leafName.replace(/^(\d\d\d).*$/, '$1'))
+                    : t.leafName;
+                if (myi === i) {
+                  if (
+                    !aPath.length &&
+                    !t.isDirectory() &&
+                    new RegExp(`\\.(${C.SupportedAudio.join('|')})$`).test(
+                      t.leafName,
+                    )
+                  ) {
+                    audioCodeDir.append(f);
+                    isSuccess = audioCodeDir.exists();
+                  } else if (aPath.length && t.isDirectory()) {
+                    audioCodeDir.append(f);
+                    isSuccess = findAudio(audioCodeDir, aPath);
+                  }
+                }
+              });
             }
-          }
+            return isSuccess;
+          };
+          if (findAudio(file, apath)) return inlineFile(file.path);
         }
       }
     }

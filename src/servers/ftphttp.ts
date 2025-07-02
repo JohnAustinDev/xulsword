@@ -1067,7 +1067,10 @@ export async function getFileHTTP(
               ev2.preventDefault();
               rejectme(new Error('Download was paused'));
             } else if (progress) {
-              progress(item.getReceivedBytes() / item.getTotalBytes());
+              // TODO: getTotalBytes returns 0 (need response headers?)
+              // Assume the largest download is 50MB, and use that if 0.
+              const total = item.getTotalBytes() || 50000000;
+              progress(item.getReceivedBytes() / total);
             }
           }
         });

@@ -86,7 +86,7 @@ function recurseAudioDirectory(
   dir.directoryEntries.forEach((sub) => {
     const subfile = dir.clone().append(sub);
     if (/^(\d+)/.test(sub)) {
-      const m2 = subfile.leafName.match(/^(\d+)\.[^.]+$/);
+      const m2 = subfile.leafName.match(/^(\d+)/);
       if (subfile.isDirectory()) {
         recurseAudioDirectory(subfile, ancOrSelf, audio);
       } else if (m2) {
@@ -563,9 +563,11 @@ export async function installZIPs(
                 //
                 // Current paths:
                 // audio/<audio-code>/<book>/001.mp3 (000.mp3 is book introduction)
-                // audio/<audio-code>/000/.../000.mp3
+                // audio/<audio-code>/000 title/.../000 title.mp3
                 //
                 // NOTES:
+                // - Deprecated directory and file names are 3 digit ordinal only, but
+                // new directory and file names are fully qualified paths.
                 // - Deprecated file indexes start at 1, but new indexes start at 0. For
                 // verse-key modules, 0 is the book introduction.
                 // - Deprecated system is detected if <lang-code> is present in the path.
@@ -582,22 +584,9 @@ export async function installZIPs(
                 // Finally, general-book indexes need 1 to be subtracted from each index.
                 const audio = Dirs.xsAudio;
                 const pobj = fpath.posix.parse(entryName);
-                let dirs = pobj.dir.split(fpath.posix.sep);
-                let chapter = Number(pobj.name.replace(/^(\d+).*?$/, '$1'));
+                const dirs = pobj.dir.split(fpath.posix.sep);
+                const chapter = Number(pobj.name.replace(/^(\d+).*?$/, '$1'));
                 dirs.shift(); // remove ./audio
-                let deprecatedZip = false;
-                // Deprecated Zip files have lang-code in the path, so check and remove.
-                if (
-                  dirs.findIndex(
-                    (d) =>
-                      Object.entries(C.SupportedBooks).some((bg: any) =>
-                        bg[1].includes(d),
-                      ) || /^\d+/.test(d),
-                  ) === 2
-                ) {
-                  dirs.shift();
-                  deprecatedZip = true;
-                }
                 let [audioCode] = dirs;
                 // For some reason path-audioCode case might not always
                 // match what is in the conf file, so use the conf file value.
@@ -609,22 +598,10 @@ export async function installZIPs(
                 const isVerseKey = Object.values(C.SupportedBooks).some(
                   (bg: any) => bg.includes(bookOrSub),
                 );
-                // Convert deprecated GenBook path to new form.
-                if (!isVerseKey && deprecatedZip) {
-                  chapter -= 1;
-                  dirs = dirs.map((d, ix) =>
-                    ix < 2
-                      ? d
-                      : pad(Number(d.replace(/^(\d+).*?$/, '$1')) - 1, 3, 0),
-                  );
-                  dirs.splice(2, 0, '000');
-                }
                 // Create parent directories
-                const gbkeys: string[] = [];
                 while (dirs.length) {
                   const subname = dirs.shift() as string;
                   audio.append(subname);
-                  gbkeys.push(subname);
                   if (!audio.exists()) {
                     audio.create(LocalFile.DIRECTORY_TYPE);
                   }
@@ -645,14 +622,15 @@ export async function installZIPs(
                   } else audioCode = '';
                 } else if (audioCode) {
                   // GenBook audio file...
-                  const fname = pad(chapter, 3, 0);
-                  gbkeys.push(fname);
-                  audio.append(fname + pobj.ext);
+                  audio.append(pobj.base);
                   audio.writeFile(entry.getData());
+                  const qp = decodeURIComponent(pobj.dir).split(fpath.posix.sep);
+                  qp.shift(); // remove audio
+                  qp.shift(); // remove <audiocode>
                   const audioFile: GenBookAudioFile = {
                     audioModule: audioCode,
-                    key: gbkeys.join(C.GBKSEP),
-                    path: gbkeys.map((k) => Number(k)),
+                    key: qp.map((p) => p.replace(/^\d\d\d /, '')).join(C.GBKSEP),
+                    path: qp.map((p) => Number(p.replace(/^(\d\d\d) .*$/, '$1'))),
                   };
                   newmods.audio.push(audioFile);
                 }
@@ -1090,7 +1068,7 @@ const Module = {
         const trace = 'trace' in erobj ? erobj.trace : '';
         w?.webContents.send('progress', prog, downloadkey, trace);
         w = null;
-        threshProgress = prog + 2;
+        threshProgress = prog + .02;
         done = prog === -1;
       }
     };
@@ -1125,7 +1103,7 @@ const Module = {
             tmpdir.append(randomID()),
             downloadkey,
             (p: number) => {
-              if (p && p !== -1) progress(p * (3 / 4));
+              if (p && p !== -1) progress(p);
             },
           );
           ftpCancelable(downloadkey);
