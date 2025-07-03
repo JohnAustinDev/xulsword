@@ -1,7 +1,14 @@
-.select-parent.hide {
-  /* display: none; */
+.selector {
+  margin: 5px;
 }
 
-.selector .menulist + .menulist {
+.menulist.hide {
+  display: none;
+}
+
+.selector .menulist {
   margin-top: 0;
+}
+.selector .menulist:not(.hide) + .menulist {
+  margin-top: 5px;
 }

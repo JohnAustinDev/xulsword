@@ -1,4 +1,5 @@
 .menulist select {
+  height: 100%;
   border: none;
   border-radius: 1px;
   background: none;

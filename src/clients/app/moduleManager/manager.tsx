@@ -795,7 +795,7 @@ export default class ModuleManager
                   {vkAudioDialog && (
                     <>
                       <Label value={vkAudioDialog.conf.module} />
-                      <div>{vkAudioDialog.conf.Description?.locale}</div>
+                      <div className="modname">{vkAudioDialog.conf.Description?.locale}</div>
                       <SelectVK
                         height="2em"
                         initialVK={vkAudioDialog.initial}
@@ -808,6 +808,7 @@ export default class ModuleManager
                   {gbAudioDialog && (
                     <>
                       <Label value={gbAudioDialog.conf.module} />
+                      <div className="modname">{gbAudioDialog.conf.Description?.locale}</div>
                       <SelectOR
                         key={[
                           gbAudioDialog.selection.otherMod,

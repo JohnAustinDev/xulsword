@@ -11,6 +11,8 @@ import Menulist from './menulist.tsx';
 import Textbox from './textbox.tsx';
 import './bookselect.css';
 
+import type { OSISBookType } from '../../../type.ts';
+
 // XUL Bookselect
 // This component contains an overlapping Textbox and Menulist.
 // The Menulist's value does not display (its selection is covered
@@ -38,7 +40,7 @@ const propTypes = {
 };
 
 type BookselectProps = {
-  options: string[];
+  options: OSISBookType[];
   selection?: string | undefined;
   disabled?: boolean | undefined;
   sizetopopup?: string | undefined;

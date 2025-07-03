@@ -57,6 +57,9 @@
   white-space: unset;
   margin-bottom: 10px;
 }
+.moduleManager .dialog .modname {
+  margin-inline-start: 10px;
+}
 .moduleManager .bp5-dialog-body .label:first-child {
   font-size: large;
   margin-bottom: 20px;

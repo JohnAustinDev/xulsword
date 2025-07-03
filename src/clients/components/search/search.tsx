@@ -495,7 +495,7 @@ export default class Search
                 <Groupbox
                   id="searchTextGroup"
                   orient="horizontal"
-                  align="stretch"
+                  align="center"
                 >
                   <Hbox className="searchtextLabel" align="center">
                     <Label
@@ -521,7 +521,7 @@ export default class Search
                       onChange={handler}
                     />
                   </Vbox>
-                  <Hbox>
+                  <Hbox className="searchtextButtons">
                     <Button
                       id="searchButton"
                       icon="search"

@@ -176,16 +176,13 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
     let select: JSX.Element;
     if ('v11n' in location) {
       select = (
-        <>
-          <Spacer flex="1" />
-          <SelectVK
-            key={[reset].join('.')}
-            initialVK={location}
-            options={{ lastchapters: [] }}
-            disabled={disabled}
-            onSelection={onChange}
-          />
-        </>
+        <SelectVK
+          key={[reset].join('.')}
+          initialVK={location}
+          options={{ lastchapters: [] }}
+          disabled={disabled}
+          onSelection={onChange}
+        />
       );
     } else {
       const { otherMod, key } = location;
@@ -205,10 +202,13 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
     return (
       <Hbox
         domref={loadingRef}
-        pack="end"
+        pack="start"
         align="start"
         {...htmlAttribs('selectany', props)}
       >
+        {/* Although SelectOR and SelectVK have their own ModuleMenu
+        selectors, they filter out unsupported modules. So this ModuleMenu
+        is needed because it will not filter. */}
         <ModuleMenu
           className={`any-module ${'v11n' in location ? 'vksel' : 'orsel'}`}
           value={module}

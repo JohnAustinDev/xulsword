@@ -485,7 +485,7 @@ export default class PrintSettings extends React.Component {
       // initialPageViewW can be anything, but it must have a known value.
       let initialPageViewW =
         window.innerWidth - settingsW - 3 * C.UI.Print.viewMargin;
-      if (Build.isWebApp && window.innerWidth <= C.UI.WebApp.mobileW) {
+      if (window.innerWidth <= C.UI.WebApp.mobileW) {
         initialPageViewW = settingsW - 20;
       }
       if (initialPageViewW < 100) initialPageViewW = 100;

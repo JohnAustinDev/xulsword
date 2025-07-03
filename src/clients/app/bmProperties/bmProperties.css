@@ -12,12 +12,19 @@
   min-width: 350px;
 }
 
-.grid-cell > .label {
+.bmproperties .grid {
+  overflow: auto;
+}
+.bmproperties .grid-cell > .label {
   display: inline-block;
   margin: 5px;
 }
-.grid-cell > .label::after {
+.bmproperties .grid-cell > .label::after {
   content: ': ';
+}
+
+.bmproperties .selector {
+  min-width: 300px;
 }
 
 .bmproperties textarea {

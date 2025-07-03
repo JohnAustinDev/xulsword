@@ -2,15 +2,9 @@
   height: 100%;
 }
 
-html:not(.bibleBrowser) #player > .vbox > div {
-  height: 30px;
+#player > .vbox > div {
   background: #f6f7f9;
   border: 1px solid rgb(197 197 197);
-  padding-top: 1px;
-  border-radius: 3px;
-}
-html:not(.bibleBrowser) #player audio {
-  height: 25px;
 }
 
 #navigator-tool {
@@ -56,7 +50,6 @@ html:not(.bibleBrowser) #player audio {
 }
 
 #xsSearchButton {
-  margin: 0;
   z-index: 1; /* allow bottom focus border to be visible */
 }
 

@@ -34,6 +34,8 @@ export type SelectVKType =
       lastchapter?: number;
     });
 
+// TODO: Replace book Menulist with Bookselect component.
+
 // The SelectVK maintains its own state starting at initialVK. So
 // onSelection must be used to read component selection. The key
 // prop may be used to reset state to initialVK at any time.
@@ -445,6 +447,18 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
         align="center"
         {...addClass('selectvk', this.props)}
       >
+        {modules.length > 0 && (
+          <ModuleMenu
+            className="vk-vkmod"
+            value={vkmod || modules[0]}
+            modules={modules}
+            language={language}
+            description={description}
+            disabled={disabled}
+            allowNotInstalled={allowNotInstalled}
+            onChange={handleChange}
+          />
+        )}
         {newbooks.length > 0 && (
           <Menulist
             className="vk-book"
@@ -500,23 +514,6 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
             onChange={handleChange}
           />
         )}
-        <div className="mod-select">
-          {modules.length > 0 && (
-            <>
-              <Spacer orient="horizontal" flex="1" />
-              <ModuleMenu
-                className="vk-vkmod"
-                value={vkmod || modules[0]}
-                modules={modules}
-                language={language}
-                description={description}
-                disabled={disabled}
-                allowNotInstalled={allowNotInstalled}
-                onChange={handleChange}
-              />
-            </>
-          )}
-        </div>
       </Hbox>
     );
   }

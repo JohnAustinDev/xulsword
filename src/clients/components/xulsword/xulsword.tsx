@@ -541,7 +541,7 @@ export default class Xulsword
 
     const webappVKSelectorComponent = (
       <Hbox pack="center">
-        <Hbox id="textnav" align="center">
+        <Hbox id="textnav">
           <SelectVK
             id="book"
             flex="1"
@@ -664,7 +664,7 @@ export default class Xulsword
                 <Spacer flex="1" className="narrow-screen-hide" />
               </Hbox>
 
-              <Hbox id="main-controlbar" pack="center">
+              <Hbox id="main-controlbar" pack="center" align="start">
                 {chooserMenuButton}
 
                 {vkMod && webappVKSelectorComponent}
@@ -692,7 +692,12 @@ export default class Xulsword
         )}
 
         {Build.isElectronApp && (
-          <Hbox id="main-controlbar" pack="start" className="controlbar skin">
+          <Hbox
+            id="main-controlbar"
+            pack="start"
+            align="start"
+            className="controlbar skin"
+          >
             <Spacer className="start-spacer" />
 
             {appNavigatorToolComponent}

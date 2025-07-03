@@ -1,14 +1,33 @@
-.selectvk .menulist {
-  height: 100%;
+.selectvk {
+  margin: 5px;
 }
+.selectvk .menulist,
 .selectvk select {
   height: 100%;
+}
+
+.selectvk select {
   border: none;
   background-color: white;
 }
 
+.selectvk .vk-chapter select,
+.selectvk .vk-verse select,
+.selectvk .vk-lastchapter select,
+.selectvk .vk-lastverse select {
+  width: calc(3em + 4px);
+}
+
 .selectvk > *:not(:first-child) {
   display: inline-block;
+}
+
+.selectvk > .modulemenu:not(:last-child),
+.selectvk > .menulist:not(:last-child) {
+  margin-inline-end: 10px;
+}
+.selectvk > .label {
+  margin-inline-end: 5px;
 }
 
 .selectvk .label label {
@@ -16,15 +35,6 @@
   padding-top: 3px;
   margin-inline-start: 2px;
   margin-inline-end: 2px;
-}
-.selectvk .vk-book {
-  margin-inline-end: 10px;
-}
-.selectvk .spacer {
-  width: 10px;
-}
-.selectvk .vk-vkmod {
-  margin-inline-start: 10px;
 }
 
 .selectvk span.name {

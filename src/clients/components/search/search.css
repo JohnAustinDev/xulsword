@@ -1,16 +1,19 @@
 .search {
+  height: 100%;
   padding: 10px;
 }
 .search-grid {
   position: relative;
+  overflow: hidden;
   gap: 10px 10px;
+  transition: height 0.5s;
+  height: 270px;
 }
 .search-grid .groupbox {
   margin: 0 0 0 0;
 }
-.search-grid.less .grid-row-cell:not(:first-of-type) {
-  height: 0px;
-  overflow: hidden;
+.search-grid.less  {
+  height: 100px;
 }
 .search-grid > .grid-row-cell:nth-of-type(2) .groupbox {
   min-width: 360px;
@@ -21,37 +24,32 @@
 #scopeselect select {
   width: 100%;
 }
-.bibleBrowser #searchTextGroup {
-  padding: 25px;
+#searchTextGroup .groupbox-body {
+  height: 84px;
 }
 .searchtext {
   position: relative;
-  top: -15px;
-}
-.bibleBrowser .searchtext {
-  top: -22px;
+  top: -17px;
 }
 .searchtext > div {
   width: 100%;
   margin: 0;
 }
-.searchtextLabel {
-  margin-inline-end: 5px;
-  margin-inline-start: 10px;
-}
 .searchtext > .modulemenu {
   position: absolute;
-  top: 37px;
-}
-.bibleBrowser .searchtext > .modulemenu {
-  top: 50px;
+  top: 41px;
 }
 .searchtext > .modulemenu select {
   width: 100%;
 }
-
-#searchButton {
-  margin-inline-start: 10px;
+.searchtextButtons > div {
+  margin-bottom: 0;
+}
+.searchtextButtons > div:first-child {
+  margin-left: 0;
+}
+.searchtextButtons > div:last-child {
+  margin-right: 0;
 }
 
 #helpButton.open {
@@ -161,7 +159,10 @@ html[dir='rtl'] .resultBox #displayModule {
   text-decoration: underline;
 }
 #searchResults {
-  overflow-y: auto;
+  overflow: auto;
+}
+#searchResults > div {
+  width: fit-content;
 }
 #searchResults .searchterm {
   color: red;
@@ -214,95 +215,99 @@ html[dir='rtl'] .resultBox #displayModule {
   text-decoration: unset !important;
 }
 
-@media (max-width: 767px) {
+/* 640 is the aproximate width of the search tool group */
+@media (max-width: 640px) {
+  .searchWin body {
+    overflow-y: auto;
+  }
+  .searchWin #root, .searchWin #reset, .searchWin .search {
+    height: unset;
+  }
   .search {
     padding: 5px;
   }
-  .bibleBrowser .xsinput {
+  .xsinput {
     margin-right: 0px;
     margin-left: 0px;
   }
-  .bibleBrowser .search-grid {
+  .search-grid {
     width: 100vw;
     grid-template-columns: unset !important;
   }
-  .bibleBrowser .search-grid > div {
+  .search-grid {
+    height: 472px;
+  }
+  .search-grid.less  {
+    height: 150px;
+  }
+  .search-grid > div {
     grid-area: auto / 1 / auto / 3 !important;
   }
-  .bibleBrowser #searchTextGroup {
+  #searchTextGroup {
     padding: 10px;
   }
-  .bibleBrowser #searchTextGroup > .groupbox-body {
+  #searchTextGroup > .groupbox-body {
     flex-direction: column;
     align-items: center;
+    height: unset;
+    padding-bottom: unset;
   }
-  .bibleBrowser #searchTextGroup .groupbox-body > div {
+  #searchTextGroup .groupbox-body > div {
     width: 200px;
+    margin: unset;
   }
-  .bibleBrowser .searchtext {
+  .searchtext {
     top: 0;
     margin: 0px 10px;
   }
-  .bibleBrowser .searchtext > .modulemenu {
+  .searchtext > .modulemenu {
     position: unset;
     top: unset;
   }
-  .bibleBrowser .searchtext > div:not(:first-child) {
-    margin-top: 10px;
+  .searchtext > div:not(:first-child) {
+    margin-top: 5px;
   }
-  .bibleBrowser .searchtextLabel {
+  .searchtextLabel {
     display: none;
   }
-  .bibleBrowser #searchButton,
-  .bibleBrowser #helpButton,
-  .bibleBrowser #moreLess {
-    margin: 10px 0;
-  }
-  .bibleBrowser #searchButton {
-    margin-inline-start: unset;
-    margin-inline-end: 5px;
-  }
-  .bibleBrowser #moreLess {
-    margin-inline-start: 5px;
-  }
-  .bibleBrowser #searchButton .button-box,
-  .bibleBrowser #searchButton button {
+  #searchButton .button-box,
+  #searchButton button {
     width: 100%;
   }
-  .bibleBrowser .search-grid > .grid-row-cell:nth-of-type(2) .groupbox {
+  .search-grid > .grid-row-cell:nth-of-type(2) .groupbox {
     min-width: unset;
     width: 100%;
   }
-  .bibleBrowser #scoperadio .grid {
+  #scoperadio .grid {
     grid-template-columns: unset !important;
   }
-  .bibleBrowser #scoperadio .grid > div:last-child {
+  #scoperadio .grid > div:last-child {
     width: 40%;
   }
-  .bibleBrowser #scoperadio .label {
+  #scoperadio .label {
     white-space: unset;
   }
-  .bibleBrowser .resultBox {
+  .resultBox {
     width: calc(100%);
   }
-  .bibleBrowser .resultBox .npopup {
+  .resultBox .npopup {
     padding-inline-start: unset;
     padding-inline-end: unset;
   }
-  .bibleBrowser .result-parent {
+  .result-parent {
     flex-direction: column;
   }
-  .bibleBrowser .buttonBox {
+  .buttonBox {
     flex-direction: row;
     justify-content: center;
   }
-  .bibleBrowser .buttonBox .spacer {
+  .buttonBox .spacer {
     display: none;
   }
-  .bibleBrowser .search #pagefirst svg,
-  .bibleBrowser .search #pageprev svg,
-  .bibleBrowser .search #pagenext svg,
-  .bibleBrowser .search #pagelast svg {
+  .search #pagefirst svg,
+  .search #pageprev svg,
+  .search #pagenext svg,
+  .search #pagelast svg {
     transform: rotate(-90deg);
   }
 }

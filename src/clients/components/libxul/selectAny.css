@@ -1,10 +1,10 @@
-.selectany .any-module.vksel select {
-  max-width: 100px;
-}
-
 .selectany .selectvk .vk-vkmod,
 .selectany .selector .select-module {
   display: none;
+}
+
+.selectany .selector .select-module + .menulist:not(.hide) {
+  margin-top: 0;
 }
 
 .selectany .selector {
@@ -21,8 +21,4 @@
 }
 .selectany .selectvk {
   margin-inline-end: -8px;
-}
-
-.selectany .selector .menulist + .menulist {
-  margin-top: 5px;
 }

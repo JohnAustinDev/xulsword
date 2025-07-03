@@ -25,5 +25,8 @@
 }
 
 .groupbox .groupbox-body {
-  padding: 10px;
+  padding-bottom: 8px;
+}
+.groupbox .groupbox-body > div {
+  margin: 5px;
 }

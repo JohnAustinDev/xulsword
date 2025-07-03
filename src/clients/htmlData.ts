@@ -141,6 +141,10 @@ export function libSwordData2XulswordData(dataIn: LibSwordHTMLData): HTMLData {
           verse: vs ?? undefined,
           lastverse: lv ?? undefined,
           v11n: (mod && mod in G.Tab && G.Tab[mod].v11n) || null,
+          vkMod:
+            context && context in G.Tab && G.Tab[context].isVerseKey
+              ? context
+              : undefined,
         }
       : undefined;
   if (type && osisref) {
@@ -426,7 +430,8 @@ export function elementData(
 
 // Merge a priority ordered array of HTMLData objects into one. Certain
 // attributes are kept consistent so they are guaranteed to originate
-// from the same source data object.
+// from the same source data object. Only the first location OR locationGB
+// wil be kept, and later location/locationGB are ignored.
 export function mergeElementData(
   datas: Array<HTMLData | null>,
 ): HTMLData | null {
@@ -441,13 +446,18 @@ export function mergeElementData(
     datas2.forEach((d) => {
       Object.entries(d).forEach((entry) => {
         const [p, v] = entry;
-        if (keepConsistent.includes(p as never)) {
-          if (!r.type && p === 'type' && v) {
-            keepConsistent.forEach((pc) => {
-              (r as any)[pc] = d[pc];
-            });
-          }
-        } else if (!r[p as keyof HTMLData] && v) (r as any)[p] = v;
+        if (
+          !['location', 'locationGB'].includes(p) ||
+          !('location' in r || 'locationGB' in r)
+        ) {
+          if (keepConsistent.includes(p as never)) {
+            if (!r.type && p === 'type' && v) {
+              keepConsistent.forEach((pc) => {
+                (r as any)[pc] = d[pc];
+              });
+            }
+          } else if (!r[p as keyof HTMLData] && v) (r as any)[p] = v;
+        }
       });
     });
     return r;

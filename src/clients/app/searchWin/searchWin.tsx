@@ -15,7 +15,7 @@ export const searchArg = windowArguments('search') as SearchType;
 export const descriptor = windowArguments();
 
 renderToRoot(
-  <Search initialState={searchArg} descriptor={descriptor} height="100%" />,
+  <Search initialState={searchArg} descriptor={descriptor} />,
   {
     resetOnResize: false,
     onunload: () => {

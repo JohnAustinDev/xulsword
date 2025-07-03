@@ -575,8 +575,10 @@ export default async function renderToRoot(
       const [bodyElem] = Array.from(document.getElementsByTagName('body'));
       if (htmlElem && bodyElem) {
         const b = bodyElem.getBoundingClientRect();
-        if (b && Build.isElectronApp)
-          G.Window.setContentSize(b.width, b.height);
+        if (b && Build.isElectronApp) {
+          // Add 20 px, otherwise unnecessary scrollbars may appear.
+          G.Window.setContentSize(b.width + 20, b.height + 20);
+        }
         // Now that the window has been resized, remove the fitToContent
         // class so content will fill the window even if it shrinks.
         htmlElem.classList.remove('fitToContent');

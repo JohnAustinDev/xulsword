@@ -5,14 +5,11 @@
   position: relative;
 }
 .printControls .selectvk {
-  padding-bottom: 14px;
+  height: unset; /* allow selectvk to wrap */
   flex-wrap: wrap;
 }
-.printControls .selectvk .vk-vkmod {
-  margin-inline-start: 0;
-}
-.printControls .selectvk .vk-lastchapter {
-  margin-inline-end: 10px;
+.printControls .selectvk > div {
+  height: var(--input-height); /* allow selectvk to wrap */
 }
 .printControls .bp5-progress-bar {
   position: absolute;

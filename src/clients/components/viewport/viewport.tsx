@@ -260,8 +260,7 @@ class Viewport extends React.Component implements PopupParent {
       if (ilpref === 'disabled') ilpref = null;
       if (
         panelHasILOptions[i] &&
-        (!ilModuleOptions[i] ||
-          (panel && G.Tab[panel].type !== C.BIBLE))
+        (!ilModuleOptions[i] || (panel && G.Tab[panel].type !== C.BIBLE))
       ) {
         ilModules[i] = 'disabled'; // visible and disabled
       } else if (
@@ -357,7 +356,8 @@ class Viewport extends React.Component implements PopupParent {
       : 'bible';
 
     const showingChooser =
-      showChooser || (Build.isElectronApp && chooser === 'genbook');
+      showChooser ||
+      (!ownWindow && Build.isElectronApp && chooser === 'genbook');
 
     const chooserV11n =
       panels.reduce(
