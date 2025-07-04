@@ -9,7 +9,11 @@ import CommandsX from './components/commands.ts';
 import Data from '../components/data.ts';
 
 import type { BrowserWindow } from 'electron';
-import type { GAddWindowId, ContextDataType, SwordConfType } from '../../type.ts';
+import type {
+  GAddWindowId,
+  ContextDataType,
+  SwordConfType,
+} from '../../type.ts';
 import type { AboutWinState } from '../../clients/app/about/about.tsx';
 
 // Require the calling window argument, since G will not add it when

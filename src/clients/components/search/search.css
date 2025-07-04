@@ -12,7 +12,7 @@
 .search-grid .groupbox {
   margin: 0 0 0 0;
 }
-.search-grid.less  {
+.search-grid.less {
   height: 100px;
 }
 .search-grid > .grid-row-cell:nth-of-type(2) .groupbox {
@@ -220,7 +220,9 @@ html[dir='rtl'] .resultBox #displayModule {
   .searchWin body {
     overflow-y: auto;
   }
-  .searchWin #root, .searchWin #reset, .searchWin .search {
+  .searchWin #root,
+  .searchWin #reset,
+  .searchWin .search {
     height: unset;
   }
   .search {
@@ -237,7 +239,7 @@ html[dir='rtl'] .resultBox #displayModule {
   .search-grid {
     height: 472px;
   }
-  .search-grid.less  {
+  .search-grid.less {
     height: 150px;
   }
   .search-grid > div {

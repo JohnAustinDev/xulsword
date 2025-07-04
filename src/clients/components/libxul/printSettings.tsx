@@ -3,9 +3,7 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Icon, Intent, Position, OverlayToaster } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
-import analytics, {
-  BibleBrowserEventInfo,
-} from '../../analytics.ts';
+import analytics, { BibleBrowserEventInfo } from '../../analytics.ts';
 import { clone, randomID } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
@@ -879,7 +877,6 @@ export default class PrintSettings extends React.Component {
         </Groupbox>
 
         <Hbox className="dialog-buttons" pack="end" align="end">
-
           {/* Native print is problematic in MS-Windows and doesn't work well
           in Linux either, plus it's not needed since print-to-pdf works well.
             <Button
@@ -891,8 +888,7 @@ export default class PrintSettings extends React.Component {
               onClick={handler}
             >
               {GI.i18n.t('', renderPromise, 'menu.print')}
-            </Button>*/
-          }
+            </Button>*/}
 
           {Build.isElectronApp && (
             <>

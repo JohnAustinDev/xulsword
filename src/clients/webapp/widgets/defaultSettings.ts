@@ -6,7 +6,10 @@ import type { SelectORProps } from '../../components/libxul/selectOR.tsx';
 import type { SelectVKProps } from '../../components/libxul/selectVK.tsx';
 import type { AllComponentsData } from '../common.ts';
 
-export type WidgetActions = 'bible_audio_Play' | 'genbk_audio_Play' | 'update_url';
+export type WidgetActions =
+  | 'bible_audio_Play'
+  | 'genbk_audio_Play'
+  | 'update_url';
 
 export type WidgetVKData = {
   component: 'selectVK';
@@ -92,7 +95,7 @@ const defaultSettings: AllComponentsData = {
       data: {
         '': [
           ['000 First chapter', '', 1000000, 0, [1, 2, 200000], 'chapters'],
-          ['001 Second chapter', '', 1000000, 0, [1, 2, 200000], 'chapters']
+          ['001 Second chapter', '', 1000000, 0, [1, 2, 200000], 'chapters'],
         ],
       },
     },

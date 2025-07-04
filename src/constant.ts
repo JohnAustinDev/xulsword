@@ -330,7 +330,7 @@ const C = {
     'NRSVA',
     'Segond',
     'SynodalProt',
-   ] as V11nType[],
+  ] as V11nType[],
 
   // SupportedBookGroups and SupportedBooks lists were taken from:
   // wiki.crosswire.org/OSIS_Book_Abbreviations (11/19/20)

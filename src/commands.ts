@@ -139,10 +139,7 @@ export default class Commands {
     return result;
   }
 
-  playAudio(
-    audio: AudioPrefType,
-    renderPromise: RenderPromise,
-  ) {
+  playAudio(audio: AudioPrefType, renderPromise: RenderPromise) {
     let xulsword: Partial<typeof S.prefs.xulsword> | undefined;
     const { file: selection, defaults } = audio;
     if (selection) {
@@ -181,7 +178,7 @@ export default class Commands {
         audio: {
           open: true,
           file: selection,
-          defaults
+          defaults,
         },
       };
     } else {

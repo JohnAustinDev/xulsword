@@ -14,17 +14,14 @@ export const searchArg = windowArguments('search') as SearchType;
 
 export const descriptor = windowArguments();
 
-renderToRoot(
-  <Search initialState={searchArg} descriptor={descriptor} />,
-  {
-    resetOnResize: false,
-    onunload: () => {
-      if (Indexing.current) {
-        G.LibSword.searchIndexCancel(Indexing.current, descriptor.id);
-        noAutoSearchIndex(G.Prefs, Indexing.current);
-      }
-    },
+renderToRoot(<Search initialState={searchArg} descriptor={descriptor} />, {
+  resetOnResize: false,
+  onunload: () => {
+    if (Indexing.current) {
+      G.LibSword.searchIndexCancel(Indexing.current, descriptor.id);
+      noAutoSearchIndex(G.Prefs, Indexing.current);
+    }
   },
-).catch((er) => {
+}).catch((er) => {
   log.error(er);
 });

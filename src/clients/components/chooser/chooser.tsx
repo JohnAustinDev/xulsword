@@ -54,7 +54,7 @@ export type ChooserProps = {
   availableBooks?: Set<string>;
   hideUnavailableBooks?: boolean;
   headingsModule?: string;
-  audio: AudioPrefType,
+  audio: AudioPrefType;
   v11n: V11nType;
   onCloseChooserClick: (e: any) => void;
   onAudioClick: (
@@ -381,7 +381,7 @@ function BookGroupList(
     selection?: string;
     availableBooks?: Set<string>;
     headingsModule?: string;
-    defaults: AudioPrefType['defaults'],
+    defaults: AudioPrefType['defaults'];
     hideUnavailableBooks?: boolean;
     handler?: (e: React.SyntheticEvent) => void;
     onAudioClick?: (
@@ -447,7 +447,7 @@ function BookGroupItem(
     sName: OSISBookType;
     classes?: string[];
     headingsModule?: string;
-    defaults: AudioPrefType['defaults'],
+    defaults: AudioPrefType['defaults'];
     v11n: V11nType;
     handler?: (e: React.SyntheticEvent) => void;
     onAudioClick?: (
@@ -509,7 +509,7 @@ function BookGroupItem(
 
 function ChapterMenu(props: {
   headingsModule?: string;
-  defaults: AudioPrefType['defaults'],
+  defaults: AudioPrefType['defaults'];
   bkcode: string;
   v11n: V11nType;
   handler?: (e: React.SyntheticEvent) => void;

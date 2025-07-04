@@ -28,7 +28,8 @@
   .printPassageWin body {
     overflow-y: auto;
   }
-  .printPassageWin #root, .printPassageWin #root > .print {
+  .printPassageWin #root,
+  .printPassageWin #root > .print {
     height: unset;
   }
   .print {

@@ -31,21 +31,21 @@ export default function verseKey(
   let books: ReturnType<typeof GI.getLocalizedBooks>;
   if (Build.isElectronApp) {
     digits = locs.reduce(
-    (p, c) => {
-      p[c] = G.getLocaleDigits(c);
-      return p;
-    },
-    {} as Record<string, string[] | null>,
-  );
+      (p, c) => {
+        p[c] = G.getLocaleDigits(c);
+        return p;
+      },
+      {} as Record<string, string[] | null>,
+    );
     books = G.getLocalizedBooks(true);
   } else if (renderPromise) {
     digits = locs.reduce(
-    (p, c) => {
-      p[c] = GI.getLocaleDigits(null, renderPromise, c);
-      return p;
-    },
-    {} as Record<string, string[] | null>,
-  );
+      (p, c) => {
+        p[c] = GI.getLocaleDigits(null, renderPromise, c);
+        return p;
+      },
+      {} as Record<string, string[] | null>,
+    );
     books = GI.getLocalizedBooks({}, renderPromise, locs);
   } else {
     options.locales = [G.i18n.language];

@@ -187,9 +187,11 @@ export default class CopyPassageWin
       if (ch === passage.chapter + MaxChaptersToCopy) {
         passage.lastchapter = ch - 1;
         this.addToast({
-          message: `${
-            GI.i18n.t('', renderPromise, 'menu.copyPassage')
-            }: ${passage.chapter}-${passage.lastchapter}`,
+          message: `${GI.i18n.t(
+            '',
+            renderPromise,
+            'menu.copyPassage',
+          )}: ${passage.chapter}-${passage.lastchapter}`,
           timeout: 5000,
           intent: Intent.WARNING,
         });

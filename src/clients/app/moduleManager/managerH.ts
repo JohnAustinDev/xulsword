@@ -1394,14 +1394,16 @@ export async function download(
         moduleData[k][ModCol.iInfo].loading = loading(ModCol.iInstalled);
       });
       if ('http' in dlobj && conf.xsmType === 'XSM_audio') {
-        return promptAudioChapters(xthis, conf).then((audio) => {
-          if (!audio) throw new Error(C.UI.Manager.cancelMsg);
-          dlobj.data = audio;
-          return dlobj;
-        }).catch((er) => {
-          handleError(xthis, er, [modkey]);
-          return null;
-        });
+        return promptAudioChapters(xthis, conf)
+          .then((audio) => {
+            if (!audio) throw new Error(C.UI.Manager.cancelMsg);
+            dlobj.data = audio;
+            return dlobj;
+          })
+          .catch((er) => {
+            handleError(xthis, er, [modkey]);
+            return null;
+          });
       }
       return dlobj;
     }

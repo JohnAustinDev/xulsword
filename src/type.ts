@@ -625,7 +625,7 @@ export type HTTPDownload = {
   type: 'http';
   http: string; // https?://...
   confname: string;
-  data?: SelectVKType | SelectORMType
+  data?: SelectVKType | SelectORMType;
 } & Repository;
 export type Download = FTPDownload | ModFTPDownload | HTTPDownload;
 
@@ -728,10 +728,11 @@ export type MethodAddWindowId<M extends (...args: any[]) => any> = (
   ...args2: [...Parameters<M>, windowId: number]
 ) => ReturnType<M>;
 
-export type ObjectAddWindowId<T extends Record<string, (...args: any[]) => any>> =
-  {
-    [K in keyof T]: MethodAddWindowId<T[K]>;
-  };
+export type ObjectAddWindowId<
+  T extends Record<string, (...args: any[]) => any>,
+> = {
+  [K in keyof T]: MethodAddWindowId<T[K]>;
+};
 
 export type GAddWindowId = {
   [obj in (typeof GBuilder)['includeCallingWindow'][number]]: ObjectAddWindowId<

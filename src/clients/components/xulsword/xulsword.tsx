@@ -351,7 +351,7 @@ export default class Xulsword
     const sels = updatedAudioSelections(file, renderPromise);
     let index = 0;
     if (sels.length && defaults && swordModule && swordModule in defaults)
-      index = sels.findIndex((a) => (a.conf.module === defaults[swordModule]));
+      index = sels.findIndex((a) => a.conf.module === defaults[swordModule]);
     if (index < 0) index = 0;
     const src = sels.length
       ? GI.inlineAudioFile('', renderPromise, sels[index].selection)
@@ -367,10 +367,7 @@ export default class Xulsword
                 onChange={handler}
                 options={sels.map((s) => {
                   return (
-                    <option
-                      key={s.conf.module}
-                      value={s.conf.module}
-                    >
+                    <option key={s.conf.module} value={s.conf.module}>
                       {s.conf.module}
                     </option>
                   );
