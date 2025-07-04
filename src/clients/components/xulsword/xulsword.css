@@ -6,18 +6,22 @@
   background: #f6f7f9;
   border: 1px solid rgb(197 197 197);
 }
-
+#player audio:focus {
+  outline: none;
+}
 #xsSearchButton {
   z-index: 1; /* allow bottom focus border to be visible */
   margin-top: 0;
   margin-bottom: 0;
 }
 #audioCodeSelect {
-  height: 36px;
+  height: calc(var(--input-height) - 2px);
   margin-bottom: 0;
 }
 #audioCodeSelect select {
   width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 #navigator-tool {

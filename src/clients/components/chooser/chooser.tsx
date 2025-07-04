@@ -28,6 +28,7 @@ import type {
   OSISBookType,
   V11nType,
   AudioPlayerSelectionVK,
+  AudioPrefType,
 } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
@@ -41,6 +42,7 @@ const propTypes = {
   availableBooks: PropTypes.instanceOf(Set),
   hideUnavailableBooks: PropTypes.bool,
   headingsModule: PropTypes.string,
+  audio: PropTypes.object.isRequired,
   v11n: PropTypes.string.isRequired,
   onCloseChooserClick: PropTypes.func.isRequired,
   onAudioClick: PropTypes.func.isRequired,
@@ -52,6 +54,7 @@ export type ChooserProps = {
   availableBooks?: Set<string>;
   hideUnavailableBooks?: boolean;
   headingsModule?: string;
+  audio: AudioPrefType,
   v11n: V11nType;
   onCloseChooserClick: (e: any) => void;
   onAudioClick: (
@@ -258,6 +261,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     const {
       availableBooks,
       headingsModule,
+      audio,
       selection,
       v11n,
       onCloseChooserClick,
@@ -266,6 +270,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     let { bookGroups } = props;
     if (!bookGroups) bookGroups = ['ot', 'nt'];
     const { bookGroup, slideIndex } = state;
+    const { defaults } = audio;
 
     const label = {} as Record<(typeof bookGroups)[number], string>;
     const useLabelImage: any = {};
@@ -330,6 +335,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
               }`}
               availableBooks={new Set([longestBook])}
               headingsModule={headingsModule}
+              defaults={defaults}
               hideUnavailableBooks
               v11n={v11n}
               style={{ visibility: 'hidden' }}
@@ -345,6 +351,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
               selection={selection}
               availableBooks={availableBooks}
               headingsModule={headingsModule}
+              defaults={defaults}
               v11n={v11n}
               style={{
                 position: 'absolute',
@@ -374,6 +381,7 @@ function BookGroupList(
     selection?: string;
     availableBooks?: Set<string>;
     headingsModule?: string;
+    defaults: AudioPrefType['defaults'],
     hideUnavailableBooks?: boolean;
     handler?: (e: React.SyntheticEvent) => void;
     onAudioClick?: (
@@ -389,6 +397,7 @@ function BookGroupList(
     availableBooks,
     hideUnavailableBooks,
     headingsModule,
+    defaults,
     v11n,
     handler,
     onAudioClick,
@@ -420,6 +429,7 @@ function BookGroupList(
             sName={bk.code}
             classes={classes}
             headingsModule={headingsModule}
+            defaults={defaults}
             v11n={v11n}
             handler={handler}
             onAudioClick={onAudioClick}
@@ -437,6 +447,7 @@ function BookGroupItem(
     sName: OSISBookType;
     classes?: string[];
     headingsModule?: string;
+    defaults: AudioPrefType['defaults'],
     v11n: V11nType;
     handler?: (e: React.SyntheticEvent) => void;
     onAudioClick?: (
@@ -450,6 +461,7 @@ function BookGroupItem(
     sName,
     classes,
     headingsModule,
+    defaults,
     handler,
     onAudioClick,
     v11n,
@@ -473,6 +485,7 @@ function BookGroupItem(
           headingsModule,
           sName,
           undefined,
+          defaults,
           onAudioClick,
           renderPromise,
         )}
@@ -481,6 +494,7 @@ function BookGroupItem(
       {!classes?.includes('disabled') && (
         <ChapterMenu
           headingsModule={headingsModule}
+          defaults={defaults}
           bkcode={sName}
           v11n={v11n}
           handler={handler}
@@ -495,6 +509,7 @@ function BookGroupItem(
 
 function ChapterMenu(props: {
   headingsModule?: string;
+  defaults: AudioPrefType['defaults'],
   bkcode: string;
   v11n: V11nType;
   handler?: (e: React.SyntheticEvent) => void;
@@ -506,6 +521,7 @@ function ChapterMenu(props: {
 }) {
   const {
     headingsModule,
+    defaults,
     bkcode,
     v11n,
     handler,
@@ -548,6 +564,7 @@ function ChapterMenu(props: {
                 headingsModule,
                 bkcode,
                 ch,
+                defaults,
                 onAudioClick,
                 renderPromise,
               )}

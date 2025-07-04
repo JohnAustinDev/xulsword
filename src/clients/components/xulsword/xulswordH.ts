@@ -8,7 +8,7 @@ import Commands from '../../commands.ts';
 import {
   doUntilDone,
   rootRenderPromise,
-  updatedAudioSelection,
+  updatedAudioSelections,
 } from '../../common.tsx';
 import verseKey from '../../verseKey.ts';
 import log from '../../log.ts';
@@ -22,6 +22,7 @@ import type {
   SearchType,
   ShowType,
   AudioPlayerSelectionVK,
+  AudioPrefType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type { AnalyticsInfo } from '../../analytics.ts';
@@ -40,6 +41,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           const audio: XulswordState['audio'] = {
             open: false,
             file: null,
+            defaults: state.audio.defaults,
           };
           this.setState({ audio });
           break;
@@ -328,30 +330,34 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             break;
           }
           case 'audioCodeSelect__select': {
-            const { audio } = this.state as XulswordState;
-            const { file } = audio;
+            const { audio: a } = this.state as XulswordState;
+            const { open, file, defaults: d } = clone(a);
             if (file) {
               const { swordModule } = file;
-                if (swordModule) {
-                const audiolookup =
-                  (G.Prefs.getComplexValue('global.audiolookup') as
-                    | typeof S.prefs.global.audiolookup
-                    | undefined) ?? {};
-                audiolookup[swordModule] = value;
-                G.Prefs.setComplexValue('global.audiolookup', audiolookup);
+              if (swordModule) {
                 doUntilDone((renderPromise2) => {
-                  const newfile = updatedAudioSelection(file, renderPromise2);
-                  if (!renderPromise2?.waiting())
-                    this.setState({ open: true, file: newfile });
+                  const sels = updatedAudioSelections(file, renderPromise2);
+                  if (!renderPromise2?.waiting()) {
+                    const defaults = d ?? {};
+                    defaults[swordModule] = value;
+                    if (sels.length && swordModule in defaults)
+                      sels.sort((a) =>
+                        a.conf.module === defaults[swordModule] ? -1 : 0,
+                      );
+                    const audio: AudioPrefType = {
+                      open,
+                      defaults,
+                      file: sels[0]?.selection ?? null,
+                    };
+                    this.setState({ audio });
+                  }
                 });
               }
             }
             break;
           }
           default:
-            throw Error(
-              `Unhandled xulswordHandler onChange event on '${id}'`,
-            );
+            throw Error(`Unhandled xulswordHandler onChange event on '${id}'`);
         }
       });
       break;
@@ -397,13 +403,15 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
 
     case 'ended': {
       const { audio } = state;
-      const { file } = audio;
+      const { open, file, defaults } = clone(audio);
       doUntilDone((renderPromise2) => {
-        let selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null =
-          null;
         if (file) {
           const { swordModule } = file;
           if (swordModule && swordModule in G.Tab) {
+            let selection:
+              | AudioPlayerSelectionVK
+              | AudioPlayerSelectionGB
+              | null = null;
             if ('book' in file) {
               const { book, chapter } = file;
               const nk = chapterChange(
@@ -434,11 +442,19 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 };
               }
             }
+            const sels = updatedAudioSelections(selection, renderPromise2);
+            if (!renderPromise2?.waiting()) {
+              if (defaults && swordModule in defaults)
+                sels.sort((a) =>
+                  a.conf.module === defaults[swordModule] ? -1 : 0,
+                );
+              Commands.playAudio(
+                { open, file: sels[0]?.selection ?? null, defaults },
+                rootRenderPromise(),
+              ); // null closes the player
+            }
           }
         }
-        const s = updatedAudioSelection(selection, renderPromise2);
-        if (!renderPromise2?.waiting())
-          Commands.playAudio(s, rootRenderPromise()); // null closes the player
       });
       break;
     }

@@ -105,7 +105,7 @@ const defaultSettings: AllComponentsData = {
 
             keys: [null, null],
 
-            audio: { open: false, file: null },
+            audio: { open: false, file: null, defaults: {} },
             history: [],
             historyIndex: 0,
 

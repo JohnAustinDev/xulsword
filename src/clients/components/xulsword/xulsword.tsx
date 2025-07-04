@@ -16,8 +16,7 @@ import {
   doUntilDone,
   isIBTChildrensBible,
   chooserGenbks,
-  selectedAudioConfs,
-  updatedAudioSelection,
+  updatedAudioSelections,
 } from '../../common.tsx';
 import {
   addClass,
@@ -347,34 +346,37 @@ export default class Xulsword
       </Hbox>
     );
 
-    const audiosel = updatedAudioSelection(audio.file, renderPromise);
-    const src = audiosel
-      ? GI.inlineAudioFile('', renderPromise, audiosel)
+    const { file, defaults } = audio;
+    const { swordModule } = file ?? {};
+    const sels = updatedAudioSelections(file, renderPromise);
+    let index = 0;
+    if (sels.length && defaults && swordModule && swordModule in defaults)
+      index = sels.findIndex((a) => (a.conf.module === defaults[swordModule]));
+    if (index < 0) index = 0;
+    const src = sels.length
+      ? GI.inlineAudioFile('', renderPromise, sels[index].selection)
       : undefined;
-    const { swordModule, audioModule } = audiosel ?? {};
-    const audioConfs =
-      swordModule && selectedAudioConfs(swordModule, renderPromise);
     const audioComponent = (
       <Hbox id="player" pack="start" align="center">
         <Vbox flex="3">
           <div>
-            {audioModule &&
-              audioConfs &&
-              Array.isArray(audioConfs.confs) &&
-              audioConfs.confs.length > 1 && (
-                <Menulist
-                  id="audioCodeSelect"
-                  value={audioModule}
-                  onChange={handler}
-                  options={audioConfs.confs.map((f) => {
-                    return (
-                      <option key={stringHash(f.module)} value={f.module}>
-                        {f.module}
-                      </option>
-                    );
-                  })}
-                />
-              )}
+            {sels.length && (
+              <Menulist
+                id="audioCodeSelect"
+                value={sels[index].conf.module}
+                onChange={handler}
+                options={sels.map((s) => {
+                  return (
+                    <option
+                      key={s.conf.module}
+                      value={s.conf.module}
+                    >
+                      {s.conf.module}
+                    </option>
+                  );
+                })}
+              />
+            )}
             <audio
               controls
               onEnded={handler}

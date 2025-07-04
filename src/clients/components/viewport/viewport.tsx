@@ -155,12 +155,18 @@ class Viewport extends React.Component implements PopupParent {
     e: React.SyntheticEvent,
   ) {
     const { audio } = this.props as ViewportProps;
+    const { open, defaults } = audio;
     const atextClick = !!ofClass(['textarea'], e.target)?.element;
-    let playAudio: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null | undefined;
-    if (selection && (!atextClick || !audio.open)) playAudio = selection;
-    if (!selection || (atextClick && audio.open)) playAudio = null;
-    if (typeof playAudio !== 'undefined') Commands.playAudio(
-        playAudio, // null closes the player
+    let file:
+      | AudioPlayerSelectionVK
+      | AudioPlayerSelectionGB
+      | null
+      | undefined;
+    if (selection && (!atextClick || !audio.open)) file = selection;
+    if (!selection || (atextClick && audio.open)) file = null;
+    if (typeof file !== 'undefined')
+      Commands.playAudio(
+        { open, file, defaults },
         new RenderPromise(() =>
           Subscription.publish.setControllerState({
             reset: randomID(),
@@ -181,6 +187,7 @@ class Viewport extends React.Component implements PopupParent {
       place,
       tabs,
       panels,
+      audio,
       ilModules: ilModules0,
       mtModules,
       scroll,
@@ -195,6 +202,8 @@ class Viewport extends React.Component implements PopupParent {
       atextRefs,
     } = this.props as ViewportProps;
     const { reset, elemdata, gap, popupParent, popupReset } = state;
+
+    const tabcntl = G.Prefs.getBoolPref('xulsword.tabcntl');
 
     const Book = G.Book(G.i18n.language);
 
@@ -398,7 +407,7 @@ class Viewport extends React.Component implements PopupParent {
         const key = stringHash([
           i,
           isPinned,
-          G.Prefs.getBoolPref('xulsword.tabcntl'),
+          tabcntl,
           tabsi,
           mtModules[i],
           ilModules[i],
@@ -413,6 +422,7 @@ class Viewport extends React.Component implements PopupParent {
             isPinned={isPinned[i]}
             module={panels[i]}
             tabs={tabsi}
+            tabcntl={tabcntl}
             ilModule={ilModules[i]}
             ilModuleOption={ilModuleOptions[i]}
             mtModule={mtModules[i]}
@@ -437,6 +447,7 @@ class Viewport extends React.Component implements PopupParent {
             panelIndex={i}
             location={locs[i]}
             selection={selection}
+            audio={audio}
             module={panels[i]}
             modkey={keys[i]}
             ilModule={ilModules[i]}
@@ -491,6 +502,7 @@ class Viewport extends React.Component implements PopupParent {
             selection={location?.book || ''}
             v11n={chooserV11n}
             headingsModule={firstUnpinnedBible}
+            audio={audio}
             bookGroups={bookGroups}
             availableBooks={availableBooks}
             onCloseChooserClick={eHandler}
@@ -502,6 +514,7 @@ class Viewport extends React.Component implements PopupParent {
             key={reset}
             panels={panels}
             keys={keys}
+            audio={audio}
             xulswordStateHandler={xulswordStateHandler}
             onAudioClick={audioHandler}
           />

@@ -103,7 +103,6 @@ const S = {
           [feature in keyof FeatureMods]?: string;
         },
       },
-      audiolookup: {} as { [anyTypeModule: string]: string },
       noAutoSearchIndex: [] as string[],
     },
 
@@ -114,7 +113,7 @@ const S = {
 
       keys: [null] as Array<string | null>,
 
-      audio: { open: false, file: null } as AudioPrefType,
+      audio: { open: false, file: null, defaults: {} } as AudioPrefType,
       history: [] as HistoryVKType[],
       historyIndex: 0 as number,
 

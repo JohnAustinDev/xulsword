@@ -46,6 +46,8 @@ import type {
   VerseKeyAudio,
   AudioPlayerSelectionVK,
   WindowDescriptorPrefType,
+  AudioPrefType,
+  ConfigType,
 } from '../type.ts';
 import type { XulswordState } from './components/xulsword/xulsword.tsx';
 import parseExtendedVKRef from '../extrefParser.ts';
@@ -380,58 +382,23 @@ export function audioConfigs(
   return audioConfs;
 }
 
-// Return an array of all audio module config objects for a SWORD module's
-// AudioCodes plus the index of the currently user selected audio config. If
-// the SWORD module has no AudioCode and no installed audio module then null
-// is returned.
-export function selectedAudioConfs(
-  swordModule: string,
-  renderPromise?: RenderPromise | null,
-): { confs: SwordConfType[]; index: number } | null {
-  const audioConfs = audioConfigs(swordModule, renderPromise);
-  if (audioConfs.length) {
-    const audiolookup = G.Prefs.getComplexValue(
-      'global.audiolookup',
-      'prefs',
-    ) as typeof S.prefs.global.audiolookup | undefined;
-    let index = -1;
-    if (swordModule && audiolookup && swordModule in audiolookup) {
-      const audiocode = audiolookup[swordModule];
-      index = audioConfs.findIndex((c) => c.module === audiocode);
-    }
-    if (!(index in audioConfs)) index = 0;
-    return { confs: audioConfs, index };
-  }
-
-  return null;
-}
-
-// Return the audio player selection having updated audioModule, path, and
-// possibly book and/or chapter. This is done by checking the selection's
-// swordModule AudioCodes (searching current user preference first) to find the
-// first AudioCode module that contains the selection's book/chapter or key. If
-// book and/or chapter of the input selection is undefined, the first
-// applicable audio file will be chosen and the returned book and chapter will
-// be updated accordingly. If no audio file is installed for the given player
-// selection then null is returned.
-export function updatedAudioSelection(
+// Return possible audio player selections by updating audioModule, path and
+// possibly book and/or chapter. This is done by checking each of the
+// selection's swordModule AudioCode audio modules. If book and/or chapter of
+// the input selection is undefined, the first applicable audio file will be
+// chosen and the returned book and chapter will be updated accordingly.
+export function updatedAudioSelections(
   selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
   renderPromise?: RenderPromise | null,
-): AudioPlayerSelectionVK | AudioPlayerSelectionGB | null {
-  if (!selection) return null;
-  let updated: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null = null;
-  const { swordModule } = selection;
-  if (swordModule) {
-    const audioConfs = selectedAudioConfs(swordModule, renderPromise);
-    if (audioConfs) {
-      const indexes = audioConfs.confs.reduce((p, _c, i) => {
-        if (i === audioConfs.index) p.unshift(i);
-        else p.push(i);
-        return p;
-      }, [] as number[]);
-      indexes.forEach((index) => {
-        if (updated) return;
-        const { module: audioModule, AudioChapters } = audioConfs.confs[index];
+): Array<{
+  selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB;
+  conf: SwordConfType;
+}> {
+  if (selection) {
+    const { swordModule } = selection;
+    if (swordModule) {
+      const results = audioConfigs(swordModule, renderPromise).map((conf) => {
+        const { module: audioModule, AudioChapters } = conf;
         if (
           swordModule in G.Tab &&
           G.Tab[swordModule].isVerseKey &&
@@ -459,12 +426,15 @@ export function updatedAudioSelection(
           if (book && boolarray.length) {
             if (chapter === -1) chapter = boolarray.indexOf(true);
             if (chapter !== -1 && boolarray[chapter])
-              updated = {
-                swordModule,
-                book,
-                chapter,
-                audioModule,
-                path: [book, chapter],
+              return {
+                selection: {
+                  swordModule,
+                  book,
+                  chapter,
+                  audioModule,
+                  path: [book, chapter],
+                },
+                conf,
               };
           }
         } else if (
@@ -478,19 +448,25 @@ export function updatedAudioSelection(
           const ac = AudioChapters as GenBookAudioConf;
           const gbaudio = getGenBookAudio(ac, swordModule, renderPromise);
           if (key in gbaudio) {
-            updated = {
-              swordModule,
-              key,
-              audioModule,
-              path: gbaudio[key],
+            return {
+              selection: {
+                swordModule,
+                key,
+                audioModule,
+                path: gbaudio[key],
+              },
+              conf,
             };
           }
         }
+        return null;
       });
+
+      return results.filter((r) => r !== null);
     }
   }
 
-  return updated;
+  return [];
 }
 
 // Return groups of same-genbook-panels, in chooser order.
@@ -515,19 +491,19 @@ export function audioGenBookNode(
   node: TreeNodeInfo,
   swordModule: string,
   key: string,
+  defaults: AudioPrefType['defaults'],
   renderPromise: RenderPromise,
 ): boolean {
-  let sel: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null = null;
   if (
     swordModule &&
     swordModule in G.Tab &&
     G.Tab[swordModule].tabType === 'Genbks' &&
     key
   ) {
-    sel = updatedAudioSelection({ swordModule, key }, renderPromise);
-  }
-  if (sel) {
-    node.nodeData = sel;
+    const sels = updatedAudioSelections({ swordModule, key }, renderPromise);
+    if (defaults && swordModule in defaults)
+      sels.sort((a) => (a.conf.module === defaults[swordModule] ? -1 : 0));
+    node.nodeData = sels[0]?.selection ?? null;
     node.className = 'audio-icon';
     node.icon = 'volume-up';
     return true;

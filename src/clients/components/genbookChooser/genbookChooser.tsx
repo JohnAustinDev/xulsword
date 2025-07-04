@@ -18,6 +18,7 @@ import './genbookChooser.css';
 import type {
   AudioPlayerSelectionGB,
   AudioPlayerSelectionVK,
+  AudioPrefType,
   XulswordStateArgType,
 } from '../../../type.ts';
 import type { Tree, TreeNodeInfo } from '@blueprintjs/core';
@@ -31,6 +32,7 @@ const propTypes = {
   ...xulPropTypes,
   panels: PropTypes.arrayOf(PropTypes.string).isRequired,
   keys: PropTypes.arrayOf(PropTypes.string).isRequired,
+  audio: PropTypes.object.isRequired,
   onAudioClick: PropTypes.func.isRequired,
   xulswordStateHandler: PropTypes.func.isRequired,
 };
@@ -38,8 +40,9 @@ const propTypes = {
 export type GenbookChooserProps = {
   panels: Array<string | null>;
   keys: Array<string | undefined>;
+  audio: AudioPrefType;
   onAudioClick: (
-    audio: AudioPlayerSelectionVK | AudioPlayerSelectionGB,
+    selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
     e: React.SyntheticEvent,
   ) => void;
   xulswordStateHandler: (s: XulswordStateArgType) => void;
@@ -118,7 +121,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     const props = this.props as GenbookChooserProps;
     const { onAudioClick } = props;
     if ('nodeData' in node) {
-      onAudioClick(node.nodeData as AudioPlayerSelectionGB, e);
+      onAudioClick(node.nodeData as AudioPlayerSelectionGB | null, e);
       e.stopPropagation();
     }
   }
@@ -190,7 +193,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
   render() {
     const props = this.props as GenbookChooserProps;
     const state = this.state as GenbookChooserState;
-    const { panels, keys, xulswordStateHandler } = props;
+    const { panels, keys, audio, xulswordStateHandler } = props;
     const { expandedIDs } = state;
     const {
       treeRef,
@@ -200,6 +203,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
       onNodeClick,
       needsTreeParent,
     } = this;
+    const { defaults } = audio;
 
     const genbkPanels = chooserGenbks(panels);
     const treekeys = (groupIndex: number): [string | null, number] => {
@@ -221,10 +225,16 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
           const childNodes = GI.genBookTreeNodes([], renderPromise, m);
           if (childNodes.length) {
             forEachNode(childNodes, (node) =>
-              // render Promise is not passed here, because audioGenBookNode()
+              // render Promise is not needed here, because audioGenBookNode()
               // only results in GI calls to GI.genBookTreeNodes, which must
               // already be cached in order to reach this point.
-              audioGenBookNode(node, m, node.id.toString(), renderPromise),
+              audioGenBookNode(
+                node,
+                m,
+                node.id.toString(),
+                defaults,
+                renderPromise,
+              ),
             );
             treeNodes[treekey] = childNodes;
           }

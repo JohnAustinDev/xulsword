@@ -17,6 +17,7 @@ import type {
   LocationVKType,
   ScrollType,
   AudioPlayerSelectionVK,
+  AudioPrefType,
 } from './type.ts';
 
 // This file contains global commands that are implemented for all clients and servers.
@@ -139,10 +140,11 @@ export default class Commands {
   }
 
   playAudio(
-    selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    audio: AudioPrefType,
     renderPromise: RenderPromise,
   ) {
     let xulsword: Partial<typeof S.prefs.xulsword> | undefined;
+    const { file: selection, defaults } = audio;
     if (selection) {
       if (
         'book' in selection &&
@@ -179,11 +181,12 @@ export default class Commands {
         audio: {
           open: true,
           file: selection,
+          defaults
         },
       };
     } else {
       xulsword = {
-        audio: { open: false, file: null },
+        audio: { open: false, file: null, defaults },
       };
     }
     this.#Prefs2.mergeValue(

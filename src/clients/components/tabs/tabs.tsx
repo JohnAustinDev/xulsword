@@ -25,6 +25,7 @@ const propTypes = {
   module: PropTypes.string,
   panelIndex: PropTypes.number.isRequired,
   tabs: PropTypes.arrayOf(PropTypes.string).isRequired,
+  tabcntl: PropTypes.bool.isRequired,
   ilModule: PropTypes.string,
   ilModuleOption: PropTypes.arrayOf(PropTypes.string).isRequired,
   mtModule: PropTypes.string,
@@ -36,6 +37,7 @@ type TabsProps = {
   module: string | undefined;
   panelIndex: number;
   tabs: string[];
+  tabcntl: boolean;
   ilModule: string | undefined;
   ilModuleOption: Array<string | undefined>;
   mtModule: string | undefined;
@@ -277,8 +279,15 @@ class Tabs extends React.Component implements RenderPromiseComponent {
 
   render() {
     const { multiTabs, multiTabMenupopup } = this.state as TabsState;
-    const { module, isPinned, panelIndex, tabs, ilModule, ilModuleOption } =
-      this.props as TabsProps;
+    const {
+      module,
+      isPinned,
+      panelIndex,
+      tabs,
+      ilModule,
+      ilModuleOption,
+      tabcntl,
+    } = this.props as TabsProps;
     const { loadingRef, renderPromise, toggleTab } = this;
 
     let ilTabLabel = GI.i18n.t('', renderPromise, 'ORIGLabelTab');
@@ -304,7 +313,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
         {module &&
           isPinned &&
           this.getTab(module, 'reg-tab', 'active', null, renderPromise)}
-        {!isPinned && G.Prefs.getBoolPref('xulsword.tabcntl') && (
+        {!isPinned && tabcntl && (
           <div
             className={`tabPlus tab active`}
             title={GI.i18n.t('', renderPromise, 'Add a tab, or remove a tab.', {

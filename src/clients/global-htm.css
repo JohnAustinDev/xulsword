@@ -18,7 +18,7 @@
   --shadow: 0 0 8px 1px #cccccc;
   --font-text: 'Open Sans', sans-serif;
   --font-heading: 'Roboto', sans-serif;
-  --input-height: 38px;
+  --input-height: 32px;
 }
 
 /* By default layouts should fill their windows without scrollbars */

@@ -183,6 +183,7 @@ export type ScrollType = {
 export type AudioPrefType = {
   open: boolean;
   file: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null;
+  defaults?: { [swordModule: string]: string };
 };
 
 export type PinPropsType = Pick<AtextPropsType, (typeof C.PinProps)[number]>;
