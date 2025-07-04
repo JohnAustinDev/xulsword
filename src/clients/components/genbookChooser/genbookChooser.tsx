@@ -16,8 +16,8 @@ import '../chooser/chooser.css';
 import './genbookChooser.css';
 
 import type {
-  GenBookAudioFile,
-  VerseKeyAudioFile,
+  AudioPlayerSelectionGB,
+  AudioPlayerSelectionVK,
   XulswordStateArgType,
 } from '../../../type.ts';
 import type { Tree, TreeNodeInfo } from '@blueprintjs/core';
@@ -39,7 +39,7 @@ export type GenbookChooserProps = {
   panels: Array<string | null>;
   keys: Array<string | undefined>;
   onAudioClick: (
-    audio: VerseKeyAudioFile | GenBookAudioFile,
+    audio: AudioPlayerSelectionVK | AudioPlayerSelectionGB,
     e: React.SyntheticEvent,
   ) => void;
   xulswordStateHandler: (s: XulswordStateArgType) => void;
@@ -118,7 +118,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     const props = this.props as GenbookChooserProps;
     const { onAudioClick } = props;
     if ('nodeData' in node) {
-      onAudioClick(node.nodeData as GenBookAudioFile, e);
+      onAudioClick(node.nodeData as AudioPlayerSelectionGB, e);
       e.stopPropagation();
     }
   }

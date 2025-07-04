@@ -42,8 +42,8 @@ import type {
   SwordFeatureMods,
   XulswordFeatureMods,
   BookGroupType,
-  VerseKeyAudioFile,
-  GenBookAudioFile,
+  AudioPlayerSelectionVK,
+  AudioPlayerSelectionGB,
   ModulesCache,
   TreeNodeInfoPref,
   AudioPath,
@@ -942,11 +942,11 @@ export function inlineFile(
 // be retreived from the audioModule conf DataPath, which may be http(s) or
 // a local file.
 export function inlineAudioFile(
-  audio: VerseKeyAudioFile | GenBookAudioFile | null,
+  audio: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
 ): string {
   if (audio) {
-    const { path: apath, audioModule } = audio;
-    if (audioModule) {
+    const { path, audioModule } = audio;
+    if (path && audioModule) {
       const file = new LocalFile(Dirs.path.xsAudio);
       const confe = Object.entries(getAudioConfs()).find(
         (e) => e[0] === audioModule,
@@ -955,7 +955,7 @@ export function inlineAudioFile(
         const [, conf] = confe;
         const { DataPath } = conf;
         if (DataPath.startsWith('http')) {
-          return resolveTemplateURL(DataPath, audio);
+          return resolveTemplateURL(DataPath, audio, 'none');
         } else if (DataPath.startsWith('.')) {
           file.append(DataPath);
           const findAudio = (audioCodeDir: LocalFile, aPath: AudioPath) => {
@@ -987,7 +987,7 @@ export function inlineAudioFile(
             }
             return isSuccess;
           };
-          if (findAudio(file, apath)) return inlineFile(file.path);
+          if (findAudio(file, path)) return inlineFile(file.path);
         }
       }
     }

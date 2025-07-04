@@ -43,9 +43,9 @@ import '../../libsword.css';
 import './atext.css';
 
 import type {
-  GenBookAudioFile,
+  AudioPlayerSelectionGB,
   PinPropsType,
-  VerseKeyAudioFile,
+  AudioPlayerSelectionVK,
   XulswordStateArgType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
@@ -99,7 +99,9 @@ export type AtextPropsType = Pick<
 
   xulswordState: (s: XulswordStateArgType) => void;
 
-  onAudioClick: (audio: VerseKeyAudioFile | GenBookAudioFile) => void;
+  onAudioClick: (
+    selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+  ) => void;
   bbDragEnd: (e: React.MouseEvent, value: any) => void;
 };
 

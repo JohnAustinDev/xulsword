@@ -1,45 +1,56 @@
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
+import { doUntilDone, updatedAudioSelection } from '../../common.tsx';
 import { G } from '../../G.ts';
-import { genBookAudioFile, verseKeyAudioFile } from '../../common.tsx';
 import RenderPromise from '../../renderPromise.ts';
 import './audioIcon.css';
 
 import type {
-  GenBookAudioFile,
+  AudioPlayerSelectionGB,
   OSISBookType,
-  VerseKeyAudioFile,
+  AudioPlayerSelectionVK,
 } from '../../../type.ts';
 
 export default function audioIcon(
-  module: string,
+  swordModule: string,
   bookOrKey: OSISBookType | string,
   chapter: number | undefined,
   audioHandler: (
-    audio: VerseKeyAudioFile | GenBookAudioFile,
+    selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
     e: React.SyntheticEvent,
   ) => void,
   renderPromise: RenderPromise,
 ): JSX.Element | null {
-  let afile: VerseKeyAudioFile | GenBookAudioFile | null = null;
-  if (G.Tab[module].isVerseKey) {
-    const book = bookOrKey as OSISBookType;
-    afile = verseKeyAudioFile(module, book, chapter ?? 1, renderPromise);
-  } else if (G.Tab[module].tabType === 'Genbks' && bookOrKey) {
-    afile = genBookAudioFile(module, bookOrKey, renderPromise);
-  }
-  if (afile) {
-    const handler = ((ax: VerseKeyAudioFile | GenBookAudioFile) => {
-      return (e: React.SyntheticEvent) => {
+  if (swordModule && swordModule in G.Tab) {
+    const selection =
+      G.Tab[swordModule].isVerseKey
+        ? {
+            swordModule,
+            book: bookOrKey as OSISBookType,
+            chapter: chapter as number,
+          }
+        : {
+            swordModule,
+            key: bookOrKey,
+          };
+    const afile = updatedAudioSelection(selection, renderPromise);
+    if (afile) {
+      const handler = (e: React.SyntheticEvent) => {
         e.stopPropagation();
-        audioHandler(ax, e);
+        doUntilDone((renderPromise) => {
+          // AudioCode index may have changed since audioIcon parent was last
+          // rendered.
+          const s = updatedAudioSelection(selection, renderPromise);
+          if (!renderPromise?.waiting()) audioHandler(s, e);
+        });
       };
-    })(afile);
-    return (
-      <div className="audio-icon" onClick={handler}>
-        <Icon icon="volume-up" />
-      </div>
-    );
+      return (
+        <div className="audio-icon" onClick={handler}>
+          <Icon icon="volume-up" />
+        </div>
+      );
+    }
   }
+
   return null;
 }

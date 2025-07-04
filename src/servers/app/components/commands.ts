@@ -42,13 +42,13 @@ import type {
   AudioPath,
   BookmarkItemType,
   GenBookAudio,
-  GenBookAudioFile,
+  AudioPlayerSelectionGB,
   LocationORType,
   LocationVKType,
   NewModulesType,
   OSISBookType,
   SearchType,
-  VerseKeyAudioFile,
+  AudioPlayerSelectionVK,
   LocationVKCommType,
 } from '../../../type.ts';
 import type {
@@ -429,30 +429,6 @@ const Commands = {
               }
               const name = pad(chapter, 3, 0);
               file.copyTo(dest, `${name}${fp.ext}`);
-              let audiofile: VerseKeyAudioFile | GenBookAudioFile;
-              if (
-                book &&
-                Object.values(C.SupportedBooks).some((bg: any) =>
-                  bg.includes(book),
-                )
-              ) {
-                audiofile = {
-                  audioModule: module,
-                  book,
-                  chapter,
-                  path: [book, chapter],
-                };
-              } else {
-                const entry = Object.entries(paths).find(
-                  (e) => !diff(path, e[1]),
-                );
-                audiofile = {
-                  audioModule: module,
-                  key: entry?.[0] || '',
-                  path,
-                };
-              }
-              newmods.audio.push(audiofile);
               tot += 1;
             }
           }
@@ -507,7 +483,7 @@ const Commands = {
             `AudioChapters=${JSON_stringify(audioChapters)}`,
           );
           destcfile.writeFile(str);
-          newmods.modules.push(parseSwordConf(destcfile));
+          newmods.audio.push(parseSwordConf(destcfile));
           ctot += 1;
         } else {
           newmods.reports.push({ error: `(${module}) Missing config file.` });

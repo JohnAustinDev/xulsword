@@ -7,6 +7,19 @@
   border: 1px solid rgb(197 197 197);
 }
 
+#xsSearchButton {
+  z-index: 1; /* allow bottom focus border to be visible */
+  margin-top: 0;
+  margin-bottom: 0;
+}
+#audioCodeSelect {
+  height: 36px;
+  margin-bottom: 0;
+}
+#audioCodeSelect select {
+  width: 100%;
+}
+
 #navigator-tool {
   min-width: 390px;
 }
@@ -47,10 +60,6 @@
 }
 #textnav .textbox input {
   text-align: center;
-}
-
-#xsSearchButton {
-  z-index: 1; /* allow bottom focus border to be visible */
 }
 
 #optionButtons button.off {

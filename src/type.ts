@@ -182,7 +182,7 @@ export type ScrollType = {
 
 export type AudioPrefType = {
   open: boolean;
-  file: VerseKeyAudioFile | GenBookAudioFile | null;
+  file: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null;
 };
 
 export type PinPropsType = Pick<AtextPropsType, (typeof C.PinProps)[number]>;
@@ -570,19 +570,19 @@ export type DeprecatedAudioChaptersConf = {
   ch2: number;
 };
 
-export type VerseKeyAudioFile = {
-  audioModule: string;
+export type AudioPlayerSelectionVK = {
+  swordModule: string;
   book: OSISBookType;
   chapter: number;
-  path: AudioPath;
-  swordModule?: string;
+  audioModule?: string;
+  path?: AudioPath;
 };
 
-export type GenBookAudioFile = {
-  audioModule: string;
+export type AudioPlayerSelectionGB = {
+  swordModule: string;
   key: string;
-  path: AudioPath;
-  swordModule?: string;
+  audioModule?: string;
+  path?: AudioPath;
 };
 
 export type RowSelection = Array<{ rows: [number, number] }>;
@@ -592,9 +592,9 @@ export type NewModuleReportType = { warning?: string; error?: string };
 export type NewModulesType = {
   modules: SwordConfType[];
   nokeymods: SwordConfType[];
+  audio: SwordConfType[];
   fonts: string[];
   bookmarks: string[];
-  audio: Array<VerseKeyAudioFile | GenBookAudioFile>;
   reports: NewModuleReportType[];
 };
 

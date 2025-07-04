@@ -31,9 +31,9 @@ import './viewport.css';
 
 import type { SyntheticEvent } from 'react';
 import type {
-  GenBookAudioFile,
+  AudioPlayerSelectionGB,
   LocationVKType,
-  VerseKeyAudioFile,
+  AudioPlayerSelectionVK,
   XulswordStateArgType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
@@ -50,6 +50,7 @@ const propTypes = {
   location: PropTypes.object,
   selection: PropTypes.object,
   scroll: PropTypes.object,
+  audio: PropTypes.object.isRequired,
 
   keys: PropTypes.arrayOf(PropTypes.string).isRequired,
 
@@ -78,6 +79,7 @@ type ViewportProps = ViewportPopupProps &
     location: typeof S.prefs.xulsword.location;
     selection: typeof S.prefs.xulsword.selection;
     scroll: typeof S.prefs.xulsword.scroll;
+    audio: typeof S.prefs.xulsword.audio;
     keys: typeof S.prefs.xulsword.keys;
     showChooser: typeof S.prefs.xulsword.showChooser;
     tabs: typeof S.prefs.xulsword.tabs;
@@ -149,26 +151,22 @@ class Viewport extends React.Component implements PopupParent {
   }
 
   audioHandler(
-    audioFile: VerseKeyAudioFile | GenBookAudioFile,
+    selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
     e: React.SyntheticEvent,
   ) {
-    const { xulswordStateHandler } = this.props as ViewportProps;
+    const { audio } = this.props as ViewportProps;
     const atextClick = !!ofClass(['textarea'], e.target)?.element;
-    const prevAudio = G.Prefs.getComplexValue(
-      'xulsword.audio',
-    ) as typeof S.prefs.xulsword.audio;
-    if (audioFile && (!atextClick || !prevAudio.open))
-      Commands.playAudio(
-        audioFile,
+    let playAudio: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null | undefined;
+    if (selection && (!atextClick || !audio.open)) playAudio = selection;
+    if (!selection || (atextClick && audio.open)) playAudio = null;
+    if (typeof playAudio !== 'undefined') Commands.playAudio(
+        playAudio, // null closes the player
         new RenderPromise(() =>
           Subscription.publish.setControllerState({
             reset: randomID(),
           }),
         ),
       );
-    if (!audioFile || (atextClick && prevAudio.open)) {
-      xulswordStateHandler({ audio: { open: false, file: null } });
-    }
   }
 
   render() {

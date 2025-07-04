@@ -12,7 +12,6 @@ import {
   localizeString,
   randomID,
   findTreeNodeOrder,
-  clone,
   JSON_attrib_stringify,
 } from '../common.ts';
 import C from '../constant.ts';
@@ -28,7 +27,7 @@ import type {
   AudioPath,
   GenBookAudio,
   GenBookAudioConf,
-  GenBookAudioFile,
+  AudioPlayerSelectionGB,
   GIType,
   GITypeMain,
   GType,
@@ -42,11 +41,10 @@ import type {
   Repository,
   SwordConfLocalized,
   SwordConfType,
-  TabTypes,
   TextVKType,
   V11nType,
   VerseKeyAudio,
-  VerseKeyAudioFile,
+  AudioPlayerSelectionVK,
   WindowDescriptorPrefType,
 } from '../type.ts';
 import type { XulswordState } from './components/xulsword/xulsword.tsx';
@@ -259,24 +257,6 @@ export function scrollIntoView(
   }
 }
 
-export function audioConfig(
-  module: string,
-  renderPromise?: RenderPromise | null,
-): SwordConfType | undefined {
-  let audioConf;
-  if (module) {
-    audioConf = GI.getAudioConf(null, renderPromise, module);
-    if (!audioConf && module in G.Tab) {
-      const codes = G.Tab[module].audioCodes || [];
-      for (let i = 0; i < codes.length; i++) {
-        audioConf = GI.getAudioConf(null, renderPromise, codes[i]);
-        if (audioConf) break;
-      }
-    }
-  }
-  return audioConf ?? undefined;
-}
-
 // Send a message to the iframe parent with the clientHeight of a selected div.
 // If elem is provided, any images it contains will be loaded before the height
 // is reported. If clear is set then -1 is sent.
@@ -380,48 +360,137 @@ export function syncChildrensBibles(
   return ks;
 }
 
-// Return an audio file for the given VerseKey module, book and chapter,
-// or null if there isn't one.
-export function verseKeyAudioFile(
-  swordModule: string,
-  book: OSISBookType,
-  chapter: number,
+// Return the audio module config objects for a SWORD module's AudioCodes.
+export function audioConfigs(
+  module: string,
   renderPromise?: RenderPromise | null,
-): VerseKeyAudioFile | null {
-  const audioConf = audioConfig(swordModule, renderPromise);
-  if (audioConf) {
-    const { AudioChapters } = audioConf;
-    let boolarray: boolean[] = [];
-    if (AudioChapters && isAudioVerseKey(AudioChapters)) {
-      const ac = AudioChapters as VerseKeyAudio;
-      let bk = book;
-      let ch = chapter === undefined ? -1 : chapter;
-      if (!bk) {
-        const [entry] = Object.entries(ac);
-        if (entry) {
-          [, boolarray] = entry;
-          const [b] = entry;
-          bk = b as OSISBookType;
-          ch = -1;
+): SwordConfType[] {
+  const audioConfs: SwordConfType[] = [];
+  if (module && module in G.Tab) {
+    let conf = GI.getAudioConf(null, renderPromise, module);
+    if (conf) audioConfs.push(conf);
+    const { audioCodes } = G.Tab[module];
+    audioCodes.forEach((audiocode) => {
+      conf = GI.getAudioConf(null, renderPromise, audiocode);
+      if (conf && !audioConfs.find((c) => conf && c.module === conf.module))
+        audioConfs.push(conf);
+    });
+  }
+
+  return audioConfs;
+}
+
+// Return an array of all audio module config objects for a SWORD module's
+// AudioCodes plus the index of the currently user selected audio config. If
+// the SWORD module has no AudioCode and no installed audio module then null
+// is returned.
+export function selectedAudioConfs(
+  swordModule: string,
+  renderPromise?: RenderPromise | null,
+): { confs: SwordConfType[]; index: number } | null {
+  const audioConfs = audioConfigs(swordModule, renderPromise);
+  if (audioConfs.length) {
+    const audiolookup = G.Prefs.getComplexValue(
+      'global.audiolookup',
+      'prefs',
+    ) as typeof S.prefs.global.audiolookup | undefined;
+    let index = -1;
+    if (swordModule && audiolookup && swordModule in audiolookup) {
+      const audiocode = audiolookup[swordModule];
+      index = audioConfs.findIndex((c) => c.module === audiocode);
+    }
+    if (!(index in audioConfs)) index = 0;
+    return { confs: audioConfs, index };
+  }
+
+  return null;
+}
+
+// Return the audio player selection having updated audioModule, path, and
+// possibly book and/or chapter. This is done by checking the selection's
+// swordModule AudioCodes (searching current user preference first) to find the
+// first AudioCode module that contains the selection's book/chapter or key. If
+// book and/or chapter of the input selection is undefined, the first
+// applicable audio file will be chosen and the returned book and chapter will
+// be updated accordingly. If no audio file is installed for the given player
+// selection then null is returned.
+export function updatedAudioSelection(
+  selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+  renderPromise?: RenderPromise | null,
+): AudioPlayerSelectionVK | AudioPlayerSelectionGB | null {
+  if (!selection) return null;
+  let updated: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null = null;
+  const { swordModule } = selection;
+  if (swordModule) {
+    const audioConfs = selectedAudioConfs(swordModule, renderPromise);
+    if (audioConfs) {
+      const indexes = audioConfs.confs.reduce((p, _c, i) => {
+        if (i === audioConfs.index) p.unshift(i);
+        else p.push(i);
+        return p;
+      }, [] as number[]);
+      indexes.forEach((index) => {
+        if (updated) return;
+        const { module: audioModule, AudioChapters } = audioConfs.confs[index];
+        if (
+          swordModule in G.Tab &&
+          G.Tab[swordModule].isVerseKey &&
+          'book' in selection &&
+          AudioChapters &&
+          isAudioVerseKey(AudioChapters)
+        ) {
+          const { book: bk, chapter: ch } = selection;
+          let boolarray: boolean[] = [];
+          const ac = AudioChapters as VerseKeyAudio;
+          let book = bk;
+          let chapter = ch === undefined ? -1 : ch;
+          if (!book) {
+            const [entry] = Object.entries(ac);
+            if (entry) {
+              [, boolarray] = entry;
+              const [b] = entry;
+              book = b as OSISBookType;
+              chapter = -1;
+            }
+          } else if (book in ac) {
+            const acbk = ac[book];
+            if (acbk) boolarray = acbk;
+          }
+          if (book && boolarray.length) {
+            if (chapter === -1) chapter = boolarray.indexOf(true);
+            if (chapter !== -1 && boolarray[chapter])
+              updated = {
+                swordModule,
+                book,
+                chapter,
+                audioModule,
+                path: [book, chapter],
+              };
+          }
+        } else if (
+          swordModule in G.Tab &&
+          G.Tab[swordModule].tabType === 'Genbks' &&
+          'key' in selection &&
+          AudioChapters &&
+          !isAudioVerseKey(AudioChapters)
+        ) {
+          const { key } = selection;
+          const ac = AudioChapters as GenBookAudioConf;
+          const gbaudio = getGenBookAudio(ac, swordModule, renderPromise);
+          if (key in gbaudio) {
+            updated = {
+              swordModule,
+              key,
+              audioModule,
+              path: gbaudio[key],
+            };
+          }
         }
-      } else if (bk in ac) {
-        const acbk = ac[bk];
-        if (acbk) boolarray = acbk;
-      }
-      if (bk && boolarray.length) {
-        if (ch === -1) ch = boolarray.indexOf(true);
-        if (ch !== -1 && boolarray[ch])
-          return {
-            audioModule: audioConf.module,
-            swordModule,
-            book: bk,
-            chapter: ch,
-            path: [bk, ch],
-          };
-      }
+      });
     }
   }
-  return null;
+
+  return updated;
 }
 
 // Return groups of same-genbook-panels, in chooser order.
@@ -440,46 +509,25 @@ export function chooserGenbks(panels: Array<string | null>): number[][] {
   return r;
 }
 
-// Return an audio file for the given GenBook module and key,
-// or null if there isn't one.
-export function genBookAudioFile(
-  swordModule: string,
-  key: string,
-  renderPromise?: RenderPromise | null,
-): GenBookAudioFile | null {
-  const audioConf = audioConfig(swordModule, renderPromise);
-  if (audioConf) {
-    const { AudioChapters } = audioConf;
-    if (AudioChapters && !isAudioVerseKey(AudioChapters)) {
-      const ac = AudioChapters as GenBookAudioConf;
-      const gbaudio = getGenBookAudio(ac, swordModule, renderPromise);
-      if (key in gbaudio) {
-        return {
-          audioModule: audioConf.module,
-          swordModule,
-          key,
-          path: gbaudio[key],
-        };
-      }
-    }
-  }
-  return null;
-}
-
 // Check a GenBook tree node to see if it has an audio file. If so,
 // add the audio file information to the node and return true.
 export function audioGenBookNode(
   node: TreeNodeInfo,
-  module: string,
+  swordModule: string,
   key: string,
   renderPromise: RenderPromise,
 ): boolean {
-  let afile: GenBookAudioFile | null = null;
-  if (!G.Tab[module].isVerseKey && G.Tab[module].tabType === 'Genbks' && key) {
-    afile = genBookAudioFile(module, key, renderPromise);
+  let sel: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null = null;
+  if (
+    swordModule &&
+    swordModule in G.Tab &&
+    G.Tab[swordModule].tabType === 'Genbks' &&
+    key
+  ) {
+    sel = updatedAudioSelection({ swordModule, key }, renderPromise);
   }
-  if (afile) {
-    node.nodeData = afile;
+  if (sel) {
+    node.nodeData = sel;
     node.className = 'audio-icon';
     node.icon = 'volume-up';
     return true;
@@ -494,29 +542,32 @@ export function getGenBookAudio(
   gbmod: string,
   renderPromise?: RenderPromise | null,
 ): GenBookAudio {
-  const treeNodes = GI.genBookTreeNodes([], renderPromise, gbmod);
-  if (treeNodes.length) {
-    if (!Cache.has('readGenBookAudioConf', gbmod)) {
-      const allGbKeys = gbPaths(treeNodes);
-      const r: GenBookAudio = {};
-      Object.entries(audio).forEach((entry) => {
-        const [pathx, str] = entry;
-        const px = pathx.split('/').filter(Boolean);
-        const parentPath: AudioPath = [];
-        px.forEach((p, i) => {
-          parentPath[i] = Number(p.replace(/^(\d+).*?$/, '$1'));
+  if (gbmod && gbmod in G.Tab) {
+    const treeNodes = GI.genBookTreeNodes([], renderPromise, gbmod);
+    if (treeNodes.length) {
+      if (!Cache.has('readGenBookAudioConf', gbmod)) {
+        const allGbKeys = gbPaths(treeNodes);
+        const r: GenBookAudio = {};
+        Object.entries(audio).forEach((entry) => {
+          const [pathx, str] = entry;
+          const px = pathx.split('/').filter(Boolean);
+          const parentPath: AudioPath = [];
+          px.forEach((p, i) => {
+            parentPath[i] = Number(p.replace(/^(\d+).*?$/, '$1'));
+          });
+          audioConfNumbers(str).forEach((n) => {
+            const pp = parentPath.slice() as AudioPath;
+            pp.push(n);
+            const kx = Object.entries(allGbKeys).find((e) => !diff(pp, e[1]));
+            if (kx) r[kx[0]] = pp;
+          });
         });
-        audioConfNumbers(str).forEach((n) => {
-          const pp = parentPath.slice() as AudioPath;
-          pp.push(n);
-          const kx = Object.entries(allGbKeys).find((e) => !diff(pp, e[1]));
-          if (kx) r[kx[0]] = pp;
-        });
-      });
-      Cache.write(r, 'readGenBookAudioConf', gbmod);
+        Cache.write(r, 'readGenBookAudioConf', gbmod);
+      }
+      return Cache.read('readGenBookAudioConf', gbmod);
     }
-    return Cache.read('readGenBookAudioConf', gbmod);
   }
+
   return {};
 }
 

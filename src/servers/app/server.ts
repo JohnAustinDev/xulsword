@@ -74,7 +74,7 @@ log.transports.file.level = C.LogLevel;
 log.transports.file.resolvePath = () => logfile.path;
 log.info(`Starting ${app.getName()} isDevelopment='${Build.isDevelopment}'`);
 
-const G = Cache.has('G') ? Cache.read('G') as GType : null;
+const G = Cache.has('G') ? (Cache.read('G') as GType) : null;
 if (!G) log.error(`G was not read from Cache.`);
 
 addBookmarkTransaction(

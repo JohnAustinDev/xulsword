@@ -9,14 +9,14 @@ import type PrefsElectron from './servers/app/prefs.ts';
 import type PrefsBrowser from './clients/webapp/prefs.ts';
 import type {
   GAddWindowId,
-  GenBookAudioFile,
+  AudioPlayerSelectionGB,
   GIType,
   GType,
   LocationORType,
   LocationVKCommType,
   LocationVKType,
   ScrollType,
-  VerseKeyAudioFile,
+  AudioPlayerSelectionVK,
 } from './type.ts';
 
 // This file contains global commands that are implemented for all clients and servers.
@@ -139,18 +139,18 @@ export default class Commands {
   }
 
   playAudio(
-    audio: VerseKeyAudioFile | GenBookAudioFile | null,
+    selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
     renderPromise: RenderPromise,
   ) {
     let xulsword: Partial<typeof S.prefs.xulsword> | undefined;
-    if (audio) {
+    if (selection) {
       if (
-        'book' in audio &&
+        'book' in selection &&
         Object.values(C.SupportedBooks).some((bg: any) =>
-          bg.includes(audio.book),
+          bg.includes(selection.book),
         )
       ) {
-        const { book, chapter, swordModule } = audio;
+        const { book, chapter, swordModule } = selection;
         this.goToLocationVK(
           {
             book,
@@ -162,8 +162,8 @@ export default class Commands {
           undefined,
           renderPromise,
         );
-      } else if ('key' in audio) {
-        const { key, swordModule } = audio;
+      } else if ('key' in selection) {
+        const { key, swordModule } = selection;
         if (swordModule) {
           this.goToLocationGB(
             {
@@ -178,7 +178,7 @@ export default class Commands {
       xulsword = {
         audio: {
           open: true,
-          file: audio,
+          file: selection,
         },
       };
     } else {

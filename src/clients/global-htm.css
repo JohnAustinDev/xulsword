@@ -168,15 +168,12 @@ html a:hover {
 .button-box,
 .textbox,
 select,
-div:has(>audio),
+audio,
 button,
 .bookselect,
 .selectvk,
 .menulist {
   height: var(--input-height);
-}
-div:has(>audio) > audio {
-  height: 100%;
 }
 
 .rp-loading {

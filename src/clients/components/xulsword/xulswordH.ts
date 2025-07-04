@@ -7,9 +7,8 @@ import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
 import {
   doUntilDone,
-  genBookAudioFile,
   rootRenderPromise,
-  verseKeyAudioFile,
+  updatedAudioSelection,
 } from '../../common.tsx';
 import verseKey from '../../verseKey.ts';
 import log from '../../log.ts';
@@ -18,11 +17,11 @@ import { genbookChange } from '../atext/ztext.ts';
 
 import type React from 'react';
 import type {
-  GenBookAudioFile,
+  AudioPlayerSelectionGB,
   OSISBookType,
   SearchType,
   ShowType,
-  VerseKeyAudioFile,
+  AudioPlayerSelectionVK,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type { AnalyticsInfo } from '../../analytics.ts';
@@ -328,9 +327,30 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               this.setState({ searchDisabled: !enable });
             break;
           }
+          case 'audioCodeSelect__select': {
+            const { audio } = this.state as XulswordState;
+            const { file } = audio;
+            if (file) {
+              const { swordModule } = file;
+                if (swordModule) {
+                const audiolookup =
+                  (G.Prefs.getComplexValue('global.audiolookup') as
+                    | typeof S.prefs.global.audiolookup
+                    | undefined) ?? {};
+                audiolookup[swordModule] = value;
+                G.Prefs.setComplexValue('global.audiolookup', audiolookup);
+                doUntilDone((renderPromise2) => {
+                  const newfile = updatedAudioSelection(file, renderPromise2);
+                  if (!renderPromise2?.waiting())
+                    this.setState({ open: true, file: newfile });
+                });
+              }
+            }
+            break;
+          }
           default:
             throw Error(
-              `Unhandled xulswordHandler onChange event on '${currentId}'`,
+              `Unhandled xulswordHandler onChange event on '${id}'`,
             );
         }
       });
@@ -340,19 +360,21 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
     case 'play': {
       const { file } = state.audio;
       if (file) {
+        const { audioModule } = file;
+        const AudioCode = audioModule ?? 'unknown';
         let info: AnalyticsInfo;
         if ('key' in file) {
-          const { audioModule, key } = file;
+          const { key } = file;
           info = {
             event: 'playAudio',
-            AudioCode: audioModule,
+            AudioCode,
             locationky: key,
           };
         } else {
-          const { audioModule, book, chapter } = file;
+          const { book, chapter } = file;
           info = {
             event: 'playAudio',
-            AudioCode: audioModule,
+            AudioCode,
             book,
             chapter,
           };
@@ -377,10 +399,11 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
       const { audio } = state;
       const { file } = audio;
       doUntilDone((renderPromise2) => {
-        let afile: VerseKeyAudioFile | GenBookAudioFile | null = null;
+        let selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null =
+          null;
         if (file) {
           const { swordModule } = file;
-          if (swordModule) {
+          if (swordModule && swordModule in G.Tab) {
             if ('book' in file) {
               const { book, chapter } = file;
               const nk = chapterChange(
@@ -396,23 +419,26 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 renderPromise2,
               );
               if (nk)
-                afile = verseKeyAudioFile(
+                selection = {
                   swordModule,
-                  nk.book,
-                  nk.chapter,
-                  renderPromise2,
-                );
+                  book: nk.book,
+                  chapter: nk.chapter,
+                };
             } else if ('key' in file) {
               const { key: k } = file;
               const key = genbookChange(swordModule, k, true, renderPromise2);
               if (key) {
-                afile = genBookAudioFile(swordModule, key, renderPromise2);
+                selection = {
+                  swordModule,
+                  key,
+                };
               }
             }
           }
         }
+        const s = updatedAudioSelection(selection, renderPromise2);
         if (!renderPromise2?.waiting())
-          Commands.playAudio(afile, rootRenderPromise()); // null closes the player
+          Commands.playAudio(s, rootRenderPromise()); // null closes the player
       });
       break;
     }

@@ -45,14 +45,14 @@ import type {
   CipherKey,
   Download,
   FTPDownload,
-  GenBookAudioFile,
+  AudioPlayerSelectionGB,
   NewModulesType,
   Repository,
   RepositoryListing,
   SwordConfType,
   GenBookAudioConf,
   VerseKeyAudioConf,
-  VerseKeyAudioFile,
+  AudioPlayerSelectionVK,
   OSISBookType,
 } from '../../../type.ts';
 import type { ListingElementR } from '../../ftphttp.ts';
@@ -612,27 +612,11 @@ export async function installZIPs(
                   if (audioCode && book && !Number.isNaN(chapter)) {
                     audio.append(pad(chapter, 3, 0) + pobj.ext);
                     audio.writeFile(entry.getData());
-                    const audiofile: VerseKeyAudioFile = {
-                      audioModule: audioCode,
-                      book,
-                      chapter,
-                      path: [book, chapter],
-                    };
-                    newmods.audio.push(audiofile);
                   } else audioCode = '';
                 } else if (audioCode) {
                   // GenBook audio file...
                   audio.append(pobj.base);
                   audio.writeFile(entry.getData());
-                  const qp = decodeURIComponent(pobj.dir).split(fpath.posix.sep);
-                  qp.shift(); // remove audio
-                  qp.shift(); // remove <audiocode>
-                  const audioFile: GenBookAudioFile = {
-                    audioModule: audioCode,
-                    key: qp.map((p) => p.replace(/^\d\d\d /, '')).join(C.GBKSEP),
-                    path: qp.map((p) => Number(p.replace(/^(\d\d\d) .*$/, '$1'))),
-                  };
-                  newmods.audio.push(audioFile);
                 }
                 // Modify the config file to show the new audio.
                 if (audioCode && conf) {
@@ -655,6 +639,12 @@ export async function installZIPs(
                       `AudioChapters=${JSON_stringify(audioChapters)}`,
                     );
                     confFile.writeFile(str);
+                    const nconf = parseSwordConf(confFile);
+                    const index = newmods.audio.findIndex(
+                      (c) => c.module === nconf.module,
+                    );
+                    if (index === -1) newmods.audio.push(nconf);
+                    else newmods.audio[index] = nconf;
                   }
                 }
                 break;
@@ -1068,7 +1058,7 @@ const Module = {
         const trace = 'trace' in erobj ? erobj.trace : '';
         w?.webContents.send('progress', prog, downloadkey, trace);
         w = null;
-        threshProgress = prog + .02;
+        threshProgress = prog + 0.02;
         done = prog === -1;
       }
     };
@@ -1099,7 +1089,7 @@ const Module = {
             );
           }
           const dlfile = await getFileHTTP(
-            resolveTemplateURL(http, data),
+            resolveTemplateURL(http, data, 'zip'),
             tmpdir.append(randomID()),
             downloadkey,
             (p: number) => {

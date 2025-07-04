@@ -1,8 +1,10 @@
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
+import Subscription from '../../../subscription.ts';
 import { clone, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
+import log from '../../log.ts';
 import RenderPromise from '../../renderPromise.ts';
 import {
   dString,
@@ -14,6 +16,8 @@ import {
   doUntilDone,
   isIBTChildrensBible,
   chooserGenbks,
+  selectedAudioConfs,
+  updatedAudioSelection,
 } from '../../common.tsx';
 import {
   addClass,
@@ -28,6 +32,7 @@ import Spacer from '../libxul/spacer.tsx';
 import Textbox from '../libxul/textbox.tsx';
 import SelectOR from '../libxul/selectOR.tsx';
 import SelectVK from '../libxul/selectVK.tsx';
+import Menulist from '../libxul/menulist.tsx';
 import Viewport from '../viewport/viewport.tsx';
 import viewportParentH, {
   closeMenupopups,
@@ -52,8 +57,6 @@ import type Atext from '../atext/atext.tsx';
 import type { XulProps } from '../libxul/xul.tsx';
 import type { SelectORMType } from '../libxul/selectOR.tsx';
 import type { SelectVKType } from '../libxul/selectVK.tsx';
-import Subscription from '../../../subscription.ts';
-import log from '../../log.ts';
 
 const propTypes = {
   ...xulPropTypes,
@@ -344,21 +347,41 @@ export default class Xulsword
       </Hbox>
     );
 
+    const audiosel = updatedAudioSelection(audio.file, renderPromise);
+    const src = audiosel
+      ? GI.inlineAudioFile('', renderPromise, audiosel)
+      : undefined;
+    const { swordModule, audioModule } = audiosel ?? {};
+    const audioConfs =
+      swordModule && selectedAudioConfs(swordModule, renderPromise);
     const audioComponent = (
       <Hbox id="player" pack="start" align="center">
         <Vbox flex="3">
           <div>
+            {audioModule &&
+              audioConfs &&
+              Array.isArray(audioConfs.confs) &&
+              audioConfs.confs.length > 1 && (
+                <Menulist
+                  id="audioCodeSelect"
+                  value={audioModule}
+                  onChange={handler}
+                  options={audioConfs.confs.map((f) => {
+                    return (
+                      <option key={stringHash(f.module)} value={f.module}>
+                        {f.module}
+                      </option>
+                    );
+                  })}
+                />
+              )}
             <audio
               controls
               onEnded={handler}
               onCanPlay={handler}
               onPlay={handler}
               autoPlay={!!Build.isWebApp}
-              src={
-                audio.file
-                  ? GI.inlineAudioFile('', renderPromise, audio.file)
-                  : undefined
-              }
+              src={src}
             />
           </div>
         </Vbox>
@@ -562,8 +585,7 @@ export default class Xulsword
 
     const appNavigatorToolComponent = (
       <Vbox id="navigator-tool" pack="start">
-        {!audio.open && historyComponent}
-        {audio.open && audioComponent}
+        {historyComponent}
 
         <Hbox id="textnav" align="center">
           <Bookselect
@@ -630,11 +652,16 @@ export default class Xulsword
     );
 
     const appSearchTool = (
-      <Hbox id="search-tool">
-        <Vbox pack="start" align="center">
-          {searchComponent}
-        </Vbox>
-      </Hbox>
+      <>
+        {audio.open && audioComponent}
+        {!audio.open && (
+          <Hbox id="search-tool">
+            <Vbox pack="start" align="center">
+              {searchComponent}
+            </Vbox>
+          </Hbox>
+        )}
+      </>
     );
 
     this.atextRefs = [];
@@ -720,6 +747,7 @@ export default class Xulsword
             id="main-viewport"
             location={location}
             selection={selection}
+            audio={audio}
             tabs={tabs}
             panels={panels}
             ilModules={ilModules}

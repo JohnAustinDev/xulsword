@@ -13,6 +13,7 @@ const config = [
     ignores: [
       '*.d.ts',
       '**/assets/',
+      '**/archive/',
       '**/build/',
       '**/Cpp/',
       '**/node_modules/',

@@ -98,11 +98,12 @@ const S = {
       fontSize: 2 as number,
       locale: '' as string,
       popup: {
-        vklookup: {} as Record<string, string>,
+        vklookup: {} as { [anyTypeModule: string]: string },
         feature: {} as {
           [feature in keyof FeatureMods]?: string;
         },
       },
+      audiolookup: {} as { [anyTypeModule: string]: string },
       noAutoSearchIndex: [] as string[],
     },
 

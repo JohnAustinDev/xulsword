@@ -215,6 +215,7 @@ export default class ViewportWin
     const {
       location,
       selection,
+      audio,
       keys,
       ilModules,
       mtModules,
@@ -257,6 +258,7 @@ export default class ViewportWin
             id="main-viewport"
             location={location}
             selection={selection}
+            audio={audio}
             keys={keys}
             ilModules={ilModules}
             mtModules={mtModules}

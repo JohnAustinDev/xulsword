@@ -18,7 +18,6 @@ import type {
   HTTPDownload,
   QuerablePromise,
   GType,
-  DeprecatedAudioChaptersConf,
   VerseKeyAudioConf,
   GenBookAudioConf,
   VerseKeyAudio,
@@ -42,8 +41,8 @@ import type {
   ModTypes,
   ShowType,
   PrefRoot,
-  VerseKeyAudioFile,
-  GenBookAudioFile,
+  AudioPlayerSelectionVK,
+  AudioPlayerSelectionGB,
 } from './type.ts';
 import type { PrefsGType } from './prefs.ts';
 import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
@@ -1912,14 +1911,14 @@ function IBTtemplateURL(
   selection:
     | SelectVKType
     | SelectORMType
-    | VerseKeyAudioFile
-    | GenBookAudioFile,
+    | AudioPlayerSelectionVK
+    | AudioPlayerSelectionGB,
   phs: {
     XSKEY: string;
     XSPARENT: string;
     XSCHAPTER: string;
     XSCHAPTERS: string;
-    XSPACKAGE: 'none' | 'zip';
+    XSPACKAGE: 'none' | 'zip' | undefined;
   },
 ) {
   if ('book' in selection) {
@@ -1933,7 +1932,8 @@ function IBTtemplateURL(
     phs.XSCHAPTER = chapter.toString();
     const chl = lastchapter > chapter ? lastchapter : chapter;
     phs.XSCHAPTERS = `${chapter.toString()}-${chl}`;
-    phs.XSPACKAGE = lastchapter > chapter ? 'zip' : 'none';
+    if (typeof phs.XSPACKAGE === 'undefined')
+      phs.XSPACKAGE = lastchapter > chapter ? 'zip' : 'none';
   } else {
     const keys = 'keys' in selection ? selection.keys : [selection.key];
     if (!keys.length) return false;
@@ -1979,7 +1979,7 @@ function IBTtemplateURL(
       phs.XSCHAPTER = ch.toString();
       const chl = cl > ch ? cl : ch;
       phs.XSCHAPTERS = `${ch}-${chl.toString()}`;
-      phs.XSPACKAGE = 'zip';
+      if (typeof phs.XSPACKAGE === 'undefined') phs.XSPACKAGE = 'zip';
     } else {
       phs.XSKEY = segs.join('/');
       let chapter = '';
@@ -1991,7 +1991,7 @@ function IBTtemplateURL(
       phs.XSPARENT = `/${parent}`;
       phs.XSCHAPTER = chapter.toString();
       phs.XSCHAPTERS = chapter.toString();
-      phs.XSPACKAGE = 'none';
+      if (typeof phs.XSPACKAGE === 'undefined') phs.XSPACKAGE = 'none';
     }
   }
 
@@ -2006,8 +2006,9 @@ export function resolveTemplateURL(
   selection:
     | SelectVKType
     | SelectORMType
-    | VerseKeyAudioFile
-    | GenBookAudioFile,
+    | AudioPlayerSelectionVK
+    | AudioPlayerSelectionGB,
+  XSPACKAGE?: 'none' | 'zip',
 ) {
   // Supported replacements
   const phs = {
@@ -2015,7 +2016,7 @@ export function resolveTemplateURL(
     XSPARENT: '',
     XSCHAPTER: '',
     XSCHAPTERS: '',
-    XSPACKAGE: 'none' as 'none' | 'zip',
+    XSPACKAGE,
   };
 
   if (!IBTtemplateURL(selection, phs)) return url;

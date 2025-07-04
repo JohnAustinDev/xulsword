@@ -5,7 +5,7 @@ import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import {
   dString,
-  audioConfig,
+  audioConfigs,
   clearPending,
   getMaxChapter,
 } from '../../common.tsx';
@@ -24,10 +24,10 @@ import './chooser.css';
 
 import type {
   BookGroupType,
-  GenBookAudioFile,
+  AudioPlayerSelectionGB,
   OSISBookType,
   V11nType,
-  VerseKeyAudioFile,
+  AudioPlayerSelectionVK,
 } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
@@ -54,7 +54,9 @@ export type ChooserProps = {
   headingsModule?: string;
   v11n: V11nType;
   onCloseChooserClick: (e: any) => void;
-  onAudioClick: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
+  onAudioClick: (
+    audio?: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+  ) => void;
 } & XulProps;
 
 export type ChooserState = RenderPromiseState & {
@@ -322,7 +324,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
             }
             <BookGroupList
               className={`sizer${
-                (audioConfig(headingsModule || '', renderPromise) &&
+                (audioConfigs(headingsModule || '', renderPromise).length &&
                   ' audio') ||
                 ''
               }`}
@@ -374,7 +376,9 @@ function BookGroupList(
     headingsModule?: string;
     hideUnavailableBooks?: boolean;
     handler?: (e: React.SyntheticEvent) => void;
-    onAudioClick?: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
+    onAudioClick?: (
+      selection?: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    ) => void;
     chooserRef: React.Component;
     renderPromise: RenderPromise;
   } & XulProps,
@@ -435,7 +439,9 @@ function BookGroupItem(
     headingsModule?: string;
     v11n: V11nType;
     handler?: (e: React.SyntheticEvent) => void;
-    onAudioClick?: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
+    onAudioClick?: (
+      selection?: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    ) => void;
     chooserRef: React.Component;
     renderPromise: RenderPromise;
   } & XulProps,
@@ -492,7 +498,9 @@ function ChapterMenu(props: {
   bkcode: string;
   v11n: V11nType;
   handler?: (e: React.SyntheticEvent) => void;
-  onAudioClick?: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
+  onAudioClick?: (
+    selection?: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+  ) => void;
   chooserRef: React.Component;
   renderPromise: RenderPromise;
 }) {
