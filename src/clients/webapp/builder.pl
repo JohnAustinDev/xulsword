@@ -6,7 +6,7 @@ my $DIST_PARENT_DIR = shift;
 my $IS_DEVELOPMENT = shift;
 
 if (! "$DIST_PARENT_DIR" || ! -d "$DIST_PARENT_DIR/dist/") {
-  print "Usage: build.sh DIST_PARENT_DIR [IS_DEVELOPMENT]";
+  print "Usage: builder.pl DIST_PARENT_DIR [IS_DEVELOPMENT]";
   print "ERROR: Not a directory: $DIST_PARENT_DIR/dist";
   exit 1;
 }
@@ -21,7 +21,7 @@ my $xulsword = `pwd`; chomp $xulsword;
 `rm -rf "$xulsword/build/app/dist/"*`;
 
 # Sourcing for environment variables does not work in Perl, so a wrapper
-# build.sh must be used to set the environment.
+# build-clients.sh must be used to set the environment.
 # doesn't work -> `source ./setenv`;
 
 if ("$IS_DEVELOPMENT" eq "1") {
