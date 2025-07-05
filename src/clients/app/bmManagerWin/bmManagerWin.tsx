@@ -16,7 +16,6 @@ import {
   registerUpdateStateFromPref,
   setStatePref,
   getStatePref,
-  printRefs,
 } from '../../common.tsx';
 import log from '../../log.ts';
 import { bookmarkTreeNodes, getSampleText } from '../../bookmarks.ts';
@@ -29,8 +28,8 @@ import Label from '../../components/libxul/label.tsx';
 import TreeView from '../../components/libxul/treeview.tsx';
 import Button from '../../components/libxul/button.tsx';
 import { xulPropTypes, addClass } from '../../components/libxul/xul.tsx';
-import * as H from './bmManagerH.tsx';
-import './bmManager.css';
+import * as H from './bmManagerWinH.tsx';
+import './bmManagerWin.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
 
 import type { Table2 as BPTable } from '@blueprintjs/table';

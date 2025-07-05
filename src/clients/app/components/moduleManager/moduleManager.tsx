@@ -17,34 +17,34 @@ import {
   repositoryModuleKey,
   stringHash,
   localizeString,
-} from '../../../common.ts';
-import C from '../../../constant.ts';
-import { G } from '../../G.ts';
-import log from '../../log.ts';
+} from '../../../../common.ts';
+import C from '../../../../constant.ts';
+import { G } from '../../../G.ts';
+import log from '../../../log.ts';
 import {
   getStatePref,
   getLangReadable,
   setStatePref,
   windowArguments,
-} from '../../common.tsx';
-import { addClass, xulPropTypes } from '../../components/libxul/xul.tsx';
-import Button from '../../components/libxul/button.tsx';
-import { Hbox, Vbox, Box } from '../../components/libxul/boxes.tsx';
-import Groupbox from '../../components/libxul/groupbox.tsx';
-import SelectVK from '../../components/libxul/selectVK.tsx';
-import SelectOR from '../../components/libxul/selectOR.tsx';
-import Table from '../../components/libxul/table.tsx';
-import Spacer from '../../components/libxul/spacer.tsx';
-import Label from '../../components/libxul/label.tsx';
-import DragSizer from '../../components/libxul/dragsizer.tsx';
-import Checkbox from '../../components/libxul/checkbox.tsx';
-import Dialog from '../../components/libxul/dialog.tsx';
+} from '../../../common.tsx';
+import { addClass, xulPropTypes } from '../../../components/libxul/xul.tsx';
+import Button from '../../../components/libxul/button.tsx';
+import { Hbox, Vbox, Box } from '../../../components/libxul/boxes.tsx';
+import Groupbox from '../../../components/libxul/groupbox.tsx';
+import SelectVK from '../../../components/libxul/selectVK.tsx';
+import SelectOR from '../../../components/libxul/selectOR.tsx';
+import Table from '../../../components/libxul/table.tsx';
+import Spacer from '../../../components/libxul/spacer.tsx';
+import Label from '../../../components/libxul/label.tsx';
+import DragSizer from '../../../components/libxul/dragsizer.tsx';
+import Checkbox from '../../../components/libxul/checkbox.tsx';
+import Dialog from '../../../components/libxul/dialog.tsx';
 import Modinfo, {
   modinfoParentInitialState,
   modinfoParentHandler as modinfoParentHandlerH,
-} from '../../components/libxul/modinfo.tsx';
-import * as H from './managerH.ts';
-import './manager.css';
+} from '../../../components/libxul/modinfo.tsx';
+import * as H from './moduleManagerH.ts';
+import './moduleManager.css';
 
 import type { Toaster, ToastProps } from '@blueprintjs/core';
 import type {
@@ -53,31 +53,31 @@ import type {
   RepositoryListing,
   RowSelection,
   SwordConfType,
-} from '../../../type.ts';
-import type S from '../../../defaultPrefs.ts';
+} from '../../../../type.ts';
+import type S from '../../../../defaultPrefs.ts';
 import type {
   TLanguageTableRow,
   TModuleTableRow,
   TRepositoryTableRow,
-} from './managerH.ts';
+} from './moduleManagerH.ts';
 import type {
   TonCellClick,
   TonEditableCellChanged,
   TonRowsReordered,
   TablePropColumn,
-} from '../../components/libxul/table.tsx';
+} from '../../../components/libxul/table.tsx';
 import type {
   SelectVKProps,
   SelectVKType,
-} from '../../components/libxul/selectVK.tsx';
+} from '../../../components/libxul/selectVK.tsx';
 import type {
   SelectORProps,
   SelectORMType,
-} from '../../components/libxul/selectOR.tsx';
-import type { ModinfoParent } from '../../components/libxul/modinfo.tsx';
-import type { XulProps } from '../../components/libxul/xul.tsx';
-import type { DragSizerVal } from '../../components/libxul/dragsizer.tsx';
-import type { ControllerState } from '../../controller.tsx';
+} from '../../../components/libxul/selectOR.tsx';
+import type { ModinfoParent } from '../../../components/libxul/modinfo.tsx';
+import type { XulProps } from '../../../components/libxul/xul.tsx';
+import type { DragSizerVal } from '../../../components/libxul/dragsizer.tsx';
+import type { ControllerState } from '../../../controller.tsx';
 
 G.Module.cancel().catch((er) => {
   log.error(er);

@@ -14,7 +14,7 @@ import type {
   ContextDataType,
   SwordConfType,
 } from '../../type.ts';
-import type { AboutWinState } from '../../clients/app/about/about.tsx';
+import type { AboutWinState } from '../../clients/app/aboutWin/aboutWin.tsx';
 
 // Require the calling window argument, since G will not add it when
 // Commands are called from the main process.

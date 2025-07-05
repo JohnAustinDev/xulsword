@@ -1,6 +1,6 @@
-html.about,
-html.about body,
-html.about #root {
+html.aboutWin,
+html.aboutWin body,
+html.aboutWin #root {
   min-width: 500px;
   min-height: 375px;
   padding: 0px;

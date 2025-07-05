@@ -28,7 +28,7 @@ import SelectVK from '../../components/libxul/selectVK.tsx';
 import Spacer from '../../components/libxul/spacer.tsx';
 import '../../libsword.css';
 import '../../components/atext/atext.css';
-import './copyPassage.css';
+import './copyPassageWin.css';
 
 import type { Toaster, ToastProps } from '@blueprintjs/core';
 import type S from '../../../defaultPrefs.ts';

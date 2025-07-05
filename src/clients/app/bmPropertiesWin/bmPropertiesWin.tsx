@@ -33,7 +33,7 @@ import Button from '../../components/libxul/button.tsx';
 import Spacer from '../../components/libxul/spacer.tsx';
 import TreeView from '../../components/libxul/treeview.tsx';
 import { xulPropTypes } from '../../components/libxul/xul.tsx';
-import './bmProperties.css';
+import './bmPropertiesWin.css';
 
 import type {
   BMItem,
@@ -99,7 +99,7 @@ const defaultState: BMPropertiesState = {
   hide: [],
 };
 
-// The window argument controls what appears in the bmProperties window and
+// The window argument controls what appears in the bmPropertiesWin window and
 // to some extent how it operates:
 // STATE                  VALUE MEANING
 // bookmark                str -id of bookmark item to which the window will apply.
@@ -250,7 +250,7 @@ export default class BMPropertiesWin extends React.Component {
         break;
       }
       default:
-        throw new Error(`Unhandled bmProperties id: ${eid}`);
+        throw new Error(`Unhandled bmPropertiesWin id: ${eid}`);
     }
   }
 

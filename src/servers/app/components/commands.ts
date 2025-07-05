@@ -55,11 +55,11 @@ import type {
   ControllerState,
   PrintOptionsType,
 } from '../../../clients/controller.tsx';
-import type { AboutWinState } from '../../../clients/app/about/about.tsx';
+import type { AboutWinState } from '../../../clients/app/aboutWin/aboutWin.tsx';
 import type { PrintPassageState } from '../../../clients/components/printPassage/printPassage.tsx';
-import type { CopyPassageState } from '../../../clients/app/copyPassage/copyPassage.tsx';
+import type { CopyPassageState } from '../../../clients/app/copyPassageWin/copyPassageWin.tsx';
 import type { SelectVKType } from '../../../clients/components/libxul/selectVK.tsx';
-import type { BMPropertiesStateWinArg } from '../../../clients/app/bmProperties/bmProperties.tsx';
+import type { BMPropertiesStateWinArg } from '../../../clients/app/bmPropertiesWin/bmPropertiesWin.tsx';
 
 // Prefs2 requires the calling window argument so that window -2 may be
 // passed. The value -2 means the Pref changes should be pushed to all
@@ -69,7 +69,7 @@ const Prefs2 = Prefs as GAddWindowId['Prefs'];
 const Commands = {
   openModuleManager(): void {
     Window.open({
-      type: 'moduleManager',
+      type: 'moduleManagerWin',
       className: 'skin',
       typePersistBounds: true,
       saveIfAppClosed: true,
@@ -164,7 +164,7 @@ const Commands = {
 
   removeModule() {
     Window.open({
-      type: 'removeModule',
+      type: 'removeModuleWin',
       className: 'skin',
       typePersistBounds: true,
       saveIfAppClosed: true,
@@ -624,7 +624,7 @@ const Commands = {
         ...(state || undefined),
       };
       Window.open({
-        type: 'copyPassage',
+        type: 'copyPassageWin',
         notResizable: true,
         fitToContent: true,
         saveIfAppClosed: true,
@@ -642,7 +642,7 @@ const Commands = {
       BrowserWindow.fromId((arguments[1] as number) ?? -1) ||
       getBrowserWindows({ type: 'xulswordWin' })[0];
     Window.open({
-      type: 'chooseFont',
+      type: 'chooseFontWin',
       notResizable: true,
       fitToContent: true,
       saveIfAppClosed: true,
@@ -757,7 +757,7 @@ const Commands = {
 
   openBookmarksManager() {
     Window.open({
-      type: 'bmManager',
+      type: 'bmManagerWin',
       className: 'skin',
       typePersistBounds: true,
       saveIfAppClosed: true,
@@ -789,7 +789,7 @@ const Commands = {
     }
     if (!hide) hide = [];
     Window.open({
-      type: 'bmProperties',
+      type: 'bmPropertiesWin',
       allowMultiple: true,
       fitToContent: true,
       additionalArguments: {
@@ -865,7 +865,7 @@ const Commands = {
         tab[state.configs[0].module]) ||
       null;
     Window.open({
-      type: 'about',
+      type: 'aboutWin',
       allowMultiple: true,
       saveIfAppClosed: true,
       additionalArguments: { aboutWinState: state || {} },

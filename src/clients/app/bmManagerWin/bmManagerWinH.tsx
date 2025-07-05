@@ -20,8 +20,6 @@ import verseKey from '../../verseKey.ts';
 import bookmarkItemIcon from './bookmarkItemIcon.tsx';
 import log from '../../log.ts';
 import Label from '../../components/libxul/label.tsx';
-import './bmManager.css';
-import '@blueprintjs/select/lib/css/blueprint-select.css';
 
 import type { ItemRendererProps } from '@blueprintjs/select';
 import type {
@@ -37,8 +35,8 @@ import type {
   TCellInfo,
   TRowLocation,
 } from '../../components/libxul/table.tsx';
-import type BMManagerWin from './bmManager.tsx';
-import type { BMManagerState } from './bmManager.tsx';
+import type BMManagerWin from './bmManagerWin.tsx';
+import type { BMManagerState } from './bmManagerWin.tsx';
 
 type CellInfo = TCellInfo & {
   id: string;
@@ -310,7 +308,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
         break;
       }
       default: {
-        throw new Error(`Unhandled bmManager button type: ${button.type}`);
+        throw new Error(`Unhandled bmManagerWinH button type: ${button.type}`);
       }
     }
     if (bmPropertiesState || newitem) {

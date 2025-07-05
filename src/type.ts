@@ -97,19 +97,19 @@ export type WindowRegistryType = Array<WindowDescriptorType | null>;
 
 export type WindowTypes =
   | 'xulswordWin'
-  | 'splash'
+  | 'splashWin'
   | 'viewportWin'
   | 'popupWin'
-  | 'chooseFont'
-  | 'moduleManager'
-  | 'removeModule'
+  | 'chooseFontWin'
+  | 'moduleManagerWin'
+  | 'removeModuleWin'
   | 'searchWin'
   | 'searchHelpWin'
-  | 'about'
+  | 'aboutWin'
   | 'printPassageWin'
-  | 'copyPassage'
-  | 'bmProperties'
-  | 'bmManager';
+  | 'copyPassageWin'
+  | 'bmPropertiesWin'
+  | 'bmManagerWin';
 
 export type WindowDescriptorType = {
   type: WindowTypes | 'all';

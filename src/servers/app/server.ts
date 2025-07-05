@@ -54,7 +54,7 @@ import type {
   WindowDescriptorPrefType,
   WindowDescriptorType,
 } from '../../type.ts';
-import type { ManagerStatePref } from '../../clients/app/moduleManager/manager.tsx';
+import type { ManagerStatePref } from '../../clients/app/components/moduleManager/moduleManager.tsx';
 
 Dirs.init();
 
@@ -153,7 +153,7 @@ function showApp() {
   SyncShow = [];
   if (!(Build.isDevelopment && C.DevSplash === 2)) {
     setTimeout(() => {
-      Window.close({ type: 'splash' });
+      Window.close({ type: 'splashWin' });
     }, 1000);
   }
 }
@@ -404,7 +404,6 @@ const openXulswordWindow = () => {
     xswinSubscriptions.forEach((dispose) => {
       dispose();
     });
-    LibSword.quit();
 
     Prefs.setBoolPref(`global.WindowsDidClose`, true);
 
@@ -614,6 +613,7 @@ app.on('will-quit', () => {
     appSubscriptions.forEach((dispose) => {
       dispose();
     });
+    LibSword.quit();
     log.info(`Exiting...`);
     app.quit();
   }
@@ -634,7 +634,7 @@ app
   .then(() => {
     if (!(Build.isDevelopment && C.DevSplash === 1)) {
       Window.open({
-        type: 'splash',
+        type: 'splashWin',
         notResizable: true,
         options:
           Build.isDevelopment && C.DevSplash === 2

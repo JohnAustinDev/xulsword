@@ -5,7 +5,7 @@ import log from '../../log.ts';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Label from '../../components/libxul/label.tsx';
 import Stack from '../../components/libxul/stack.tsx';
-import './splash.css';
+import './splashWin.css';
 
 const overlay = G.inlineFile(
   `${G.Dirs.path.xsAsset}/splash-overlay-${G.i18n.language}.png`,

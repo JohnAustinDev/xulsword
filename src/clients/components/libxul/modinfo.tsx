@@ -92,7 +92,7 @@ export function modinfoParentHandler(
           break;
         }
         default:
-          throw new Error(`Unhandled click event ${id} in about.tsx`);
+          throw new Error(`Unhandled click event ${id} in modinfo.tsx`);
       }
       break;
     }

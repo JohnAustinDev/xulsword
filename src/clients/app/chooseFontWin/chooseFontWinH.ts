@@ -5,8 +5,8 @@ import { G } from '../../G.ts';
 
 import type { ConfigType } from '../../../type.ts';
 import type { StyleType } from '../../style.ts';
-import type ChooseFontWin from './chooseFont.tsx';
-import type { ChooseFontWinState, ColorType } from './chooseFont.tsx';
+import type ChooseFontWin from './chooseFontWin.tsx';
+import type { ChooseFontWinState, ColorType } from './chooseFontWin.tsx';
 
 export const startingState = {
   module: '' as string | null, // will be initialized by windowArguments()

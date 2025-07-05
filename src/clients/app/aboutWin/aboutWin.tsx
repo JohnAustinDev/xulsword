@@ -14,8 +14,8 @@ import Modinfo, {
   modinfoParentHandler as modinfoParentHandlerH,
 } from '../../components/libxul/modinfo.tsx';
 import { type XulProps, xulPropTypes } from '../../components/libxul/xul.tsx';
-import '../splash/splash.css';
-import './about.css';
+import '../splashWin/splashWin.css';
+import './aboutWin.css';
 
 import type { ModinfoParent } from '../../components/libxul/modinfo.tsx';
 import type { SwordConfType } from '../../../type.ts';
@@ -95,7 +95,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
             break;
           }
           default:
-            throw new Error(`Unhandled click event ${id} in about.tsx`);
+            throw new Error(`Unhandled click event ${id} in aboutWin.tsx`);
         }
         break;
       }

@@ -1,6 +1,6 @@
-html.splash,
-.splash body,
-.splash #root {
+html.splashWin,
+.splashWin body,
+.splashWin #root {
   overflow: hidden;
   margin: 0;
   padding: 0 !important;

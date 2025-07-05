@@ -6,7 +6,7 @@ import { G, GI } from './G.ts';
 import { updateDataAttribute } from './htmlData.ts';
 import verseKey from './verseKey.ts';
 import { getMaxVerse } from './common.tsx';
-import bookmarkItemIcon from './app/bmManager/bookmarkItemIcon.tsx';
+import bookmarkItemIcon from './app/bmManagerWin/bookmarkItemIcon.tsx';
 
 import type {
   BookmarkFolderType,

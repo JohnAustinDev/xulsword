@@ -38,7 +38,7 @@ import type {
   GType,
 } from '../../type.ts';
 import type S from '../../defaultPrefs.ts';
-import type { ManagerStatePref } from '../../clients/app/moduleManager/manager.tsx';
+import type { ManagerStatePref } from '../../clients/app/components/moduleManager/moduleManager.tsx';
 
 export type CppGlobalMethods = {
   ToUpperCase: (str: string) => string;

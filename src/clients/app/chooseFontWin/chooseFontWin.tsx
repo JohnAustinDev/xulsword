@@ -29,8 +29,8 @@ import handlerH, {
   setStateValue as setStateValueH,
   preclose,
   computedStyle,
-} from './chooseFontH.ts';
-import './chooseFont.css';
+} from './chooseFontWinH.ts';
+import './chooseFontWin.css';
 
 import type { ColorResult } from 'react-color';
 import type { XulProps } from '../../components/libxul/xul.tsx';

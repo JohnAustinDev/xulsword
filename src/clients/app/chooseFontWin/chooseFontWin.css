@@ -1,0 +1,36 @@
+.chooseFontWin .groupbox {
+  position: relative;
+}
+
+.chooseFontWin #fontsGrid .grid-cell {
+  display: flex;
+  align-items: center;
+}
+
+.chooseFontWin select {
+  width: 200px;
+}
+
+.chooseFontWin .picker-button {
+  margin: 0;
+}
+.chooseFontWin .picker-button.disabled {
+  background-color: whitesmoke;
+}
+
+.chooseFontWin .picker-button .color-box {
+  display: block;
+  width: 60px;
+  height: 1.5em;
+  margin: 3px;
+}
+
+.chooseFontWin .picker-button .chrome-picker {
+  position: absolute;
+  top: 0px;
+  right: 50%;
+}
+html[dir='rtl'].chooseFontWin .picker-button .chrome-picker {
+  right: unset;
+  left: 50%;
+}

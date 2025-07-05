@@ -20,12 +20,12 @@ import {
   querablePromise,
   gbPaths,
   localizeString,
-} from '../../../common.ts';
-import C from '../../../constant.ts';
-import { G } from '../../G.ts';
-import { windowArguments } from '../../common.tsx';
-import log from '../../log.ts';
-import { forEachNode } from '../../components/libxul/treeview.tsx';
+} from '../../../../common.ts';
+import C from '../../../../constant.ts';
+import { G } from '../../../G.ts';
+import { windowArguments } from '../../../common.tsx';
+import log from '../../../log.ts';
+import { forEachNode } from '../../../components/libxul/treeview.tsx';
 
 import type {
   Download,
@@ -39,22 +39,22 @@ import type {
   GenBookAudioConf,
   OSISBookType,
   QuerablePromise,
-} from '../../../type.ts';
-import type S from '../../../defaultPrefs.ts';
+} from '../../../../type.ts';
+import type S from '../../../../defaultPrefs.ts';
 import type {
   SelectVKType,
   SelectVKProps,
-} from '../../components/libxul/selectVK.tsx';
-import type ModuleManager from './manager.tsx';
-import type { ManagerState } from './manager.tsx';
+} from '../../../components/libxul/selectVK.tsx';
+import type ModuleManager from './moduleManager.tsx';
+import type { ManagerState } from './moduleManager.tsx';
 import type {
   NodeListOR,
   SelectORMType,
-} from '../../components/libxul/selectOR.tsx';
+} from '../../../components/libxul/selectOR.tsx';
 import type {
   TCellInfo,
   TCellLocation,
-} from '../../components/libxul/table.tsx';
+} from '../../../components/libxul/table.tsx';
 
 export const Tables = ['language', 'module', 'repository'] as const;
 
