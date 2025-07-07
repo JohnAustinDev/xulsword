@@ -22,12 +22,20 @@
   display: inline-block;
 }
 
+.selectvk > .modulemenu:first-child,
+.selectvk > .menulist:first-child {
+  margin-inline-start: 0;
+}
 .selectvk > .modulemenu:not(:last-child),
 .selectvk > .menulist:not(:last-child) {
   margin-inline-end: 10px;
 }
 .selectvk > .label {
   margin-inline-end: 5px;
+}
+.selectvk > .modulemenu:last-child,
+.selectvk > .menulist:last-child {
+  margin-inline-end: 0;
 }
 
 .selectvk .label label {

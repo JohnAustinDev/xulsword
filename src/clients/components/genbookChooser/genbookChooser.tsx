@@ -18,7 +18,6 @@ import './genbookChooser.css';
 import type {
   AudioPlayerSelectionGB,
   AudioPlayerSelectionVK,
-  AudioPrefType,
   XulswordStateArgType,
 } from '../../../type.ts';
 import type { Tree, TreeNodeInfo } from '@blueprintjs/core';
@@ -32,7 +31,6 @@ const propTypes = {
   ...xulPropTypes,
   panels: PropTypes.arrayOf(PropTypes.string).isRequired,
   keys: PropTypes.arrayOf(PropTypes.string).isRequired,
-  audio: PropTypes.object.isRequired,
   onAudioClick: PropTypes.func.isRequired,
   xulswordStateHandler: PropTypes.func.isRequired,
 };
@@ -40,7 +38,6 @@ const propTypes = {
 export type GenbookChooserProps = {
   panels: Array<string | null>;
   keys: Array<string | undefined>;
-  audio: AudioPrefType;
   onAudioClick: (
     selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
     e: React.SyntheticEvent,
@@ -120,7 +117,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
   ) {
     const props = this.props as GenbookChooserProps;
     const { onAudioClick } = props;
-    if ('nodeData' in node) {
+    if ('nodeData' in node && node.nodeData) {
       onAudioClick(node.nodeData as AudioPlayerSelectionGB | null, e);
       e.stopPropagation();
     }
@@ -193,7 +190,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
   render() {
     const props = this.props as GenbookChooserProps;
     const state = this.state as GenbookChooserState;
-    const { panels, keys, audio, xulswordStateHandler } = props;
+    const { panels, keys, xulswordStateHandler } = props;
     const { expandedIDs } = state;
     const {
       treeRef,
@@ -203,13 +200,12 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
       onNodeClick,
       needsTreeParent,
     } = this;
-    const { defaults } = audio;
 
     const genbkPanels = chooserGenbks(panels);
     const treekeys = (groupIndex: number): [string | null, number] => {
-      const [group] = genbkPanels[groupIndex];
-      const m = panels[group];
-      return [m, group];
+      const [panelIndex] = genbkPanels[groupIndex];
+      const module = panels[panelIndex];
+      return [module, panelIndex];
     };
 
     // Build any treeNodes that have not been built yet. Each treekey has a
@@ -232,7 +228,6 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
                 node,
                 m,
                 node.id.toString(),
-                defaults,
                 renderPromise,
               ),
             );
@@ -283,7 +278,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
                     onExpansion={(exids) => {
                       this.setState((prevState: GenbookChooserState) => {
                         const { expandedIDs: expIDs } = clone(prevState);
-                        expIDs[i] = exids.map((d) => d.toString());
+                        expIDs[panelIndex] = exids.map((d) => d.toString());
                         return { expandedIDs: expIDs };
                       });
                     }}

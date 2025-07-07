@@ -172,7 +172,7 @@ audio,
 button,
 .bookselect,
 .selectvk,
-.menulist {
+.menulist:not(:has( > select[multiple])) {
   height: var(--input-height);
 }
 

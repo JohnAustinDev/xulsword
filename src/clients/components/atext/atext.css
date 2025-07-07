@@ -75,16 +75,13 @@ html[dir='rtl'] .atext .origselect {
 }
 
 .atext .audio-icon {
-  margin-inline-start: 5px;
+  margin-top: 10px;
+  margin-inline-start: 30px;
   margin-bottom: 5px;
 }
 .atext .audio-icon svg {
   width: 20px;
   height: 20px;
-}
-.atext.headings .audio-icon {
-  margin-inline-start: 30px;
-  margin-top: 10px;
 }
 .atext .audio-icon + .sb > .chapterhead:first-child {
   padding-top: 5px;
@@ -181,7 +178,7 @@ html[dir='rtl'] .notebox-maximizer {
   border-radius: 8px;
   padding: 0px 5px 0px 5px;
 }
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   /* Dictionary nb must have max-width for mobile multi-panel
   or long dict entries will cause the entire display to skew.
   50vw works because multi-panel is always 2 on mobile. */

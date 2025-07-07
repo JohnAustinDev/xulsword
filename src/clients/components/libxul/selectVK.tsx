@@ -10,7 +10,6 @@ import { addClass, xulPropTypes } from './xul.tsx';
 import { Hbox } from './boxes.tsx';
 import ModuleMenu from './modulemenu.tsx';
 import Label from './label.tsx';
-import Spacer from './spacer.tsx';
 import Menulist from './menulist.tsx';
 import './selectVK.css';
 
@@ -59,6 +58,7 @@ export type SelectVKProps = {
     verses?: number[];
     lastverses?: number[];
     vkMods?: string[] | 'Texts' | 'Comms';
+    showSingleMod?: boolean;
   };
   language?: boolean;
   description?: boolean;
@@ -292,8 +292,15 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     const { book, chapter, verse, lastverse, lastchapter } = selection;
     const { options, disabled, allowNotInstalled, language, description } =
       props;
-    const { books, chapters, lastchapters, verses, lastverses, vkMods } =
-      options || {};
+    const {
+      books,
+      chapters,
+      lastchapters,
+      verses,
+      lastverses,
+      vkMods,
+      showSingleMod,
+    } = options || {};
     const Book = G.Book(G.i18n.language);
 
     const tab = (vkMod && G.Tab[vkMod]) || null;
@@ -447,7 +454,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
         align="center"
         {...addClass('selectvk', this.props)}
       >
-        {modules.length > 0 && (
+        {modules.length > 0 && (showSingleMod || modules.length > 1) && (
           <ModuleMenu
             className="vk-vkmod"
             value={vkmod || modules[0]}

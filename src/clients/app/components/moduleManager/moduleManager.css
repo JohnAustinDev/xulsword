@@ -64,3 +64,7 @@
   font-size: large;
   margin-bottom: 20px;
 }
+
+.moduleManagerWin .menulist:has(select[disabled]) {
+  display: none;
+}

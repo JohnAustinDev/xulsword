@@ -150,20 +150,21 @@ export default class Commands {
         )
       ) {
         const { book, chapter, swordModule } = selection;
-        this.goToLocationVK(
-          {
-            book,
-            chapter: chapter || 1,
-            verse: 1,
-            v11n: (swordModule && this.#G.Tab[swordModule].v11n) || null,
-          },
-          undefined,
-          undefined,
-          renderPromise,
-        );
+        if (book && typeof chapter !== 'undefined')
+          this.goToLocationVK(
+            {
+              book,
+              chapter: chapter || 1,
+              verse: 1,
+              v11n: (swordModule && this.#G.Tab[swordModule].v11n) || null,
+            },
+            undefined,
+            undefined,
+            renderPromise,
+          );
       } else if ('key' in selection) {
         const { key, swordModule } = selection;
-        if (swordModule) {
+        if (key && swordModule) {
           this.goToLocationGB(
             {
               otherMod: swordModule,

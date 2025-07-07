@@ -41,7 +41,6 @@ body {
 
 #controls {
   display: block;
-  z-index: 2; /* hide chooser slider */
 }
 #control-rows {
   padding: 0 10px;
@@ -74,10 +73,6 @@ body {
 #textnav .vk-book select {
   width: 100%;
 }
-#textnav .vk-chapter {
-  margin-left: 10px;
-  margin-right: 0;
-}
 #player {
   padding: 5px;
 }
@@ -89,7 +84,6 @@ body {
 #genbknav,
 .open-chooser,
 .close-chooser,
-#textnav .modulemenu,
 /* don't show text pin without multiple texts */
 .textrow:not(:has(.atext:nth-child(2))) .text-pin,
 /* genbknav shouldn't show single-option selects */
@@ -119,6 +113,11 @@ body {
 }
 
 @media (max-width: 300px) {
+  #historyButtons,
+  #addcolumn,
+  #removecolumn {
+    display: none;
+  }
   .close-card-button {
     padding: 0;
   }

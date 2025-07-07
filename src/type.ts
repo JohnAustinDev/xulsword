@@ -573,15 +573,15 @@ export type DeprecatedAudioChaptersConf = {
 
 export type AudioPlayerSelectionVK = {
   swordModule: string;
-  book: OSISBookType;
-  chapter: number;
+  book?: OSISBookType;
+  chapter?: number;
   audioModule?: string;
   path?: AudioPath;
 };
 
 export type AudioPlayerSelectionGB = {
   swordModule: string;
-  key: string;
+  key?: string;
   audioModule?: string;
   path?: AudioPath;
 };

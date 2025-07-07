@@ -11,6 +11,12 @@
 .printControls .selectvk > div {
   height: var(--input-height); /* allow selectvk to wrap */
 }
+.printControls .vk-vkmod select {
+  width: 100%;
+}
+.printControls .vk-book {
+  margin-inline-start: 0;
+}
 .printControls .bp5-progress-bar {
   position: absolute;
   top: 70px;

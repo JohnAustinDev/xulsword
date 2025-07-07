@@ -276,7 +276,10 @@ export function onModCellClick(
       const is = !was;
       const selrows = selectionToTableRows(selection);
       const datarows = (
-        selrows.includes(tableRowIndex) ? selrows : [tableRowIndex]
+        selrows.includes(tableRowIndex) &&
+        selrows.every((ri) => ri in modtable.data)
+          ? selrows
+          : [tableRowIndex]
       ).map((r) => modtable.tableToDataRowMap[r] ?? r);
       modtableUpdate(
         this,

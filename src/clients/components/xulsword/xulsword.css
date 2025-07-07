@@ -2,6 +2,10 @@
   height: 100%;
 }
 
+.controls {
+  z-index: 2; /* hide chooser slider, allow history popup to cover tabs */
+}
+
 #player > .vbox > div {
   background: #f6f7f9;
   border: 1px solid rgb(197 197 197);
@@ -9,10 +13,19 @@
 #player audio:focus {
   outline: none;
 }
+#searchText {
+  flex-basis: 100%;
+}
 #xsSearchButton {
   z-index: 1; /* allow bottom focus border to be visible */
-  margin-top: 0;
-  margin-bottom: 0;
+}
+@media (min-width: 768px) {
+  #searchText {
+    margin-bottom: 0;
+  }
+  #xsSearchButton {
+    margin-bottom: 0;
+  }
 }
 #audioCodeSelect {
   height: calc(var(--input-height) - 2px);

@@ -47,7 +47,6 @@ import type {
   PinPropsType,
   AudioPlayerSelectionVK,
   XulswordStateArgType,
-  AudioPrefType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type {
@@ -66,7 +65,6 @@ const propTypes = {
   columns: PropTypes.number.isRequired,
   location: PropTypes.object,
   module: PropTypes.string,
-  audio: PropTypes.object.isRequired,
   ilModule: PropTypes.string,
   ilModuleOption: PropTypes.arrayOf(PropTypes.string).isRequired,
   modkey: PropTypes.string,
@@ -86,7 +84,6 @@ export type AtextPropsType = Pick<
   'location' | 'selection' | 'scroll' | 'show' | 'place'
 > & {
   modkey: string;
-  audio: AudioPrefType;
 
   module: string | undefined;
   ilModule: string | undefined;
@@ -710,7 +707,6 @@ class Atext extends React.Component implements RenderPromiseComponent {
       module,
       modkey,
       panelIndex,
-      audio,
       ownWindow,
       noteBoxHeight,
       maximizeNoteBox,
@@ -720,7 +716,6 @@ class Atext extends React.Component implements RenderPromiseComponent {
       onAudioClick,
       bbDragEnd,
     } = props;
-    const { defaults } = audio;
 
     // Header logic etc.
     const isVerseKey = module && G.Tab[module].isVerseKey;
@@ -814,7 +809,6 @@ class Atext extends React.Component implements RenderPromiseComponent {
             module,
             isVerseKey ? location?.book || '' : modkey,
             location?.chapter,
-            defaults,
             onAudioClick,
             renderPromise,
           )}

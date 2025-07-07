@@ -16,7 +16,7 @@ import {
   doUntilDone,
   isIBTChildrensBible,
   chooserGenbks,
-  updatedAudioSelections,
+  audioSelections,
 } from '../../common.tsx';
 import {
   addClass,
@@ -46,7 +46,12 @@ import {
 import './xulsword.css';
 
 import type { BibleBrowserControllerGlobal } from '../../webapp/bibleBrowser/bibleBrowser.tsx';
-import type { OSISBookType, XulswordStateArgType } from '../../../type.ts';
+import type {
+  AudioPlayerSelectionGB,
+  AudioPlayerSelectionVK,
+  OSISBookType,
+  XulswordStateArgType,
+} from '../../../type.ts';
 import type {
   RenderPromiseComponent,
   RenderPromiseState,
@@ -348,7 +353,7 @@ export default class Xulsword
 
     const { file, defaults } = audio;
     const { swordModule } = file ?? {};
-    const sels = updatedAudioSelections(file, renderPromise);
+    const sels = audioSelections(file, renderPromise);
     let index = 0;
     if (sels.length && defaults && swordModule && swordModule in defaults)
       index = sels.findIndex((a) => a.conf.module === defaults[swordModule]);
@@ -360,7 +365,15 @@ export default class Xulsword
       <Hbox id="player" pack="start" align="center">
         <Vbox flex="3">
           <div>
-            {sels.length && (
+            {audioSelections(
+              {
+                ...file,
+                book: undefined,
+                chapter: undefined,
+                key: undefined,
+              } as AudioPlayerSelectionVK | AudioPlayerSelectionGB,
+              renderPromise,
+            ).length > 1 && (
               <Menulist
                 id="audioCodeSelect"
                 value={sels[index].conf.module}
@@ -368,7 +381,7 @@ export default class Xulsword
                 options={sels.map((s) => {
                   return (
                     <option key={s.conf.module} value={s.conf.module}>
-                      {s.conf.module}
+                      {s.conf.Description?.locale}
                     </option>
                   );
                 })}

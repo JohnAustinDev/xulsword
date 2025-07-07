@@ -383,11 +383,11 @@ export function audioConfigs(
 }
 
 // Return possible audio player selections by updating audioModule, path and
-// possibly book and/or chapter. This is done by checking each of the
-// selection's swordModule AudioCode audio modules. If book and/or chapter of
+// possibly book, chapter or key. This is done by checking each of the
+// selection's swordModule AudioCode audio modules. If book, chapter or key of
 // the input selection is undefined, the first applicable audio file will be
 // chosen and the returned book and chapter will be updated accordingly.
-export function updatedAudioSelections(
+export function audioSelections(
   selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
   renderPromise?: RenderPromise | null,
 ): Array<{
@@ -444,9 +444,10 @@ export function updatedAudioSelections(
           AudioChapters &&
           !isAudioVerseKey(AudioChapters)
         ) {
-          const { key } = selection;
+          let { key } = selection;
           const ac = AudioChapters as GenBookAudioConf;
           const gbaudio = getGenBookAudio(ac, swordModule, renderPromise);
+          if (typeof key === 'undefined') [key] = Object.keys(gbaudio);
           if (key in gbaudio) {
             return {
               selection: {
@@ -491,7 +492,6 @@ export function audioGenBookNode(
   node: TreeNodeInfo,
   swordModule: string,
   key: string,
-  defaults: AudioPrefType['defaults'],
   renderPromise: RenderPromise,
 ): boolean {
   if (
@@ -500,13 +500,14 @@ export function audioGenBookNode(
     G.Tab[swordModule].tabType === 'Genbks' &&
     key
   ) {
-    const sels = updatedAudioSelections({ swordModule, key }, renderPromise);
-    if (defaults && swordModule in defaults)
-      sels.sort((a) => (a.conf.module === defaults[swordModule] ? -1 : 0));
-    node.nodeData = sels[0]?.selection ?? null;
-    node.className = 'audio-icon';
-    node.icon = 'volume-up';
-    return true;
+    const selections = audioSelections({ swordModule, key }, renderPromise);
+    const selection = selections[0]?.selection ?? null;
+    if (selection) {
+      node.nodeData = selection;
+      node.className = 'audio-icon';
+      node.icon = 'volume-up';
+      return true;
+    }
   }
   return false;
 }

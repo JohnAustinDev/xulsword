@@ -164,7 +164,11 @@ class Viewport extends React.Component implements PopupParent {
       | undefined;
     if (selection && (!atextClick || !audio.open)) file = selection;
     if (!selection || (atextClick && audio.open)) file = null;
-    if (typeof file !== 'undefined')
+    if (typeof file !== 'undefined') {
+      // The actual audio file may be changed during viewportParent rendering,
+      // because at that time all available audio file options are again
+      // collected and a single option will be selected according to current
+      // defaults.
       Commands.playAudio(
         { open, file, defaults },
         new RenderPromise(() =>
@@ -173,6 +177,7 @@ class Viewport extends React.Component implements PopupParent {
           }),
         ),
       );
+    }
   }
 
   render() {
@@ -187,7 +192,6 @@ class Viewport extends React.Component implements PopupParent {
       place,
       tabs,
       panels,
-      audio,
       ilModules: ilModules0,
       mtModules,
       scroll,
@@ -447,7 +451,6 @@ class Viewport extends React.Component implements PopupParent {
             panelIndex={i}
             location={locs[i]}
             selection={selection}
-            audio={audio}
             module={panels[i]}
             modkey={keys[i]}
             ilModule={ilModules[i]}
@@ -502,7 +505,6 @@ class Viewport extends React.Component implements PopupParent {
             selection={location?.book || ''}
             v11n={chooserV11n}
             headingsModule={firstUnpinnedBible}
-            audio={audio}
             bookGroups={bookGroups}
             availableBooks={availableBooks}
             onCloseChooserClick={eHandler}
@@ -514,7 +516,6 @@ class Viewport extends React.Component implements PopupParent {
             key={reset}
             panels={panels}
             keys={keys}
-            audio={audio}
             xulswordStateHandler={xulswordStateHandler}
             onAudioClick={audioHandler}
           />

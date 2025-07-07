@@ -1922,7 +1922,9 @@ function IBTtemplateURL(
   },
 ) {
   if ('book' in selection) {
-    const { book, chapter } = selection;
+    let { book, chapter } = selection;
+    if (typeof book === 'undefined') book = 'Gen';
+    if (typeof chapter === 'undefined') chapter = 1;
     const lastchapter =
       'lastchapter' in selection && selection.lastchapter
         ? selection.lastchapter
@@ -1935,7 +1937,9 @@ function IBTtemplateURL(
     if (typeof phs.XSPACKAGE === 'undefined')
       phs.XSPACKAGE = lastchapter > chapter ? 'zip' : 'none';
   } else {
-    const keys = 'keys' in selection ? selection.keys : [selection.key];
+    let keys: string[] = [];
+    if ('keys' in selection) ({ keys } = selection);
+    if ('key' in selection && selection.key) keys = [selection.key];
     if (!keys.length) return false;
     // Multiple genbk keys are assumed to use path order or fully qualified
     // keys and to be siblings of the same parent (which is guaranteed by

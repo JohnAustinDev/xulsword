@@ -1,10 +1,8 @@
 import type React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
-import { G, GI } from '../../G.ts';
-import log from '../../log.ts';
+import { GI } from '../../G.ts';
 import { doUntilDone } from '../../common.tsx';
-import RenderPromise from '../../renderPromise.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 
 import type { BookGroupType } from '../../../type.ts';

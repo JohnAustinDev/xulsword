@@ -8,7 +8,7 @@ import Commands from '../../commands.ts';
 import {
   doUntilDone,
   rootRenderPromise,
-  updatedAudioSelections,
+  audioSelections,
 } from '../../common.tsx';
 import verseKey from '../../verseKey.ts';
 import log from '../../log.ts';
@@ -336,7 +336,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               const { swordModule } = file;
               if (swordModule) {
                 doUntilDone((renderPromise2) => {
-                  const sels = updatedAudioSelections(file, renderPromise2);
+                  const sels = audioSelections(file, renderPromise2);
                   if (!renderPromise2?.waiting()) {
                     const defaults = d ?? {};
                     defaults[swordModule] = value;
@@ -442,7 +442,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 };
               }
             }
-            const sels = updatedAudioSelections(selection, renderPromise2);
+            const sels = audioSelections(selection, renderPromise2);
             if (!renderPromise2?.waiting()) {
               if (defaults && swordModule in defaults)
                 sels.sort((a) =>

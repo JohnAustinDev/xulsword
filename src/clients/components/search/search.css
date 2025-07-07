@@ -37,7 +37,7 @@
 }
 .searchtext > .modulemenu {
   position: absolute;
-  top: 41px;
+  top: calc(var(--input-height) + 5px);
 }
 .searchtext > .modulemenu select {
   width: 100%;
@@ -240,7 +240,7 @@ html[dir='rtl'] .resultBox #displayModule {
     height: 472px;
   }
   .search-grid.less {
-    height: 150px;
+    height: 132px;
   }
   .search-grid > div {
     grid-area: auto / 1 / auto / 3 !important;
