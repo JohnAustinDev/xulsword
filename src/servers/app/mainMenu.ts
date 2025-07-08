@@ -105,26 +105,35 @@ function updateModuleMenus(menux?: Menu) {
         const submenu = tabmenu?.submenu;
         if (!submenu) throw Error(`No tabmenu: menu_${typekey}_${pl}`);
         const { items } = submenu;
-        while (items[0].id !== `showAll_${typekey}_${pl}`) items.shift();
+        // Menu items cannot be removed!! They can only be added or disabled.
+        items.forEach((item) => {
+          if (item.id !== `showAll_${typekey}_${pl}`) item.enabled = false;
+        });
         rgtabs.forEach((t) => {
           if (t.tabType === type) {
             disableParent = false;
-            const { description } = t;
-            const newItem = new MenuItem({
-              id: `showtab_${panelIndex}_${t.module}`,
-              label:
-                t.label + (description ? ` --- ${description.locale}` : ''),
-              type: 'checkbox',
-              // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
-              click: d(() => {
-                G.Viewport.setXulswordTabs({
-                  panelIndex,
-                  whichTab: t.module,
-                  doWhat: 'toggle',
-                });
-              }),
-            });
-            submenu.insert(0, newItem);
+            const item = items.find(
+              (i) => i.id === `showtab_${panelIndex}_${t.module}`,
+            );
+            if (item) item.enabled = true;
+            else {
+              const { description } = t;
+              const newItem = new MenuItem({
+                id: `showtab_${panelIndex}_${t.module}`,
+                label:
+                  t.label + (description ? ` --- ${description.locale}` : ''),
+                type: 'checkbox',
+                // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
+                click: d(() => {
+                  G.Viewport.setXulswordTabs({
+                    panelIndex,
+                    whichTab: t.module,
+                    doWhat: 'toggle',
+                  });
+                }),
+              });
+              submenu.insert(0, newItem);
+            }
           }
         });
         if (panelIndex !== -1) {
@@ -136,6 +145,7 @@ function updateModuleMenus(menux?: Menu) {
             if (item) item.enabled = ps[panelIndex] !== null;
           });
         }
+        //submenu.items = items;
       });
       const parent = menu.getMenuItemById(`parent_${typekey}`);
       if (parent) parent.enabled = !disableParent;
@@ -204,8 +214,8 @@ function updateCheckboxAndRadiosFromPref(menux?: Menu | null) {
 
 // This callback updates the menu when applicable prefs change. If the
 // calling window is -1 (main process) the menu will normally NOT be updated
-// as it will be assumed the menu initiated the change, and ignoring
-// it prevents cycling.
+// as it will be assumed the main process initiated the change and will also
+// update the menu, and ignoring it prevents cycling.
 export const pushPrefsToMenu: PrefCallbackType = (winid, store, key, val) => {
   let menuPref: string[] = [];
   if (G.Data.has('menuPref')) {
@@ -647,22 +657,30 @@ export default class MainMenuBuilder {
                   id: `showAll_${typekey}_${pl}`,
                   label: ts('menu.view.showAll'),
                   click: d(() => {
-                    G.Viewport.setXulswordTabs({
-                      panelIndex,
-                      whichTab: type,
-                      doWhat: 'show',
-                    });
+                    G.Viewport.setXulswordTabs(
+                      {
+                        panelIndex,
+                        whichTab: type,
+                        doWhat: 'show',
+                      },
+                      null,
+                      () => updateCheckboxAndRadiosFromPref(),
+                    );
                   }),
                 },
                 {
                   id: `hideAll_${typekey}_${pl}`,
                   label: ts('menu.view.hideAll'),
                   click: d(() => {
-                    G.Viewport.setXulswordTabs({
-                      panelIndex,
-                      whichTab: type,
-                      doWhat: 'hide',
-                    });
+                    G.Viewport.setXulswordTabs(
+                      {
+                        panelIndex,
+                        whichTab: type,
+                        doWhat: 'hide',
+                      },
+                      null,
+                      () => updateCheckboxAndRadiosFromPref(),
+                    );
                   }),
                 },
               ],
@@ -711,11 +729,15 @@ export default class MainMenuBuilder {
               id: `menu_showAll_${pl}`,
               enabled: panelIndex === -1 || Boolean(panels[panelIndex]),
               click: d(() => {
-                G.Viewport.setXulswordTabs({
-                  panelIndex,
-                  whichTab: 'all',
-                  doWhat: 'show',
-                });
+                G.Viewport.setXulswordTabs(
+                  {
+                    panelIndex,
+                    whichTab: 'all',
+                    doWhat: 'show',
+                  },
+                  null,
+                  () => updateCheckboxAndRadiosFromPref(),
+                );
               }),
             };
           }),
@@ -732,11 +754,15 @@ export default class MainMenuBuilder {
               id: `menu_hideAll_${pl}`,
               enabled: panelIndex === -1 || Boolean(panels[panelIndex]),
               click: d(() => {
-                G.Viewport.setXulswordTabs({
-                  panelIndex,
-                  whichTab: 'all',
-                  doWhat: 'hide',
-                });
+                G.Viewport.setXulswordTabs(
+                  {
+                    panelIndex,
+                    whichTab: 'all',
+                    doWhat: 'hide',
+                  },
+                  null,
+                  () => updateCheckboxAndRadiosFromPref(),
+                );
               }),
             };
           }),

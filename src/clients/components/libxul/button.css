@@ -4,7 +4,6 @@
 .button .button-box {
   position: relative; /* For Menulist */
   width: fit-content;
-  background-color: var(--light);
 }
 .button button {
   height: 100%;
@@ -26,4 +25,10 @@
 
 .button.on .bp5-icon {
   color: #4444c1;
+}
+
+/* bp5 disabled was 0.6 opacity, which looks bad with a patterned background */
+html.isElectron .bp5-button:not([class*=bp5-intent-]):disabled,
+html.isElectron .button .bp5-button:not([class*=bp5-intent-]).bp5-disabled {
+    background-color: rgb(211, 216, 222);
 }

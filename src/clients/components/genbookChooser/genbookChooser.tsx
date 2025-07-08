@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { clone, gbAncestorIDs, stringHash } from '../../../common.ts';
+import { clone, gbAncestorIDs, ofClass, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
@@ -117,7 +117,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
   ) {
     const props = this.props as GenbookChooserProps;
     const { onAudioClick } = props;
-    if ('nodeData' in node && node.nodeData) {
+    if ('nodeData' in node && node.nodeData && !ofClass('bp5-tree-node-label', e.target)) {
       onAudioClick(node.nodeData as AudioPlayerSelectionGB | null, e);
       e.stopPropagation();
     }

@@ -458,6 +458,7 @@ export class Viewport {
       clearRendererCaches?: boolean;
     },
     renderPromise?: RenderPromise | null,
+    callback?: (xulsword: typeof S.prefs.xulsword) => void,
   ): Pick<
     typeof S.prefs.xulsword,
     'panels' | 'mtModules' | 'tabs' | 'location'
@@ -495,6 +496,8 @@ export class Viewport {
       isViewportWin.setComplexValue('xulswordState', xulsword, id);
       isViewportWin.reset('all', 'self', id);
     }
+
+    if (callback) callback(xulsword);
 
     return result;
   }

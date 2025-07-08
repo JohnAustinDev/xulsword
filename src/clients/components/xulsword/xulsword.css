@@ -16,6 +16,9 @@
 #searchText {
   flex-basis: 100%;
 }
+#searchText input {
+  height: calc(var(--input-height) - 5px);
+}
 #xsSearchButton {
   z-index: 1; /* allow bottom focus border to be visible */
 }
