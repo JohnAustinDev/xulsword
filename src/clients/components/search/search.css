@@ -52,18 +52,22 @@
   margin-right: 0;
 }
 
+#root:has(#helpButton.open) .close-card-button {
+  display: none;
+}
 #helpButton.open {
-  position: absolute;
-  top: 0;
-  left: 0;
+  width:100%;
   z-index: 9;
 }
 #helpButton.open .bp5-button {
   align-items: start;
-  height: fit-content;
 }
 #helpButton.open .bp5-button-text {
-  margin: 25px -9px -4px -33px;
+  margin: 25px 0 -4px -33px;
+}
+#helpButton .button-box {
+  height: unset;
+  margin: 0 auto;
 }
 
 .search-type,

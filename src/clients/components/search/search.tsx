@@ -449,308 +449,320 @@ export default class Search
       );
     }
 
-    return (
-      <Vbox domref={loadingRef} {...addClass('search', props)}>
-        {indexing && (
-          <Dialog
-            className="indexing-dialog"
-            key="indexing"
-            body={
-              <Vbox pack="center" align="center">
-                <Label
-                  value={GI.i18n.t('', renderPromise, 'buildingIndex.label')}
-                />
-              </Vbox>
-            }
-          />
-        )}
+    const helpButton = (
+      <Button
+        id="helpButton"
+        className={showHelp ? 'open' : 'closed'}
+        icon={showHelp ? 'cross' : 'help'}
+        onClick={handler}
+      >
+        {showHelp}
+      </Button>
+    );
 
-        {popupParent &&
-          elemdata?.length &&
-          ReactDOM.createPortal(
-            <Popup
-              className="hide"
-              key={[gap, elemdata.length, popupReset].join('.')}
-              elemdata={elemdata}
-              gap={gap}
-              onMouseMove={popupHandler}
-              onPopupClick={popupHandler}
-              onSelectChange={popupHandler}
-              onMouseLeftPopup={popupHandler}
-              onPopupContextMenu={popupHandler}
-            />,
-            popupParent,
+    return (
+      (showHelp && helpButton) || (
+        <Vbox domref={loadingRef} {...addClass('search', props)}>
+          {indexing && (
+            <Dialog
+              className="indexing-dialog"
+              key="indexing"
+              body={
+                <Vbox pack="center" align="center">
+                  <Label
+                    value={GI.i18n.t('', renderPromise, 'buildingIndex.label')}
+                  />
+                </Vbox>
+              }
+            />
           )}
 
-        <Hbox pack="center">
-          <Grid
-            className={['search-grid', moreLess ? 'more' : 'less'].join(' ')}
-          >
-            <Columns>
-              <Column width="min-content" />
-              <Column width="min-content" />
-            </Columns>
-            <Rows>
-              <Row>
-                <Groupbox
-                  id="searchTextGroup"
-                  orient="horizontal"
-                  align="center"
-                >
-                  <Hbox className="searchtextLabel" align="center">
-                    <Label
-                      control="searchtext"
-                      value={`${GI.i18n.t('', renderPromise, 'searchtext.label')}:`}
-                    />
-                  </Hbox>
+          {popupParent &&
+            elemdata?.length &&
+            ReactDOM.createPortal(
+              <Popup
+                className="hide"
+                key={[gap, elemdata.length, popupReset].join('.')}
+                elemdata={elemdata}
+                gap={gap}
+                onMouseMove={popupHandler}
+                onPopupClick={popupHandler}
+                onSelectChange={popupHandler}
+                onMouseLeftPopup={popupHandler}
+                onPopupContextMenu={popupHandler}
+              />,
+              popupParent,
+            )}
 
-                  <Vbox className="searchtext">
-                    <Textbox
-                      id="searchtext"
-                      value={searchtext}
-                      title={GI.i18n.t('', renderPromise, 'searchbox.tooltip')}
-                      maxLength="60"
+          <Hbox pack="center">
+            <Grid
+              className={['search-grid', moreLess ? 'more' : 'less'].join(' ')}
+            >
+              <Columns>
+                <Column width="min-content" />
+                <Column width="min-content" />
+              </Columns>
+              <Rows>
+                <Row>
+                  <Groupbox
+                    id="searchTextGroup"
+                    orient="horizontal"
+                    align="center"
+                  >
+                    <Hbox className="searchtextLabel" align="center">
+                      <Label
+                        control="searchtext"
+                        value={`${GI.i18n.t('', renderPromise, 'searchtext.label')}:`}
+                      />
+                    </Hbox>
+
+                    <Vbox className="searchtext">
+                      <Textbox
+                        id="searchtext"
+                        value={searchtext}
+                        title={GI.i18n.t(
+                          '',
+                          renderPromise,
+                          'searchbox.tooltip',
+                        )}
+                        maxLength="60"
+                        onChange={handler}
+                      />
+                      <ModuleMenu
+                        id="module"
+                        value={module}
+                        language
+                        description
+                        sortByLabel
+                        onChange={handler}
+                      />
+                    </Vbox>
+                    <Hbox className="searchtextButtons">
+                      <Button
+                        id="searchButton"
+                        icon="search"
+                        flex="1"
+                        disabled={progress !== -1 || !module}
+                        onClick={handler}
+                      >
+                        {GI.i18n.t('', renderPromise, 'menu.search')}
+                      </Button>
+                      {!showHelp && helpButton}
+                      <Button id="moreLess" onClick={handler}>
+                        {!moreLess && (
+                          <Label
+                            value={GI.i18n.t('', renderPromise, 'more.label')}
+                          />
+                        )}
+                        {moreLess && (
+                          <Label
+                            value={GI.i18n.t('', renderPromise, 'less.label')}
+                          />
+                        )}
+                      </Button>
+                    </Hbox>
+                  </Groupbox>
+                </Row>
+                <Row>
+                  <Stack
+                    className="search-type"
+                    orient="horizontal"
+                    align="stretch"
+                  >
+                    <Groupbox
+                      id="searchtype"
+                      caption={GI.i18n.t('', renderPromise, 'searchType.label')}
+                      orient="vertical"
                       onChange={handler}
-                    />
+                    >
+                      {searchTypes
+                        .filter(
+                          (st) => !(onlyLucene && st === 'SearchExactText'),
+                        )
+                        .map((st) => (
+                          <Radio
+                            key={['type', st].join('.')}
+                            name="type"
+                            checked={searchtype === st}
+                            value={st}
+                            label={GI.i18n.t('', renderPromise, `${st}.label`)}
+                            title={GI.i18n.t(
+                              '',
+                              renderPromise,
+                              `${st}.description`,
+                            )}
+                          />
+                        ))}
+                    </Groupbox>
+                    {!searchindex && !indexing && (
+                      <>
+                        <Vbox />
+                        <Vbox align="center">
+                          <Button
+                            id="createIndexButton"
+                            disabled={Build.isWebApp || progress !== -1}
+                            onClick={handler}
+                          >
+                            {GI.i18n.t('', renderPromise, 'createIndex.label')}
+                          </Button>
+                        </Vbox>
+                      </>
+                    )}
+                  </Stack>
+                  <Groupbox
+                    id="scoperadio"
+                    caption={GI.i18n.t('', renderPromise, 'searchScope.label')}
+                    onChange={handler}
+                  >
+                    <Grid>
+                      <Columns>
+                        <Column width="min-content" />
+                        <Column width="min-content" />
+                      </Columns>
+                      <Rows>
+                        <Row>
+                          <Radio
+                            name="scope"
+                            checked={scoperadio === 'all'}
+                            value="all"
+                            label={GI.i18n.t('', renderPromise, 'search.all')}
+                          />
+                          <Radio
+                            name="scope"
+                            checked={scoperadio === 'book'}
+                            value="book"
+                            label={GI.i18n.t(
+                              '',
+                              renderPromise,
+                              'search.currentBook',
+                            )}
+                            disabled={!location?.book}
+                          />
+                        </Row>
+                        <Row>
+                          <Radio
+                            name="scope"
+                            checked={scoperadio === 'ot'}
+                            value="ot"
+                            label={GI.i18n.t('', renderPromise, 'search.ot')}
+                          />
+                          <Radio
+                            name="scope"
+                            checked={scoperadio === 'nt'}
+                            value="nt"
+                            label={GI.i18n.t('', renderPromise, 'search.nt')}
+                          />
+                        </Row>
+                        <Row>
+                          <div>
+                            <Radio
+                              name="scope"
+                              checked={scoperadio === 'other'}
+                              value="other"
+                              label={`${GI.i18n.t('', renderPromise, 'search.groups')}:`}
+                            />
+                            <Menulist
+                              id="scopeselect"
+                              value={scopeselect}
+                              options={scopeOptions}
+                              disabled={scoperadio !== 'other'}
+                              onChange={handler}
+                            />
+                          </div>
+                        </Row>
+                      </Rows>
+                    </Grid>
+                  </Groupbox>
+                </Row>
+              </Rows>
+            </Grid>
+          </Hbox>
+
+          <Hbox className="searchStatus" pack="start" align="center">
+            <Box>
+              <span>{searchStatus}</span>
+            </Box>
+            <Spacer flex="1" />
+            {progress !== -1 && (
+              <Hbox align="center">
+                {progressLabel && <Label value={`${progressLabel}:`} />}
+                <ProgressBar value={progress} />
+              </Hbox>
+            )}
+          </Hbox>
+          <Vbox className="result-container" flex="1">
+            <Hbox className="result-parent" flex="1">
+              <Vbox
+                className="resultBox"
+                pack="start"
+                flex="1"
+                data-context={displayModule}
+                onMouseOut={popupParentHandler}
+                onMouseOver={popupParentHandler}
+                onMouseMove={popupParentHandler}
+              >
+                {module && G.Tab[module].type === C.BIBLE && (
+                  <div className="lexiconParent">
                     <ModuleMenu
-                      id="module"
-                      value={module}
+                      id="displayModule"
+                      value={displayModule}
+                      types={[C.BIBLE]}
                       language
                       description
                       sortByLabel
+                      disabled={!module || G.Tab[module].type !== C.BIBLE}
                       onChange={handler}
                     />
-                  </Vbox>
-                  <Hbox className="searchtextButtons">
-                    <Button
-                      id="searchButton"
-                      icon="search"
-                      flex="1"
-                      disabled={progress !== -1 || !module}
+                    <span
+                      id="lexiconResults"
+                      ref={this.lexref}
                       onClick={handler}
-                    >
-                      {GI.i18n.t('', renderPromise, 'menu.search')}
-                    </Button>
-                    <Button
-                      id="helpButton"
-                      className={showHelp ? 'open' : 'closed'}
-                      icon={showHelp ? 'cross' : 'help'}
-                      onClick={handler}
-                    >
-                      {showHelp}
-                    </Button>
-                    <Button id="moreLess" onClick={handler}>
-                      {!moreLess && (
-                        <Label
-                          value={GI.i18n.t('', renderPromise, 'more.label')}
-                        />
-                      )}
-                      {moreLess && (
-                        <Label
-                          value={GI.i18n.t('', renderPromise, 'less.label')}
-                        />
-                      )}
-                    </Button>
-                  </Hbox>
-                </Groupbox>
-              </Row>
-              <Row>
-                <Stack
-                  className="search-type"
-                  orient="horizontal"
-                  align="stretch"
-                >
-                  <Groupbox
-                    id="searchtype"
-                    caption={GI.i18n.t('', renderPromise, 'searchType.label')}
-                    orient="vertical"
-                    onChange={handler}
-                  >
-                    {searchTypes
-                      .filter((st) => !(onlyLucene && st === 'SearchExactText'))
-                      .map((st) => (
-                        <Radio
-                          key={['type', st].join('.')}
-                          name="type"
-                          checked={searchtype === st}
-                          value={st}
-                          label={GI.i18n.t('', renderPromise, `${st}.label`)}
-                          title={GI.i18n.t(
-                            '',
-                            renderPromise,
-                            `${st}.description`,
-                          )}
-                        />
-                      ))}
-                  </Groupbox>
-                  {!searchindex && !indexing && (
-                    <>
-                      <Vbox />
-                      <Vbox align="center">
-                        <Button
-                          id="createIndexButton"
-                          disabled={Build.isWebApp || progress !== -1}
-                          onClick={handler}
-                        >
-                          {GI.i18n.t('', renderPromise, 'createIndex.label')}
-                        </Button>
-                      </Vbox>
-                    </>
-                  )}
-                </Stack>
-                <Groupbox
-                  id="scoperadio"
-                  caption={GI.i18n.t('', renderPromise, 'searchScope.label')}
-                  onChange={handler}
-                >
-                  <Grid>
-                    <Columns>
-                      <Column width="min-content" />
-                      <Column width="min-content" />
-                    </Columns>
-                    <Rows>
-                      <Row>
-                        <Radio
-                          name="scope"
-                          checked={scoperadio === 'all'}
-                          value="all"
-                          label={GI.i18n.t('', renderPromise, 'search.all')}
-                        />
-                        <Radio
-                          name="scope"
-                          checked={scoperadio === 'book'}
-                          value="book"
-                          label={GI.i18n.t(
-                            '',
-                            renderPromise,
-                            'search.currentBook',
-                          )}
-                          disabled={!location?.book}
-                        />
-                      </Row>
-                      <Row>
-                        <Radio
-                          name="scope"
-                          checked={scoperadio === 'ot'}
-                          value="ot"
-                          label={GI.i18n.t('', renderPromise, 'search.ot')}
-                        />
-                        <Radio
-                          name="scope"
-                          checked={scoperadio === 'nt'}
-                          value="nt"
-                          label={GI.i18n.t('', renderPromise, 'search.nt')}
-                        />
-                      </Row>
-                      <Row>
-                        <div>
-                          <Radio
-                            name="scope"
-                            checked={scoperadio === 'other'}
-                            value="other"
-                            label={`${GI.i18n.t('', renderPromise, 'search.groups')}:`}
-                          />
-                          <Menulist
-                            id="scopeselect"
-                            value={scopeselect}
-                            options={scopeOptions}
-                            disabled={scoperadio !== 'other'}
-                            onChange={handler}
-                          />
-                        </div>
-                      </Row>
-                    </Rows>
-                  </Grid>
-                </Groupbox>
-              </Row>
-            </Rows>
-          </Grid>
-        </Hbox>
-
-        <Hbox className="searchStatus" pack="start" align="center">
-          <Box>
-            <span>{searchStatus}</span>
-          </Box>
-          <Spacer flex="1" />
-          {progress !== -1 && (
-            <Hbox align="center">
-              {progressLabel && <Label value={`${progressLabel}:`} />}
-              <ProgressBar value={progress} />
-            </Hbox>
-          )}
-        </Hbox>
-        <Vbox className="result-container" flex="1">
-          <Hbox className="result-parent" flex="1">
-            <Vbox
-              className="resultBox"
-              pack="start"
-              flex="1"
-              data-context={displayModule}
-              onMouseOut={popupParentHandler}
-              onMouseOver={popupParentHandler}
-              onMouseMove={popupParentHandler}
-            >
-              {module && G.Tab[module].type === C.BIBLE && (
-                <div className="lexiconParent">
-                  <ModuleMenu
-                    id="displayModule"
-                    value={displayModule}
-                    types={[C.BIBLE]}
-                    language
-                    description
-                    sortByLabel
-                    disabled={!module || G.Tab[module].type !== C.BIBLE}
-                    onChange={handler}
-                  />
-                  <span
-                    id="lexiconResults"
-                    ref={this.lexref}
-                    onClick={handler}
-                  />
-                </div>
-              )}
-              <Spacer orient="horizontal" />
-              <Vbox
-                id="searchResults"
-                pack="start"
-                flex="8"
-                domref={this.resref}
-                onClick={handler}
-              />
-            </Vbox>
-            {count > C.UI.Search.resultsPerPage && (
-              <Vbox className="buttonBox">
-                <Button
-                  id="pagefirst"
-                  icon="double-chevron-up"
-                  disabled={progress !== -1}
-                  onClick={handler}
-                />
-                <Spacer orient="vertical" flex="1" />
-                <Button
-                  id="pageprev"
-                  icon="chevron-up"
-                  disabled={progress !== -1}
-                  onClick={handler}
-                />
-                <Button
-                  id="pagenext"
-                  icon="chevron-down"
-                  disabled={progress !== -1}
-                  onClick={handler}
-                />
-                <Spacer orient="vertical" flex="1" />
-                <Button
-                  id="pagelast"
-                  icon="double-chevron-down"
-                  disabled={progress !== -1}
+                    />
+                  </div>
+                )}
+                <Spacer orient="horizontal" />
+                <Vbox
+                  id="searchResults"
+                  pack="start"
+                  flex="8"
+                  domref={this.resref}
                   onClick={handler}
                 />
               </Vbox>
-            )}
-          </Hbox>
+              {count > C.UI.Search.resultsPerPage && (
+                <Vbox className="buttonBox">
+                  <Button
+                    id="pagefirst"
+                    icon="double-chevron-up"
+                    disabled={progress !== -1}
+                    onClick={handler}
+                  />
+                  <Spacer orient="vertical" flex="1" />
+                  <Button
+                    id="pageprev"
+                    icon="chevron-up"
+                    disabled={progress !== -1}
+                    onClick={handler}
+                  />
+                  <Button
+                    id="pagenext"
+                    icon="chevron-down"
+                    disabled={progress !== -1}
+                    onClick={handler}
+                  />
+                  <Spacer orient="vertical" flex="1" />
+                  <Button
+                    id="pagelast"
+                    icon="double-chevron-down"
+                    disabled={progress !== -1}
+                    onClick={handler}
+                  />
+                </Vbox>
+              )}
+            </Hbox>
+          </Vbox>
         </Vbox>
-      </Vbox>
+      )
     );
   }
 }
