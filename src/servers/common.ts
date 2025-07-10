@@ -19,6 +19,7 @@ import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
 import Dirs from './components/dirs.ts';
 import DiskCache from './components/diskcache.ts';
+import Data from './components/data.ts';
 import LibSword, { moduleUnsupported } from './components/libsword.ts';
 import LocalFile from './components/localFile.ts';
 import getFontFamily from './fontfamily.ts';
@@ -48,7 +49,7 @@ import type {
   TreeNodeInfoPref,
   AudioPath,
 } from '../type.ts';
-import PrefsElectron from './app/prefs.ts';
+import type PrefsElectron from './app/prefs.ts';
 
 // Get all supported books in locale order. NOTE: xulsword ignores individual
 // module book order in lieu of locale book order or xulsword default order
@@ -506,8 +507,8 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
 // If a module config fontFamily specifies a URL to a font, rather
 // than a fontFamily, then parse the URL. Otherwise return null.
 function fontURL(mod: string) {
-  const prefs = Cache.has('PrefsElectron')
-    ? (Cache.read('PrefsElectron') as typeof PrefsElectron)
+  const prefs = Data.has('PrefsElectron')
+    ? (Data.read('PrefsElectron') as typeof PrefsElectron)
     : null;
   if (Build.isWebApp || prefs?.getBoolPref('global.InternetPermission')) {
     const url = LibSword.getModuleInformation(mod, 'Font').match(
@@ -958,36 +959,45 @@ export function inlineAudioFile(
           return resolveTemplateURL(DataPath, audio, 'none');
         } else if (DataPath.startsWith('.')) {
           file.append(DataPath);
-          const findAudio = (audioCodeDir: LocalFile, aPath: AudioPath) => {
-            const i = aPath.shift();
-            let isSuccess = false;
-            if (audioCodeDir.isDirectory()) {
-              audioCodeDir.directoryEntries.forEach((f) => {
-                const t = audioCodeDir.clone().append(f);
+          const findAudio = (
+            inDir: LocalFile,
+            audioPathx: AudioPath,
+          ): LocalFile | null => {
+            const audioPath = audioPathx.slice();
+            let result: LocalFile | null = null;
+            const i = audioPath.shift();
+            if (inDir.isDirectory()) {
+              // Reverse to search qualified paths before order-only paths.
+              inDir.directoryEntries.reverse().forEach((f) => {
+                const t = inDir.clone().append(f);
                 const myi =
                   typeof i === 'number'
                     ? Number(t.leafName.replace(/^(\d\d\d).*$/, '$1'))
                     : t.leafName;
-                if (myi === i) {
+                if (!result && myi === i) {
                   if (
-                    !aPath.length &&
+                    !audioPath.length &&
                     !t.isDirectory() &&
                     new RegExp(`\\.(${C.SupportedAudio.join('|')})$`).test(
                       t.leafName,
                     )
                   ) {
-                    audioCodeDir.append(f);
-                    isSuccess = audioCodeDir.exists();
-                  } else if (aPath.length && t.isDirectory()) {
-                    audioCodeDir.append(f);
-                    isSuccess = findAudio(audioCodeDir, aPath);
+                    result = t.exists() ? t : null;
+                    return;
+                  } else if (audioPath.length && t.isDirectory()) {
+                    const af = findAudio(t, audioPath);
+                    if (af) {
+                      result = af;
+                      return;
+                    }
                   }
                 }
               });
             }
-            return isSuccess;
+            return result;
           };
-          if (findAudio(file, path)) return inlineFile(file.path);
+          const audioFile = findAudio(file, path);
+          if (audioFile) return inlineFile(audioFile.path);
         }
       }
     }

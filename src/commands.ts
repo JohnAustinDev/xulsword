@@ -9,14 +9,12 @@ import type PrefsElectron from './servers/app/prefs.ts';
 import type PrefsBrowser from './clients/webapp/prefs.ts';
 import type {
   GAddWindowId,
-  AudioPlayerSelectionGB,
   GIType,
   GType,
   LocationORType,
   LocationVKCommType,
   LocationVKType,
   ScrollType,
-  AudioPlayerSelectionVK,
   AudioPrefType,
 } from './type.ts';
 
@@ -52,6 +50,10 @@ export default class Commands {
     renderPromise?: RenderPromise,
   ): void {
     if (location.otherMod in this.#G.Tab) {
+      // Genbk keys in xulsword should not start with slash, but libxulsword
+      // returns keys starting with slash. So remove it if it exists.
+      const { key } = location;
+      if (key.startsWith('/')) location.key = key.substring(1);
       const xulsword: Partial<typeof S.prefs.xulsword> = this.setXulswordPanels(
         {
           whichModuleOrLocGB: location,

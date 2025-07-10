@@ -20,6 +20,8 @@ import {
   querablePromise,
   gbPaths,
   localizeString,
+  findFirstLeafNode,
+  cloneAny,
 } from '../../../../common.ts';
 import C from '../../../../constant.ts';
 import { G } from '../../../G.ts';
@@ -111,6 +113,7 @@ export type TRepCellInfo = TCellInfo & {
 
 export type TModCellInfo = TCellInfo & {
   shared: boolean;
+  installedLocally: boolean;
   repo: Repository;
   conf: SwordConfType;
 };
@@ -200,6 +203,71 @@ export const Progressing = {
   ids: [] as Array<[string, number]>, // [id, percent]
 };
 
+// The following functions return custom callbacks meant to be sent
+// to tables for applying values, settings, classes etc. to particular
+// table cells.
+export function loading(columnIndex: number) {
+  return (_ri: number, ci: number) => {
+    return ci === columnIndex;
+  };
+}
+
+export function editable() {
+  return (_ri: number, ci: number) => {
+    return ci < RepCol.iState;
+  };
+}
+
+export function intent(columnIndex: number, theIntent: Intent) {
+  return (_ri: number, ci: number) => {
+    return ci === columnIndex ? theIntent : 'none';
+  };
+}
+
+export function classes(
+  columnIndexArray: number[],
+  theClasses: string[],
+  wholeRowClasses?: string[],
+) {
+  return (_ri: number, ci: number) => {
+    const cs = wholeRowClasses?.slice() || [];
+    if (columnIndexArray.includes(ci))
+      theClasses.forEach((c) => {
+        if (!cs.includes(c)) cs.push(c);
+      });
+    return cs;
+  };
+}
+
+export function modclasses() {
+  return (ri: number, ci: number) => {
+    const cs: string[] = [];
+    if (
+      [ModCol.iShared, ModCol.iInstalled, ModCol.iRemove].includes(ci as never)
+    )
+      cs.push('checkbox-column');
+    const drow = Saved.module.data[ri];
+    if (
+      (ci === ModCol.iShared && drow && drow[ModCol.iInstalled] === OFF) ||
+      (ci === ModCol.iInstalled && drow[ModCol.iInfo].installedLocally)
+    ) {
+      cs.push('disabled');
+    } else if (
+      ci === ModCol.iShared &&
+      drow[ModCol.iInfo].conf.xsmType === 'XSM_audio'
+    ) {
+      cs.push('disabled');
+    }
+    return cs;
+  };
+}
+
+export function tooltip(atooltip: string, skipColumnIndexArray: number[]) {
+  return (_ri: number, ci: number) => {
+    return skipColumnIndexArray.includes(ci) ? undefined : atooltip;
+  };
+}
+
 export function setDownloadProgress(
   xthis: ModuleManager,
   dlkey: string,
@@ -226,7 +294,7 @@ export function onRowsReordered(
   direction: 'ascending' | 'descending',
   tableToDataRowMap: number[],
 ) {
-  const state = this.state as ManagerState;
+  const state = cloneAny(this.state) as ManagerState;
   const tbl = state[table];
   if (tbl) {
     // Update our tableToDataRowMap based on the new sorting.
@@ -264,7 +332,7 @@ export function onModCellClick(
 ) {
   const disabled = ofClass(['disabled'], e.target);
   if (!disabled) {
-    const state = this.state as ManagerState;
+    const state = cloneAny(this.state) as ManagerState;
     const { module } = state;
     const { module: modtable } = Saved;
     const { selection } = module;
@@ -311,7 +379,7 @@ export function onRepoCellClick(
   e: React.MouseEvent,
   cell: TCellLocation,
 ) {
-  const state = this.state as ManagerState;
+  const state = cloneAny(this.state) as ManagerState;
   const { repository } = state;
   if (repository) {
     const { repository: repotable } = state.tables;
@@ -342,11 +410,11 @@ export function onCellEdited(
   value: string,
 ) {
   const table = 'repository';
-  const state = this.state as ManagerState;
+  const state = cloneAny(this.state) as ManagerState;
   const { repositories } = state;
   const tbl = state[table];
   if (repositories && tbl) {
-    const newCustomRepos = clone(repositories.custom);
+    const newCustomRepos = repositories.custom;
     const tablestate = state.tables[table];
     const { dataRowIndex: row, dataColIndex: col } = cell;
     const drow = tablestate.data[row];
@@ -389,12 +457,12 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           case 'languageListClose':
           case 'languageListOpen': {
             const open = id === 'languageListOpen';
-            const state = this.state as ManagerState;
+            const state = cloneAny(this.state) as ManagerState;
             setTableState(
               this,
               'module',
               null,
-              this.filterModuleTable(null, open),
+              this.filterModuleTable(state.language.selection, open),
               true,
               {
                 language: { ...state.language, open },
@@ -407,7 +475,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           case 'moduleInfo': {
             const div = document.getElementById('moduleInfo');
             if (div) {
-              const state = this.state as ManagerState;
+              const state = cloneAny(this.state) as ManagerState;
               const { module } = state;
               const { module: modtable } = state.tables;
               const { selection } = module;
@@ -456,7 +524,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               // Un-persist these table selections.
               setTableState(this, 'module', { selection: [] });
               setTableState(this, 'repository', { selection: [] });
-              const state = this.state as ManagerState;
+              const state = cloneAny(this.state) as ManagerState;
               const { repositories } = state;
               const { repository: repotable } = state.tables;
               const { moduleData } = Saved;
@@ -508,19 +576,19 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                     const conf = installed.find(
                       (c) => repositoryModuleKey(c) === modkey,
                     );
-                    if (conf?.sourceRepository.builtin) {
-                      const toRepo = builtinRepos(G)[shared ? 0 : 1];
-                      if (
-                        conf &&
-                        repositoryKey(conf.sourceRepository) !==
-                          repositoryKey(toRepo)
-                      ) {
-                        moveMods.push({
-                          name: module,
-                          fromRepo: conf.sourceRepository,
-                          toRepo,
-                        });
-                      }
+                    const builtIns = builtinRepos(G);
+                    // May only move into shared, or from shared to UserMods.
+                    const toRepo = shared ? builtIns[0] : builtIns[1];
+                    if (
+                      conf &&
+                      repositoryKey(conf.sourceRepository) !==
+                        repositoryKey(toRepo)
+                    ) {
+                      moveMods.push({
+                        name: module,
+                        fromRepo: conf.sourceRepository,
+                        toRepo,
+                      });
                     }
                   }
                 }
@@ -599,7 +667,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             break;
           }
           case 'repoAdd': {
-            const state = this.state as ManagerState;
+            const state = cloneAny(this.state) as ManagerState;
             const { repositories } = state;
             if (repositories) {
               const newCustomRepos = clone(repositories.custom);
@@ -633,7 +701,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             break;
           }
           case 'repoDelete': {
-            const state = this.state as ManagerState;
+            const state = cloneAny(this.state) as ManagerState;
             const { repositories, repository } = state;
             if (repositories && repository) {
               const newCustomRepos = clone(repositories.custom);
@@ -668,7 +736,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             break;
           }
           case 'repoCancel': {
-            const state = this.state as ManagerState;
+            const state = cloneAny(this.state) as ManagerState;
             const { repository: repotable } = state.tables;
             G.Module.cancel(
               repotable.data
@@ -749,7 +817,7 @@ export function rowSelect(
   table: (typeof Tables)[number],
   row: number,
 ): RowSelection | string[] {
-  const state = xthis.state as ManagerState;
+  const state = cloneAny(xthis.state) as ManagerState;
   const tbl = state[table];
   let newSelection: RowSelection | string[] = [];
   if (tbl) {
@@ -835,7 +903,7 @@ export async function switchRepo(
   rows: number[],
   onOrOff?: boolean,
 ) {
-  const state = xthis.state as ManagerState;
+  const state = cloneAny(xthis.state) as ManagerState;
   const { repositories } = state;
   if (repositories) {
     const { repository: repotable } = state.tables;
@@ -895,7 +963,7 @@ export function handleListings(
   xthis: ModuleManager,
   listingsAndErrors: Array<RepositoryListing | string>,
 ): void {
-  const state = xthis.state as ManagerState;
+  const state = cloneAny(xthis.state) as ManagerState;
   const { repositories } = state;
   const { repositoryListings } = Saved;
   if (repositories) {
@@ -1302,9 +1370,14 @@ async function promptAudioChapters(
               ? gbPaths(G.genBookTreeNodes(conf.module))
               : {};
           d.type = 'genbook';
+          const nodes = genBookAudio2TreeNodes(ac, conf.module);
+          const firstNode = findFirstLeafNode(nodes, [])?.id.toString();
           d.selection = {
             otherMod: conf.module,
-            keys: [],
+            keys:
+              // If only one option is available, select it, so that ok button
+              // will be enabled even though no options will be shown.
+              firstNode && Object.keys(ac).length === 1 ? [firstNode] : [],
           };
           d.options = {
             nodeLists: [
@@ -1312,30 +1385,27 @@ async function promptAudioChapters(
                 otherMod: conf.module,
                 label: conf.Description?.locale || conf.module,
                 labelClass: 'cs-locale',
-                nodes: forEachNode(
-                  genBookAudio2TreeNodes(ac, conf.module),
-                  (n) => {
-                    const path = n.id
-                      .toString()
-                      .split(C.GBKSEP)
-                      .filter(Boolean)
-                      .map((s) => Number(s.replace(/^(\d+).*?$/, '$1')));
-                    const entry = Object.entries(paths).find(
-                      (e) => !diff(e[1], path),
-                    );
-                    const keys = (entry ? entry[0] : '').split(C.GBKSEP);
-                    let label = '';
-                    while (keys.length && !label) label = keys.pop() || '';
-                    n.label =
-                      label || n.label.toString().replace(/^\d+\s(.*?)$/, '$1');
-                  },
-                ),
+                nodes: forEachNode(nodes, (n) => {
+                  const path = n.id
+                    .toString()
+                    .split(C.GBKSEP)
+                    .filter(Boolean)
+                    .map((s) => Number(s.replace(/^(\d+).*?$/, '$1')));
+                  const entry = Object.entries(paths).find(
+                    (e) => !diff(e[1], path),
+                  );
+                  const keys = (entry ? entry[0] : '').split(C.GBKSEP);
+                  let label = '';
+                  while (keys.length && !label) label = keys.pop() || '';
+                  n.label =
+                    label || n.label.toString().replace(/^\d+\s(.*?)$/, '$1');
+                }),
               },
             ],
           };
         }
         const d = dialog as VersekeyDialog | GenBookDialog;
-        const state = xthis.state as ManagerState;
+        const state = cloneAny(xthis.state) as ManagerState;
         const { showAudioDialog } = state;
         showAudioDialog.push(d);
         xthis.setState({ showAudioDialog });
@@ -1646,66 +1716,4 @@ export function scrollToSelectedLanguage(xthis: ModuleManager) {
       }
     }
   }
-}
-
-// The following functions return custom callbacks meant to be sent
-// to tables for applying values, settings, classes etc. to particular
-// table cells.
-export function loading(columnIndex: number) {
-  return (_ri: number, ci: number) => {
-    return ci === columnIndex;
-  };
-}
-
-export function editable() {
-  return (_ri: number, ci: number) => {
-    return ci < RepCol.iState;
-  };
-}
-
-export function intent(columnIndex: number, theIntent: Intent) {
-  return (_ri: number, ci: number) => {
-    return ci === columnIndex ? theIntent : 'none';
-  };
-}
-
-export function classes(
-  columnIndexArray: number[],
-  theClasses: string[],
-  wholeRowClasses?: string[],
-) {
-  return (_ri: number, ci: number) => {
-    const cs = wholeRowClasses?.slice() || [];
-    if (columnIndexArray.includes(ci))
-      theClasses.forEach((c) => {
-        if (!cs.includes(c)) cs.push(c);
-      });
-    return cs;
-  };
-}
-
-export function modclasses() {
-  return (ri: number, ci: number) => {
-    const cs: string[] = [];
-    if (
-      [ModCol.iShared, ModCol.iInstalled, ModCol.iRemove].includes(ci as never)
-    )
-      cs.push('checkbox-column');
-    const drow = Saved.module.data[ri];
-    if (drow && drow[ModCol.iInstalled] === OFF && ci === ModCol.iShared) {
-      cs.push('disabled');
-    } else if (
-      ci === ModCol.iShared &&
-      drow[ModCol.iInfo].conf.xsmType === 'XSM_audio'
-    ) {
-      cs.push('disabled');
-    }
-    return cs;
-  };
-}
-
-export function tooltip(atooltip: string, skipColumnIndexArray: number[]) {
-  return (_ri: number, ci: number) => {
-    return skipColumnIndexArray.includes(ci) ? undefined : atooltip;
-  };
 }

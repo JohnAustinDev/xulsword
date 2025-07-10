@@ -368,7 +368,7 @@ class Viewport extends React.Component implements PopupParent {
 
     const showingChooser =
       showChooser ||
-      (!ownWindow && Build.isElectronApp && chooser === 'genbook');
+      (ownWindow && Build.isElectronApp && chooser === 'genbook');
 
     const chooserV11n =
       panels.reduce(

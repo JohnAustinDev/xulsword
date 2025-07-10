@@ -1,6 +1,7 @@
 html .skin,
 html.skin > #root {
   background-image: unset;
+  background-color: var(--light);
 }
 /* body height is the iframe's height and is scrollable */
 body {
@@ -113,11 +114,6 @@ body {
 }
 
 @media (max-width: 300px) {
-  #historyButtons,
-  #addcolumn,
-  #removecolumn {
-    display: none;
-  }
   .close-card-button {
     padding: 0;
   }

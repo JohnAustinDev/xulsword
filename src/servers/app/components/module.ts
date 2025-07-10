@@ -16,6 +16,7 @@ import {
   mergeNewModules,
   unknown2String,
   resolveTemplateURL,
+  encodeWindowsNTFSPath,
 } from '../../../common.ts';
 import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
@@ -39,20 +40,19 @@ import DiskCache from '../../components/diskcache.ts';
 import LocalFile from '../../components/localFile.ts';
 import Dirs from '../../components/dirs.ts';
 import LibSword, { moduleUnsupported } from '../../components/libsword.ts';
+import Prefs from '../prefs.ts';
 import Window, { getBrowserWindows } from './window.ts';
 
 import type {
   CipherKey,
   Download,
   FTPDownload,
-  AudioPlayerSelectionGB,
   NewModulesType,
   Repository,
   RepositoryListing,
   SwordConfType,
   GenBookAudioConf,
   VerseKeyAudioConf,
-  AudioPlayerSelectionVK,
   OSISBookType,
 } from '../../../type.ts';
 import type { ListingElementR } from '../../ftphttp.ts';
@@ -94,7 +94,9 @@ function recurseAudioDirectory(
       }
     } else log.warn(`Skipping non-number audio file: ${subfile.path}`);
   });
-  if (chs.length) audio[`${[...ancOrSelf].join('/')}/`] = audioConfStrings(chs);
+  if (chs.length)
+    audio[`${[...ancOrSelf.map((s) => decodeURIComponent(s))].join('/')}/`] =
+      audioConfStrings(chs);
   return audio;
 }
 
@@ -197,7 +199,7 @@ export function moveRemoveModules(
       moddir.directoryEntries.map((c) => {
         const confFile = moddir.clone().append(c);
         if (!confFile.isDirectory() && confFile.path.endsWith('.conf')) {
-          return parseSwordConf(confFile);
+          return parseSwordConf(confFile, Prefs);
         }
         return null;
       }),
@@ -314,7 +316,7 @@ export async function installZIPs(
         modsd.directoryEntries.forEach((confFile) => {
           const file = modsd.clone().append(confFile);
           if (!file.isDirectory && file.leafName.endsWith('.conf')) {
-            const conf = parseSwordConf(file);
+            const conf = parseSwordConf(file, Prefs);
             const { module, CipherKey } = conf;
             installed.push({
               module,
@@ -379,11 +381,14 @@ export async function installZIPs(
                     ? Dirs.path.xsAudio
                     : destdir,
                 );
-                const conf = parseSwordConf({
-                  confString: confstr,
-                  filename: name,
-                  sourceRepository: dest.path,
-                });
+                const conf = parseSwordConf(
+                  {
+                    confString: confstr,
+                    filename: name,
+                    sourceRepository: dest.path,
+                  },
+                  Prefs,
+                );
                 // Look for any problems with the module itself
                 const modreports = clone(conf.reports);
                 modreports.push(...moduleUnsupported(conf));
@@ -428,7 +433,7 @@ export async function installZIPs(
                       confdest.remove();
                     } else {
                       // Remove any existing module having this name unless it would be downgraded.
-                      const existing = parseSwordConf(confdest);
+                      const existing = parseSwordConf(confdest, Prefs);
                       if (
                         versionCompare(
                           conf.Version ?? 0,
@@ -583,7 +588,9 @@ export async function installZIPs(
                 // Bible SWORD modules (the only SWORD GenBook audio published so far).
                 // Finally, general-book indexes need 1 to be subtracted from each index.
                 const audio = Dirs.xsAudio;
-                const pobj = fpath.posix.parse(entryName);
+                const pobj = fpath.posix.parse(
+                  encodeWindowsNTFSPath(entryName, true),
+                );
                 const dirs = pobj.dir.split(fpath.posix.sep);
                 const chapter = Number(pobj.name.replace(/^(\d+).*?$/, '$1'));
                 dirs.shift(); // remove ./audio
@@ -618,7 +625,7 @@ export async function installZIPs(
                   audio.append(pobj.base);
                   audio.writeFile(entry.getData());
                 }
-                // Modify the config file to show the new audio.
+                // Modify the config file to show currently installed audio.
                 if (audioCode && conf) {
                   const confFile = Dirs.xsAudio;
                   confFile.append('mods.d');
@@ -639,7 +646,7 @@ export async function installZIPs(
                       `AudioChapters=${JSON_stringify(audioChapters)}`,
                     );
                     confFile.writeFile(str);
-                    const nconf = parseSwordConf(confFile);
+                    const nconf = parseSwordConf(confFile, Prefs);
                     const index = newmods.audio.findIndex(
                       (c) => c.module === nconf.module,
                     );
@@ -779,11 +786,14 @@ async function downloadRepoConfs(
     if (header.name.endsWith('.conf')) {
       const rconf = {} as DownloadRepoConfsType;
       rconf.strconf = buffer.toString('utf8');
-      const conf = parseSwordConf({
-        confString: rconf.strconf,
-        filename: header.name.replace(/^.*?mods\.d\//, ''),
-        sourceRepository: manifest,
-      });
+      const conf = parseSwordConf(
+        {
+          confString: rconf.strconf,
+          filename: header.name.replace(/^.*?mods\.d\//, ''),
+          sourceRepository: manifest,
+        },
+        Prefs,
+      );
       rconf.conf = conf;
       rconf.module = conf.module;
       repositoryConfs.push(rconf);
@@ -880,7 +890,7 @@ const Module = {
                 modsd.directoryEntries.forEach((de) => {
                   const f = modsd.clone().append(de);
                   if (!f.isDirectory() && f.path.endsWith('.conf')) {
-                    const conf = parseSwordConf(f);
+                    const conf = parseSwordConf(f, Prefs);
                     confs.push(conf);
                   }
                 });
@@ -1154,11 +1164,14 @@ const Module = {
       progress(0);
       const confbuf = await getFile(domain, confpath, downloadkey);
       ftpCancelable(downloadkey);
-      const conf = parseSwordConf({
-        confString: confbuf.toString('utf8'),
-        filename: confname,
-        sourceRepository: download,
-      });
+      const conf = parseSwordConf(
+        {
+          confString: confbuf.toString('utf8'),
+          filename: confname,
+          sourceRepository: download,
+        },
+        Prefs,
+      );
       // Then download module contents
       const datapath = confModulePath(conf.DataPath);
       if (!datapath) {

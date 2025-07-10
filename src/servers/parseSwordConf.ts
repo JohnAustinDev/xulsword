@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import path from 'path';
 import Dirs from './components/dirs.ts';
-
+import Data from './components/data.ts';
 import C from '../constant.ts';
 import {
   builtinRepos,
@@ -12,11 +12,13 @@ import {
 
 import type {
   GenBookAudioConf,
+  GType,
   NewModuleReportType,
   Repository,
   SwordConfType,
   VerseKeyAudioConf,
 } from '../type.ts';
+import type S from '../defaultPrefs.ts';
 import type LocalFile from './components/localFile.ts';
 
 // Return a SwordConfType object from a config LocalFile, or else from
@@ -29,7 +31,15 @@ export default function parseSwordConf(
         filename: string;
         sourceRepository: Repository | string;
       },
+  prefs?: GType['Prefs'],
 ): SwordConfType {
+  const Prefs: GType['Prefs'] | undefined = prefs
+    ? prefs
+    : Data.has('PrefsElectron')
+      ? Data.read('PrefsElectron')
+      : undefined;
+  if (Build.isElectronApp && !Prefs)
+    throw new Error(`Electron Prefs is not set.`);
   // Find and save sourceRepository and filename
   let confString: string;
   let filename: string;
@@ -46,10 +56,14 @@ export default function parseSwordConf(
     sourceRepositoryOrPath = config.path;
   }
   if (typeof sourceRepositoryOrPath === 'string') {
-    const p = path.parse(sourceRepositoryOrPath);
-    const mypath = path.normalize(p.dir.replace(/[/\\]mods\.d.*$/, ''));
+    sourceRepositoryOrPath = sourceRepositoryOrPath.replace(
+      /[/\\]mods\.d\/.*?$/,
+      '',
+    );
     const srcrepo = builtinRepos(i18n, Dirs.path).find(
-      (r) => path.normalize(r.path) === mypath,
+      (r) =>
+        path.normalize(r.path) ===
+        path.normalize(sourceRepositoryOrPath as string),
     );
     if (srcrepo) sourceRepositoryOrPath = srcrepo;
   }
@@ -57,7 +71,9 @@ export default function parseSwordConf(
     typeof sourceRepositoryOrPath !== 'string'
       ? sourceRepositoryOrPath
       : {
-          name: 'unknown',
+          name:
+            (Prefs && localRepoName(sourceRepositoryOrPath, Prefs)) ||
+            'unknown',
           domain: 'file://',
           path: sourceRepositoryOrPath,
           builtin: false,
@@ -122,10 +138,11 @@ export default function parseSwordConf(
 
         // Check for RTF where it shouldn't be.
         const rtfControlWords = value.match(/\\\w[\w\d]*/);
-        if (rtfControlWords) {
+        // AudioChapters JSON encoded unicode causes false alarms.
+        if (rtfControlWords && !['AudioChapters'].includes(entry)) {
           if (!C.SwordConf.rtf.includes(entryBase as never)) {
             reports.push({
-              warning: `Config entry '${entry}' should not contain RTF.`,
+              warning: `Config entry '${entry}' should not contain RTF (${value}).`,
             });
           }
         }
@@ -138,10 +155,13 @@ export default function parseSwordConf(
             if (!r.History) r.History = [];
             const eold = r.History.find((y) => y[0] === version);
             const enew = eold || [version as string, {}];
-            enew[1][loc || 'en'] = value;
-            if (loc === i18n.language || (loc === 'en' && !enew[1].locale))
-              enew[1].locale = value;
-            if (!eold) r.History.push(enew);
+            (enew[1] as any)[loc || 'en'] = value;
+            if (
+              loc === i18n.language ||
+              (loc === 'en' && (!('locale' in enew[1]) || !enew[1].locale))
+            )
+              (enew[1] as any).locale = value;
+            if (!eold) r.History.push(enew as any);
           }
         } else if (entryBase === 'AudioChapters') {
           const ac = JSON_parse(value);
@@ -165,7 +185,7 @@ export default function parseSwordConf(
         } else if (C.SwordConf.localization.includes(entryBase as never)) {
           const ent = entryBase as (typeof C.SwordConf.localization)[number];
           const loc = entry.substring(entryBase.length + 1) || 'en';
-          if (!(ent in r)) r[ent] = {};
+          if (!(ent in r)) (r as any)[ent] = {};
           const o = r[ent];
           if (o) {
             o[loc] = value;
@@ -222,6 +242,20 @@ export default function parseSwordConf(
   }
 
   return r;
+}
+
+// Given a local repository path, find its name from prefs.
+export function localRepoName(
+  path: string,
+  Prefs: GType['Prefs'],
+): string | undefined {
+  const repositories = Prefs.getComplexValue(
+    'moduleManager.repositories',
+  ) as typeof S.prefs.moduleManager.repositories;
+  const repo = repositories.xulsword
+    .concat(repositories.custom)
+    .find((r) => r.path === path);
+  return repo ? repo.name : undefined;
 }
 
 // Take a server path and return the full path IF it is public, or else return

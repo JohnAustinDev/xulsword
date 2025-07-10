@@ -17,6 +17,7 @@ import {
   repositoryModuleKey,
   stringHash,
   localizeString,
+  cloneAny,
 } from '../../../../common.ts';
 import C from '../../../../constant.ts';
 import { G } from '../../../G.ts';
@@ -330,7 +331,7 @@ export default class ModuleManager
     // Instantiate progress handler
     this.destroy.push(
       window.IPC.on('progress', (prog: number, id?: string) => {
-        const state = this.state as ManagerState;
+        const state = cloneAny(this.state) as ManagerState;
         if (id) {
           H.setDownloadProgress(this, id, prog);
           const { moduleData } = H.Saved;
@@ -374,7 +375,7 @@ export default class ModuleManager
   // It returns the array of repositories that was used to create the
   // table data.
   loadRepositoryTable(repos?: Repository[]): Repository[] {
-    const state = this.state as ManagerState;
+    const state = cloneAny(this.state) as ManagerState;
     const { repositories } = state;
     let allrepos = builtinRepos(G);
     if (repositories) {
@@ -461,7 +462,7 @@ export default class ModuleManager
   // languageSelection argument if provided), or else with all modules if
   // no codes are selected.
   loadModuleTable(languageSelection?: string[]): void {
-    const state = this.state as ManagerState;
+    const state = cloneAny(this.state) as ManagerState;
     // Insure there is one moduleData row object for each module in
     // each repository (local and remote). The same object should be reused
     // throughout the lifetime of the window, so that user interactions will
@@ -470,9 +471,10 @@ export default class ModuleManager
     H.Saved.moduleLangData = { allmodules: [] };
     const { moduleData, moduleLangData, repositoryListings } = H.Saved;
     const repoType = {
-      localXulsword: [] as SwordConfType[],
+      localUser: [] as SwordConfType[],
       localShared: [] as SwordConfType[],
       localAudio: [] as SwordConfType[],
+      localOther: [] as SwordConfType[],
       remoteSWORD: [] as SwordConfType[],
       remoteAudio: [] as SwordConfType[],
       remoteXSM: [] as SwordConfType[],
@@ -483,22 +485,19 @@ export default class ModuleManager
       if (drow && Array.isArray(listing)) {
         listing.forEach((c) => {
           const modkey = repositoryModuleKey(c);
-          const repoIsLocal = isRepoLocal(c.sourceRepository) || false;
+          const repoIsLocal = isRepoLocal(c.sourceRepository);
           if (drow[H.RepCol.iState] !== H.OFF) {
-            if (c.sourceRepository.path === G.Dirs.path.xsModsUser)
-              repoType.localXulsword.push(c);
-            if (
-              c.sourceRepository.path &&
-              c.sourceRepository.path === G.Dirs.path.xsModsCommon
-            )
-              repoType.localShared.push(c);
-            if (c.sourceRepository.path === G.Dirs.path.xsAudio)
-              repoType.localAudio.push(c);
-            if (!repoIsLocal && c.xsmType === 'none')
-              repoType.remoteSWORD.push(c);
-            if (!repoIsLocal && c.xsmType === 'XSM_audio')
-              repoType.remoteAudio.push(c);
-            if (!repoIsLocal && c.xsmType === 'XSM') repoType.remoteXSM.push(c);
+            if (repoIsLocal) {
+              if (c.sourceRepository.path === G.Dirs.path.xsModsUser)
+                repoType.localUser.push(c);
+              else if (c.sourceRepository.path === G.Dirs.path.xsModsCommon)
+                repoType.localShared.push(c);
+              else if (c.sourceRepository.path === G.Dirs.path.xsAudio)
+                repoType.localAudio.push(c);
+              else repoType.localOther.push(c);
+            } else if (c.xsmType === 'XSM_audio') repoType.remoteAudio.push(c);
+            else if (c.xsmType === 'XSM') repoType.remoteXSM.push(c);
+            else repoType.remoteSWORD.push(c);
           }
           // But moduleData is only collected once.
           if (!(modkey in moduleData)) {
@@ -513,6 +512,7 @@ export default class ModuleManager
             d[H.ModCol.iInfo] = {
               repo: c.sourceRepository,
               shared: c.sourceRepository.path === builtinRepos(G)[0].path,
+              installedLocally: false,
               classes: H.modclasses(),
               tooltip: H.tooltip('VALUE', [
                 H.ModCol.iShared,
@@ -556,36 +556,78 @@ export default class ModuleManager
         });
       }
     });
-    // Modules in the local xulsword repository and local audio repository
-    // which are from enabled remote repositories are not included in
-    // moduleLangData. Rather they are left off the list and their 'installed'
-    // and 'shared' checkboxes are applied to the corresponding remote
-    // repository module. Also, if an XSM module is listed, any corresponding
-    // module in a repository at the same domain will not be listed.
-    const { localXulsword, localAudio, remoteSWORD, remoteAudio, remoteXSM } =
-      repoType;
+    // Modules in a local file system repository which are found in an enabled
+    // remote repository (meaning they have same name and version) are not
+    // included in the table. Rather their 'installed' and 'shared' checkboxes
+    // are applied to the remote repository module (but in the case of XSM
+    // modules, this application only happens when all modules in the XSM are
+    // installed). Also, SWORD modules in remote repositories which are part of
+    // an XSM module are not listed.
+    const {
+      localUser,
+      localShared,
+      localAudio,
+      localOther,
+      remoteSWORD,
+      remoteAudio,
+      remoteXSM,
+    } = repoType;
     repositoryListings.forEach((listing, i) => {
       const drow = repotable.data[i];
       if (drow && Array.isArray(listing) && drow[H.RepCol.iState] !== H.OFF) {
         listing.forEach((c) => {
           const modkey = repositoryModuleKey(c);
           const modrow = moduleData[modkey];
-          const repoIsRemote = !isRepoLocal(c.sourceRepository);
-          const modInLocalXulswordOrAudio = localXulsword
-            .concat(localAudio)
-            .find(
-              (ci) =>
-                c.module === ci.module &&
-                c.Version === ci.Version &&
-                c.xsmType === ci.xsmType,
-            );
-          if (repoIsRemote && modInLocalXulswordOrAudio) {
-            const localModKey = repositoryModuleKey(modInLocalXulswordOrAudio);
+
+          // NOTE: XSM modules are only remote, since once installed they
+          // are simply multiple local regular modules.
+
+          const isLocal = isRepoLocal(c.sourceRepository);
+          const isRemote = !isLocal;
+
+          let foundSomeInstalledXSM: SwordConfType | undefined;
+          const isInstalledXSM =
+            c.xsmType === 'XSM' &&
+            c.SwordModules?.every((m, i) => {
+              const mcc = localUser
+                .concat(localShared)
+                .concat(localOther)
+                .find(
+                  (mc) =>
+                    mc.module === m &&
+                    c.SwordVersions &&
+                    mc.Version === c.SwordVersions[i],
+                );
+              if (mcc) foundSomeInstalledXSM = mcc;
+              return mcc;
+            });
+
+          const foundInLocal =
+            localUser
+              .concat(localShared)
+              .concat(localOther)
+              .concat(localAudio)
+              .find(
+                (ci) =>
+                  c.xsmType === ci.xsmType &&
+                  c.module === ci.module &&
+                  // Audio modules are unversioned
+                  (c.xsmType === 'XSM_audio' || c.Version === ci.Version),
+              ) ||
+            (isInstalledXSM && foundSomeInstalledXSM);
+
+          if (foundInLocal) modrow[H.ModCol.iInfo].installedLocally = true;
+
+          if (isRemote && foundInLocal) {
+            const localModKey = repositoryModuleKey(foundInLocal);
             if (localModKey in moduleData) {
+              // shared
               modrow[H.ModCol.iInfo].shared =
                 moduleData[localModKey][H.ModCol.iInfo].shared;
+              // installed
               modrow[H.ModCol.iInstalled] =
                 moduleData[localModKey][H.ModCol.iInstalled];
+              // audio installed
               if (c.xsmType === 'XSM_audio') {
                 const inst = H.allAudioInstalled(c) ? H.ON : H.OFF;
                 modrow[H.ModCol.iInstalled] = inst;
@@ -594,25 +636,30 @@ export default class ModuleManager
             }
           }
 
+          const isRemoteSWORD = isRemote && c.xsmType === 'none';
+
+          const foundInRemoteXSM = remoteXSM.find((ci) => {
+            const i = ci.SwordModules?.indexOf(c.module) ?? -1;
+            return (
+              i > -1 &&
+              'SwordVersions' in ci &&
+              ci.SwordVersions &&
+              c.Version === ci.SwordVersions[i]
+            );
+          });
+
+          const foundInRemote =
+            remoteSWORD.concat(remoteAudio).find(
+              (ci) =>
+                c.xsmType === ci.xsmType &&
+                c.module === ci.module &&
+                // Audio modules are unversioned
+                (c.xsmType === 'XSM_audio' || c.Version === ci.Version),
+            ) || foundInRemoteXSM;
+
           if (
-            // not if in xsModsUser or xsAudio and a remote match is listed.
-            ((c.sourceRepository.path !== G.Dirs.path.xsModsUser &&
-              c.sourceRepository.path !== G.Dirs.path.xsAudio) ||
-              !remoteSWORD
-                .concat(remoteXSM)
-                .concat(remoteAudio)
-                .find(
-                  (ci) =>
-                    c.module === ci.module &&
-                    c.Version === ci.Version &&
-                    c.xsmType === ci.xsmType,
-                )) &&
-            // and not if in remote-non-xsm and a remote XSM is listed.
-            (!repoIsRemote ||
-              c.xsmType !== 'none' ||
-              !remoteXSM.find(
-                (ci) => c.module === ci.module && c.Version === ci.Version,
-              ))
+            !(isLocal && foundInRemote) &&
+            !(isRemoteSWORD && foundInRemoteXSM)
           ) {
             const code = c.Lang?.replace(/-.*$/, '') || 'en';
             if (!(code in moduleLangData)) moduleLangData[code] = [];
@@ -627,21 +674,20 @@ export default class ModuleManager
       this,
       'module',
       { selection: [] }, // reset selection which may not fit new rows
-      this.filterModuleTable(languageSelection, null),
+      this.filterModuleTable(
+        languageSelection ?? state.language.selection,
+        state.language.open,
+      ),
       true,
     );
   }
 
   // Return sorted and filtered (by language selection) module table data.
   filterModuleTable(
-    languageSelection?: string[] | null,
-    langTableOpen?: boolean | null,
+    codes: string[] | null,
+    isOpen: boolean | null,
   ): TModuleTableRow[] {
-    const state = this.state as ManagerState;
-    const codes = languageSelection ?? state.language.selection;
-    const { open } = state.language;
     const { moduleLangData } = H.Saved;
-    const isOpen = langTableOpen ?? open;
     // Select the appropriate moduleLangData lists.
     let tableData: TModuleTableRow[] = [];
     if (isOpen && codes?.length) {

@@ -1,6 +1,5 @@
 import { clipboard, shell } from 'electron';
 import i18next from 'i18next';
-import Cache from '../../cache.ts';
 import Viewport from '../../viewport.ts';
 import {
   getBooks,
@@ -266,8 +265,6 @@ const GI: Pick<GIType, 'getBooksInVKModule'> = {
 
 G.Viewport = new Viewport(G, GI, Prefs, Window);
 
-Cache.write(G, 'G');
-Cache.noclear('G');
+Data.write(G, 'GElectron');
 
-Cache.write(GI, 'GI');
-Cache.noclear('GI');
+Data.write(GI, 'GIElectron');

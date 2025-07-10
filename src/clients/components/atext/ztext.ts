@@ -301,8 +301,9 @@ export function genbookChange(
         if (next) {
           const ns: TreeNodeInfo | null = nextTreeSibling(node, toc);
           return (
+            (childNodes ? childNodes[0]?.id.toString() : null) ||
             ns?.id.toString() ||
-            (childNodes ? childNodes[0]?.id.toString() : null)
+            null
           );
         } else {
           const ps: TreeNodeInfo | null = prevTreeSibling(node, toc);

@@ -253,6 +253,7 @@ function Controller(props: ControllerProps) {
   useEffect(() => {
     return Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType) => {
+        Subscription.publish.setControllerState({ progress: -1 });
         if (!Build.isElectronApp) return;
         log.debug(
           `Renderer reset (cache, stylesheet, component): ${descriptor?.id || 'unknown'}`,

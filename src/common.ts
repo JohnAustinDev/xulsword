@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex */
 import DOMPurify from 'dompurify';
 import C from './constant.ts';
 import S, { completePanelPrefDefaultArrays } from './defaultPrefs.ts';
@@ -174,7 +175,7 @@ export function clone<T extends PrefValue>(
     else if (Array.isArray(obj)) {
       copy = [];
       anc.push(obj);
-      obj.forEach((p) => copy.push(clone(p, anc)));
+      obj.forEach((p) => copy.push(clone(p, anc, includeAny)));
     } else {
       copy = {};
       const o = obj as Record<string, unknown>;
@@ -190,7 +191,7 @@ export function clone<T extends PrefValue>(
       Object.entries(o).forEach((entry) => {
         const [k, v] = entry;
         if (typeof v !== 'function' && typeof v !== 'symbol') {
-          copy[k] = clone(v as PrefValue, anc);
+          copy[k] = clone(v as PrefValue, anc, includeAny);
         } else if (includeAny) {
           copy[k] = v;
         } else {
@@ -578,6 +579,22 @@ export function decodeOSISRef(aRef: string) {
     m = targ.match(re);
   }
   return work ? `${work}:${targ}` : targ;
+}
+
+// Encode strings to be used as file or directory names, because NTFS does not
+// allow certain characters in file names. Encoded file names must be decoded
+// using decodeURIComonent() to retrieve their original value (useful when
+// writing/reading genbk paths to/from the file system).
+export function encodeWindowsNTFSPath(filename: string, passSlash: boolean) {
+  // This includes: < > : " / \ | ? * and control characters (0-31).
+  const invalidCharsRegex = passSlash
+    ? /[<>:"|?*\x00-\x1F]/g
+    : /[<>:"|?*\x00-\x1F\\/]/g;
+  return filename.replace(invalidCharsRegex, (char) => {
+    const codePoint = char.charCodeAt(0);
+    const hex = codePoint.toString(16).toUpperCase().padStart(2, '0');
+    return `%${hex}`;
+  });
 }
 
 // This function should always be used when writing to innerHTML.
@@ -1694,6 +1711,7 @@ export function findFirstLeafNode(
   nodes: TreeNodeInfo[],
   candidates: Array<string | TreeNodeInfo>,
 ): TreeNodeInfo | undefined {
+  if (!candidates.length) candidates.push(...nodes);
   const candidateNodes = candidates.map((c) => {
     if (typeof c === 'string') {
       if (!nodes)
@@ -1783,6 +1801,17 @@ export function gbPaths(genbkTreeNodes: TreeNodeInfo[]): GenBookAudio {
   }
   addPath(genbkTreeNodes);
   return r;
+}
+
+export function gbQualifiedPath(key: string, gbAudio: GenBookAudio): string {
+  if (key in gbAudio) {
+    const ords = gbAudio[key] as number[];
+    const keys = key.split(C.GBKSEP);
+    if (ords.length === keys.filter(Boolean).length) {
+      return ords.map((o, i) => `${pad(o, 3, 0)} ${keys[i]}`).join(C.GBKSEP);
+    }
+  }
+  return '';
 }
 
 export function genBookAudio2TreeNodes(

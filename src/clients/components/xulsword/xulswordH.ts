@@ -131,7 +131,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'xsSearchButton': {
           let module = state.panels.find((m) => m);
           if (!module && G.Tabs.length) [{ module }] = G.Tabs;
-          const tbp = document.getElementById('searchText');
+          const tbp = document.getElementById('xsSearchText');
           const tb = tbp?.getElementsByTagName('input');
           const searchtext = tb?.[0].value;
           if (searchtext && module && module in G.Tab) {
@@ -323,7 +323,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             });
             break;
           }
-          case 'searchText__input': {
+          case 'xsSearchText__input': {
             const enable = /\S+/.test(value);
             if (state.searchDisabled === enable)
               this.setState({ searchDisabled: !enable });
@@ -374,15 +374,15 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           info = {
             event: 'playAudio',
             AudioCode,
-            locationky: key,
+            locationky: key ?? 'unknown',
           };
         } else {
-          const { book, chapter } = file;
+          const { book, chapter } = 'book' in file ? file : {};
           info = {
             event: 'playAudio',
             AudioCode,
-            book,
-            chapter,
+            book: book ?? 'unkown',
+            chapter: chapter ?? -1,
           };
         }
         analytics.recordElementEvent(info, target as HTMLElement);
@@ -414,32 +414,39 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               | null = null;
             if ('book' in file) {
               const { book, chapter } = file;
-              const nk = chapterChange(
-                verseKey(
-                  {
-                    book,
-                    chapter,
-                    v11n: G.Tab[swordModule].v11n || null,
-                  },
+              if (
+                typeof book !== 'undefined' &&
+                typeof chapter !== 'undefined'
+              ) {
+                const nk = chapterChange(
+                  verseKey(
+                    {
+                      book,
+                      chapter,
+                      v11n: G.Tab[swordModule].v11n || null,
+                    },
+                    renderPromise2,
+                  ),
+                  1,
                   renderPromise2,
-                ),
-                1,
-                renderPromise2,
-              );
-              if (nk)
-                selection = {
-                  swordModule,
-                  book: nk.book,
-                  chapter: nk.chapter,
-                };
+                );
+                if (nk)
+                  selection = {
+                    swordModule,
+                    book: nk.book,
+                    chapter: nk.chapter,
+                  };
+              }
             } else if ('key' in file) {
               const { key: k } = file;
-              const key = genbookChange(swordModule, k, true, renderPromise2);
-              if (key) {
-                selection = {
-                  swordModule,
-                  key,
-                };
+              if (k) {
+                const key = genbookChange(swordModule, k, true, renderPromise2);
+                if (key) {
+                  selection = {
+                    swordModule,
+                    key,
+                  };
+                }
               }
             }
             const sels = audioSelections(selection, renderPromise2);

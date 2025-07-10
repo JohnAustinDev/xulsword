@@ -197,7 +197,7 @@ export default class LocalFile {
     if (typeof o !== 'string' && typeof data === 'string' && !o.encoding) {
       o.encoding = 'utf8';
     }
-    fs.writeFileSync(this.path, data, o);
+    fs.writeFileSync(this.path, data as any, o);
   }
 
   // Return the file name as a string.

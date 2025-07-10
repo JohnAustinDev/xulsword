@@ -16,6 +16,8 @@ import {
   moveBookmarkItems,
   gbPaths,
   randomID,
+  gbQualifiedPath,
+  encodeWindowsNTFSPath,
 } from '../../../common.ts';
 import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
@@ -60,6 +62,8 @@ import type { PrintPassageState } from '../../../clients/components/printPassage
 import type { CopyPassageState } from '../../../clients/app/copyPassageWin/copyPassageWin.tsx';
 import type { SelectVKType } from '../../../clients/components/libxul/selectVK.tsx';
 import type { BMPropertiesStateWinArg } from '../../../clients/app/bmPropertiesWin/bmPropertiesWin.tsx';
+import RefParser from '../../../refParser.ts';
+import { G } from '../G.ts';
 
 // Prefs2 requires the calling window argument so that window -2 may be
 // passed. The value -2 means the Pref changes should be pushed to all
@@ -179,24 +183,7 @@ const Commands = {
       type: 'xulswordWin',
     });
     const tab = getTab();
-    const gbpaths = {} as Record<string, GenBookAudio>;
-    function title(module: string, path: number[]): string {
-      let paths = {} as GenBookAudio;
-      if (module in gbpaths) {
-        paths = gbpaths[module];
-      } else if (module && module in tab) {
-        paths = gbPaths(genBookTreeNodes(module));
-        gbpaths[module] = paths;
-      }
-      const entry = Object.entries(paths).find((e) => !diff(path, e[1]));
-      let t = '';
-      if (entry) {
-        const keys = entry[0].split(C.GBKSEP);
-        if (!keys[keys.length - 1]) keys.pop();
-        t = ` ${keys.pop()}`;
-      }
-      return t;
-    }
+
     function getFiles(dir: LocalFile) {
       let r: LocalFile[] = [];
       dir.directoryEntries.forEach((fn) => {
@@ -208,11 +195,13 @@ const Commands = {
       });
       return r;
     }
+
     const progress = (prog: number) => {
       xswindow?.setProgressBar(prog);
       xswindow?.webContents.send('progress', prog);
       if (prog === -1) xswindow = null;
     };
+
     const modulesDir = Dirs.xsAudio.append('modules');
     const audioFiles = getFiles(modulesDir);
     if (audioFiles.length) {
@@ -220,6 +209,7 @@ const Commands = {
         title: i18n.t('to.label'),
         properties: ['openDirectory', 'createDirectory'],
       });
+
       if (obj.filePaths[0]) {
         progress(0);
         let tot = 0;
@@ -227,6 +217,7 @@ const Commands = {
           const audioConfs = getAudioConfs();
           const destdir = new LocalFile(obj.filePaths[0]);
           const confWritten: string[] = [];
+          const gbpaths: { [module: string]: GenBookAudio } = {};
           audioFiles.forEach((file) => {
             const fp = fpath.parse(fpath.relative(modulesDir.path, file.path));
             const dirs = fp.dir.split(fpath.sep);
@@ -252,10 +243,9 @@ const Commands = {
                   bg.includes(dirs[0]),
                 )
               ) {
-                // Copy VerseKey audio file...
+                // Copy a VerseKey audio file...
                 const book = dirs.shift();
                 if (book) {
-                  const chapFileName = dirs.shift();
                   if (!dirs.length) {
                     const bookFileName = i18n.exists(book, { ns: 'books' })
                       ? i18n.t(book, { ns: 'books' })
@@ -269,35 +259,45 @@ const Commands = {
                       dest.create(LocalFile.DIRECTORY_TYPE, {
                         recursive: true,
                       });
-                    file.copyTo(dest, chapFileName);
+                    file.copyTo(dest, fp.base);
                     tot += 1;
                   }
                 }
               } else {
-                // Copy GenBook audio file...
-                const path: number[] = [];
-                const dest = destdir.clone().append('modules').append(module);
-                while (dirs.length) {
-                  const sub = dirs.shift();
-                  if (sub) {
-                    if (!Number.isNaN(Number(sub))) {
-                      path.push(Number(sub));
-                    }
-                    dest.append(`${sub}${title(module, path)}`);
+                // Copy a GenBook audio file...
+                let path: string[] = dirs.slice();
+                path.push(fp.name);
+                if (module in tab && tab[module].type === C.GENBOOK) {
+                  if (!(module in gbpaths))
+                    gbpaths[module] = gbPaths(genBookTreeNodes(module));
+                  const gbps = gbpaths[module];
+                  const ords = path.map((p) =>
+                    Number(p.replace(/$(\d\d\d)( .*)?$/, '$1')),
+                  );
+                  const em = Object.entries(gbps).find(
+                    (e) => !diff(e[1], ords),
+                  );
+                  if (em) {
+                    path = gbQualifiedPath(em[0], gbps)
+                      .split(C.GBKSEP)
+                      .map((s) => encodeWindowsNTFSPath(s, false));
                   }
                 }
-                if (!Number.isNaN(Number(fp.name))) {
-                  path.push(Number(fp.name));
+                if (path.every((p) => /^\d\d\d( .*)?$/.test(p))) {
+                  const leafname = path.pop();
+                  const dest = destdir.clone().append('modules').append(module);
+                  path.forEach((p) => dest.append(p));
+                  if (!dest.exists())
+                    dest.create(LocalFile.DIRECTORY_TYPE, {
+                      recursive: true,
+                    });
+                  file.copyTo(dest, `${leafname}${fpath.parse(file.path).ext}`);
+                  tot += 1;
+                } else {
+                  log.error(
+                    `Failed to parse audio file path during export: ${file.path}`,
+                  );
                 }
-                const chapFileName = `${fp.name}${title(module, path)}${
-                  fp.ext
-                }`;
-                if (!dest.exists())
-                  dest.create(LocalFile.DIRECTORY_TYPE, {
-                    recursive: true,
-                  });
-                file.copyTo(dest, chapFileName);
-                tot += 1;
               }
             }
             progress(tot / audioFiles.length);
@@ -311,6 +311,12 @@ const Commands = {
   },
 
   async importAudio() {
+    const newmods = clone(C.NEWMODS);
+    let [xswindow]: Array<BrowserWindow | null> = getBrowserWindows({
+      type: 'xulswordWin',
+    });
+    const callingWinID = xswindow.id;
+
     const obj = await dialog.showOpenDialog(
       getBrowserWindows({ type: 'xulswordWin' })[0],
       {
@@ -318,15 +324,28 @@ const Commands = {
         properties: ['openDirectory'],
       },
     );
+
     if (obj.filePaths[0]) {
       let tot = 0;
       let ctot = 0;
       const tab = getTab();
-      let [xswindow]: Array<BrowserWindow | null> = getBrowserWindows({
-        type: 'xulswordWin',
-      });
-      const callingWinID = xswindow.id;
       const audioExtRE = new RegExp(`^\\.(${C.SupportedAudio.join('|')})$`);
+      const refParse = new RefParser(
+        Build.isElectronApp
+          ? C.Locales.reduce(
+              (p, c) => {
+                p[c[0]] = G.getLocaleDigits(c[0]);
+                return p;
+              },
+              {} as Record<string, string[] | null>,
+            )
+          : { [G.i18n.language]: G.getLocaleDigits() },
+        G.getLocalizedBooks(Build.isElectronApp ? true : [G.i18n.language]),
+        {
+          locales: C.Locales.map((l) => l[0]),
+        },
+      );
+
       const getImportFiles = (dir: LocalFile): LocalFile[] => {
         const r: LocalFile[] = [];
         dir.directoryEntries.forEach((fn) => {
@@ -336,6 +355,7 @@ const Commands = {
         });
         return r;
       };
+
       const getModule = (moddir?: string): string => {
         if (!moddir) return '';
         let r = moddir;
@@ -345,145 +365,245 @@ const Commands = {
         if (r && !C.SwordModuleCharsRE.test(r)) r = '';
         return !m ? r : r?.toUpperCase(); // Legacy dir name was lowercase
       };
+
+      type CopyFilesType = [module: string, file: LocalFile, dest: string[]];
+      const copyFiles = (files: CopyFilesType[]) => {
+        files.forEach((f) => {
+          const [module, file, dest] = f;
+          const leafname = dest.pop();
+          const destDir = Dirs.xsAudio.append('modules').append(module);
+          while (dest.length) destDir.append(dest.shift() as string);
+          if (!destDir.exists()) {
+            destDir.create(LocalFile.DIRECTORY_TYPE, { recursive: true });
+          }
+          file.copyTo(destDir, `${leafname}${fpath.parse(file.path).ext}`);
+          tot += 1;
+        });
+        progress(tot / importFiles.length);
+      };
+
       const progress = (prog: number) => {
         xswindow?.setProgressBar(prog);
         xswindow?.webContents.send('progress', prog);
         if (prog === -1) xswindow = null;
       };
-      let modsd: LocalFile | null = null;
-      const gbpaths = {} as Record<string, GenBookAudio>;
-      const newmods = clone(C.NEWMODS);
-      const smodules = new Set<string>();
-      let singleModule: string | undefined;
+
       const fromdir = new LocalFile(obj.filePaths[0]);
-      const parent = fpath
-        .normalize(fpath.join(fromdir.path, '..'))
-        .split(fpath.sep)
-        .pop();
+      const modules: string[] = [];
+
+      // Import all audio in a repository or a single module directory.
+      let singleModule: string | undefined;
+      let importFiles: LocalFile[] = [];
       if (fromdir.directoryEntries.includes('modules')) {
         fromdir.append('modules');
-      } else if (parent === 'modules') {
+        importFiles = getImportFiles(fromdir);
+      } else {
         singleModule = getModule(fromdir.path.split(fpath.sep).pop());
-        fromdir.append('..');
+        if (/^[A-Za-z0-9_]+$/.test(singleModule)) {
+          fromdir.append('..');
+          importFiles = getImportFiles(fromdir);
+        } else {
+          newmods.reports.push({
+            error: `Import directory is not a valid module name or repository: ${fromdir.path}`,
+          });
+        }
       }
-      modsd = fromdir.clone();
-      modsd.append('..').append('mods.d');
-      if (!modsd.exists()) modsd = null;
-      const importFiles = getImportFiles(fromdir);
+
+      let files: CopyFilesType[] = [];
+      let moduleValid = false;
+      let genbkPaths: GenBookAudio | null = null;
+      let prependGenbkRedRoot: { ord: boolean; key: boolean } = {
+        ord: false,
+        key: false,
+      };
       progress(0);
       try {
         importFiles.forEach((file) => {
-          const dest = Dirs.xsAudio;
           const fp = fpath.parse(fpath.relative(fromdir.path, file.path));
-          fp.ext = fp.ext.toLowerCase();
-          const dirs = fp.dir.split(fpath.sep);
-          const module = getModule(dirs.shift());
+          const module = getModule(fp.dir.split(fpath.sep).shift());
+
+          if (!modules.includes(module)) {
+            // Copy each module's audio after file validation is complete.
+            if (moduleValid && files.length) copyFiles(files);
+            else modules.pop();
+            files = [];
+            moduleValid = true;
+            genbkPaths = null;
+            prependGenbkRedRoot = { ord: false, key: false };
+            if (module in tab && tab[module].type === C.GENBOOK) {
+              genbkPaths = gbPaths(genBookTreeNodes(module));
+            }
+            modules.push(module);
+          }
+
           if (
+            moduleValid &&
             module &&
-            audioExtRE.test(fp.ext) &&
+            file &&
+            audioExtRE.test(fp.ext.toLowerCase()) &&
             (!singleModule || singleModule === module)
           ) {
-            let paths = {} as GenBookAudio;
-            if (module in gbpaths) {
-              paths = gbpaths[module];
-            } else if (module in tab && tab[module].type === C.GENBOOK) {
-              paths = gbPaths(genBookTreeNodes(module));
-              gbpaths[module] = paths;
-            }
-            dest.append('modules').append(module);
-            const path: AudioPath = [];
-            const chapter = Number(fp.name.replace(/^(\d+).*?$/, '$1'));
-            let book: OSISBookType | '' = '';
-            while (dirs.length) {
-              let sub = dirs.shift();
-              if (sub) {
-                const subn = Number(sub.replace(/^(\d+).*?$/, '$1'));
-                const m2 = sub.match(/^(\d+)[-\s](.*?)$/); // legacy VerseKey markup
-                if (!book && m2)
-                  ({ book } = verseKey({ parse: m2[2], v11n: 'KJV' }));
-                else if (!book)
-                  ({ book } = verseKey({ parse: sub, v11n: 'KJV' }));
-                if (book) {
-                  sub = book;
-                  path.push(book);
-                } else {
-                  sub = pad(subn, 3, 0);
-                  path.push(subn);
+            const dest: string[] = [];
+            const path = fp.dir.split(fpath.sep);
+            path.push(fp.name);
+            path.shift(); // remove module name
+            // If a genbk module is installed to be validated against, the file
+            // must be found in the TOC, or import is aborted with errors.
+            if (genbkPaths) {
+              // Fully qualified genbk path segments begin with a 3 digit number
+              // followed by an optional title. If all path segments contain a
+              // title, then the title is looked up in the genbk TOC (with or
+              // without any redundant root). Otherwise the order is looked up
+              // in the TOC (again with or without any redundant root). NOTE:
+              // When a redundant root is required for validation, all keys of
+              // that type will have the root prepended to them.
+              const ords = path.map((p) =>
+                Number(p.replace(/^(\d+).*$/, '$1')),
+              );
+              const keys = path.map((p) =>
+                decodeURIComponent(p).replace(/^\d+ ?/, ''),
+              );
+              let em: [string, AudioPath] | undefined;
+              if (ords.length !== keys.length) {
+                newmods.reports.push({ error: `Invalid path. (${file.path})` });
+                moduleValid = false;
+              } else if (keys.every((k) => k)) {
+                // gb key lookup
+                const [kRedRoot] = Object.keys(genbkPaths);
+                let k = keys.join(C.GBKSEP);
+                if (prependGenbkRedRoot.key) k = kRedRoot + k;
+                em = Object.entries(genbkPaths).find(
+                  (e) => e[0].normalize() === k.normalize(),
+                );
+                if (!em) {
+                  em = Object.entries(genbkPaths).find(
+                    (e) => e[0].normalize() === (kRedRoot + k).normalize(),
+                  );
+                  if (em) prependGenbkRedRoot.key = true;
                 }
-                dest.append(sub);
+                if (!em)
+                  newmods.reports.push({
+                    error: `'${k}' not found in general book ${module}. (${file.path})`,
+                  });
+              } else {
+                // gb ord lookup
+                const oRedRoot = 0;
+                if (prependGenbkRedRoot.ord) ords.unshift(oRedRoot);
+                em = Object.entries(genbkPaths).find((e) => !diff(e[1], ords));
+                if (!em) {
+                  ords.unshift(oRedRoot);
+                  em = Object.entries(genbkPaths).find(
+                    (e) => !diff(e[1], ords),
+                  );
+                  if (em) prependGenbkRedRoot.ord = true;
+                  else
+                    newmods.reports.push({
+                      error: `'${ords.join('/')}' not found in general book ${module}. (${file.path})`,
+                    });
+                }
+              }
+              if (em) {
+                gbQualifiedPath(em[0], genbkPaths)
+                  .split(C.GBKSEP)
+                  .forEach((p) => dest.push(encodeWindowsNTFSPath(p, false)));
+              } else moduleValid = false;
+            } else {
+              // If files is not for an installed genbk, then only OSIS book,
+              // chapter and order number are validated.
+              let firstSub = true;
+              while (moduleValid && path.length) {
+                let p = path.shift();
+                if (p) {
+                  const pnum = Number(p.replace(/^(\d+).*?$/, '$1'));
+                  const { book } = refParse.parse(p, null)?.location ?? {
+                    book: '',
+                  };
+                  if (firstSub && book) {
+                    p = book;
+                  } else if (Number.isNaN(pnum)) {
+                    newmods.reports.push({
+                      error: `Path segment '${p}' must begin with a number. (${file.path})`,
+                    });
+                    moduleValid = false;
+                  } else p = pad(p, 3, 0);
+
+                  dest.push(p);
+                  firstSub = false;
+                } else {
+                  newmods.reports.push({
+                    error: `Empty path segment. (${file.path})`,
+                  });
+                  moduleValid = false;
+                }
               }
             }
-            path.push(chapter);
-            // Only accept the file if it has a proper AudioPath.
-            if (
-              path.length &&
-              (Object.values(C.SupportedBooks).some((bg: any) =>
-                bg.includes(path[0]),
-              ) ||
-                !Number.isNaN(Number(path[0]))) &&
-              !path.slice(1).some((x) => Number.isNaN(Number(x)))
-            ) {
-              smodules.add(module);
-              if (!dest.exists()) {
-                dest.create(LocalFile.DIRECTORY_TYPE, { recursive: true });
-              }
-              const name = pad(chapter, 3, 0);
-              file.copyTo(dest, `${name}${fp.ext}`);
-              tot += 1;
-            }
+            if (moduleValid) files.push([module, file, dest]);
           }
-          progress(tot / importFiles.length);
         });
+        if (files.length && moduleValid) copyFiles(files);
+        else modules.pop();
       } finally {
         progress(-1);
       }
+
+      // Find mods.d direcory if it exists.
+      let modsd: LocalFile | null = null;
+      modsd = fromdir.clone();
+      modsd.append('..').append('mods.d');
+      if (!modsd.exists()) modsd = null;
+
       // Update or create the config files
-      const myconfs = modsd?.directoryEntries.map((c) => {
+      const importedConfs = modsd?.directoryEntries.map((c) => {
         const cf = modsd?.clone().append(c);
-        return !cf || cf.isDirectory() ? null : parseSwordConf(cf);
+        return !cf || cf.isDirectory() ? null : parseSwordConf(cf, Prefs);
       });
-      const destconfs = getAudioConfs();
-      const modules = Array.from(smodules);
+      const installedAudio = getAudioConfs();
       modules.forEach((module) => {
-        const myconf = myconfs && myconfs.find((c) => c && c.module === module);
-        const destconf = Object.values(destconfs).find(
+        const impconf =
+          importedConfs && importedConfs.find((c) => c && c.module === module);
+        const installedConf = Object.values(installedAudio).find(
           (c) => c && c.module === module,
         );
-        const mycfile =
-          (myconf && modsd?.clone().append(myconf.filename)) || null;
-        let destcfile =
-          (destconf &&
-            Dirs.xsAudio.append('mods.d').append(destconf.filename)) ||
+        const impcfile =
+          (impconf && modsd?.clone().append(impconf.filename)) || null;
+        let instcfile =
+          (installedConf &&
+            Dirs.xsAudio.append('mods.d').append(installedConf.filename)) ||
           null;
-        const myvers = (myconf && myconf.Version) || 0;
-        const destvers = (destconf && destconf.Version) || 0;
+        const impvers = (impconf && impconf.Version) || 0;
+        const instvers = (installedConf && installedConf.Version) || 0;
         const confname = `${module.toLowerCase()}.conf`;
+
+        // Overwrite installed audio config only if the imported config is
+        // a newer version. If there is no installed config, copy the imported
+        // one if one exists, or create a minimal one.
         if (
-          mycfile?.exists() &&
-          (!destcfile?.exists() || versionCompare(myvers, destvers) === 1)
+          impcfile?.exists() &&
+          (!instcfile?.exists() || versionCompare(impvers, instvers) === 1)
         ) {
-          destcfile = Dirs.xsAudio.append('mods.d').append(confname);
-          mycfile?.copyTo(Dirs.xsAudio.append('mods.d'), confname);
-        } else if (!destcfile?.exists()) {
+          instcfile = Dirs.xsAudio.append('mods.d').append(confname);
+          impcfile?.copyTo(Dirs.xsAudio.append('mods.d'), confname);
+        } else if (!instcfile?.exists()) {
           // If necessary, auto-generate bare minimum config file
-          destcfile = Dirs.xsAudio.append('mods.d').append(confname);
-          destcfile.writeFile(
+          instcfile = Dirs.xsAudio.append('mods.d').append(confname);
+          instcfile.writeFile(
             `[${module}]\nModDrv=audio\nDataPath=./modules/${module}\nVersion=0.0.1\nDescription=Imported audio\nAudioChapters={}`,
           );
         }
+
         // Update config AudioChapters
-        if (destcfile && destcfile.exists()) {
+        if (instcfile && instcfile.exists()) {
           const audioChapters = scanAudio(
             Dirs.xsAudio.path,
             `./modules/${module}`,
           );
-          let str = destcfile.readFile();
+          let str = instcfile.readFile();
           str = str.replace(
             /^AudioChapters\b.*$/m,
             `AudioChapters=${JSON_stringify(audioChapters)}`,
           );
-          destcfile.writeFile(str);
-          newmods.audio.push(parseSwordConf(destcfile));
+          instcfile.writeFile(str);
+          newmods.audio.push(parseSwordConf(instcfile, Prefs));
           ctot += 1;
         } else {
           newmods.reports.push({ error: `(${module}) Missing config file.` });
@@ -497,6 +617,8 @@ const Commands = {
         Subscription.publish.modulesInstalled(newmods, callingWinID);
       }
     }
+
+    Subscription.publish.modulesInstalled(newmods, callingWinID);
   },
 
   async print(print: PrintOptionsType): Promise<void> {

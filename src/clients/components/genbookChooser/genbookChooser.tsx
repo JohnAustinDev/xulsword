@@ -117,7 +117,11 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
   ) {
     const props = this.props as GenbookChooserProps;
     const { onAudioClick } = props;
-    if ('nodeData' in node && node.nodeData && !ofClass('bp5-tree-node-label', e.target)) {
+    if (
+      'nodeData' in node &&
+      node.nodeData &&
+      !ofClass('bp5-tree-node-label', e.target)
+    ) {
       onAudioClick(node.nodeData as AudioPlayerSelectionGB | null, e);
       e.stopPropagation();
     }
@@ -224,12 +228,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
               // render Promise is not needed here, because audioGenBookNode()
               // only results in GI calls to GI.genBookTreeNodes, which must
               // already be cached in order to reach this point.
-              audioGenBookNode(
-                node,
-                m,
-                node.id.toString(),
-                renderPromise,
-              ),
+              audioGenBookNode(node, m, node.id.toString(), renderPromise),
             );
             treeNodes[treekey] = childNodes;
           }

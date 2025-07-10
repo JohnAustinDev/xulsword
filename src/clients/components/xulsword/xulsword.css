@@ -6,29 +6,13 @@
   z-index: 2; /* hide chooser slider, allow history popup to cover tabs */
 }
 
-#player > .vbox > div {
-  background: #f6f7f9;
+#player audio {
+  vertical-align: middle;
   border: 1px solid rgb(197 197 197);
+  background: #f6f7f9;
 }
 #player audio:focus {
   outline: none;
-}
-#searchText {
-  flex-basis: 100%;
-}
-#searchText input {
-  height: calc(var(--input-height) - 5px);
-}
-#xsSearchButton {
-  z-index: 1; /* allow bottom focus border to be visible */
-}
-@media (min-width: 768px) {
-  #searchText {
-    margin-bottom: 0;
-  }
-  #xsSearchButton {
-    margin-bottom: 0;
-  }
 }
 #audioCodeSelect {
   height: calc(var(--input-height) - 2px);
@@ -38,6 +22,21 @@
   width: 100%;
   position: relative;
   z-index: 1;
+}
+
+#xsSearchText {
+  margin-bottom: 0;
+  flex-basis: 100%;
+}
+#xsSearchText input {
+  height: calc(var(--input-height) - 5px);
+}
+#xsSearchButton {
+  margin-left: 0;
+}
+#search-tool #xsSearchButton {
+  margin-bottom: 0;
+  margin-right: 0;
 }
 
 #navigator-tool {

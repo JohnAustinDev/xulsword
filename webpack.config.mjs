@@ -470,8 +470,11 @@ export default function (opts) {
                           `localhost:${devServerPort}/${path.parse(html).name}.html`,
                         ),
                       )
-                      .join('\n') + '\n',
+                      .join('\n'),
                   );
+                  console.log(chalk.bgGreen.bold(
+                    `localhost:${devServerPort}/src/clients/webapp/bibleBrowser/bibleBrowserParent.html` + '\n'
+                  ));
                 }
                 spawn('yarn', [start], {
                   shell: true,

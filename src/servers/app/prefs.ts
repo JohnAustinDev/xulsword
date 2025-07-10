@@ -4,6 +4,7 @@ import log from 'electron-log';
 import PrefsBase from '../../prefs.ts';
 import LocalFile from '../components/localFile.ts';
 import Dirs from '../components/dirs.ts';
+import Data from '../components/data.ts';
 
 import type { PrefsGType } from '../../prefs.ts';
 
@@ -24,5 +25,7 @@ const Prefs = new PrefsBase(
   false,
   BrowserWindow,
 );
+
+Data.write(Prefs, 'PrefsElectron'); // for buried fontURL()
 
 export default Prefs as PrefsGType;

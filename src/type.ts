@@ -543,7 +543,7 @@ export type AudioPath = [(number | OSISBookType)?, ...number[]];
 
 // GenBookAudio describes audio chapter keys, existence, and disk address.
 // Each gbkey is a key to a GenBook SWORD module entry.
-export type GenBookAudio = Record<string, AudioPath>;
+export type GenBookAudio = { [gbkey: string]: AudioPath };
 
 // GenBookAudioConf is similar to GenBookAudio but is short and readable for
 // use in config files. Ex: { '000 Title/002 Title/': ['0-10', '12'] }

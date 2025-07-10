@@ -410,7 +410,7 @@ export default class Xulsword
     const searchComponent = (
       <>
         <Textbox
-          id="searchText"
+          id="xsSearchText"
           type="search"
           maxLength="24"
           onChange={handler}
@@ -695,7 +695,7 @@ export default class Xulsword
         )}
       >
         {Build.isWebApp && (
-          <Hbox id="controls" pack="center">
+          <Hbox id="controls" pack="center" className="skin">
             <Spacer flex="1" />
             <Vbox id="control-rows">
               <Hbox pack="center">
