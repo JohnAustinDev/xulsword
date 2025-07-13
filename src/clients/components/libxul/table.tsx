@@ -69,17 +69,25 @@ export type TData = TDataRow[];
 export type TDataRow = [...unknown[], TCellInfo];
 
 export type TCellInfo = {
-  loading?: boolean | ((dataRowIndex: number, dataColIndex: number) => boolean);
+  loading?:
+    | boolean
+    | ((dataRowIndex: number, dataColIndex: number, data: TData) => boolean);
   editable?:
     | boolean
-    | ((dataRowIndex: number, dataColIndex: number) => boolean);
-  intent?: Intent | ((dataRowIndex: number, dataColIndex: number) => Intent);
+    | ((dataRowIndex: number, dataColIndex: number, data: TData) => boolean);
+  intent?:
+    | Intent
+    | ((dataRowIndex: number, dataColIndex: number, data: TData) => Intent);
   classes?:
     | string[]
-    | ((dataRowIndex: number, dataColIndex: number) => string[]);
+    | ((dataRowIndex: number, dataColIndex: number, data: TData) => string[]);
   tooltip?:
     | string
-    | ((dataRowIndex: number, dataColIndex: number) => string | undefined);
+    | ((
+        dataRowIndex: number,
+        dataColIndex: number,
+        data: TData,
+      ) => string | undefined);
 };
 
 type ColumnHide = (
@@ -171,24 +179,25 @@ abstract class AbstractSortableColumn implements TSortableColumn {
       tableRowIndex: number,
       tableColIndex: number,
     ) => {
+      const { data } = props;
       const cellData = getCellData(tableRowIndex, tableColIndex);
       let { value } = cellData;
       const { info, row, dataColIndex } = cellData;
       let { editable, loading, intent, classes, tooltip } = info;
       if (typeof editable === 'function') {
-        editable = editable(row.dataRowIndex, dataColIndex);
+        editable = editable(row.dataRowIndex, dataColIndex, data);
       }
       if (typeof loading === 'function') {
-        loading = loading(row.dataRowIndex, dataColIndex);
+        loading = loading(row.dataRowIndex, dataColIndex, data);
       }
       if (typeof intent === 'function') {
-        intent = intent(row.dataRowIndex, dataColIndex);
+        intent = intent(row.dataRowIndex, dataColIndex, data);
       }
       if (typeof tooltip === 'function') {
-        tooltip = tooltip(row.dataRowIndex, dataColIndex);
+        tooltip = tooltip(row.dataRowIndex, dataColIndex, data);
       }
       if (typeof classes === 'function') {
-        classes = classes(row.dataRowIndex, dataColIndex);
+        classes = classes(row.dataRowIndex, dataColIndex, data);
       }
       if (!classes) classes = [];
       classes.push(`data-row-${row.dataRowIndex} data-col-${dataColIndex}`);
@@ -521,7 +530,7 @@ class Table extends React.Component {
     const dataCol = propCol.datacolumn;
     let value = datarow[dataCol];
     if (typeof value === 'function') {
-      value = value(row.dataRowIndex, dataCol);
+      value = value(row.dataRowIndex, dataCol, data);
     }
     const info = datarow[datarow.length - 1] as TCellInfo;
     return { value, info, row, dataColIndex: dataCol };

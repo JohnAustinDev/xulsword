@@ -56,36 +56,10 @@ import type {
 import type {
   TCellInfo,
   TCellLocation,
+  TData,
 } from '../../../components/libxul/table.tsx';
 
 export const Tables = ['language', 'module', 'repository'] as const;
-
-// Data that is saved between window resets, but isn't saved to prefs:
-export const Saved = {
-  repositoryListings: [] as RepositoryListing[],
-
-  moduleData: {} as Record<string, TModuleTableRow>,
-
-  moduleLangData: {} as Record<string, TModuleTableRow[]>,
-
-  language: {
-    data: [] as TLanguageTableRow[],
-    tableToDataRowMap: [] as number[],
-    scrollTop: 0 as number,
-  },
-
-  module: {
-    data: [] as TModuleTableRow[],
-    tableToDataRowMap: [] as number[],
-    scrollTop: 0 as number,
-  },
-
-  repository: {
-    data: [] as TRepositoryTableRow[],
-    tableToDataRowMap: [] as number[],
-    scrollTop: 0 as number,
-  },
-};
 
 export type VersekeyDialog = {
   type: 'versekey';
@@ -138,7 +112,11 @@ export type TModuleTableRow = [
   string,
   string,
   string,
-  (dataRow: number, dataCol: number) => typeof ON | typeof OFF,
+  (
+    dataRow: number,
+    dataCol: number,
+    data: TModuleTableRow[],
+  ) => typeof ON | typeof OFF,
   typeof ON | typeof OFF,
   typeof ON | typeof OFF,
   TModCellInfo,
@@ -240,23 +218,31 @@ export function classes(
 }
 
 export function modclasses() {
-  return (ri: number, ci: number) => {
+  return (ri: number, ci: number, data: TData) => {
     const cs: string[] = [];
     if (
       [ModCol.iShared, ModCol.iInstalled, ModCol.iRemove].includes(ci as never)
     )
       cs.push('checkbox-column');
-    const drow = Saved.module.data[ri];
+    const drow = data[ri];
     if (
-      (ci === ModCol.iShared && drow && drow[ModCol.iInstalled] === OFF) ||
-      (ci === ModCol.iInstalled && drow[ModCol.iInfo].installedLocally)
+      drow &&
+      ModCol.iInfo in drow &&
+      typeof drow[ModCol.iInfo] === 'object' &&
+      'conf' in (drow as any)[ModCol.iInfo]
     ) {
-      cs.push('disabled');
-    } else if (
-      ci === ModCol.iShared &&
-      drow[ModCol.iInfo].conf.xsmType === 'XSM_audio'
-    ) {
-      cs.push('disabled');
+      const drowm = drow as TModuleTableRow;
+      if (
+        (ci === ModCol.iShared && drowm[ModCol.iInstalled] === OFF) ||
+        (ci === ModCol.iInstalled && drowm[ModCol.iInfo].installedLocally)
+      ) {
+        cs.push('disabled');
+      } else if (
+        ci === ModCol.iShared &&
+        drowm[ModCol.iInfo].conf.xsmType === 'XSM_audio'
+      ) {
+        cs.push('disabled');
+      }
     }
     return cs;
   };
@@ -289,28 +275,29 @@ export function setDownloadProgress(
 
 export function onRowsReordered(
   this: ModuleManager,
-  table: (typeof Tables)[number],
+  tableName: (typeof Tables)[number],
   propColumnIndex: number,
   direction: 'ascending' | 'descending',
   tableToDataRowMap: number[],
 ) {
   const state = cloneAny(this.state) as ManagerState;
-  const tbl = state[table];
-  if (tbl) {
+  const table = state[tableName];
+  if (table) {
     // Update our tableToDataRowMap based on the new sorting.
-    Saved[table].tableToDataRowMap = tableToDataRowMap;
+    state.tables[tableName].tableToDataRowMap = tableToDataRowMap;
     // Update initial rowSort for the next Table component reset.
-    const { rowSort } = tbl;
+    const { rowSort } = table;
     if (
       rowSort.propColumnIndex !== propColumnIndex ||
       rowSort.direction !== direction
     ) {
       setTableState(
         this,
-        table,
+        tableName,
         { rowSort: { propColumnIndex, direction } },
         null,
         true,
+        state,
       );
     }
   }
@@ -322,7 +309,7 @@ export function onLangCellClick(
   cell: TCellLocation,
 ) {
   const newSelection = rowSelect(this, e, 'language', cell.tableRowIndex);
-  this.loadModuleTable(newSelection as string[]);
+  this.loadModuleTable(this.state as ManagerState, newSelection as string[]);
 }
 
 export function onModCellClick(
@@ -333,9 +320,10 @@ export function onModCellClick(
   const disabled = ofClass(['disabled'], e.target);
   if (!disabled) {
     const state = cloneAny(this.state) as ManagerState;
-    const { module } = state;
-    const { module: modtable } = Saved;
+    const { module, tables } = state;
+    const { module: modtable } = tables;
     const { selection } = module;
+    const { tableToDataRowMap } = state.tables.module;
     const { dataRowIndex: row, tableRowIndex, dataColIndex: col } = cell;
     const drow = modtable.data[row];
     if (drow && (col === ModCol.iInstalled || col === ModCol.iRemove)) {
@@ -348,7 +336,7 @@ export function onModCellClick(
         selrows.every((ri) => ri in modtable.data)
           ? selrows
           : [tableRowIndex]
-      ).map((r) => modtable.tableToDataRowMap[r] ?? r);
+      ).map((r) => tableToDataRowMap[r] ?? r);
       modtableUpdate(
         this,
         col === ModCol.iRemove ? !is : is,
@@ -360,7 +348,7 @@ export function onModCellClick(
       const is = !drow[ModCol.iInfo].shared;
       const selrows = selectionToTableRows(selection);
       (selrows.includes(tableRowIndex) ? selrows : [tableRowIndex])
-        .map((r) => modtable.tableToDataRowMap[r] ?? r)
+        .map((r) => tableToDataRowMap[r] ?? r)
         .forEach((r) => {
           const rrow = modtable.data[r];
           if (rrow && rrow[ModCol.iInstalled] === ON) {
@@ -392,7 +380,7 @@ export function onRepoCellClick(
       switchRepo(
         this,
         (selrows.includes(tableRowIndex) ? selrows : [tableRowIndex]).map(
-          (r) => Saved.repository.tableToDataRowMap[r] ?? r,
+          (r) => state.tables.repository.tableToDataRowMap[r] ?? r,
         ),
         repotable.data[row][RepCol.iState] === OFF,
       ).catch((er) => {
@@ -453,20 +441,23 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
       case 'click': {
         const e = ev as React.MouseEvent;
         const [id, idext] = e.currentTarget.id.split('.');
+        const state = cloneAny(this.state) as ManagerState;
         switch (id) {
           case 'languageListClose':
           case 'languageListOpen': {
             const open = id === 'languageListOpen';
-            const state = cloneAny(this.state) as ManagerState;
             setTableState(
               this,
               'module',
-              null,
-              this.filterModuleTable(state.language.selection, open),
+              { selection: [] }, // reset selection which may not fit new rows,
+              this.filterModuleTable(
+                state.tables.module.modules,
+                state.language.selection,
+                open,
+              ),
               true,
               {
                 language: { ...state.language, open },
-                module: { ...state.module, selection: [] },
               },
             );
             scrollToSelectedLanguage(this);
@@ -475,11 +466,10 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           case 'moduleInfo': {
             const div = document.getElementById('moduleInfo');
             if (div) {
-              const state = cloneAny(this.state) as ManagerState;
               const { module } = state;
               const { module: modtable } = state.tables;
               const { selection } = module;
-              const infoConfigs = selectionToDataRows('module', selection)
+              const infoConfigs = selectionToDataRows(this, 'module', selection)
                 .map((r) => {
                   return modtable.data[r][ModCol.iInfo].conf || null;
                 })
@@ -524,15 +514,13 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               // Un-persist these table selections.
               setTableState(this, 'module', { selection: [] });
               setTableState(this, 'repository', { selection: [] });
-              const state = cloneAny(this.state) as ManagerState;
               const { repositories } = state;
-              const { repository: repotable } = state.tables;
-              const { moduleData } = Saved;
+              const { repository: repotable, module: modtable } = state.tables;
               // Get a list of all currently installed modules (those found in any
               // enabled local repository).
               repotable.data.forEach((rtd, i) => {
                 if (isRepoLocal(rtd[RepCol.iInfo].repo)) {
-                  const listing = Saved.repositoryListings[i];
+                  const listing = repotable.repositoryListings[i];
                   if (Array.isArray(listing)) {
                     listing.forEach((c) => installed.push(c));
                   }
@@ -541,7 +529,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
 
               // Remove modules (only when there are no repositories)
               if (!repositories) {
-                Object.values(moduleData).forEach((row) => {
+                modtable.data.forEach((row) => {
                   if (row[ModCol.iInstalled] === OFF) {
                     const modkey = repositoryModuleKey(row[ModCol.iInfo].conf);
                     const lconf = installed.find(
@@ -567,26 +555,29 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               }
 
               // Move modules (between the shared and xulsword builtins).
-              Object.values(moduleData).forEach((row) => {
+              modtable.data.forEach((row) => {
                 if (row[ModCol.iInfo].conf.xsmType !== 'XSM_audio') {
                   const { shared } = row[ModCol.iInfo];
                   const module = row[ModCol.iModule];
                   if (!removeMods.map((m) => m.name).includes(module)) {
-                    const modkey = repositoryModuleKey(row[ModCol.iInfo].conf);
-                    const conf = installed.find(
-                      (c) => repositoryModuleKey(c) === modkey,
+                    // start with conf from modtable
+                    const { conf } = row[ModCol.iInfo];
+                    // find conf of actual installed module to move from
+                    const confFrom = installed.find(
+                      (c) =>
+                        c.module === conf.module && c.Version === conf.Version,
                     );
                     const builtIns = builtinRepos(G);
                     // May only move into shared, or from shared to UserMods.
                     const toRepo = shared ? builtIns[0] : builtIns[1];
                     if (
-                      conf &&
-                      repositoryKey(conf.sourceRepository) !==
+                      confFrom &&
+                      repositoryKey(confFrom.sourceRepository) !==
                         repositoryKey(toRepo)
                     ) {
                       moveMods.push({
                         name: module,
-                        fromRepo: conf.sourceRepository,
+                        fromRepo: confFrom.sourceRepository,
                         toRepo,
                       });
                     }
@@ -620,19 +611,21 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                           // Find the moduleData row associated with this
                           // download.
                           downloadkey = downloadKey(dl);
-                          const key = Object.keys(moduleData).find(
-                            (k) =>
-                              downloadKey(getModuleDownload(k)) === downloadkey,
+                          const row = modtable.data.find(
+                            (r) =>
+                              downloadKey(
+                                getModuleDownload(
+                                  this,
+                                  repositoryModuleKey(r[ModCol.iInfo].conf),
+                                ),
+                              ) === downloadkey,
                           );
-                          if (
-                            key &&
-                            moduleData[key][ModCol.iInstalled] === ON
-                          ) {
+                          if (row && row[ModCol.iInstalled] === ON) {
                             install.push({
                               download: dl,
                               toRepo:
                                 builtinRepos(G)[
-                                  moduleData[key][ModCol.iInfo].shared ? 0 : 1
+                                  row[ModCol.iInfo].shared ? 0 : 1
                                 ],
                             });
                           }
@@ -667,12 +660,9 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             break;
           }
           case 'repoAdd': {
-            const state = cloneAny(this.state) as ManagerState;
             const { repositories } = state;
             if (repositories) {
-              const newCustomRepos = clone(repositories.custom);
-              const { repository: repotables } = state.tables;
-              const rawdata = Saved.repositoryListings;
+              const { repository: repotable } = state.tables;
               const repo: Repository = {
                 name: '?',
                 domain: C.Downloader.localfile,
@@ -688,12 +678,17 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                 ['custom-repo'],
               );
               row[RepCol.iInfo].editable = editable();
-              repotables.data.unshift(row);
-              rawdata.unshift(null);
-              newCustomRepos.push(repo);
-              setTableState(this, 'repository', null, repotables.data, true, {
-                repositories: { ...repositories, custom: newCustomRepos },
-              });
+              repotable.data.unshift(row);
+              repotable.repositoryListings.unshift(null);
+              repositories.custom.push(repo);
+              setTableState(
+                this,
+                'repository',
+                null,
+                repotable.data,
+                true,
+                state,
+              );
               switchRepo(this, [0], false).catch((er) => {
                 log.error(er);
               });
@@ -701,16 +696,16 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             break;
           }
           case 'repoDelete': {
-            const state = cloneAny(this.state) as ManagerState;
             const { repositories, repository } = state;
             if (repositories && repository) {
-              const newCustomRepos = clone(repositories.custom);
+              const newCustomRepos = repositories.custom;
               const { repository: repotable } = state.tables;
               const { selection } = repository;
               const repotableData = repotable.data.slice();
-              const { repositoryListings } = Saved;
+              const { repositoryListings } = repotable;
               const rows =
-                (repository && selectionToDataRows('repository', selection)) ||
+                (repository &&
+                  selectionToDataRows(this, 'repository', selection)) ||
                 [];
               rows.reverse().forEach((r) => {
                 const drow = repotable.data[r];
@@ -727,16 +722,20 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                   }
                 }
               });
-              setTableState(this, 'repository', null, repotableData, true, {
-                repositories: { ...repositories, custom: newCustomRepos },
-              });
-              this.loadLanguageTable();
-              this.loadModuleTable();
+              setTableState(
+                this,
+                'repository',
+                null,
+                repotableData,
+                true,
+                state,
+              );
+              this.loadLanguageTable(state, repositoryListings);
+              this.loadModuleTable(state);
             }
             break;
           }
           case 'repoCancel': {
-            const state = cloneAny(this.state) as ManagerState;
             const { repository: repotable } = state.tables;
             G.Module.cancel(
               repotable.data
@@ -851,12 +850,11 @@ export function rowSelect(
 
 // Get a list of disabled repositories: usually state.repositories.disabled,
 // but if that is null, return the 'disabled' property of each repository.
-function getDisabledRepos(xthis: ModuleManager) {
-  const state = xthis.state as ManagerState;
+function getDisabledRepos(state: ManagerState) {
   const { repositories } = state;
   if (repositories) {
     const { disabled } = repositories;
-    const { repository: repotable } = Saved;
+    const { repository: repotable } = state.tables;
     return disabled
       ? disabled.slice()
       : repotable.data
@@ -873,9 +871,10 @@ function getDisabledRepos(xthis: ModuleManager) {
 function repoRowEnableDisable(
   enable: boolean,
   row: TRepositoryTableRow,
-  disabledRepos: string[],
+  disabledReposx: string[] | null,
   stateIntent = Intent.NONE as Intent,
 ): string[] {
+  const disabledRepos = disabledReposx ?? [];
   const rowkey = repositoryKey(row[RepCol.iInfo].repo);
   const disabledIndex = disabledRepos.findIndex((drs) => {
     return drs === rowkey;
@@ -907,19 +906,20 @@ export async function switchRepo(
   const { repositories } = state;
   if (repositories) {
     const { repository: repotable } = state.tables;
+    const { repositoryListings } = repotable;
     const repoTableData = repotable.data.slice();
-    const disabled = getDisabledRepos(xthis);
+    repositories.disabled = getDisabledRepos(state);
     const cancel: Parameters<GType['Module']['cancel']>[0] = [];
     rows.forEach((r) => {
       const drowWas = repotable.data[r];
       const drow = repoTableData[r] as TRepositoryTableRow;
       const unswitchable = !drowWas || drowWas[RepCol.iInfo].repo.builtin;
-      if (drow && !unswitchable) {
+      if (drow && !unswitchable && repositories.disabled) {
         if (
           onOrOff !== false &&
           (onOrOff === true || drowWas[RepCol.iState] === OFF)
         ) {
-          repoRowEnableDisable(true, drow, disabled);
+          repoRowEnableDisable(true, drow, repositories.disabled);
         } else if (drow[RepCol.iInfo].loading) {
           drow[RepCol.iInfo].intent = intent(RepCol.iState, 'warning');
           cancel[r] = {
@@ -928,7 +928,7 @@ export async function switchRepo(
             type: 'ftp',
           };
         } else {
-          repoRowEnableDisable(false, drow, disabled);
+          repoRowEnableDisable(false, drow, repositories.disabled);
         }
       }
     });
@@ -936,12 +936,7 @@ export async function switchRepo(
       G.Module.cancel(cancel.filter((o) => o)).catch((er) => {
         log.error(er);
       });
-    const disreps = disabled
-      ? {
-          repositories: { ...repositories, disabled },
-        }
-      : undefined;
-    setTableState(xthis, 'repository', null, repoTableData, true, disreps);
+    setTableState(xthis, 'repository', null, repoTableData, true, state);
     const newrepos: Array<FTPDownload | null> = repoTableData.map((r, i) => {
       return !rows.includes(i) || cancel[i] || r[RepCol.iInfo].repo.disabled
         ? null
@@ -952,7 +947,7 @@ export async function switchRepo(
           };
     });
     const listing = await G.Module.repositoryListing(newrepos);
-    handleListings(xthis, listing);
+    handleListings(xthis, state, listing);
   }
 }
 
@@ -961,14 +956,14 @@ export async function switchRepo(
 // possible module updates of installed modules.
 export function handleListings(
   xthis: ModuleManager,
+  state: ManagerState,
   listingsAndErrors: Array<RepositoryListing | string>,
 ): void {
-  const state = cloneAny(xthis.state) as ManagerState;
   const { repositories } = state;
-  const { repositoryListings } = Saved;
-  if (repositories) {
-    const { repository } = state.tables;
-    const disabled = getDisabledRepos(xthis);
+  const { repository } = state.tables;
+  const { repositoryListings } = repository;
+  if (repositories && repositories.disabled) {
+    repositories.disabled = getDisabledRepos(state);
     listingsAndErrors.forEach((l, i) => {
       const drow = repository.data[i];
       if (l !== null && drow) {
@@ -983,7 +978,7 @@ export function handleListings(
             timeout: newintent === Intent.WARNING ? 5000 : -1,
             intent: newintent,
           });
-          repoRowEnableDisable(false, drow, disabled, newintent);
+          repoRowEnableDisable(false, drow, repositories.disabled, newintent);
           if (!Array.isArray(repositoryListings[i])) {
             repositoryListings[i] = null;
           }
@@ -997,12 +992,6 @@ export function handleListings(
       }
       return null;
     });
-    const disreps = disabled
-      ? {
-          repositories: { ...repositories, disabled },
-        }
-      : undefined;
-    setTableState(xthis, 'repository', null, repository.data, true, disreps);
   } else {
     // Then only local repositories are being considered, with no table to update.
     listingsAndErrors.forEach((l, i) => {
@@ -1021,12 +1010,14 @@ export function handleListings(
       return l;
     });
   }
-  xthis.loadLanguageTable();
-  xthis.loadModuleTable();
+
+  setTableState(xthis, 'repository', null, repository.data, true, state);
+  xthis.loadLanguageTable(state, repositoryListings);
+  xthis.loadModuleTable(state);
 
   if (repositories) {
-    checkForModuleUpdates(xthis);
-    checkForSuggestions(xthis);
+    checkForModuleUpdates(xthis, state);
+    checkForSuggestions(xthis, state);
   }
 }
 
@@ -1035,11 +1026,12 @@ export function handleListings(
 // downloading the updates, but ask whether to replace each installed module
 // with the update before doing so. This function should be called after
 // updateRepositoryLists().
-export function checkForModuleUpdates(xthis: ModuleManager) {
-  const { repositoryListings, repository: reptable, moduleLangData } = Saved;
+export function checkForModuleUpdates(xthis: ModuleManager, state: ManagerState) {
+  const { module, repository } = state.tables;
+  const { repositoryListings } = repository;
   const updateable: SwordConfType[] = [];
   // Get modules in the local xulsword repository.
-  reptable.data.forEach((rtd, i) => {
+  repository.data.forEach((rtd, i) => {
     if (rtd[RepCol.iInfo].repo.path === G.Dirs.path.xsModsUser) {
       const listing = repositoryListings[i];
       if (Array.isArray(listing)) listing.forEach((c) => updateable.push(c));
@@ -1048,7 +1040,7 @@ export function checkForModuleUpdates(xthis: ModuleManager) {
   // Add modules in other local SWORD repositories IF they are not in the
   // local xulsword repository. Modules in the shared repository are never
   // auto-updated, but newer versions will be installed into the xulsword repo.
-  reptable.data.forEach((rtd, i) => {
+  repository.data.forEach((rtd, i) => {
     if (
       isRepoLocal(rtd[RepCol.iInfo].repo) &&
       rtd[RepCol.iInfo].repo.path !== G.Dirs.path.xsAudio
@@ -1067,7 +1059,7 @@ export function checkForModuleUpdates(xthis: ModuleManager) {
   const moduleUpdates: ModuleUpdates[] = [];
   updateable.forEach((inst) => {
     const candidates: ModuleUpdates[] = [];
-    moduleLangData.allmodules.forEach((row) => {
+    module.data.forEach((row) => {
       const { conf } = row[ModCol.iInfo];
       if (
         inst.sourceRepository &&
@@ -1198,8 +1190,8 @@ function installModuleUpdates(
   modtableUpdate(xthis, ons, rows);
 }
 
-function checkForSuggestions(xthis: ModuleManager) {
-  const { moduleLangData } = Saved;
+function checkForSuggestions(xthis: ModuleManager, state: ManagerState) {
+  const { module } = state.tables;
   const suggested = G.Prefs.getComplexValue(
     'moduleManager.suggested',
   ) as typeof S.prefs.moduleManager.suggested;
@@ -1208,7 +1200,7 @@ function checkForSuggestions(xthis: ModuleManager) {
     // Filter from Prefs any suggested mods that are already installed.
     suggested[locale] = suggested[locale].filter(
       (m) =>
-        !Object.values(moduleLangData.allmodules).some(
+        !Object.values(module.data).some(
           (r) => r[ModCol.iModule] === m && r[ModCol.iInstalled] !== OFF,
         ),
     );
@@ -1216,18 +1208,19 @@ function checkForSuggestions(xthis: ModuleManager) {
       // Build the list of modules to suggest.
       const suggestions: ModuleUpdates[] = [];
       suggested[locale].forEach((m) => {
-        const row: TModuleTableRow | null = Object.values(
-          moduleLangData.allmodules,
-        ).reduce((p: TModuleTableRow | null, c: TModuleTableRow) => {
-          if (c[ModCol.iModule] !== m) return p;
-          if (!p) return c;
-          return versionCompare(
-            c[ModCol.iInfo].conf.Version || 0,
-            p[ModCol.iInfo].conf.Version || 0,
-          ) === 1
-            ? c
-            : p;
-        }, null);
+        const row: TModuleTableRow | null = Object.values(module.data).reduce(
+          (p: TModuleTableRow | null, c: TModuleTableRow) => {
+            if (c[ModCol.iModule] !== m) return p;
+            if (!p) return c;
+            return versionCompare(
+              c[ModCol.iInfo].conf.Version || 0,
+              p[ModCol.iInfo].conf.Version || 0,
+            ) === 1
+              ? c
+              : p;
+          },
+          null,
+        );
         if (row) {
           const { conf } = row[ModCol.iInfo];
           suggestions.push({
@@ -1247,55 +1240,67 @@ function checkForSuggestions(xthis: ModuleManager) {
   }
 }
 
-export function getModuleRowXsmSiblings(modrepkey: string): string[] {
-  const { moduleData } = Saved;
-  const data = (modrepkey in moduleData && moduleData[modrepkey]) ?? null;
-  if (!data) return [];
-  if (data[ModCol.iInfo].conf.xsmType === 'XSM') {
-    return Object.entries(moduleData)
-      .map((entry) =>
-        entry[1][ModCol.iInfo].conf.DataPath ===
-        data[ModCol.iInfo].conf.DataPath
-          ? entry[0]
-          : null,
-      )
-      .filter((i) => i !== null) as string[];
+export function getModuleRowXsmSiblings(
+  xthis: ModuleManager,
+  modrepkey: string,
+): string[] {
+  const state = xthis.state as ManagerState;
+  const { module: modTable } = state.tables;
+  const { data } = modTable;
+  const row = data.find(
+    (r) => repositoryModuleKey(r[ModCol.iInfo].conf) === modrepkey,
+  );
+  if (!row) return [];
+  if (row[ModCol.iInfo].conf.xsmType === 'XSM') {
+    return data
+      .map((r) => {
+        return r[ModCol.iInfo].conf.DataPath === row[ModCol.iInfo].conf.DataPath
+          ? repositoryModuleKey(r[ModCol.iInfo].conf)
+          : null;
+      })
+      .filter(Boolean) as string[];
   }
   return [modrepkey];
 }
 
-export function getModuleDownload(modrepkey: string): Download | null {
-  const { moduleData } = Saved;
-  const data = (modrepkey in moduleData && moduleData[modrepkey]) ?? null;
-  if (!data) return null;
-  const { xsmType } = data[ModCol.iInfo].conf;
+export function getModuleDownload(
+  xthis: ModuleManager,
+  modrepkey: string,
+): Download | null {
+  const state = xthis.state as ManagerState;
+  const { data } = state.tables.module;
+  const row = data.find(
+    (r) => repositoryModuleKey(r[ModCol.iInfo].conf) === modrepkey,
+  );
+  if (!row) return null;
+  const { xsmType } = row[ModCol.iInfo].conf;
   if (xsmType === 'XSM') {
     return {
-      ...data[ModCol.iInfo].repo,
-      file: data[ModCol.iInfo].conf.DataPath,
+      ...row[ModCol.iInfo].repo,
+      file: row[ModCol.iInfo].conf.DataPath,
       type: 'ftp',
     };
   }
   if (xsmType === 'XSM_audio') {
     // Remote audio repositories have URL as DataPath.
-    if (data[ModCol.iInfo].conf.DataPath.startsWith('http'))
+    if (row[ModCol.iInfo].conf.DataPath.startsWith('http'))
       return {
-        http: data[ModCol.iInfo].conf.DataPath,
-        confname: data[ModCol.iInfo].conf.filename,
-        ...data[ModCol.iInfo].repo,
+        http: row[ModCol.iInfo].conf.DataPath,
+        confname: row[ModCol.iInfo].conf.filename,
+        ...row[ModCol.iInfo].repo,
         type: 'http',
       };
     // Local audio repositories have local path as DataPath.
     return {
-      ...data[ModCol.iInfo].repo,
-      file: data[ModCol.iInfo].conf.DataPath,
+      ...row[ModCol.iInfo].repo,
+      file: row[ModCol.iInfo].conf.DataPath,
       type: 'ftp',
     };
   }
   return {
-    module: data[ModCol.iModule],
-    confname: data[ModCol.iInfo].conf.filename,
-    ...data[ModCol.iInfo].repo,
+    module: row[ModCol.iModule],
+    confname: row[ModCol.iInfo].conf.filename,
+    ...row[ModCol.iInfo].repo,
     type: 'module',
   };
 }
@@ -1423,7 +1428,7 @@ async function promptAudioChapters(
 function handleError(xthis: ModuleManager, er: any, modrepkeys: string[]) {
   const state = xthis.state as ManagerState;
   const { module: modtable } = state.tables;
-  const { moduleData } = Saved;
+  const { data } = modtable;
   log.error(er);
   let message;
   if (typeof er === 'string') message = er;
@@ -1441,8 +1446,13 @@ function handleError(xthis: ModuleManager, er: any, modrepkeys: string[]) {
     });
   }
   modrepkeys.forEach((k) => {
-    moduleData[k][ModCol.iInfo].loading = false;
-    moduleData[k][ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
+    const row = data.find(
+      (r) => repositoryModuleKey(r[ModCol.iInfo].conf) === k,
+    );
+    if (row) {
+      row[ModCol.iInfo].loading = false;
+      row[ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
+    }
   });
   setTableState(xthis, 'module', null, modtable.data, true);
   return null;
@@ -1454,17 +1464,21 @@ export async function download(
   xthis: ModuleManager,
   configs: SwordConfType[],
 ): Promise<void> {
-  const { module: modtable } = Saved;
+  const state = xthis.state as ManagerState;
+  const { tables } = state;
+  const { module: modtable } = tables;
 
   // Get download objects, prompting user as necessary.
   const dlpromises = configs.map(async (conf) => {
     const modkey = repositoryModuleKey(conf);
-    const modkeys = getModuleRowXsmSiblings(modkey);
-    const dlobj = getModuleDownload(modkey);
+    const modkeys = getModuleRowXsmSiblings(xthis, modkey);
+    const dlobj = getModuleDownload(xthis, modkey);
     if (dlobj) {
-      const { moduleData } = Saved;
-      modkeys.forEach((k) => {
-        moduleData[k][ModCol.iInfo].loading = loading(ModCol.iInstalled);
+      modkeys.forEach((mk) => {
+        const row = modtable.data.find(
+          (r) => repositoryModuleKey(r[ModCol.iInfo].conf) === mk,
+        );
+        if (row) row[ModCol.iInfo].loading = loading(ModCol.iInstalled);
       });
       if ('http' in dlobj && conf.xsmType === 'XSM_audio') {
         return promptAudioChapters(xthis, conf)
@@ -1508,10 +1522,15 @@ export async function download(
   // Now that all downloads are complete, update the module table.
   dls.forEach((dl, i) => {
     if (dl) {
-      const { moduleData } = Saved;
       Object.values(dl).forEach((result) => {
         const modrepkey = repositoryModuleKey(configs[i]);
-        const modkeys = getModuleRowXsmSiblings(modrepkey);
+        const modkeys = getModuleRowXsmSiblings(xthis, modrepkey);
+        const modrows = modkeys.map((mk) =>
+          modtable.data.find(
+            (r) => repositoryModuleKey(r[ModCol.iInfo].conf) === mk,
+          ),
+        );
+
         let newintent: Intent = Intent.NONE;
         if (typeof result === 'string') {
           if (result.startsWith(C.UI.Manager.cancelMsg)) {
@@ -1526,20 +1545,17 @@ export async function download(
           }
         } else if (result > 0) {
           newintent = Intent.SUCCESS;
-          modkeys.forEach((k) => {
-            moduleData[k][ModCol.iInstalled] = ON;
+          modrows.forEach((r) => {
+            if (r) r[ModCol.iInstalled] = ON;
           });
         } else {
           newintent = Intent.WARNING;
-          modkeys.forEach((k) => {
-            moduleData[k][ModCol.iInstalled] = OFF;
+          modrows.forEach((r) => {
+            if (r) r[ModCol.iInstalled] = OFF;
           });
         }
-        modkeys.forEach((k) => {
-          moduleData[k][ModCol.iInfo].intent = intent(
-            ModCol.iInstalled,
-            newintent,
-          );
+        modrows.forEach((r) => {
+          if (r) r[ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
         });
       });
     }
@@ -1553,30 +1569,39 @@ function modtableUpdate(
   configs: SwordConfType[],
   iRemove = false,
 ) {
-  const { moduleData } = Saved;
+  const state = xthis.state as ManagerState;
+  const { module: modtable } = state.tables;
   const doDownload: SwordConfType[] = [];
   const cancel: Download[] = [];
   configs.forEach((conf, i) => {
-    const row = moduleData[repositoryModuleKey(conf)];
-    if (Array.isArray(on) ? on[i] : on) {
-      row[ModCol.iRemove] = OFF;
-      if (row[ModCol.iInfo].loading) {
-        // if installing a module that's loading, ignore and do nothing
-      } else if (iRemove || isRepoLocal(row[ModCol.iInfo].repo)) {
-        // if installing a module is already installed or downloaded, just check the installed box
-        row[ModCol.iInstalled] = ON;
-        // otherwise download the module
-      } else doDownload.push(conf);
-    } else if (row[ModCol.iInfo].loading) {
-      // if uninstalling a module that is loading, cancel the download
-      row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'warning');
-      const dl = getModuleDownload(repositoryModuleKey(row[ModCol.iInfo].conf));
-      if (dl) cancel.push(dl);
-    } else {
-      // otherwise uncheck the installed box and check the remove box
-      row[ModCol.iRemove] = ON;
-      row[ModCol.iInstalled] = OFF;
-      row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'none');
+    const row = modtable.data.find(
+      (r) =>
+        repositoryModuleKey(r[ModCol.iInfo].conf) === repositoryModuleKey(conf),
+    );
+    if (row) {
+      if (Array.isArray(on) ? on[i] : on) {
+        row[ModCol.iRemove] = OFF;
+        if (row[ModCol.iInfo].loading) {
+          // if installing a module that's loading, ignore and do nothing
+        } else if (iRemove || isRepoLocal(row[ModCol.iInfo].repo)) {
+          // if installing a module is already installed or downloaded, just check the installed box
+          row[ModCol.iInstalled] = ON;
+          // otherwise download the module
+        } else doDownload.push(conf);
+      } else if (row[ModCol.iInfo].loading) {
+        // if uninstalling a module that is loading, cancel the download
+        row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'warning');
+        const dl = getModuleDownload(
+          xthis,
+          repositoryModuleKey(row[ModCol.iInfo].conf),
+        );
+        if (dl) cancel.push(dl);
+      } else {
+        // otherwise uncheck the installed box and check the remove box
+        row[ModCol.iRemove] = ON;
+        row[ModCol.iInstalled] = OFF;
+        row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'none');
+      }
     }
   });
   if (cancel.length)
@@ -1587,7 +1612,7 @@ function modtableUpdate(
     download(xthis, doDownload).catch((er) => {
       log.error(er);
     });
-  if (configs.length) setTableState(xthis, 'module', null, null, true);
+  if (configs.length) setTableState(xthis, 'module', null, modtable.data, true);
 }
 
 // Do any or all of the following with minimum setState() calls:
@@ -1612,13 +1637,13 @@ export function setTableState(
   const state = xthis.state as ManagerState;
   const news: Partial<ManagerState> = s || {};
   // Ignore new tableState if it is null (meaning table doesn't exist).
-  if (tableState && state[table] !== null) {
+  if (tableState && (xthis.state as ManagerState)[table] !== null) {
     news[table] = { ...state[table], ...tableState } as any;
   }
-  if (tableData) {
-    news.tables = { ...state.tables };
+  const mergeWith = 'tables' in news ? news.tables : state.tables;
+  if (tableData && mergeWith) {
+    news.tables = { ...mergeWith };
     news.tables[table].data = tableData;
-    Saved[table].data = tableData;
   }
   if (Object.keys(news).length) xthis.sState(news);
   // Two setState() calls must be used: first call allows statePrefs to be
@@ -1636,20 +1661,23 @@ export function setTableState(
 // Given a table selection, return the selected data rows in ascending order.
 // This is like selectionToRows, but returns data rows rather than table rows.
 export function selectionToDataRows(
+  xthis: ModuleManager,
   table: (typeof Tables)[number],
   selection: RowSelection | string[],
 ): number[] {
+  const state = xthis.state as ManagerState;
+  const { tables } = state;
   if (table === 'language') {
     return selection
       .map((code) => {
-        const { data } = Saved[table];
+        const { data } = tables[table];
         return data.findIndex((r) => r[LanCol.iInfo].code === code);
       })
       .filter((i) => i !== -1);
   }
   const tablerows = selectionToTableRows(selection as RowSelection);
   return tablerows
-    .map((r) => Saved[table].tableToDataRowMap[r] ?? r)
+    .map((r) => state.tables[table].tableToDataRowMap[r] ?? r)
     .sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
 }
 
