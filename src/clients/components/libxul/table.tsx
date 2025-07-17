@@ -10,7 +10,13 @@ import {
   Utils,
   SelectionModes,
 } from '@blueprintjs/table';
-import { clone, localizeString, ofClass, randomID } from '../../../common.ts';
+import {
+  clone,
+  diff,
+  localizeString,
+  ofClass,
+  randomID,
+} from '../../../common.ts';
 import { G } from '../../G.ts';
 import { addClass, xulPropTypes, topHandle } from './xul.tsx';
 import { Box } from './boxes.tsx';
@@ -41,7 +47,7 @@ export type TinitialRowSort = {
 
 export type TonRowsReordered = (
   propColumnIndex: number,
-  direction: 'ascending' | 'descending',
+  direction: 'ascending' | 'descending' | 'tableToDataRowMap',
   tableToDataRowMap: number[],
 ) => void;
 
@@ -701,8 +707,12 @@ class Table extends React.Component {
       else {
         this.sState({ sortedIndexMap, reset: randomID() });
       }
-      if (onRowsReordered) {
-        onRowsReordered(propColumnIndex, direction, sortedIndexMap);
+      if (onRowsReordered && (!sim.length || diff(sim, sortedIndexMap))) {
+        onRowsReordered(
+          propColumnIndex,
+          s ? 'tableToDataRowMap' : direction,
+          sortedIndexMap,
+        );
       }
     }
   }

@@ -52,7 +52,7 @@ type PanelChangeState = Pick<
 >;
 
 export class Viewport {
-  #Prefs;
+  #Prefs: GAddWindowId['Prefs'];
 
   #G;
 
@@ -463,7 +463,7 @@ export class Viewport {
     typeof S.prefs.xulsword,
     'panels' | 'mtModules' | 'tabs' | 'location'
   > {
-    const id = (arguments[2] as number) ?? -1;
+    const id = (arguments[3] as number) ?? -1;
     const { skipCallbacks, clearRendererCaches } = {
       skipCallbacks: false,
       clearRendererCaches: true,
@@ -478,21 +478,31 @@ export class Viewport {
     }
 
     const xulsword = !isViewportWin
-      ? (this.#Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword)
+      ? (this.#Prefs.getComplexValue(
+          'xulsword',
+          undefined,
+          id,
+        ) as typeof S.prefs.xulsword)
       : (isViewportWin.getComplexValue('xulswordState', id) as XulswordState);
 
     this.getTabChange(options, xulsword, renderPromise);
     const result = keep(xulsword, ['panels', 'mtModules', 'tabs', 'location']);
 
-    if (!isViewportWin)
+    if (!isViewportWin) {
       this.#Prefs.mergeValue(
         'xulsword',
         result,
         'prefs',
         skipCallbacks,
         clearRendererCaches,
+        id,
       );
-    else {
+      // The previous prefs mergeValue will not reset the calling window to
+      // prevent cycling (usually the calling window updates itself). In this
+      // case the calling window needs an explicit reset to apply the new pref
+      // values.
+      this.#window?.reset('all', { id });
+    } else {
       isViewportWin.setComplexValue('xulswordState', xulsword, id);
       isViewportWin.reset('all', 'self', id);
     }

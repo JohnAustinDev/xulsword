@@ -48,11 +48,6 @@
   border-right: none;
 }
 
-.progress-container {
-  height: 100%;
-  padding: 10px;
-}
-
 .moduleManager .bp5-dialog-body .label {
   white-space: unset;
   margin-bottom: 10px;
@@ -67,4 +62,8 @@
 
 .moduleManagerWin .menulist:has(select[disabled]) {
   display: none;
+}
+
+.allowInternet-message {
+  margin-top: 10px;
 }

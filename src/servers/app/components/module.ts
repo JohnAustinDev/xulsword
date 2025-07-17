@@ -165,20 +165,23 @@ export function scanAudio(
 // NOTE: LibSword can be ready upon entering this function, but it will
 // be quit before modules are removed, then other functions are responsible
 // for restarting it.
-export function moveRemoveModules(
+export function moveRemoveCopyModules(
   modules: string,
   repositoryPath: string,
   moveTo?: string,
+  copy?: boolean,
 ): boolean;
-export function moveRemoveModules(
+export function moveRemoveCopyModules(
   modules: string[],
   repositoryPath: string,
   moveTo?: string,
+  copy?: boolean,
 ): boolean[];
-export function moveRemoveModules(
+export function moveRemoveCopyModules(
   modules: string | string[],
   repositoryPath: string,
   moveTo?: string,
+  copy?: boolean,
 ): boolean | boolean[] {
   let move = (moveTo && new LocalFile(moveTo)) || null;
   if (move && (!move.exists() || !move.isDirectory())) move = null;
@@ -218,7 +221,7 @@ export function moveRemoveModules(
     const confFile = moddir.clone().append(conf.filename);
     // If we're moving, delete any destination module first, so we can
     // abort the move that fails.
-    if (move && !moveRemoveModules(m, move.clone().path)) {
+    if (move && !moveRemoveCopyModules(m, move.clone().path)) {
       return false;
     }
     let toConfFile;
@@ -234,11 +237,13 @@ export function moveRemoveModules(
     // Keep contents of conf file in case module delete fails, so
     // original state an be restored if needed.
     const conftext = confFile.readFile();
-    confFile.remove();
-    if (confFile.exists()) {
-      return false;
+    if (!copy) {
+      confFile.remove();
+      if (confFile.exists()) {
+        return false;
+      }
     }
-    if (repositoryPath === Dirs.path.xsAudio) {
+    if (!copy && repositoryPath === Dirs.path.xsAudio) {
       const audiodir = new LocalFile(repositoryPath);
       audiodir.append('modules').append(conf.module);
       if (audiodir.isDirectory()) {
@@ -447,7 +452,7 @@ export async function installZIPs(
                             existing.module
                           }.`,
                         });
-                      } else if (!moveRemoveModules(conf.module, destdir)) {
+                      } else if (!moveRemoveCopyModules(conf.module, destdir)) {
                         modreports.push({
                           error: `(${conf.module}) Could not remove existing module.`,
                         });
@@ -469,7 +474,7 @@ export async function installZIPs(
                     });
                     obsoletes.forEach((om) => {
                       const omdir = installed.find((ins) => ins.module === om);
-                      if (omdir && !moveRemoveModules(om, omdir.repoDir)) {
+                      if (omdir && !moveRemoveCopyModules(om, omdir.repoDir)) {
                         modreports.push({
                           warning: `(${conf.module}) Could not remove obsoleted module(s).`,
                         });
@@ -1290,7 +1295,7 @@ const Module = {
     return modules.map((module) => {
       const { name, repo } = module;
       if (isRepoLocal(repo)) {
-        return moveRemoveModules(name, repo.path);
+        return moveRemoveCopyModules(name, repo.path);
       }
       return false;
     });
@@ -1306,7 +1311,23 @@ const Module = {
     return modules.map((module) => {
       const { name, fromRepo, toRepo } = module;
       if (isRepoLocal(fromRepo) && isRepoLocal(toRepo)) {
-        return moveRemoveModules(name, fromRepo.path, toRepo.path);
+        return moveRemoveCopyModules(name, fromRepo.path, toRepo.path);
+      }
+      return false;
+    });
+  },
+
+  // Set windows to modal before calling this function!
+  // After this function, if installDownloads() will not be called,
+  // then modulesInstalled must be published on the main process.
+  copy(
+    modules: Array<{ name: string; fromRepo: Repository; toRepo: Repository }>,
+  ): boolean[] {
+    Cache.clear('RepoConfigObjects');
+    return modules.map((module) => {
+      const { name, fromRepo, toRepo } = module;
+      if (isRepoLocal(fromRepo) && isRepoLocal(toRepo)) {
+        return moveRemoveCopyModules(name, fromRepo.path, toRepo.path, true);
       }
       return false;
     });

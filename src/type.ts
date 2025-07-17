@@ -1170,6 +1170,7 @@ export const GBuilder: GType & {
     installDownloads: func as any,
     remove: func as any,
     move: func as any,
+    copy: func as any,
     writeConf: func as any,
     setCipherKeys: func as any,
   },
