@@ -518,8 +518,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                   (r) => r[RepCol.iInfo].repo.name === 'IBT',
                 );
                 const IBTlisting =
-                  IBTrepo in repositoryListings &&
-                  repositoryListings[IBTrepo];
+                  IBTrepo in repositoryListings && repositoryListings[IBTrepo];
                 const { SwordModules, SwordVersions } = conf;
                 if (
                   conf.xsmType === 'XSM' &&
@@ -631,7 +630,9 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                           install.push({
                             download: dl,
                             toRepo:
-                              builtInRepos()[row[ModCol.iShared] === ON ? 0 : 1],
+                              builtInRepos()[
+                                row[ModCol.iShared] === ON ? 0 : 1
+                              ],
                           });
                         }
                       }

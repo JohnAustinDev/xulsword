@@ -42,11 +42,7 @@ import Window, { publishSubscription } from './components/window.ts';
 import Module from './components/module.ts';
 import Commands from './components/commands.ts';
 
-import type {
-  GType,
-  GTypeMain,
-  WindowDescriptorType,
-} from '../../type.ts';
+import type { GType, GTypeMain, WindowDescriptorType } from '../../type.ts';
 import type { SubscriptionType } from '../../subscription.ts';
 
 if (!Build.isElectronApp)

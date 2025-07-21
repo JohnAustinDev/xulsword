@@ -970,7 +970,7 @@ const Module = {
       .finally(() => {
         manifests.forEach((man) => {
           if (man) progress(downloadKey(man), -1);
-        })
+        });
       });
   },
 
@@ -1300,7 +1300,7 @@ const Module = {
   // Set windows to modal before calling this function!
   // After this function, if installDownloads() will not be called,
   // then modulesInstalled must be published on the main process.
-  remove(modules:  RepositoryOperation[]): boolean[] {
+  remove(modules: RepositoryOperation[]): boolean[] {
     Cache.clear('RepoConfigObjects');
     return modules.map((m) => {
       const { module, destRepository } = m;
@@ -1314,14 +1314,16 @@ const Module = {
   // Set windows to modal before calling this function!
   // After this function, if installDownloads() will not be called,
   // then modulesInstalled must be published on the main process.
-  move(
-    modules: RepositoryOperation[],
-  ): boolean[] {
+  move(modules: RepositoryOperation[]): boolean[] {
     Cache.clear('RepoConfigObjects');
     return modules.map((m) => {
       const { module, sourceRepository, destRepository } = m;
       if (isRepoLocal(sourceRepository) && isRepoLocal(destRepository)) {
-        return moveRemoveCopyModules(module, sourceRepository.path, destRepository.path);
+        return moveRemoveCopyModules(
+          module,
+          sourceRepository.path,
+          destRepository.path,
+        );
       }
       return false;
     });
@@ -1330,14 +1332,17 @@ const Module = {
   // Set windows to modal before calling this function!
   // After this function, if installDownloads() will not be called,
   // then modulesInstalled must be published on the main process.
-  copy(
-    modules: RepositoryOperation[],
-  ): boolean[] {
+  copy(modules: RepositoryOperation[]): boolean[] {
     Cache.clear('RepoConfigObjects');
     return modules.map((m) => {
       const { module, sourceRepository, destRepository } = m;
       if (isRepoLocal(sourceRepository) && isRepoLocal(destRepository)) {
-        return moveRemoveCopyModules(module, sourceRepository.path, destRepository.path, true);
+        return moveRemoveCopyModules(
+          module,
+          sourceRepository.path,
+          destRepository.path,
+          true,
+        );
       }
       return false;
     });
