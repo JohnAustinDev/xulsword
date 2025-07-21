@@ -12,12 +12,13 @@ import {
   selectionToTableRows,
   repositoryKey,
   tableRowsToSelection,
-  clone,
-  builtinRepos,
+  builtInRepos,
+  builtInRepoKeys,
   repositoryModuleKey,
   stringHash,
   localizeString,
-  cloneAny,
+  isRepoCustom,
+  isRepoBuiltIn,
 } from '../../../../common.ts';
 import S from '../../../../defaultPrefs.ts';
 import C from '../../../../constant.ts';
@@ -29,7 +30,11 @@ import {
   setStatePref,
   windowArguments,
 } from '../../../common.tsx';
-import { addClass, xulPropTypes } from '../../../components/libxul/xul.tsx';
+import {
+  addClass,
+  delayHandler,
+  xulPropTypes,
+} from '../../../components/libxul/xul.tsx';
 import Button from '../../../components/libxul/button.tsx';
 import { Hbox, Vbox, Box } from '../../../components/libxul/boxes.tsx';
 import Groupbox from '../../../components/libxul/groupbox.tsx';
@@ -163,6 +168,8 @@ export default class ModuleManager
     },
   };
 
+  lastStatePref: Partial<ManagerState> | null;
+
   onRowsReordered: Record<string, TonRowsReordered>;
 
   onRepoCellClick: TonCellClick;
@@ -171,7 +178,7 @@ export default class ModuleManager
 
   onModCellClick: TonCellClick;
 
-  onCellEdited: TonEditableCellChanged;
+  onCustomRepositoryEdited: TonEditableCellChanged;
 
   eventHandler;
 
@@ -218,13 +225,15 @@ export default class ModuleManager
 
     this.destroy = [];
 
+    this.lastStatePref = null;
+
     this.loadRepositoryTable = this.loadRepositoryTable.bind(this);
     this.loadModuleTable = this.loadModuleTable.bind(this);
     this.filterModuleTable = this.filterModuleTable.bind(this);
     this.onRepoCellClick = H.onRepoCellClick.bind(this);
     this.onLangCellClick = H.onLangCellClick.bind(this);
     this.onModCellClick = H.onModCellClick.bind(this);
-    this.onCellEdited = H.onCellEdited.bind(this);
+    this.onCustomRepositoryEdited = H.onCustomRepositoryEdited.bind(this);
     this.eventHandler = H.eventHandler.bind(this);
     this.modinfoParentHandler = modinfoParentHandlerH.bind(this);
     this.onRowsReordered = {
@@ -268,10 +277,13 @@ export default class ModuleManager
       this.loadTables().catch((er) => {
         log.error(er);
       });
-    setStatePref('prefs', id, prevState, state);
+    // Using prevState in setStatePref requires that prevState is never
+    // modified during updates, which requires slow cloning of state
+    // objects. Using lastStatePref allows prevState to be modified.
+    this.lastStatePref = setStatePref('prefs', id, this.lastStatePref, state);
     ModuleManagerUnmountState = {
-      ...this.state as ManagerState,
-      progress: null
+      ...(this.state as ManagerState),
+      progress: null,
     };
   }
 
@@ -284,32 +296,31 @@ export default class ModuleManager
     const state = this.state as ManagerState;
     const { id } = this.props as ManagerProps;
     const { repositories } = state;
+    const { disabled } = repositories ?? {};
 
     // Download data for the repository and module tables
     if (!MasterRepoListDownloaded) {
       MasterRepoListDownloaded = true;
 
-      // Build the list of all repositories;
-      let allrepos = builtinRepos(G);
       // In xulsword 4.1.0+, removeModule.repository was added, allowing each
       // module's file location to be seen. So do a prefs update if required.
       if (!state.repository && id === 'removeModule') {
         (state as any).repository = S.prefs.removeModule.repository;
       }
-      if (repositories) {
-        const { xulsword, custom } = repositories;
-        allrepos.push(...xulsword, ...custom);
-      }
-      let remoteRepos: string | Repository[] = [];
+
+      // Build the list of all repositories;
+      const xulswordRepos = H.getXulswordRepos(state);
+      let crossWireRepos: Repository[] = [];
       // The removeModule window must not access Internet!!
       if (id !== 'removeModule') {
         try {
           if (!navigator.onLine) throw new Error(`No Internet connection.`);
-          remoteRepos = await G.Module.crossWireMasterRepoList();
-          if (typeof remoteRepos === 'string') throw new Error(remoteRepos);
+          const result = await G.Module.crossWireMasterRepoList();
+          if (typeof result === 'string') throw new Error(result);
+          crossWireRepos = result;
         } catch (er: any) {
-          remoteRepos = [];
-          // Failed to load the master list, so just load local repos.
+          crossWireRepos = [];
+          // Failed to load the master list, so just load xulsword repos.
           log.warn(er);
           const msg = (typeof er === 'object' && er.message) || '';
           this.addToast({
@@ -319,7 +330,7 @@ export default class ModuleManager
           });
         }
       }
-      allrepos.push(...remoteRepos);
+      let allrepos = xulswordRepos.concat(crossWireRepos);
 
       // The removeModule window does not (must not!) access Internet,
       // otherwise Internet permission is required. So filter out all
@@ -331,19 +342,21 @@ export default class ModuleManager
       this.sState(state);
       // Calling repositoryListing on all repos at once means it will not
       // return until all repositories have been read, and some repos take
-      // a very long time to respond. So instead each repository is read
+      // a very long time to respond. So instead, each repository is read
       // separately in parallel which is much faster.
-      const readrepos = allrepos.map((r, index) => {
+      const readrepos = allrepos.map((repo, index) => {
         return async () => {
-          let list: Array<RepositoryListing | string>;
-          try {
-            list = await G.Module.repositoryListing([
-              { ...r, file: C.SwordRepoManifest, type: 'ftp' },
-            ]);
-          } catch (er) {
-            log.error(er);
-            list = [];
-            return false;
+          let list: Array<RepositoryListing | string> = [null];
+          if (!disabled || !disabled.find((k) => k === repositoryKey(repo))) {
+            try {
+              list = await G.Module.repositoryListing([
+                { ...repo, file: C.SwordRepoManifest, type: 'ftp' },
+              ]);
+            } catch (er) {
+              log.error(er);
+              list = [];
+              return false;
+            }
           }
           const newstate = this.state as ManagerState;
           H.handleListings(
@@ -373,9 +386,10 @@ export default class ModuleManager
 
   installProgressHandler() {
     // Instantiate progress handler
+    const timeout = 10; // if no update in n seconds, hide progress bar.
     this.destroy.push(
       window.IPC.on('progress', (prog: number, id?: string) => {
-        const newstate = cloneAny(this.state) as ManagerState;
+        const newstate = this.state as ManagerState;
         if (id) {
           let update = false;
           H.setDownloadProgress(this, id, prog);
@@ -414,6 +428,17 @@ export default class ModuleManager
           }
           if (update) this.sState(newstate);
         }
+        delayHandler(
+          this,
+          () => {
+            H.Progressing.ids = [];
+            this.sState({ progress: null });
+            log.error(`${id} progress timed out (${timeout}s).`);
+          },
+          [],
+          1000 * timeout,
+          'progressTO',
+        );
       }),
     );
   }
@@ -422,31 +447,24 @@ export default class ModuleManager
   loadRepositoryTable(state: ManagerState, repos: Repository[]): void {
     const { tables, repositories } = state;
     const { repository } = tables;
-    repository.data = [];
-    repos.forEach((repo) => {
-      if (!repo.builtin) {
-        repo.disabled =
-          repositories?.disabled?.includes(repositoryKey(repo)) || false;
-      }
-      const css = H.classes([H.RepCol.iState], ['checkbox-column']);
-      const canedit = repo.custom ? H.editable() : false;
-      const isloading = repo.disabled ? false : H.loading(H.RepCol.iState);
-      const on = repo.builtin ? H.ALWAYSON : H.ON;
+    repository.data = repos.map((repo) => {
+      const repoIsDisabled =
+        repositories?.disabled?.includes(repositoryKey(repo)) || false;
       let lng = G.i18n.language;
       if (!['en', 'ru'].includes(lng)) lng = C.FallbackLanguage[lng];
-      repository.data.push([
+      return [
         localizeString(G, repo.name),
         repo.domain,
         repo.path,
-        repo.disabled ? H.OFF : on,
+        repoIsDisabled ? H.OFF : isRepoBuiltIn(repo) ? H.ALWAYSON : H.ON,
         {
-          loading: isloading,
-          editable: canedit,
-          classes: css,
+          loading: repoIsDisabled ? false : H.loading(H.RepCol.iState),
+          editable: isRepoCustom(repo) ? H.editable() : false,
+          classes: H.repclasses([H.RepCol.iState], ['checkbox-column']),
           repo,
           tooltip: H.tooltip('VALUE', [H.RepCol.iState]),
         },
-      ]);
+      ];
     });
     H.tableUpdate(this, state, 'repository');
   }
@@ -542,7 +560,6 @@ export default class ModuleManager
           const r = [] as unknown as TModuleTableRow;
           r[H.ModCol.iInfo] = {
             repo: c.sourceRepository,
-            shared: c.sourceRepository.path === builtinRepos(G)[0].path,
             installedLocally: false,
             classes: H.modclasses(),
             tooltip: H.tooltip('VALUE', [
@@ -574,9 +591,10 @@ export default class ModuleManager
             '';
           r[H.ModCol.iLicense] = c.DistributionLicense || '';
           r[H.ModCol.iSourceType] = c.SourceType || '';
-          r[H.ModCol.iShared] = (r, _c, data) => {
-            return r in data && data[r][H.ModCol.iInfo].shared ? H.ON : H.OFF;
-          };
+          r[H.ModCol.iShared] =
+            repositoryKey(r[H.ModCol.iInfo].repo) === builtInRepoKeys()[0]
+              ? H.ON
+              : H.OFF;
           r[H.ModCol.iInstalled] = repoIsLocal ? H.ON : H.OFF;
           r[H.ModCol.iRemove] = H.OFF;
           modtable.data.push(r);
@@ -651,8 +669,7 @@ export default class ModuleManager
                 );
                 if (localrow) {
                   // shared
-                  modrow[H.ModCol.iInfo].shared =
-                    localrow[H.ModCol.iInfo].shared;
+                  modrow[H.ModCol.iShared] = localrow[H.ModCol.iShared];
                   // installed
                   modrow[H.ModCol.iInstalled] = localrow[H.ModCol.iInstalled];
                   // audio installed
@@ -740,32 +757,26 @@ export default class ModuleManager
   }
 
   audioDialogClose() {
-    this.sState((prevState) => {
-      const { showAudioDialog: sd } = prevState;
-      const showAudioDialog = cloneAny(sd);
-      if (showAudioDialog.length) {
-        const done = showAudioDialog.shift();
-        if (done) done.callback(null);
-        return { showAudioDialog };
-      }
-      return null;
-    });
+    const newstate = this.state as ManagerState;
+    const { showAudioDialog } = newstate;
+    if (showAudioDialog.length) {
+      const done = showAudioDialog.shift();
+      if (done) done.callback(null);
+      this.sState(newstate);
+    }
   }
 
   audioDialogAccept() {
-    this.sState((prevState) => {
-      const { showAudioDialog: sd } = prevState;
-      const showAudioDialog = cloneAny(sd);
-      if (showAudioDialog.length) {
-        const done = showAudioDialog.shift();
-        if (done) {
-          const { selection } = done;
-          done.callback(selection);
-        }
-        return { showAudioDialog: showAudioDialog.slice() };
+    const newstate = this.state as ManagerState;
+    const { showAudioDialog } = newstate;
+    if (showAudioDialog.length) {
+      const done = showAudioDialog.shift();
+      if (done) {
+        const { selection } = done;
+        done.callback(selection);
       }
-      return null;
-    });
+      this.sState(newstate);
+    }
   }
 
   addToast(toast: ToastProps) {
@@ -795,7 +806,7 @@ export default class ModuleManager
     const {
       eventHandler,
       modinfoParentHandler,
-      onCellEdited,
+      onCustomRepositoryEdited,
       onLangCellClick,
       onModCellClick,
       onRepoCellClick,
@@ -815,13 +826,19 @@ export default class ModuleManager
       moduleCancel:
         !modtable.data.find((r) => r[H.ModCol.iInfo].loading) &&
         !progress?.length,
-      repoAdd: !repositories,
+      repoAdd:
+        !repositories ||
+        repotable.data.findIndex(
+          (r) =>
+            repositoryKey(r[H.RepCol.iInfo].repo) === H.DefaultCustomRepoKey,
+        ) !== -1,
       repoDelete:
         !repository?.selection.length ||
         !H.selectionToDataRows(this, 'repository', repository.selection).every(
           (r) =>
             repotable.data[r] &&
-            repotable.data[r][H.RepCol.iInfo]?.repo?.custom,
+            repotable.data[r][H.RepCol.iInfo]?.repo &&
+            isRepoCustom(repotable.data[r][H.RepCol.iInfo].repo),
         ),
       repoCancel: !repotable.data.find((r) => r[H.RepCol.iInfo].loading),
     };
@@ -838,7 +855,7 @@ export default class ModuleManager
     const handleColumns = (table: (typeof H.Tables)[number]) => {
       return (columns: TablePropColumn[]) => {
         this.sState((prevState) => {
-          const ptable = clone(prevState[table]);
+          const ptable = prevState[table];
           if (ptable) {
             ptable.columns = columns;
             return { [table]: ptable };
@@ -868,13 +885,15 @@ export default class ModuleManager
           {(vkAudioDialog || gbAudioDialog) && (
             <Dialog
               body={
-                <Vbox>
+                <Groupbox
+                  caption={
+                    (vkAudioDialog ?? gbAudioDialog)?.conf.Description
+                      ?.locale ?? ''
+                  }
+                >
                   {vkAudioDialog && (
                     <>
                       <Label value={vkAudioDialog.conf.module} />
-                      <div className="modname">
-                        {vkAudioDialog.conf.Description?.locale}
-                      </div>
                       <SelectVK
                         height="2em"
                         initialVK={vkAudioDialog.initial}
@@ -887,9 +906,6 @@ export default class ModuleManager
                   {gbAudioDialog && (
                     <>
                       <Label value={gbAudioDialog.conf.module} />
-                      <div className="modname">
-                        {gbAudioDialog.conf.Description?.locale}
-                      </div>
                       <SelectOR
                         key={[
                           gbAudioDialog.selection.otherMod,
@@ -903,10 +919,10 @@ export default class ModuleManager
                       />
                     </>
                   )}
-                </Vbox>
+                </Groupbox>
               }
               buttons={
-                <>
+                <Hbox className="dialog-buttons" pack="end" align="end">
                   <Spacer flex="10" />
                   <Button id="cancel" flex="1" fill="x" onClick={dialogClose}>
                     {G.i18n.t('cancel.label')}
@@ -923,7 +939,7 @@ export default class ModuleManager
                   >
                     {G.i18n.t('ok.label')}
                   </Button>
-                </>
+                </Hbox>
               }
             />
           )}
@@ -962,9 +978,9 @@ export default class ModuleManager
                   onDragStart={() => state.language.width}
                   onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
                     this.sState((prevState) => {
-                      const language = clone(prevState.language);
-                      language.width = v.sizerPos;
-                      return { language };
+                      prevState.language.width = v.sizerPos;
+                      H.tableUpdate(this, prevState, ['language', 'module']);
+                      return prevState;
                     });
                   }}
                   min={75}
@@ -1039,15 +1055,17 @@ export default class ModuleManager
                     {G.i18n.t('back.label')}
                   </Button>
                 )}
-                <Button
-                  id="moduleCancel"
-                  intent="primary"
-                  fill="x"
-                  disabled={disable.moduleCancel}
-                  onClick={eventHandler}
-                >
-                  {G.i18n.t('cancel.label')}
-                </Button>
+                {module.columns[H.ModCol.iInstalled].visible && (
+                  <Button
+                    id="moduleCancel"
+                    intent="primary"
+                    fill="x"
+                    disabled={disable.moduleCancel}
+                    onClick={eventHandler}
+                  >
+                    {G.i18n.t('cancel.label')}
+                  </Button>
+                )}
               </Vbox>
             </Groupbox>
           </Hbox>
@@ -1059,7 +1077,7 @@ export default class ModuleManager
                 onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
                   this.sState((prevState) => {
                     if (prevState.repository) {
-                      const repository = clone(prevState.repository);
+                      const { repository } = prevState;
                       repository.height = v.sizerPos;
                       return { repository };
                     }
@@ -1068,6 +1086,7 @@ export default class ModuleManager
                 }}
                 orient="horizontal"
                 min={160}
+                max={window.innerHeight - 220}
                 shrink
               />
               <Groupbox
@@ -1087,40 +1106,45 @@ export default class ModuleManager
                       selectedRegions={repository.selection}
                       initialRowSort={repository.rowSort}
                       domref={tableRef.repository}
-                      onEditableCellChanged={onCellEdited}
+                      onEditableCellChanged={onCustomRepositoryEdited}
                       onRowsReordered={onRowsReordered.repository}
                       onCellClick={onRepoCellClick}
                       onColumnWidthChanged={handleColumns('repository')}
                     />
                   )}
                 </Box>
-                <Vbox className="button-stack" pack="center">
-                  <Button
-                    id="repoAdd"
-                    icon="add"
-                    intent="primary"
-                    fill="x"
-                    disabled={disable.repoAdd}
-                    onClick={eventHandler}
-                  />
-                  <Button
-                    id="repoDelete"
-                    icon="delete"
-                    intent="primary"
-                    fill="x"
-                    disabled={disable.repoDelete}
-                    onClick={eventHandler}
-                  />
-                  <Button
-                    id="repoCancel"
-                    intent="primary"
-                    fill="x"
-                    disabled={disable.repoCancel}
-                    onClick={eventHandler}
-                  >
-                    {G.i18n.t('cancel.label')}
-                  </Button>
-                </Vbox>
+                {(id === 'moduleManager' ||
+                  !disable.repoAdd ||
+                  !disable.repoDelete ||
+                  !disable.repoCancel) && (
+                  <Vbox className="button-stack" pack="center">
+                    <Button
+                      id="repoAdd"
+                      icon="add"
+                      intent="primary"
+                      fill="x"
+                      disabled={disable.repoAdd}
+                      onClick={eventHandler}
+                    />
+                    <Button
+                      id="repoDelete"
+                      icon="delete"
+                      intent="primary"
+                      fill="x"
+                      disabled={disable.repoDelete}
+                      onClick={eventHandler}
+                    />
+                    <Button
+                      id="repoCancel"
+                      intent="primary"
+                      fill="x"
+                      disabled={disable.repoCancel}
+                      onClick={eventHandler}
+                    >
+                      {G.i18n.t('cancel.label')}
+                    </Button>
+                  </Vbox>
+                )}
               </Groupbox>
             </div>
           )}
@@ -1133,7 +1157,7 @@ export default class ModuleManager
                 onClick={() => {
                   this.sState((prevState) => {
                     if (prevState.repository) {
-                      const repository = clone(prevState.repository);
+                      const { repository } = prevState;
                       repository.open = false;
                       return { repository };
                     }
@@ -1151,7 +1175,7 @@ export default class ModuleManager
                 onClick={() => {
                   this.sState((prevState) => {
                     if (prevState.repository) {
-                      const repository = clone(prevState.repository);
+                      const { repository } = prevState;
                       repository.open = true;
                       return { repository };
                     }

@@ -1,6 +1,7 @@
 import React, { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Intent, ProgressBar, Spinner, Tag } from '@blueprintjs/core';
+import { G } from './G.ts';
 import Subscription from '../subscription.ts';
 import {
   JSON_stringify,
@@ -10,7 +11,6 @@ import {
 } from '../common.ts';
 import Cache from '../cache.ts';
 import C from '../constant.ts';
-import { G } from './G.ts';
 import DynamicStyleSheet from './style.ts';
 import ContextData from './contextData.ts';
 import { windowArguments } from './common.tsx';
@@ -578,7 +578,7 @@ export default async function renderToRoot(
         const b = bodyElem.getBoundingClientRect();
         if (b && Build.isElectronApp) {
           // Add 20 px, otherwise unnecessary scrollbars may appear.
-          G.Window.setContentSize(b.width + 20, b.height + 20);
+          G.Window.setContentSize(b.width + 10, b.height + 10);
         }
         // Now that the window has been resized, remove the fitToContent
         // class so content will fill the window even if it shrinks.

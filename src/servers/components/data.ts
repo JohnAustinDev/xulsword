@@ -1,7 +1,7 @@
-// Store anything transferable for sharing between any processes.
-// NOTE: Don't use this in renderer processes unless data needs
-// to be shared between processes, otherwise it is better to use
-// the Cache module, which never uses IPC.
+// Store anything serializable for sharing between processes. In renderer
+// processes, this data is accessed using G.Data, but DON'T use this in
+// renderer processes unless data needs to be shared between processes,
+// otherwise it is better to use the Cache module, which never uses IPC.
 const Data = {
   datastore: {} as Record<string, any>,
 

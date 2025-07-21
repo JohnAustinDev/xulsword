@@ -81,6 +81,10 @@
   text-align: center;
 }
 
+#optionButtons svg {
+  width: calc(var(--input-height) - 4px);
+  height: calc(var(--input-height) - 4px);
+}
 #optionButtons button.off {
   opacity: 0.5;
 }

@@ -10,6 +10,7 @@ body {
 }
 /* root is --min-height for multi-panel and print, otherwise it's unset */
 :root {
+  --input-height: 32px;
   --min-height: 800px;
 }
 #root:has(.textarea.multi-panel) {

@@ -29,6 +29,7 @@ import {
   getModuleConfs,
   getModuleConf,
 } from '../common.ts';
+import Cache from '../../cache.ts';
 import { callBatch } from '../handleG.ts';
 import { locationVKText } from '../versetext.ts';
 import Prefs from './prefs.ts';
@@ -42,7 +43,6 @@ import Module from './components/module.ts';
 import Commands from './components/commands.ts';
 
 import type {
-  GIType,
   GType,
   GTypeMain,
   WindowDescriptorType,
@@ -256,15 +256,16 @@ export const G: GTypeMain = {
     return getLanguageName(...args);
   },
 };
+Cache.write(G, 'GTypeMain');
+Cache.noclear('GTypeMain');
 
-const GI: Pick<GIType, 'getBooksInVKModule'> = {
-  getBooksInVKModule: (_default, _renderPromise, module) => {
-    return G.getBooksInVKModule(module);
+G.Viewport = new Viewport(
+  G,
+  {
+    getBooksInVKModule: (_default, _renderPromise, module) => {
+      return G.getBooksInVKModule(module);
+    },
   },
-};
-
-G.Viewport = new Viewport(G, GI, Prefs, Window);
-
-Data.write(G, 'GElectron');
-
-Data.write(GI, 'GIElectron');
+  Prefs,
+  Window,
+);

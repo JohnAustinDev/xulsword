@@ -18,7 +18,7 @@
   --shadow: 0 0 8px 1px #cccccc;
   --font-text: 'Open Sans', sans-serif;
   --font-heading: 'Roboto', sans-serif;
-  --input-height: 32px;
+  --input-height: 28px;
 }
 
 /* By default layouts should fill their windows without scrollbars */
@@ -109,7 +109,8 @@ html a:hover {
   margin-top: -5px; /* undo groupbox bottom margin */
 }
 .dialog-buttons {
-  margin: 0 10px;
+  /* bottom margin same as controller.tsx setContentSize margin */
+  margin: 0 10px 10px 10px;
 }
 .dialog-buttons .button {
   font-size: 14px;

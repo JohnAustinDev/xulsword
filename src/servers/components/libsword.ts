@@ -146,7 +146,7 @@ const LibSword = {
 
   backgroundIndexerTO: null as NodeJS.Timeout | null,
 
-  init(extraSwordRepos?: ManagerStatePref['repositories']): boolean {
+  init(repositories?: ManagerStatePref['repositories']): boolean {
     if (this.initialized) return false;
 
     this.libxulsword = libxulsword;
@@ -154,11 +154,11 @@ const LibSword = {
     log.verbose('Initializing libsword...');
 
     this.moduleDirectories = [
-      Dirs.path.xsModsCommon,
       Dirs.path.xsModsUser,
+      Dirs.path.xsModsCommon,
     ].filter(Boolean);
-    if (extraSwordRepos) {
-      const { custom, disabled } = extraSwordRepos;
+    if (repositories) {
+      const { custom, disabled } = repositories;
       custom.forEach((repo: Repository) => {
         if (
           !disabled?.includes(repositoryKey(repo)) &&
@@ -171,7 +171,9 @@ const LibSword = {
       });
     }
 
-    this.moduleDirectories = this.moduleDirectories.filter((md) => {
+    // Reverse module directories because last one loaded is used by
+    // libxulsword.
+    this.moduleDirectories = this.moduleDirectories.reverse().filter((md) => {
       const test = new LocalFile(md).append('mods.d');
       return test.exists() && test.isDirectory();
     });

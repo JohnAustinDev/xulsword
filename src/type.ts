@@ -603,10 +603,17 @@ export type Repository = {
   name: string | 'i18n:lookup';
   domain: string;
   path: string;
-  custom: boolean; // repository is created by user (and can be deleted)
-  builtin: boolean; // repository cannot be disabled
-  disabled?: boolean;
 };
+
+export type RepositoryOperation = {
+  module: string;
+  sourceRepository: Repository;
+  destRepository: Repository;
+  // 'remove' removes module from destRepository
+  operation: 'copy' | 'move' | 'remove';
+};
+
+export type RepoDisabled = string[] | null;
 
 export type RepositoryListing = SwordConfType[] | null;
 

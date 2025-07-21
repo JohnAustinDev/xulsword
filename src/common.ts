@@ -44,6 +44,9 @@ import type {
   PrefRoot,
   AudioPlayerSelectionVK,
   AudioPlayerSelectionGB,
+  GTypeMain,
+  GIType,
+  GITypeMain,
 } from './type.ts';
 import type { PrefsGType } from './prefs.ts';
 import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
@@ -56,6 +59,22 @@ import type Window from './servers/app/components/window.ts';
 
 // This file contains functions that are used in common with both xulsword
 // clients and servers.
+
+// This function cannot be called before G has been created and cached, so G
+// should be imported as early as possible.
+function G(): GType | GTypeMain {
+  if (Cache.has('GType')) return Cache.read('GType') as GType;
+  if (Cache.has('GTypeMain')) return Cache.read('GTypeMain') as GTypeMain;
+  throw new Error(`G was requested before it was cached.`);
+}
+
+// This function cannot be called before GI has been created and cached, so GI
+// should be imported as early as possible.
+function GI(): GIType | GITypeMain {
+  if (Cache.has('GIType')) return Cache.read('GIType') as GIType;
+  if (Cache.has('GITypeMain')) return Cache.read('GITypeMain') as GITypeMain;
+  throw new Error(`GI was requested before it was cached.`);
+}
 
 export function isCallCacheable(
   gBuilder: typeof GBuilder,
@@ -468,24 +487,6 @@ export function resolveXulswordPath(
     throw new Error(`Unrecognized xulsword path: ${dirs[0]}`);
   }
   return path;
-}
-
-// Built-in local repositories cannot be disabled, deleted or changed.
-// Implemented as a function to allow G.i18n to initialize.
-export function builtinRepos(
-  GorI: GType | GType['i18n'],
-  DirsPath?: GType['Dirs']['path'],
-): Repository[] {
-  const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
-  const dpath = 'Dirs' in GorI ? GorI.Dirs.path : DirsPath;
-  const birs = clone(C.SwordBultinRepositories);
-  if (dpath) {
-    birs.forEach((r) => {
-      r.name = localizeString(i18n, r.name);
-      r.path = resolveXulswordPath(dpath, r.path);
-    });
-  }
-  return birs;
 }
 
 export function prefType(
@@ -2089,10 +2090,48 @@ export function versionCompare(v1: string | number, v2: string | number) {
   return 0;
 }
 
-export function isRepoLocal(repo: Repository): boolean {
-  return repo.domain === C.Downloader.localfile;
+// Built-in local repositories cannot be disabled, deleted or changed.
+// Implemented as a function to allow G.i18n to initialize.
+export function builtInRepos(): Repository[] {
+  return clone(C.SwordBultinRepositories).map((r) => {
+    r.name = localizeString(G().i18n, r.name);
+    r.path = resolveXulswordPath(G().Dirs.path, r.path);
+    return r;
+  });
 }
 
+export function builtInRepoKeys(): string[] {
+  const repos: Repository[] = builtInRepos();
+  return repos.map((r) => repositoryKey(r));
+}
+
+export function isRepoBuiltIn(repo: Repository | string): boolean {
+  const repokey = typeof repo === 'object' ? repositoryKey(repo) : repo;
+  const cachekey = ['isBuiltIn', repokey];
+  if (!Cache.has(...cachekey)) {
+    const biRepoKeys = builtInRepoKeys();
+    const result: boolean = biRepoKeys.includes(repokey);
+    Cache.write(result, ...cachekey);
+  }
+  return Cache.read(...cachekey);
+}
+
+export function isRepoCustom(repo: Repository | string): boolean {
+  const repokey = typeof repo === 'object' ? repositoryKey(repo) : repo;
+  return isRepoLocal(repokey) && !builtInRepoKeys().includes(repokey);
+}
+
+export function isRepoLocal(repo: Repository | string): boolean {
+  let r: Repository | null = null;
+  if (typeof repo === 'object') r = repo;
+  else {
+    r = keyToRepository(repo); // this r is not complete but does include domain
+  }
+  return r ? r.domain === C.Downloader.localfile : false;
+}
+
+// Return the string key of a download object. That string may also be used
+// to clone the object by calling keyToDownload(dlkey).
 export function downloadKey(dl: Download | null): string {
   if (!dl) return '';
   if (dl.type === 'http' && !C.URLRE.test(dl.http))
@@ -2110,8 +2149,6 @@ export function downloadKey(dl: Download | null): string {
     domain: true,
     path: true,
     confname: true,
-    custom: true,
-    builtin: true,
     data: false,
   };
   const inner = Object.entries(ms)
@@ -2121,8 +2158,7 @@ export function downloadKey(dl: Download | null): string {
   return `[${inner}]`;
 }
 
-// Return a Download object from a download key. NOTE: The 'disabled'
-// property will not be restored (it will be undefined).
+// Return a Download object from a download key.
 export function keyToDownload(downloadkey: string): Download {
   const dl: any = {};
   downloadkey
@@ -2135,12 +2171,27 @@ export function keyToDownload(downloadkey: string): Download {
   return dl as Download;
 }
 
-// Unique string signature of a particular repository.
+// Unique string signature of a particular repository. Although the key is
+// unique among all repositories. That string may also be used to clone the
+// object by calling keyToRepository(repokey)
 export function repositoryKey(r: Repository): string {
   return `[${[r.name, r.domain, r.path].join('][')}]`;
 }
 
+export function keyToRepository(repokey: string): Repository {
+  const ks: (keyof Repository)[] = ['name', 'domain', 'path'];
+  return repokey
+    .substring(1, repokey.length - 2)
+    .split('][')
+    .reduce((p, r) => {
+      const k = ks.shift();
+      if (k) p[k] = r;
+      return p;
+    }, {} as Repository);
+}
+
 // Unique string signature of a particular module in a particular repository.
+// The key is unique among all modules everywhere in the program.
 export function repositoryModuleKey(conf: SwordConfType): string {
   const { module, sourceRepository: r, DataPath } = conf;
   let str = `[${[r.name, r.domain, r.path, module].join('][')}]`;

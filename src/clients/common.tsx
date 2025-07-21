@@ -725,7 +725,7 @@ export function setStatePref(
   prevState: Record<string, any> | null,
   state: Record<string, any>,
   statePrefKeys?: string[], // default is all applicable S keys
-) {
+): Record<string, any> | null {
   let keys = statePrefKeys?.slice();
   if (!keys) {
     const st: PrefObject = store in S ? (S as any)[store] : null;
@@ -737,13 +737,19 @@ export function setStatePref(
   }
   if (keys) {
     const newStatePref = keep(state, keys);
-    if (prevState === null) G.Prefs.mergeValue(id, newStatePref, store);
-    else {
+    if (prevState === null) {
+      G.Prefs.mergeValue(id, newStatePref, store);
+      return newStatePref;
+    } else {
       const prvStatePref = keep(prevState, keys);
       const d = diff(prvStatePref, newStatePref);
-      if (d) G.Prefs.mergeValue(id, d, store);
+      if (d) {
+        G.Prefs.mergeValue(id, d, store);
+        return newStatePref;
+      }
     }
   }
+  return null;
 }
 
 // Calling this function sets a listener for update-state-from-pref. It will

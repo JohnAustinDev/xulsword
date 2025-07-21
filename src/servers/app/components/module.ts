@@ -54,6 +54,7 @@ import type {
   GenBookAudioConf,
   VerseKeyAudioConf,
   OSISBookType,
+  RepositoryOperation,
 } from '../../../type.ts';
 import type { ListingElementR } from '../../ftphttp.ts';
 
@@ -837,8 +838,6 @@ const Module = {
       path: fpath.posix.join('pub', 'sword'),
       file: 'masterRepoList.conf',
       name: 'CrossWire Master List',
-      custom: false,
-      builtin: true,
     };
     const cancelkey = downloadKey(mr);
     if (ftpCancelableInit(cancelkey)) return C.UI.Manager.cancelMsg;
@@ -853,17 +852,14 @@ const Module = {
     } catch (er: any) {
       return er.message;
     }
-    const fstring = fbuffer.toString('utf8');
-    const regex = 'FTPSource=([^|]+)\\|([^|]+)\\|([^|]+)\\s*[\\n\\r]';
-    fstring.match(new RegExp(regex, 'g'))?.forEach((mx: string) => {
-      const m = mx.match(new RegExp(regex));
+    const entry = fbuffer.toString('utf8').split(/[\n\r]+/);
+    entry.forEach((mx: string) => {
+      const m = mx.match(/FTPSource=([^|]+)\|([^|]+)\|([^|]+)\s*/);
       if (m) {
         result.push({
           name: m[1],
           domain: m[2],
           path: m[3],
-          custom: false,
-          builtin: false,
         });
       }
     });
@@ -882,10 +878,28 @@ const Module = {
     manifests: Array<FTPDownload | null>,
   ): Promise<Array<RepositoryListing | string>> {
     const callingWinID = (arguments[1] as number) ?? -1;
+
+    let threshProgress = 0;
+    let done = false;
+    const progress = (dlkey: string, prog: number) => {
+      if (prog === 0) {
+        threshProgress = 0;
+        done = false;
+      }
+      if (!done && (Math.abs(prog) === 1 || prog >= threshProgress)) {
+        const w = BrowserWindow.fromId(callingWinID);
+        w?.webContents.send('progress', prog, dlkey);
+        threshProgress = prog + 5;
+        done = prog === -1;
+      }
+    };
+
     // Get an array of Promises that will progress in parallel.
     const promises: Array<Promise<RepositoryListing | string>> = manifests.map(
       async (manifest) => {
-        if (manifest && !manifest.disabled) {
+        if (manifest) {
+          const cancelkey = downloadKey(manifest);
+          progress(cancelkey, 0);
           // LOCAL repository conf files
           if (isRepoLocal(manifest)) {
             if (fpath.isAbsolute(manifest.path)) {
@@ -899,36 +913,28 @@ const Module = {
                     confs.push(conf);
                   }
                 });
-                return confs;
+                return await Promise.resolve(confs);
               }
-              return `Directory not found: ${manifest.path}/mods.d`;
+              return await Promise.resolve(
+                `Directory not found: ${manifest.path}/mods.d`,
+              );
             }
-            return `Path not absolute: ${manifest.path}/mods.d`;
+            return await Promise.resolve(
+              `Path not absolute: ${manifest.path}/mods.d`,
+            );
           }
 
           // REMOTE repository conf files.
-          const cancelkey = downloadKey(manifest);
           if (ftpCancelableInit(cancelkey)) {
             return await Promise.resolve(
               failCause(manifest, C.UI.Manager.cancelMsg),
             );
           }
-          let threshProgress = 0;
-          let done = false;
-          const progress = (prog: number) => {
-            if (manifest) {
-              if (!done && (Math.abs(prog) === 1 || prog >= threshProgress)) {
-                const dlk = downloadKey(manifest);
-                const w = BrowserWindow.fromId(callingWinID);
-                w?.webContents.send('progress', prog, dlk);
-                threshProgress = prog + 5;
-                done = prog === -1;
-              }
-            }
-          };
           let repconfs: DownloadRepoConfsType[];
           try {
-            repconfs = await downloadRepoConfs(manifest, cancelkey, progress);
+            repconfs = await downloadRepoConfs(manifest, cancelkey, (prog) => {
+              progress(cancelkey, prog);
+            });
           } catch (er) {
             return await Promise.resolve(
               failCause(manifest, unknown2String(er, ['message'])),
@@ -941,7 +947,7 @@ const Module = {
               failCause(manifest, C.UI.Manager.cancelMsg),
             );
           }
-          return repconfs.map((rc) => rc.conf);
+          return await Promise.resolve(repconfs.map((rc) => rc.conf));
         }
         return null;
       },
@@ -960,6 +966,11 @@ const Module = {
       .catch((er) => {
         log.error(er);
         return [];
+      })
+      .finally(() => {
+        manifests.forEach((man) => {
+          if (man) progress(downloadKey(man), -1);
+        })
       });
   },
 
@@ -1216,12 +1227,11 @@ const Module = {
         }, {})
       : ModuleDownloads.ongoing;
     const keys = Object.keys(toCancel);
-    const values = Object.values(toCancel);
     log.debug(`CANCEL-ONGOING: ${keys.length} items! ${logdls()}`);
     downloadCancel(keys);
     let canceled: any[] = [];
     try {
-      canceled = await Promise.allSettled(values);
+      canceled = await Promise.allSettled(Object.values(toCancel));
     } catch (er) {
       // Do nothing, handled by this.download()
     }
@@ -1290,12 +1300,12 @@ const Module = {
   // Set windows to modal before calling this function!
   // After this function, if installDownloads() will not be called,
   // then modulesInstalled must be published on the main process.
-  remove(modules: Array<{ name: string; repo: Repository }>): boolean[] {
+  remove(modules:  RepositoryOperation[]): boolean[] {
     Cache.clear('RepoConfigObjects');
-    return modules.map((module) => {
-      const { name, repo } = module;
-      if (isRepoLocal(repo)) {
-        return moveRemoveCopyModules(name, repo.path);
+    return modules.map((m) => {
+      const { module, destRepository } = m;
+      if (isRepoLocal(destRepository)) {
+        return moveRemoveCopyModules(module, destRepository.path);
       }
       return false;
     });
@@ -1305,13 +1315,13 @@ const Module = {
   // After this function, if installDownloads() will not be called,
   // then modulesInstalled must be published on the main process.
   move(
-    modules: Array<{ name: string; fromRepo: Repository; toRepo: Repository }>,
+    modules: RepositoryOperation[],
   ): boolean[] {
     Cache.clear('RepoConfigObjects');
-    return modules.map((module) => {
-      const { name, fromRepo, toRepo } = module;
-      if (isRepoLocal(fromRepo) && isRepoLocal(toRepo)) {
-        return moveRemoveCopyModules(name, fromRepo.path, toRepo.path);
+    return modules.map((m) => {
+      const { module, sourceRepository, destRepository } = m;
+      if (isRepoLocal(sourceRepository) && isRepoLocal(destRepository)) {
+        return moveRemoveCopyModules(module, sourceRepository.path, destRepository.path);
       }
       return false;
     });
@@ -1321,13 +1331,13 @@ const Module = {
   // After this function, if installDownloads() will not be called,
   // then modulesInstalled must be published on the main process.
   copy(
-    modules: Array<{ name: string; fromRepo: Repository; toRepo: Repository }>,
+    modules: RepositoryOperation[],
   ): boolean[] {
     Cache.clear('RepoConfigObjects');
-    return modules.map((module) => {
-      const { name, fromRepo, toRepo } = module;
-      if (isRepoLocal(fromRepo) && isRepoLocal(toRepo)) {
-        return moveRemoveCopyModules(name, fromRepo.path, toRepo.path, true);
+    return modules.map((m) => {
+      const { module, sourceRepository, destRepository } = m;
+      if (isRepoLocal(sourceRepository) && isRepoLocal(destRepository)) {
+        return moveRemoveCopyModules(module, sourceRepository.path, destRepository.path, true);
       }
       return false;
     });

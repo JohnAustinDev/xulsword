@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import type { OSISBookType } from '../../../type.ts';
 import type C from '../../../constant.ts';
 import type { MenulistProps } from '../../components/libxul/menulist.tsx';
 import type { SelectORProps } from '../../components/libxul/selectOR.tsx';

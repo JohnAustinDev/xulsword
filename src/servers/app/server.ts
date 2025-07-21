@@ -10,6 +10,7 @@ import devToolsInstaller, {
   REACT_DEVELOPER_TOOLS,
 } from 'electron-devtools-installer';
 import { install as SourceMapInstall } from 'source-map-support';
+import { G } from './G.ts';
 import Subscription from '../../subscription.ts';
 import Cache from '../../cache.ts';
 import {
@@ -49,7 +50,6 @@ import type { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import type { LogLevel } from 'electron-log';
 import type {
   GCallType,
-  GType,
   NewModulesType,
   WindowDescriptorPrefType,
   WindowDescriptorType,
@@ -73,9 +73,6 @@ log.transports.console.level = C.LogLevel;
 log.transports.file.level = C.LogLevel;
 log.transports.file.resolvePath = () => logfile.path;
 log.info(`Starting ${app.getName()} isDevelopment='${Build.isDevelopment}'`);
-
-const G = Data.has('GElectron') ? (Data.read('GElectron') as GType) : null;
-if (!G) log.error(`G was not read from Data.`);
 
 addBookmarkTransaction(
   -1,
@@ -159,12 +156,12 @@ function showApp() {
 
 ipcMain.on('global', (event: IpcMainEvent, acall: GCallType) => {
   const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1;
-  event.returnValue = handleGlobal(Data.read('GElectron'), win, acall, true);
+  event.returnValue = handleGlobal(G, win, acall, true);
 });
 
 ipcMain.handle('global', (event: IpcMainInvokeEvent, acall: GCallType) => {
   const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1;
-  return handleGlobal(Data.read('GElectron'), win, acall, true);
+  return handleGlobal(G, win, acall, true);
 });
 
 ipcMain.on('error-report', (_e: IpcMainEvent, message: string) => {

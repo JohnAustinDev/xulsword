@@ -1,6 +1,7 @@
 import i18next from 'i18next';
 import { locationVKText } from '../versetext.ts';
 import LibSword from '../components/libsword.ts';
+import Cache from '../../cache.ts';
 import {
   getBooks,
   getBook,
@@ -189,3 +190,5 @@ export const GI: GITypeMain = {
     return getLanguageName(...args);
   },
 };
+Cache.write(GI, 'GITypeMain');
+Cache.noclear('GITypeMain');

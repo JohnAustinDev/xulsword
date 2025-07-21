@@ -1,5 +1,5 @@
 import C from '../constant.ts';
-import analytics, { Analytics } from './analytics.ts';
+import analytics from './analytics.ts';
 import {
   JSON_stringify,
   GCacheKey,
@@ -67,8 +67,12 @@ import type RenderPromise from './renderPromise.ts';
 // server's GI object is used to respond to clients' G and GI calls.
 
 export const G = {} as GType;
+Cache.write(G, 'GType');
+Cache.noclear('GType');
 
 export const GI = {} as GIType;
+Cache.write(G, 'GIType');
+Cache.noclear('GIType');
 
 const { asyncFuncs } = GBuilder;
 Object.entries(GBuilder).forEach((entry) => {

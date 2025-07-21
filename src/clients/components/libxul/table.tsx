@@ -486,9 +486,9 @@ class Table extends React.Component {
 
   componentDidMount() {
     const { domref, id } = this.props as TableProps;
-    const { resizeColumns } = this;
+    const { tableDomRef, resizeColumns } = this;
     // Scroll table to previously saved position.
-    const tableRef = domref || this.tableDomRef;
+    const tableRef = domref || tableDomRef;
     const t = tableRef.current;
     if (t) {
       const [parent] = t.getElementsByClassName(
@@ -500,6 +500,23 @@ class Table extends React.Component {
         parent.scrollTop = top;
       }
       resizeColumns();
+    }
+  }
+
+  componentDidUpdate() {
+    // Adjust column widths to table width if difference is more than margin.
+    const margin = 5;
+    const { tableDomRef, resizeColumns } = this;
+    const { columns, domref } = this.props as TableProps;
+    const tableRef = domref ?? tableDomRef;
+    if (tableRef?.current) {
+      const tableWidth = tableRef.current.clientWidth;
+      const columnsWidth: number = columns.reduce(
+        (p, c) => p + ((c.visible && c.width) || 0),
+        0,
+      );
+      if (tableWidth < columnsWidth - margin) resizeColumns();
+      if (tableWidth > columnsWidth + margin) resizeColumns();
     }
   }
 
@@ -691,11 +708,11 @@ class Table extends React.Component {
     sortedIndexMap.sort((a: number, b: number) => {
       let aa = data[a][dataCol];
       if (typeof aa === 'function') {
-        aa = aa(a, dataCol);
+        aa = aa(a, dataCol, data);
       }
       let bb = data[b][dataCol];
       if (typeof bb === 'function') {
-        bb = bb(b, dataCol);
+        bb = bb(b, dataCol, data);
       }
       return comparator(aa, bb);
     });
@@ -754,11 +771,11 @@ class Table extends React.Component {
     const { reset } = state;
     const {
       datacolumns,
+      tableDomRef,
       onCellClick,
       onColumnsReordered,
       onColumnWidthChanged,
     } = this;
-    let { tableDomRef } = this;
     const numRows = data.length;
     // Column order and visiblity are wholly determined by the columns prop.
     // If the user reorders or hides a column, only the action is reported via
@@ -783,9 +800,6 @@ class Table extends React.Component {
 
     const classes = ['table'];
     if (props.onColumnWidthChanged) classes.push('width-resizable');
-
-    // If parent uses a domref, don't clobber it, use it.
-    if (props.domref) tableDomRef = props.domref;
 
     // Notes on BluePrintJS Tables:
     // - Row and column selection is only possible by clicking on a row or col

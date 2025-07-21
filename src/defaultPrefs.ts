@@ -14,6 +14,7 @@ import type {
   HistoryVKType,
   LocationVKType,
   PlaceType,
+  RepoDisabled,
   Repository,
   RowSelection,
   ScrollType,
@@ -156,17 +157,11 @@ const S = {
             name: 'i18n:IBT_XSM',
             domain: 'ftp.ibt.org.ru',
             path: '/pub/modxsm',
-            builtin: false,
-            disabled: false,
-            custom: false,
           },
           {
             name: 'i18n:IBT_Audio',
             domain: 'ftp.ibt.org.ru',
             path: '/pub/modaudio',
-            builtin: false,
-            disabled: false,
-            custom: false,
           },
         ],
         custom: [],
@@ -174,7 +169,7 @@ const S = {
       } as {
         xulsword: Repository[];
         custom: Repository[];
-        disabled: string[] | null;
+        disabled: RepoDisabled;
       },
       language: {
         open: true as boolean,

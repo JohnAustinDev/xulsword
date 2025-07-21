@@ -10,6 +10,7 @@ import i18nBackendMain from 'i18next-fs-backend';
 import https from 'https';
 import http from 'http';
 import fs from 'fs';
+import { GI } from './G.ts';
 import {
   JSON_parse,
   JSON_stringify,
@@ -18,7 +19,6 @@ import {
 import Subscription from '../../subscription.ts';
 import Cache from '../../cache.ts';
 import C from '../../constant.ts';
-import { GI } from './G.ts';
 import handleGlobal from '../handleG.ts';
 import { resetMain } from '../common.ts';
 import Dirs from '../components/dirs.ts';

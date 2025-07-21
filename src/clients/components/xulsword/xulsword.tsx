@@ -458,7 +458,7 @@ export default class Xulsword
           <Button
             id="printPassage"
             disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
-            icon={<Icon icon="print" size={28} />}
+            icon={<Icon icon="print" />}
             onClick={() => {
               setStatePref('prefs', 'printPassage', null, {
                 chapters: { ...location, vkMod },
@@ -475,7 +475,7 @@ export default class Xulsword
             <Button
               id="addcolumn"
               disabled={panels.length >= (window as any).browserMaxPanels}
-              icon={<Icon icon="add-column-right" size={28} />}
+              icon={<Icon icon="add-column-right" />}
               onClick={handler}
               title={GI.i18n.t(
                 '',
@@ -487,7 +487,7 @@ export default class Xulsword
             <Button
               id="removecolumn"
               disabled={panels.length <= 1}
-              icon={<Icon icon="remove-column-right" size={28} />}
+              icon={<Icon icon="remove-column-right" />}
               onClick={handler}
               title={GI.i18n.t('', renderPromise, 'Remove a column of text.', {
                 ns: 'bibleBrowser',
@@ -498,7 +498,7 @@ export default class Xulsword
         <Button
           id="headings"
           checked={show.headings}
-          icon={<Icon icon="widget-header" size={28} />}
+          icon={<Icon icon="widget-header" />}
           onClick={handler}
           title={GI.i18n.t('', renderPromise, 'headingsButton.tooltip')}
           disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
@@ -506,7 +506,7 @@ export default class Xulsword
         <Button
           id="dictlinks"
           checked={show.dictlinks}
-          icon={<Icon icon="search-template" size={28} />}
+          icon={<Icon icon="search-template" />}
           onClick={handler}
           title={GI.i18n.t('', renderPromise, 'dictButton.tooltip')}
           disabled={
@@ -518,7 +518,7 @@ export default class Xulsword
         <Button
           id="footnotes"
           checked={show.footnotes}
-          icon={<Icon icon="manually-entered-data" size={28} />}
+          icon={<Icon icon="manually-entered-data" />}
           onClick={handler}
           title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
           disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
@@ -527,7 +527,7 @@ export default class Xulsword
           <Button
             id="crossrefs"
             checked={show.crossrefs}
-            icon={<Icon icon="link" size={28} />}
+            icon={<Icon icon="link" />}
             onClick={handler}
             title={GI.i18n.t('', renderPromise, 'crossrefsButton.tooltip')}
             disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}

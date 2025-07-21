@@ -4,7 +4,7 @@ import Dirs from './components/dirs.ts';
 import Data from './components/data.ts';
 import C from '../constant.ts';
 import {
-  builtinRepos,
+  builtInRepos,
   isAudioVerseKey,
   JSON_parse,
   readVerseKeyAudioConf,
@@ -60,7 +60,7 @@ export default function parseSwordConf(
       /[/\\]mods\.d\/.*?$/,
       '',
     );
-    const srcrepo = builtinRepos(i18n, Dirs.path).find(
+    const srcrepo = builtInRepos().find(
       (r) =>
         path.normalize(r.path) ===
         path.normalize(sourceRepositoryOrPath as string),
@@ -71,13 +71,9 @@ export default function parseSwordConf(
     typeof sourceRepositoryOrPath !== 'string'
       ? sourceRepositoryOrPath
       : {
-          name:
-            (Prefs && localRepoName(sourceRepositoryOrPath, Prefs)) ||
-            'unknown',
+          name: (Prefs && localRepoName(sourceRepositoryOrPath, Prefs)) || '?',
           domain: 'file://',
           path: sourceRepositoryOrPath,
-          builtin: false,
-          custom: true,
         };
   const reports: NewModuleReportType[] = [];
   const lines = confString.split(/[\n\r]+/);
