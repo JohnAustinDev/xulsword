@@ -4,8 +4,8 @@ import type { paperSizes } from './clients/components/libxul/printSettings.tsx';
 import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
 import type { StyleType } from './clients/style.ts';
 import type {
-  TablePropColumn,
-  TinitialRowSort,
+  TableColumnInfo,
+  TableRowSortState,
 } from './clients/components/libxul/table.tsx';
 import type {
   AudioPrefType,
@@ -178,7 +178,7 @@ const S = {
         rowSort: {
           propColumnIndex: 0,
           direction: 'ascending',
-        } as TinitialRowSort,
+        } as TableRowSortState,
         columns: [
           {
             datacolumn: 0,
@@ -188,7 +188,7 @@ const S = {
             sortable: false,
             visible: true,
           },
-        ] as TablePropColumn[],
+        ] as TableColumnInfo[],
       },
       repository: {
         open: true as boolean,
@@ -197,7 +197,7 @@ const S = {
         rowSort: {
           propColumnIndex: 2,
           direction: 'ascending',
-        } as TinitialRowSort,
+        } as TableRowSortState,
         columns: [
           {
             datacolumn: 0,
@@ -231,14 +231,14 @@ const S = {
             sortable: true,
             visible: true,
           },
-        ] as TablePropColumn[],
+        ] as TableColumnInfo[],
       },
       module: {
         selection: [] as RowSelection,
         rowSort: {
           propColumnIndex: 0,
           direction: 'ascending',
-        } as TinitialRowSort,
+        } as TableRowSortState,
         columns: [
           {
             datacolumn: 0,
@@ -368,7 +368,7 @@ const S = {
             sortable: false,
             visible: false,
           },
-        ] as TablePropColumn[],
+        ] as TableColumnInfo[],
       },
     },
 
@@ -380,7 +380,7 @@ const S = {
         rowSort: {
           propColumnIndex: 0,
           direction: 'ascending',
-        } as TinitialRowSort,
+        } as TableRowSortState,
         width: 150 as number,
         columns: [
           {
@@ -391,14 +391,14 @@ const S = {
             sortable: false,
             visible: true,
           },
-        ] as TablePropColumn[],
+        ] as TableColumnInfo[],
       },
       module: {
         selection: [] as RowSelection,
         rowSort: {
           propColumnIndex: 0,
           direction: 'ascending',
-        } as TinitialRowSort,
+        } as TableRowSortState,
         columns: [
           {
             datacolumn: 0,
@@ -528,7 +528,7 @@ const S = {
             sortable: true,
             visible: true,
           },
-        ] as TablePropColumn[],
+        ] as TableColumnInfo[],
       },
       repository: {
         open: false as boolean,
@@ -537,7 +537,7 @@ const S = {
         rowSort: {
           propColumnIndex: 2,
           direction: 'ascending',
-        } as TinitialRowSort,
+        } as TableRowSortState,
         columns: [
           {
             datacolumn: 0,
@@ -571,7 +571,7 @@ const S = {
             sortable: true,
             visible: true,
           },
-        ] as TablePropColumn[],
+        ] as TableColumnInfo[],
       },
     },
 
@@ -659,7 +659,7 @@ const S = {
           sortable: false,
           visible: true,
         },
-      ] as TablePropColumn[],
+      ] as TableColumnInfo[],
     },
   },
 };

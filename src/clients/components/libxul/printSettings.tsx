@@ -255,53 +255,7 @@ export default class PrintSettings extends React.Component {
           }
           case 'print': {
             analytics.record(getAnalyticInfo());
-            if (Build.isElectronApp) {
-              const options: Electron.WebContentsPrintOptions = {
-                ...electronOptions,
-                silent: false,
-                color: false,
-                margins: {
-                  marginType: 'custom',
-                  top: round(margins.top * convertToPx.mm),
-                  right: round(margins.right * convertToPx.mm),
-                  bottom: round(margins.bottom * convertToPx.mm),
-                  left: round(margins.left * convertToPx.mm),
-                },
-                scaleFactor: 1,
-                pagesPerSheet: 1,
-                collate: false,
-                copies: 1,
-                pageRanges: [{ from: 1, to: pages }],
-                dpi: { horizontal: convertToPx.in, vertical: convertToPx.in },
-                header: '',
-                footer: '',
-              };
-              Subscription.publish.setControllerState(dark);
-              G.Window.print(options)
-                .finally(() => {
-                  Subscription.publish.setControllerState(
-                    {
-                      reset: randomID(),
-                      ...normal,
-                      print: {
-                        iframeFilePath: '',
-                      } as PrintOptionsType,
-                    },
-                    true,
-                  );
-                })
-                .catch((er) => {
-                  this.addToast({
-                    message: er
-                      .toString()
-                      .replace(/^error: promise rejection.*?:([^:]+)$/is, '$1'),
-                    intent: Intent.DANGER,
-                    timeout: -1,
-                  });
-                });
-            } else {
-              window.print();
-            }
+            window.print();
             break;
           }
           case 'printToPDF': {
@@ -877,8 +831,7 @@ export default class PrintSettings extends React.Component {
         </Groupbox>
 
         <Hbox className="dialog-buttons" pack="end" align="end">
-          {/* Native print is problematic in MS-Windows and doesn't work well
-          in Linux either, plus it's not needed since print-to-pdf works well.
+          {
             <Button
               id="print"
               icon="print"
@@ -888,7 +841,8 @@ export default class PrintSettings extends React.Component {
               onClick={handler}
             >
               {GI.i18n.t('', renderPromise, 'menu.print')}
-            </Button>*/}
+            </Button>
+          }
 
           {Build.isElectronApp && (
             <>

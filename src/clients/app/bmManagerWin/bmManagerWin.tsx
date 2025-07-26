@@ -396,10 +396,9 @@ export default class BMManagerWin extends React.Component {
             <Table
               key={stringHash(columns, reset)}
               data={this.tableData}
+              tableColumns={columns}
+              tableToDataRowMap={[]}
               selectedRegions={selectedRegions}
-              columns={columns}
-              enableColumnReordering
-              enableMultipleSelection
               onCellClick={this.onCellClick}
               onColumnHide={(c) => {
                 this.setState({ columns: c });

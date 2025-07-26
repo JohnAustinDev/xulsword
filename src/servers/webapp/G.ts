@@ -17,7 +17,7 @@ import {
   getFeatureModules,
   localeConfig,
   getConfig,
-  GetBooksInVKModules,
+  getBooksInVKModules,
   getLocalizedBooks,
   getLocaleDigits,
   getAllDictionaryKeyList,
@@ -88,8 +88,8 @@ export const GI: GITypeMain = {
     return getFeatureModules();
   },
 
-  get GetBooksInVKModules() {
-    return GetBooksInVKModules();
+  get BooksInVKModules() {
+    return getBooksInVKModules();
   },
 
   Books(...args: Parameters<GType['Books']>): ReturnType<GType['Books']> {

@@ -43,7 +43,7 @@
   overflow: auto;
 }
 
-#repository .custom-repo:first-child::before {
+#repository .custom-repo.data-col-0::before {
   margin-left: -8.5px;
   content: '•';
   color: #238551;

@@ -18,7 +18,7 @@ import type {
   PrefValue,
   TabType,
 } from '../type.ts';
-import type { GetBooksInVKModules } from '../servers/common.ts';
+import type { getBooksInVKModules } from '../servers/common.ts';
 
 export type RenderPromiseComponent = {
   renderPromise: RenderPromise;
@@ -339,10 +339,10 @@ function writeCallToCache(call: GCallType | null, result: any) {
       // Some calls will return data that is identical to other calls, so preload the cache
       // for those others as well.
 
-      // GetBooksInVKModules
-      if (call[0] === 'GetBooksInVKModules') {
+      // BooksInVKModules
+      if (call[0] === 'BooksInVKModules') {
         Object.entries(
-          result as ReturnType<typeof GetBooksInVKModules>,
+          result as ReturnType<typeof getBooksInVKModules>,
         ).forEach((entry) => {
           const [module, bookArray] = entry;
           const k = GCacheKey(['getBooksInVKModule', null, [module]]);

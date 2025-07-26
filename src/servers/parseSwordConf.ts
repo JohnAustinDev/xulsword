@@ -1,14 +1,13 @@
 import i18n from 'i18next';
 import path from 'path';
-import Dirs from './components/dirs.ts';
 import Data from './components/data.ts';
 import C from '../constant.ts';
 import {
-  builtInRepos,
   isAudioVerseKey,
   JSON_parse,
   readVerseKeyAudioConf,
 } from '../common.ts';
+import { getBuiltInRepos } from './common.ts';
 
 import type {
   GenBookAudioConf,
@@ -60,7 +59,7 @@ export default function parseSwordConf(
       /[/\\]mods\.d\/.*?$/,
       '',
     );
-    const srcrepo = builtInRepos().find(
+    const srcrepo = getBuiltInRepos().find(
       (r) =>
         path.normalize(r.path) ===
         path.normalize(sourceRepositoryOrPath as string),

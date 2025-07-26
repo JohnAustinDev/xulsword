@@ -14,6 +14,8 @@ import {
   resolveTemplateURL,
   stringHash,
   clone,
+  resolveXulswordPath,
+  localizeString,
 } from '../common.ts';
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
@@ -184,7 +186,7 @@ export function getBkChsInV11n(
   return null;
 }
 
-export function GetBooksInVKModules(): Record<string, OSISBookType[]> {
+export function getBooksInVKModules(): Record<string, OSISBookType[]> {
   const r: Record<string, OSISBookType[]> = {};
   getTabs().forEach((t) => {
     r[t.module] = getBooksInVKModule(t.module);
@@ -474,6 +476,16 @@ export function getAudioConfs(): Record<string, SwordConfType> {
 export function getAudioConf(module: string): SwordConfType | null {
   const audioConfs = getAudioConfs();
   return module in audioConfs ? audioConfs[module] : null;
+}
+
+// Built-in local repositories cannot be disabled, deleted or changed.
+// Implemented as a function to allow G.i18n to initialize.
+export function getBuiltInRepos() {
+  return clone(C.SwordBultinRepositories).map((r) => {
+    r.name = localizeString(i18n, r.name);
+    r.path = resolveXulswordPath(Dirs.path, r.path);
+    return r;
+  });
 }
 
 export function getCipherFailConfs(): SwordConfType[] {

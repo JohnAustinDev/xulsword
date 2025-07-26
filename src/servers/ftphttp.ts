@@ -21,7 +21,7 @@ import type { Download, HTTPDownload } from '../type.ts';
 
 export type ListingElementR = ListingElement & { subdir: string };
 
-const OperationTimeoutFTP = 5000;
+const OperationTimeoutFTP = 7000;
 
 let MaxDomainConnections: Record<string, number> = {};
 
@@ -101,7 +101,7 @@ export function ftpCancelableInit(cancelkey: string): number {
 
 // id = ftpCancelable(key) - Throws if the key has been canceled, or returns
 // a unique id to be associated with an operation.
-export function ftpCancelable(key: string) {
+export function ftpThrowIfCanceled(key: string) {
   if (!key) return '';
 
   const { cause } = (key in FtpCancelable && FtpCancelable[key]) || {};
@@ -115,6 +115,24 @@ export function ftpCancelable(key: string) {
     downloadCancel(key, cause);
     if (typeof cause === 'string') throw new Error(cause);
     if (cause) throw cause;
+  }
+
+  // Return a unique operation id
+  return randomID();
+}
+
+// id = ftpCancelable(key) - Throws if the key has been canceled, or returns
+// a unique id to be associated with an operation.
+export function httpThrowIfCanceled(key: string) {
+  if (!key) return '';
+
+  const { canceled } = (key in HttpCancelable && HttpCancelable[key]) || {};
+  if (
+    canceled &&
+    key &&
+    key in FtpCancelable
+  ) {
+    throw new Error(`httpThrowIfCanceled`);
   }
 
   // Return a unique operation id
@@ -167,7 +185,7 @@ export function downloadCancel(
   return cnt;
 }
 
-// Issue a cancellation for all operations assocaited with the cancelkey.
+// Issue a cancellation for all operations associated with the cancelkey.
 // This function may be run multiple times during cancelation, but only
 // the cause given for the first call will be reported. The default cause
 // is 'canceled' by user, but stream errors etc. can also initiate a
@@ -208,7 +226,7 @@ export function ftpCancel(
 // The cancelkey for XSM audio modules need not be exactly the downloadkey,
 // but rather having an http URL without a specific bk, ch or vs. In this case
 // keys are truncated and multiple downloads may be canceled by the one cancelkey.
-// HttpCancelable should be regsitered and unregistered directly by each a cancelable
+// HttpCancelable should be regsitered and unregistered directly by each cancelable
 // downloading function.
 export function httpCancel(cancelkey?: string | string[]): number {
   let canceled = 0;
@@ -348,7 +366,7 @@ async function createActiveConnection(
           .concat(Object.values(waitingConnections))
           .flat().length < max
       ) {
-        id = ftpCancelable(cancelkey);
+        id = ftpThrowIfCanceled(cancelkey);
         log.debug(`Connecting: ${domain}`);
         c = new FTP();
         activeConnections[domain].push(c);
@@ -440,7 +458,7 @@ async function getActiveConnection(
       return await Promise.reject(er);
     }
     try {
-      ftpCancelable(cancelkey);
+      ftpThrowIfCanceled(cancelkey);
     } catch (er) {
       return await Promise.reject(er);
     }
@@ -460,7 +478,7 @@ async function getActiveConnection(
       return await Promise.reject(er);
     }
     try {
-      ftpCancelable(cancelkey);
+      ftpThrowIfCanceled(cancelkey);
     } catch (er) {
       return await Promise.reject(er);
     }
@@ -476,7 +494,7 @@ async function getActiveConnection(
         }, 100),
       );
       try {
-        ftpCancelable(cancelkey);
+        ftpThrowIfCanceled(cancelkey);
       } catch (er) {
         return await Promise.reject(er);
       }
@@ -493,7 +511,7 @@ export async function ftp<Retval>(
   func: (c: FTP) => Promise<Retval>,
   cancelkey = '', // '' is uncancelable
 ): Promise<Retval> {
-  const id = ftpCancelable(cancelkey);
+  const id = ftpThrowIfCanceled(cancelkey);
   let c: FTP;
   try {
     c = await getActiveConnection(domain, cancelkey);
@@ -504,7 +522,7 @@ export async function ftp<Retval>(
     return await Promise.reject(er);
   }
   try {
-    ftpCancelable(cancelkey);
+    ftpThrowIfCanceled(cancelkey);
   } catch (er) {
     return await Promise.reject(er);
   }
@@ -534,7 +552,7 @@ export async function ftp<Retval>(
     ftpCancelableOperation(cancelkey, id); // never throws
   }
   try {
-    ftpCancelable(cancelkey);
+    ftpThrowIfCanceled(cancelkey);
   } catch (er) {
     return await Promise.reject(er);
   }
@@ -562,7 +580,8 @@ async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 async function abortP(c: FTP): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const to = setTimeout(() => {
-      reject(new Error('timeout'));
+      reject(`Promise rejection: FTP abort did not return in ${Math.round(OperationTimeoutFTP / 1000)}s.`
+    );
     }, OperationTimeoutFTP);
     c.abort((er: Error) => {
       clearTimeout(to);
@@ -646,24 +665,24 @@ async function getFileP(
   progress?: (prog: number) => void,
   size?: number,
 ): Promise<Buffer> {
-  let dead = false;
+  let killedOnce = false;
   const killstream = async (s: any) => {
-    if (!dead) {
+    if (!killedOnce) {
       if (s && 'destroy' in s && typeof s.destroy === 'function') {
-        dead = true;
+        killedOnce = true;
         try {
-          await abortP(c);
           await s.destroy();
+          await abortP(c);
           log.silly(`Killed FTP stream: ${filepath}`);
         } catch (er) {
-          log.error(er);
+          log.error(`Killing FTP stream: ${er}`);
         }
       } else log.error(`Stream was not destroyable: ${filepath}`);
     }
   };
 
   let stream: NodeJS.ReadableStream;
-  const id = ftpCancelable(cancelkey);
+  const id = ftpThrowIfCanceled(cancelkey);
   log.silly(`START getFileP=${filepath} FTP=${logid(cancelkey, id)}`);
   try {
     stream = await getP(c, filepath);
@@ -675,7 +694,7 @@ async function getFileP(
     return await Promise.reject(er);
   }
   try {
-    ftpCancelable(cancelkey);
+    ftpThrowIfCanceled(cancelkey);
   } catch (er) {
     return await Promise.reject(er);
   }
@@ -708,7 +727,7 @@ async function getFileP(
         });
         stream.on('data', () => {
           try {
-            ftpCancelable(cancelkey);
+            ftpThrowIfCanceled(cancelkey);
           } catch (er) {
             killstream(stream).catch((er) => {
               log.error(er);
@@ -742,7 +761,7 @@ async function getFileP(
     if (progress && size) progress(-1);
   }
   try {
-    ftpCancelable(cancelkey);
+    ftpThrowIfCanceled(cancelkey);
   } catch (er) {
     return await Promise.reject(er);
   }
@@ -774,14 +793,14 @@ export async function getFile(
           return await Promise.reject(er);
         }
         try {
-          ftpCancelable(cancelkey);
+          ftpThrowIfCanceled(cancelkey);
         } catch (er) {
           return await Promise.reject(er);
         }
       }
       const r = await getFileP(c, filepath, cancelkey, progress, size);
       try {
-        ftpCancelable(cancelkey);
+        ftpThrowIfCanceled(cancelkey);
       } catch (er) {
         return await Promise.reject(er);
       }
@@ -818,8 +837,9 @@ export async function getFiles(
       return await Promise.reject(er);
     }
     try {
-      ftpCancelable(cancelkey);
+      ftpThrowIfCanceled(cancelkey);
     } catch (er) {
+      if (progress) progress(-1);
       return await Promise.reject(er);
     }
     prog += 1;
@@ -874,7 +894,7 @@ export async function getListing(
     return await Promise.reject(er);
   }
   try {
-    ftpCancelable(cancelkey);
+    ftpThrowIfCanceled(cancelkey);
   } catch (er) {
     return await Promise.reject(er);
   }
@@ -931,7 +951,7 @@ export async function getDir(
     return await Promise.reject(er);
   }
   try {
-    ftpCancelable(cancelkey);
+    ftpThrowIfCanceled(cancelkey);
   } catch (er) {
     return await Promise.reject(er);
   }
@@ -955,7 +975,7 @@ export async function getDir(
     return await Promise.reject(er);
   }
   try {
-    ftpCancelable(cancelkey);
+    ftpThrowIfCanceled(cancelkey);
   } catch (er) {
     return await Promise.reject(er);
   }
@@ -992,7 +1012,6 @@ export async function untargz(
       extract.on(
         'entry',
         (header: TAR.Headers, stream2: Readable, next: () => void) => {
-          log.silly(`untargz received stream2.`);
           streamToBuffer(stream2)
             .then((content) => {
               return content && result.push({ header, content });

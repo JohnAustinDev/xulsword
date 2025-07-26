@@ -31,10 +31,11 @@ import {
   untargz,
   ftpCancelableInit,
   failCause,
-  ftpCancelable,
+  ftpThrowIfCanceled,
   downloadCancel,
   logid,
   destroyFTPconnections,
+  httpThrowIfCanceled,
 } from '../../ftphttp.ts';
 import DiskCache from '../../components/diskcache.ts';
 import LocalFile from '../../components/localFile.ts';
@@ -941,7 +942,7 @@ const Module = {
             );
           }
           try {
-            ftpCancelable(cancelkey);
+            ftpThrowIfCanceled(cancelkey);
           } catch (er) {
             return await Promise.resolve(
               failCause(manifest, C.UI.Manager.cancelMsg),
@@ -1000,9 +1001,18 @@ const Module = {
     const rs = await Promise.all(
       dls.map(async (dl) => {
         if (dl === null) return null;
-        return typeof dl === 'string'
-          ? await Promise.resolve(dl)
-          : await this.download(dl, callingWinID, true);
+        if (typeof dl === 'string') {
+          return await Promise.resolve(dl);
+        } else {
+          const dlkey = downloadKey(dl);
+          try {
+            httpThrowIfCanceled(dlkey);
+            ftpThrowIfCanceled(dlkey);
+            return await this.download(dl, callingWinID, true);
+          } catch (er) {
+            return Promise.reject(C.UI.Manager.cancelMsg);
+          }
+        }
       }),
     );
     const res = downloads.map((dl, i) => {
@@ -1027,6 +1037,9 @@ const Module = {
     if (typeof winID === 'number') callingWinID = winID;
     const key = downloadKey(download);
     if (!alreadyReset && ftpCancelableInit(key)) {
+      return failCause(download, C.UI.Manager.cancelMsg);
+    }
+    try { httpThrowIfCanceled(key) } catch (er) {
       return failCause(download, C.UI.Manager.cancelMsg);
     }
     let dl = ModuleDownloads.finished[key];
@@ -1100,7 +1113,6 @@ const Module = {
       log.debug(`Successful download: ${logid(downloadkey)} ${logdls()}`);
       return zip;
     };
-
     try {
       // Audio XSM modules (HTTP download)
       if (type === 'http') {
@@ -1122,7 +1134,7 @@ const Module = {
               if (p && p !== -1) progress(p);
             },
           );
-          ftpCancelable(downloadkey);
+          ftpThrowIfCanceled(downloadkey);
 
           const zip = new ZIP(dlfile.path);
           // The conf file is required. Add it to the zip if not already there
@@ -1141,7 +1153,7 @@ const Module = {
                 if (p && p !== -1) progress(3 / 4 + p / 4);
               },
             );
-            ftpCancelable(downloadkey);
+            ftpThrowIfCanceled(downloadkey);
             const strconf = confs.find(
               (rc) => rc.conf.filename === confname,
             )?.strconf;
@@ -1170,7 +1182,7 @@ const Module = {
         const fp = fpath.posix.join(path, file);
         progress(0);
         const zipBuf = await getFile(domain, fp, downloadkey, progress);
-        ftpCancelable(downloadkey);
+        ftpThrowIfCanceled(downloadkey);
         return await Promise.resolve(returnZIP(new ZIP(zipBuf)));
       }
 
@@ -1179,7 +1191,7 @@ const Module = {
       const confpath = fpath.posix.join(path, 'mods.d', confname);
       progress(0);
       const confbuf = await getFile(domain, confpath, downloadkey);
-      ftpCancelable(downloadkey);
+      ftpThrowIfCanceled(downloadkey);
       const conf = parseSwordConf(
         {
           confString: confbuf.toString('utf8'),
@@ -1203,7 +1215,7 @@ const Module = {
         downloadkey,
         progress,
       );
-      ftpCancelable(downloadkey);
+      ftpThrowIfCanceled(downloadkey);
       const zip = new ZIP();
       zip.addFile(fpath.posix.join('mods.d', confname), confbuf);
       modfiles.forEach((fp) => {
@@ -1219,6 +1231,7 @@ const Module = {
   },
 
   async cancelOngoingDownloads(downloads?: Download[]): Promise<number> {
+    let cnt = 0;
     const toCancel = downloads
       ? downloads.reduce<typeof ModuleDownloads.ongoing>((p, c) => {
           const k = downloadKey(c);
@@ -1227,24 +1240,25 @@ const Module = {
         }, {})
       : ModuleDownloads.ongoing;
     const keys = Object.keys(toCancel);
-    log.debug(`CANCEL-ONGOING: ${keys.length} items! ${logdls()}`);
-    downloadCancel(keys);
-    let canceled: any[] = [];
-    try {
-      canceled = await Promise.allSettled(Object.values(toCancel));
-    } catch (er) {
-      // Do nothing, handled by this.download()
-    }
-    let cnt = 0;
-    canceled.forEach((r) => {
-      if (r.status === 'fulfilled') {
-        cnt += 1;
-      } else {
-        log.debug(r.reason);
+    if (keys.length) {
+      log.debug(`CANCEL-ONGOING: ${keys.length} items! ${logdls()}`);
+      downloadCancel(keys);
+      let canceled: any[] = [];
+      try {
+        canceled = await Promise.allSettled(Object.values(toCancel));
+      } catch (er) {
+        // Do nothing, handled by this.download()
       }
-    });
-    keys.forEach((key) => delete ModuleDownloads.ongoing[key]);
-    log.debug(`CANCEL-ONGOING COMPLETE: ${keys.length} items! ${logdls()}`);
+      canceled.forEach((r) => {
+        if (r.status === 'fulfilled') {
+          cnt += 1;
+        } else {
+          log.debug(r.reason);
+        }
+      });
+      keys.forEach((key) => delete ModuleDownloads.ongoing[key]);
+      log.debug(`CANCEL-ONGOING COMPLETE: ${keys.length} items! ${logdls()}`);
+    }
     return cnt;
   },
 
@@ -1262,12 +1276,10 @@ const Module = {
           return p;
         }, {})
       : ModuleDownloads.finished;
-    const nfk = Object.keys(finished).length;
     Object.keys(finished).forEach((key) => {
       delete ModuleDownloads.finished[key];
       cnt += 1;
     });
-    log.debug(`CANCEL-FINISHED COMPLETE: ${nfk} items! ${logdls()}`);
     return cnt;
   },
 

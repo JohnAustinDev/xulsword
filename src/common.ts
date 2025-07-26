@@ -60,12 +60,15 @@ import type Window from './servers/app/components/window.ts';
 // This file contains functions that are used in common with both xulsword
 // clients and servers.
 
-// This function cannot be called before G has been created and cached, so G
-// should be imported as early as possible.
+// This function may only be called in Electron and cannot be called before G
+// has been created and cached, so G should be imported as early as possible.
 function G(): GType | GTypeMain {
-  if (Cache.has('GType')) return Cache.read('GType') as GType;
-  if (Cache.has('GTypeMain')) return Cache.read('GTypeMain') as GTypeMain;
-  throw new Error(`G was requested before it was cached.`);
+  if (Build.isElectronApp) {
+    if (Cache.has('GType')) return Cache.read('GType') as GType;
+    if (Cache.has('GTypeMain')) return Cache.read('GTypeMain') as GTypeMain;
+    throw new Error(`G was requested before it was cached.`);
+  }
+  throw new Error(`Cache G may only be used by Electron.`);
 }
 
 // This function cannot be called before GI has been created and cached, so GI
@@ -2090,35 +2093,12 @@ export function versionCompare(v1: string | number, v2: string | number) {
   return 0;
 }
 
-// Built-in local repositories cannot be disabled, deleted or changed.
-// Implemented as a function to allow G.i18n to initialize.
-export function builtInRepos(): Repository[] {
-  return clone(C.SwordBultinRepositories).map((r) => {
-    r.name = localizeString(G().i18n, r.name);
-    r.path = resolveXulswordPath(G().Dirs.path, r.path);
-    return r;
-  });
-}
-
-export function builtInRepoKeys(): string[] {
-  const repos: Repository[] = builtInRepos();
-  return repos.map((r) => repositoryKey(r));
-}
-
-export function isRepoBuiltIn(repo: Repository | string): boolean {
+export function isRepoCustom(
+  custom: Repository[] | null,
+  repo: Repository | string,
+): boolean {
   const repokey = typeof repo === 'object' ? repositoryKey(repo) : repo;
-  const cachekey = ['isBuiltIn', repokey];
-  if (!Cache.has(...cachekey)) {
-    const biRepoKeys = builtInRepoKeys();
-    const result: boolean = biRepoKeys.includes(repokey);
-    Cache.write(result, ...cachekey);
-  }
-  return Cache.read(...cachekey);
-}
-
-export function isRepoCustom(repo: Repository | string): boolean {
-  const repokey = typeof repo === 'object' ? repositoryKey(repo) : repo;
-  return isRepoLocal(repokey) && !builtInRepoKeys().includes(repokey);
+  return custom !== null && !!custom.find((r) => repositoryKey(r) === repokey);
 }
 
 export function isRepoLocal(repo: Repository | string): boolean {
@@ -2201,7 +2181,7 @@ export function repositoryModuleKey(conf: SwordConfType): string {
   return str;
 }
 
-// Convert a Blueprint.js Region selection to a list of table data rows.
+// Convert a Blueprint.js Region selection to a list of table rows.
 export function selectionToTableRows(regions: Region[]): number[] {
   const sels = new Set<number>();
   regions?.forEach((region) => {
@@ -2214,7 +2194,7 @@ export function selectionToTableRows(regions: Region[]): number[] {
   return Array.from(sels).sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
 }
 
-// Convert a list of table data rows to a Blueprint.js Region.
+// Convert a list of table rows to a Blueprint.js Region.
 export function tableRowsToSelection(rows: number[]): RowSelection {
   const unique = new Set(rows);
   const sorted = Array.from(unique).sort((a: number, b: number) =>
@@ -2235,46 +2215,47 @@ export function tableRowsToSelection(rows: number[]): RowSelection {
   return selection;
 }
 
-// Return a new selection after toggling a data row, by adding or
-// subtracting from the current selection as appropriate. If the ctrl
-// or shift key is pressed, the current selection will be handled
-// accordingly.
-export function tableSelectDataRows(
-  toggleDataRow: number,
-  selectedDataRows: number[],
+// Return a new array of row indexes after toggling a particular index, by adding
+// or subtracting from the input array as appropriate. If the ctrl or shift key
+// is pressed, the current selection will be handled accordingly.
+export function updateSelectedIndexes(
+  toggleRowIndex: number,
+  selectedRowIndexes: number[],
   e: React.MouseEvent,
 ): number[] {
-  const selectedRows = Array.from(new Set(selectedDataRows));
-  selectedRows.sort((a, b) => a - b);
-  const toggleSelected = selectedRows.includes(toggleDataRow);
-  if (selectedRows.length && (e.ctrlKey || e.shiftKey)) {
+  const newSelectedRowIndexes = Array.from(new Set(selectedRowIndexes));
+  newSelectedRowIndexes.sort((a, b) => a - b);
+  const toggleSelected = newSelectedRowIndexes.includes(toggleRowIndex);
+  if (newSelectedRowIndexes.length && (e.ctrlKey || e.shiftKey)) {
     // Decide if selecting upwards or downwards
-    if (selectedRows[0] > toggleDataRow) {
+    if (newSelectedRowIndexes[0] > toggleRowIndex) {
       // select upwards:
       // Get the first selected row after the clicked row.
-      const [prev] = selectedRows;
-      const start = e.ctrlKey ? toggleDataRow : prev - 1;
-      for (let x = start; x >= toggleDataRow; x -= 1) {
-        if (!toggleSelected) selectedRows.push(x);
-        else if (selectedRows.includes(x)) {
-          selectedRows.splice(selectedRows.indexOf(x), 1);
+      const [prev] = newSelectedRowIndexes;
+      const start = e.ctrlKey ? toggleRowIndex : prev - 1;
+      for (let x = start; x >= toggleRowIndex; x -= 1) {
+        if (!toggleSelected) newSelectedRowIndexes.push(x);
+        else if (newSelectedRowIndexes.includes(x)) {
+          newSelectedRowIndexes.splice(newSelectedRowIndexes.indexOf(x), 1);
         }
       }
     } else {
       // select downwards:
       // Get the first selected row before the clicked row.
-      const prev = selectedRows.filter((r) => r < toggleDataRow).pop();
-      const start = prev === undefined || e.ctrlKey ? toggleDataRow : prev + 1;
-      for (let x = start; x <= toggleDataRow; x += 1) {
-        if (!toggleSelected) selectedRows.push(x);
-        else if (selectedRows.includes(x)) {
-          selectedRows.splice(selectedRows.indexOf(x), 1);
+      const prev = newSelectedRowIndexes
+        .filter((r) => r < toggleRowIndex)
+        .pop();
+      const start = prev === undefined || e.ctrlKey ? toggleRowIndex : prev + 1;
+      for (let x = start; x <= toggleRowIndex; x += 1) {
+        if (!toggleSelected) newSelectedRowIndexes.push(x);
+        else if (newSelectedRowIndexes.includes(x)) {
+          newSelectedRowIndexes.splice(newSelectedRowIndexes.indexOf(x), 1);
         }
       }
     }
-    return selectedRows;
+    return newSelectedRowIndexes;
   }
-  return toggleSelected ? [] : [toggleDataRow];
+  return toggleSelected ? [] : [toggleRowIndex];
 }
 
 // Append entries of 'b' to 'a'. So 'a' is modified in place, while 'b'

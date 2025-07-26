@@ -17,7 +17,7 @@ import {
   getFeatureModules,
   localeConfig,
   getConfig,
-  GetBooksInVKModules,
+  getBooksInVKModules,
   getLocalizedBooks,
   getLocaleDigits,
   inlineAudioFile,
@@ -28,6 +28,7 @@ import {
   getAudioConf,
   getModuleConfs,
   getModuleConf,
+  getBuiltInRepos,
 } from '../common.ts';
 import Cache from '../../cache.ts';
 import { callBatch } from '../handleG.ts';
@@ -123,8 +124,12 @@ export const G: GTypeMain = {
     return process.platform;
   },
 
-  get GetBooksInVKModules() {
-    return GetBooksInVKModules();
+  get BuiltInRepos() {
+    return getBuiltInRepos();
+  },
+
+  get BooksInVKModules() {
+    return getBooksInVKModules();
   },
 
   Books(...args: Parameters<GType['Books']>): ReturnType<GType['Books']> {

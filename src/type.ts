@@ -29,7 +29,7 @@ import type {
   getModuleFonts,
   getFeatureModules,
   getBkChsInV11n,
-  GetBooksInVKModules,
+  getBooksInVKModules,
   getLocaleDigits,
   getLocalizedBooks,
   inlineFile,
@@ -40,6 +40,7 @@ import type {
   getAudioConfs,
   getModuleConfs,
   getModuleConf,
+  getBuiltInRepos,
 } from './servers/common.ts';
 import type { LocationVKTextG } from './servers/versetext.ts';
 import type { publishSubscription } from './servers/app/components/window.ts';
@@ -764,7 +765,8 @@ export type GType = {
   ModuleFonts: ReturnType<typeof getModuleFonts>;
   FeatureModules: ReturnType<typeof getFeatureModules>;
   OPSYS: NodeJS.Platform;
-  GetBooksInVKModules: ReturnType<typeof GetBooksInVKModules>;
+  BuiltInRepos: ReturnType<typeof getBuiltInRepos>;
+  BooksInVKModules: ReturnType<typeof getBooksInVKModules>;
 
   // Functions
   Books: typeof getBooks;
@@ -833,7 +835,7 @@ export type GIType = {
     | 'ModuleConfigDefault'
     | 'ModuleFonts'
     | 'FeatureModules'
-    | 'GetBooksInVKModules'
+    | 'BooksInVKModules'
   >]: (a: GType[name], b: RenderPromise) => GType[name];
 } & {
   [name in keyof Pick<
@@ -927,7 +929,7 @@ export const GBuilder: GType & {
     [keyof GType, Array<keyof GType['getBkChsInV11n']>],
     [keyof GType, Array<keyof GType['getLocalizedBooks']>],
     [keyof GType, Array<keyof GType['getLocaleDigits']>],
-    [keyof GType, Array<keyof GType['GetBooksInVKModules']>],
+    [keyof GType, Array<keyof GType['BooksInVKModules']>],
     [keyof GType, Array<keyof GType['callBatch']>],
     [keyof GType, Array<keyof GType['getAllDictionaryKeyList']>],
     [keyof GType, Array<keyof GType['genBookTreeNodes']>],
@@ -990,7 +992,7 @@ export const GBuilder: GType & {
     ['getBkChsInV11n', []],
     ['getLocalizedBooks', []],
     ['getLocaleDigits', []],
-    ['GetBooksInVKModules', []],
+    ['BooksInVKModules', []],
     ['callBatch', []],
     ['getAllDictionaryKeyList', []],
     ['genBookTreeNodes', []],
@@ -1032,7 +1034,8 @@ export const GBuilder: GType & {
   ModuleFonts: 'getter' as any,
   FeatureModules: 'getter' as any,
   OPSYS: 'getter' as any,
-  GetBooksInVKModules: 'getter' as any,
+  BuiltInRepos: 'getter' as any,
+  BooksInVKModules: 'getter' as any,
 
   // Functions
   Books: CACHEfunc as any,

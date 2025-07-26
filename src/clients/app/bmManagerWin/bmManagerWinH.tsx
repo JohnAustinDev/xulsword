@@ -9,7 +9,7 @@ import {
   randomID,
   stringHash,
   tableRowsToSelection,
-  tableSelectDataRows,
+  updateSelectedIndexes,
   xulswordLocation,
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
@@ -33,7 +33,6 @@ import type {
 } from '../../../type.ts';
 import type {
   TCellInfo,
-  TRowLocation,
 } from '../../components/libxul/table.tsx';
 import type BMManagerWin from './bmManagerWin.tsx';
 import type { BMManagerState } from './bmManagerWin.tsx';
@@ -83,15 +82,15 @@ export function onFolderSelection(
 
 export function onCellClick(
   this: BMManagerWin,
+  dataRowIndex: number,
+  _dataColIndex: number,
   e: React.MouseEvent,
-  cell: TRowLocation,
 ): void {
   this.setState((prevState: BMManagerState) => {
-    const { dataRowIndex } = cell;
     const data = this.tableData;
     if (data[dataRowIndex]) {
       const { selectedItems: prevSelectedItems } = prevState;
-      const selectedDataRows = tableSelectDataRows(
+      const selectedDataRows = updateSelectedIndexes(
         dataRowIndex,
         prevSelectedItems
           .map((id) => data.findIndex((r) => r[Col.iInfo].id === id))

@@ -1,4 +1,5 @@
 import { Intent } from '@blueprintjs/core';
+import { Utils } from '@blueprintjs/table';
 import {
   clone,
   downloadKey,
@@ -14,26 +15,22 @@ import {
   subtractGenBookAudioChapters,
   genBookAudio2TreeNodes,
   diff,
-  builtInRepos,
   repositoryModuleKey,
-  tableSelectDataRows,
-  querablePromise,
+  updateSelectedIndexes,
   gbPaths,
   localizeString,
   findFirstLeafNode,
-  cloneAny,
   isRepoCustom,
-  isRepoBuiltIn,
 } from '../../../../common.ts';
 import C from '../../../../constant.ts';
 import { G } from '../../../G.ts';
 import { windowArguments } from '../../../common.tsx';
 import log from '../../../log.ts';
 import { forEachNode } from '../../../components/libxul/treeview.tsx';
+import { isRepoBuiltIn } from '../../common.ts';
 
 import type {
   Download,
-  FTPDownload,
   GType,
   Repository,
   RepositoryListing,
@@ -42,8 +39,6 @@ import type {
   VerseKeyAudio,
   GenBookAudioConf,
   OSISBookType,
-  QuerablePromise,
-  RepoDisabled,
   RepositoryOperation,
 } from '../../../../type.ts';
 import type S from '../../../../defaultPrefs.ts';
@@ -52,28 +47,16 @@ import type {
   SelectVKProps,
 } from '../../../components/libxul/selectVK.tsx';
 import type ModuleManager from './moduleManager.tsx';
-import type { ManagerState } from './moduleManager.tsx';
+import type { ManagerProps, ManagerState } from './moduleManager.tsx';
 import type {
   NodeListOR,
   SelectORMType,
 } from '../../../components/libxul/selectOR.tsx';
 import type {
+  TableRowSortState,
   TCellInfo,
-  TCellLocation,
   TData,
 } from '../../../components/libxul/table.tsx';
-
-export const Tables = ['language', 'module', 'repository'] as const;
-
-export const Permission = { internet: false };
-
-export const DefaultCustomRepo: Repository = {
-  name: '?',
-  domain: C.Downloader.localfile,
-  path: '?',
-};
-
-export const DefaultCustomRepoKey = repositoryKey(DefaultCustomRepo);
 
 export type VersekeyDialog = {
   type: 'versekey';
@@ -100,7 +83,6 @@ export type TRepCellInfo = TCellInfo & {
 };
 
 export type TModCellInfo = TCellInfo & {
-  installedLocally: boolean;
   repo: Repository;
   conf: SwordConfType;
 };
@@ -139,7 +121,25 @@ export type TRepositoryTableRow = [
   TRepCellInfo,
 ];
 
-export type DownloadType = Record<string, number | string> | null;
+export type DownloadRecordType = Record<string, number | string> | null;
+
+export type ModuleUpdates = {
+  doInstall: boolean;
+  installed?: SwordConfType;
+  updateTo: SwordConfType;
+};
+
+export const Tables = ['language', 'module', 'repository'] as const;
+
+export const Permission = { internet: false };
+
+export const DefaultCustomRepo: Repository = {
+  name: '?',
+  domain: C.Downloader.localfile,
+  path: '?',
+};
+
+export const DefaultCustomRepoKey = repositoryKey(DefaultCustomRepo);
 
 export const ON = '☑';
 export const OFF = '☐';
@@ -178,13 +178,7 @@ export const RepCol = {
   iInfo: 4,
 } as const;
 
-export const Downloads: Array<QuerablePromise<Array<DownloadType>>> = [];
-
-export type ModuleUpdates = {
-  doInstall: boolean;
-  installed?: SwordConfType;
-  updateTo: SwordConfType;
-};
+export const Downloads: Array<Promise<Array<DownloadRecordType>>> = [];
 
 export const Progressing = {
   ids: [] as Array<[string, number]>, // [id, percent]
@@ -193,9 +187,9 @@ export const Progressing = {
 // The following functions return custom callbacks meant to be sent
 // to tables for applying values, settings, classes etc. to particular
 // table cells.
-export function loading(columnIndex: number) {
+export function loading(columnToShowLoading: number) {
   return (_ri: number, ci: number) => {
-    return ci === columnIndex;
+    return ci === columnToShowLoading;
   };
 }
 
@@ -242,7 +236,7 @@ export function modclasses() {
       classes.push('checkbox-column');
     if (
       dci === ModCol.iInstalled &&
-      drow[ModCol.iInfo].installedLocally &&
+      drow[ModCol.iInstalled] === ON &&
       !partialAudioInstalled
     ) {
       classes.push('disabled');
@@ -268,7 +262,7 @@ export function tooltip(atooltip: string, skipColumnIndexArray: number[]) {
 // but customs can also be remote. Only CrossWire list repos are not returned.
 export function getXulswordRepos(state: ManagerState): Repository[] {
   const { repositories } = state;
-  const builtIns = builtInRepos();
+  const builtIns = clone(G.BuiltInRepos);
 
   if (repositories) {
     const { xulsword, custom } = repositories;
@@ -278,66 +272,85 @@ export function getXulswordRepos(state: ManagerState): Repository[] {
   return builtIns;
 }
 
-export function setDownloadProgress(
-  xthis: ModuleManager,
+export function updateDownloadProgress(
+  state: ManagerState,
   dlkey: string,
   prog: number,
 ) {
-  if (prog !== -1 || Progressing.ids.find((v) => v[0] === dlkey)) {
-    let { ids } = Progressing;
-    const idi = ids.findIndex((d) => d[0] === dlkey);
-    if (idi === -1) ids.push([dlkey, prog]);
-    else ids[idi][1] = prog;
-    if (ids.every((d) => d[1] === -1)) ids = [];
-    const total = ids.reduce((p, c) => p + (c[1] === -1 ? 1 : c[1]), 0);
-    const progress =
-      !ids.length || total === ids.length ? null : [total, ids.length];
-    xthis.sState({ progress });
-    Progressing.ids = ids;
-  }
+  let { ids } = Progressing;
+  const idi = ids.findIndex((d) => d[0] === dlkey);
+  if (idi === -1) ids.push([dlkey, prog]);
+  else ids[idi][1] = prog;
+  if (ids.every((d) => d[1] === -1)) ids = [];
+  Progressing.ids = ids;
+  const total = ids.reduce((p, c) => p + (c[1] === -1 ? 1 : c[1]), 0);
+  state.progress =
+    !ids.length || !total || total === ids.length ? null : [total, ids.length];
 }
 
 export function onRowsReordered(
   this: ModuleManager,
   tableName: (typeof Tables)[number],
-  propColumnIndex: number,
-  direction: 'ascending' | 'descending' | 'tableToDataRowMap',
-  tableToDataRowMap: number[],
+  direction: 'ascending' | 'descending',
+  dataColIndex: number,
 ) {
-  const newstate = this.state as ManagerState;
-  const table = newstate[tableName];
-  if (table) {
-    // Update our tableToDataRowMap based on the new sorting.
-    newstate.tables[tableName].tableToDataRowMap = tableToDataRowMap;
-    if (direction !== 'tableToDataRowMap' && newstate[tableName]) {
-      newstate[tableName].rowSort = { propColumnIndex, direction };
-      tableUpdate(this, newstate, tableName);
-    }
-    this.sState(newstate);
+  const state = this.state as ManagerState;
+  const { columns, selection } = state[tableName];
+  const rowSort: TableRowSortState = {
+    direction,
+    propColumnIndex: columns.findIndex((tc) => tc.datacolumn === dataColIndex),
+  };
+  state[tableName].rowSort = rowSort;
+  // Save current selection
+  const oldDataRowSelection = selectionToDataRows(this, tableName, selection);
+  let codes: string[] = [];
+  if (tableName === 'language') {
+    const { data } = state.tables.language;
+    codes = oldDataRowSelection.map((dr) => data[dr][LanCol.iInfo].code);
   }
+  tableUpdate(state, tableName, 'rowmap');
+  // Reselect original selection
+  let newselection: string[] | RowSelection;
+  if (tableName === 'language')
+    newselection = this.languageCodesToTableSelection(state, codes);
+  else {
+    const { tableToDataRowMap } = state.tables[tableName];
+    newselection = tableRowsToSelection(
+      oldDataRowSelection.map((dr) => {
+        const tr = tableToDataRowMap.indexOf(dr);
+        return tr === -1 ? dr : tr;
+      }),
+    );
+  }
+  state[tableName].selection = newselection;
+
+  this.sState(state);
 }
 
 export function onLangCellClick(
   this: ModuleManager,
+  dataRowIndex: number,
+  _dataColIndex: number,
   e: React.MouseEvent,
-  cell: TCellLocation,
 ) {
-  const newstate = this.state as ManagerState;
+  const state = this.state as ManagerState;
+  const newstate = state as ManagerState;
   newstate.language.selection = rowSelect(
     newstate,
     e,
     'language',
-    cell.tableRowIndex,
+    dataRowIndex,
   );
   this.loadModuleTable(newstate);
-  tableUpdate(this, newstate, ['language', 'module']);
+  tableUpdate(newstate, ['language', 'module'], 'remount');
   this.sState(newstate);
 }
 
 export function onModCellClick(
   this: ModuleManager,
+  dataRowIndex: number,
+  dataColIndex: number,
   e: React.MouseEvent,
-  cell: TCellLocation,
 ) {
   const disabled = ofClass(['disabled'], e.target);
   if (!disabled) {
@@ -345,19 +358,12 @@ export function onModCellClick(
     const { module, tables } = newstate;
     const { module: modtable } = tables;
     const { selection } = module;
-    const { tableToDataRowMap } = newstate.tables.module;
-    const { dataRowIndex: row, tableRowIndex, dataColIndex: col } = cell;
-    const drow = modtable.data[row];
-    const selrows = selectionToTableRows(selection);
-    const datarows = (
-      selrows.includes(tableRowIndex) &&
-      selrows.every((ri) => ri in modtable.data)
-        ? selrows
-        : [tableRowIndex]
-    ).map((r) => tableToDataRowMap[r] ?? r);
-    const wason = drow[col] === ON || drow[ModCol.iInfo].loading;
+    const drow = modtable.data[dataRowIndex];
+    let datarows = selectionToDataRows(this, 'module', selection);
+    if (!(dataRowIndex in datarows)) datarows = [dataRowIndex];
+    const wason = drow[dataColIndex] === ON || drow[ModCol.iInfo].loading;
     const willon = !wason;
-    if (drow && col === ModCol.iInstalled) {
+    if (drow && dataColIndex === ModCol.iInstalled) {
       // iInstalled column clicks
       if (willon || !drow[ModCol.iInfo].loading) {
         const updated = updateModuleInstallColumn(
@@ -368,7 +374,7 @@ export function onModCellClick(
         );
         if (updated) return this.sState(newstate);
       }
-    } else if (drow && col === ModCol.iRemove) {
+    } else if (drow && dataColIndex === ModCol.iRemove) {
       // iRemove column clicks
       const updated = updateModuleRemoveColumn(
         this,
@@ -377,66 +383,54 @@ export function onModCellClick(
         datarows.map((ri) => modtable.data[ri][ModCol.iInfo].conf),
       );
       if (updated) return this.sState(newstate);
-    } else if (drow && col === ModCol.iShared) {
+    } else if (drow && dataColIndex === ModCol.iShared) {
       // Shared column clicks
       let updated = false;
-      const newv = modtable.data[row][ModCol.iShared] === ON ? OFF : ON;
-      const selrows = selectionToTableRows(selection);
-      (selrows.includes(tableRowIndex) ? selrows : [tableRowIndex])
-        .map((r) => tableToDataRowMap[r] ?? r)
-        .forEach((r) => {
-          const rrow = modtable.data[r];
-          if (rrow && rrow[ModCol.iInstalled] === ON) {
-            rrow[ModCol.iShared] = newv;
-            updated = true;
-          }
-        });
+      const newv =
+        modtable.data[dataRowIndex][ModCol.iShared] === ON ? OFF : ON;
+      datarows.forEach((r) => {
+        const drow = modtable.data[r];
+        if (drow && drow[ModCol.iInstalled] === ON) {
+          drow[ModCol.iShared] = newv;
+          updated = true;
+        }
+      });
       if (updated) {
-        tableUpdate(this, newstate, 'module');
+        tableUpdate(newstate, 'module');
         return this.sState(newstate);
       }
     }
 
-    rowSelect(newstate, e, 'module', tableRowIndex);
+    rowSelect(newstate, e, 'module', dataRowIndex);
     this.sState(newstate);
   }
 }
 
 export function onRepoCellClick(
   this: ModuleManager,
+  dataRowIndex: number,
+  dataColIndex: number,
   e: React.MouseEvent,
-  cell: TCellLocation,
 ) {
-  const newstate = this.state as ManagerState;
+  const state = this.state as ManagerState;
+  const newstate = state;
   const { repository } = newstate;
   const { repository: repotable } = newstate.tables;
-  const { tableToDataRowMap } = repotable;
-  const { dataRowIndex: row, tableRowIndex, dataColIndex: col } = cell;
+
   if (repository) {
     const { selection } = repository;
-    const selrows = selectionToTableRows(selection);
-    const rows = (
-      selrows.includes(tableRowIndex) ? selrows : [tableRowIndex]
-    ).map((r) => tableToDataRowMap[r] ?? r);
-    const switchOn = repotable.data[row][RepCol.iState] === OFF;
-    const { editable } = repotable.data[row][RepCol.iInfo];
+    const switchOn = repotable.data[dataRowIndex][RepCol.iState] === OFF;
+    let selectedDataRows = selectionToDataRows(this, 'repository', selection);
+    if (!(dataRowIndex in selectedDataRows)) selectedDataRows = [dataRowIndex];
+    const { editable } = repotable.data[dataRowIndex][RepCol.iInfo];
     if (
-      !isRepoBuiltIn(repotable.data[row][RepCol.iInfo].repo) &&
-      col === RepCol.iState
+      !isRepoBuiltIn(repotable.data[dataRowIndex][RepCol.iInfo].repo) &&
+      dataColIndex === RepCol.iState
     ) {
-      switchRepo(this, newstate, rows, switchOn);
-    } else if (
-      // Don't select the row on editable cell click or double click can't
-      // trigger table cell edit!
-      (!selrows.includes(tableRowIndex) ||
-        !(typeof editable === 'function'
-          ? editable(row, col, repotable.data)
-          : editable)) &&
-      row > -1 &&
-      col < RepCol.iState
-    ) {
-      rowSelect(newstate, e, 'repository', tableRowIndex);
-      tableUpdate(this, newstate, 'repository');
+      switchRepo(this, newstate, selectedDataRows, switchOn);
+    } else {
+      rowSelect(newstate, e, 'repository', dataRowIndex);
+      tableUpdate(newstate, 'repository');
       this.sState(newstate);
     }
   }
@@ -444,7 +438,8 @@ export function onRepoCellClick(
 
 export function onCustomRepositoryEdited(
   this: ModuleManager,
-  cell: TCellLocation,
+  dataRowIndex: number,
+  dataColIndex: number,
   value: string,
 ) {
   const newstate = this.state as ManagerState;
@@ -452,21 +447,22 @@ export function onCustomRepositoryEdited(
   if (repositories && repository) {
     const { disabled } = repositories;
     const { repository: repotable } = newstate.tables;
-    const { dataRowIndex: row, dataColIndex: col } = cell;
-    const drow = repotable.data[row];
+    const drow = repotable.data[dataRowIndex];
     if (drow) {
       const repo = clone(drow[RepCol.iInfo].repo);
       const origRepoKey = repositoryKey(repo);
       const enabled = !disabled || !disabled.find((k) => k === origRepoKey);
       let prop: keyof Repository = 'domain';
-      if (col === RepCol.iName) prop = 'name';
-      if (col === RepCol.iPath) prop = 'path';
+      if (dataColIndex === RepCol.iName) prop = 'name';
+      if (dataColIndex === RepCol.iPath) prop = 'path';
       repo[prop] = value;
       if (!repo.domain) repo.domain = '?';
       if (!repo.name) repo.name = '?';
       if (!repo.path) repo.path = 'file://';
-      if (installCustomRepository(this, newstate, row, repo, enabled)) {
-        switchRepo(this, newstate, [row], enabled);
+      if (
+        installCustomRepository(this, newstate, dataRowIndex, repo, enabled)
+      ) {
+        switchRepo(this, newstate, [dataRowIndex], enabled);
       }
     }
   }
@@ -490,9 +486,9 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               newstate.language.selection,
               open,
             );
-            tableUpdate(this, newstate, ['language', 'module']);
-            scrollToSelectedLanguage(this, newstate);
+            tableUpdate(newstate, ['language', 'module'], 'remount');
             this.sState(newstate);
+            scrollToSelectedLanguage(this, newstate);
             break;
           }
           case 'moduleInfo': {
@@ -548,7 +544,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           }
           case 'moduleInfoBack': {
             const newstate = this.state as ManagerState;
-            tableUpdate(this, newstate, ['module']);
+            tableUpdate(newstate, ['module']);
             this.setState({ infoConfigs: [] });
             break;
           }
@@ -558,7 +554,8 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           }
           case 'ok': {
             const errors: string[] = [];
-            let downloadResults: PromiseSettledResult<DownloadType[]>[] = [];
+            let downloadResults: PromiseSettledResult<DownloadRecordType[]>[] =
+              [];
             try {
               downloadResults = await Promise.allSettled(Downloads);
             } catch (er) {
@@ -630,7 +627,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                           install.push({
                             download: dl,
                             toRepo:
-                              builtInRepos()[
+                              G.BuiltInRepos[
                                 row[ModCol.iShared] === ON ? 0 : 1
                               ],
                           });
@@ -685,7 +682,6 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           }
           case 'repoAdd': {
             const newstate = this.state as ManagerState;
-            const { repositories } = newstate;
             if (
               installCustomRepository(
                 this,
@@ -714,10 +710,9 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                 drows.length &&
                 uninstallRepository(this, newstate, drows[0])
               ) {
-                newstate.language.selection = [];
                 this.loadLanguageTable(newstate);
                 this.loadModuleTable(newstate);
-                tableUpdate(this, newstate);
+                tableUpdate(newstate, undefined, 'remount');
                 this.sState(newstate);
               }
             }
@@ -726,30 +721,32 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           case 'repoCancel': {
             const newstate = this.state as ManagerState;
             const { repository: repotable } = newstate.tables;
-            G.Module.cancel(
-              repotable.data
-                .map((r, ri) =>
-                  r[RepCol.iInfo].loading !== false && r[RepCol.iState] !== OFF
-                    ? ri
-                    : null,
-                )
-                .filter((ri) => ri !== null)
-                .map((rix) => {
-                  const ri = rix as number;
-                  const r = repotable.data[ri];
-                  r[RepCol.iInfo].intent = intent(RepCol.iState, 'warning');
-                  r[RepCol.iInfo].loading = false;
-                  r[RepCol.iState] = OFF;
-                  return {
-                    ...r[RepCol.iInfo].repo,
-                    file: C.SwordRepoManifest,
-                    type: 'ftp',
-                  };
-                }),
-            ).catch((er) => {
+            const canceldls: Download[] = repotable.data
+              .map((r, ri) =>
+                r[RepCol.iInfo].loading !== false && r[RepCol.iState] !== OFF
+                  ? ri
+                  : null,
+              )
+              .filter((ri) => ri !== null)
+              .map((rix) => {
+                const ri = rix as number;
+                const r = repotable.data[ri];
+                r[RepCol.iInfo].intent = intent(RepCol.iState, 'warning');
+                r[RepCol.iInfo].loading = false;
+                r[RepCol.iState] = OFF;
+                return {
+                  ...r[RepCol.iInfo].repo,
+                  file: C.SwordRepoManifest,
+                  type: 'ftp',
+                };
+              });
+            G.Module.cancel(canceldls).catch((er) => {
               log.error(er);
             });
-            tableUpdate(this, newstate, 'repository');
+            canceldls.forEach((dl) =>
+              updateDownloadProgress(newstate, downloadKey(dl), -1),
+            );
+            tableUpdate(newstate, 'repository');
             this.sState(newstate);
             break;
           }
@@ -813,7 +810,6 @@ export function installCustomRepository(
   enabled: boolean,
 ): boolean {
   const { tables, repositories } = state;
-  const { disabled } = repositories ?? {};
   const { repository: repotable } = tables;
   const { data } = repotable;
   const repokey = repositoryKey(repo);
@@ -821,16 +817,11 @@ export function installCustomRepository(
     repositories &&
     !data.find((r) => repositoryKey(r[RepCol.iInfo].repo) === repokey)
   ) {
-    const row = repositoryToRow(disabled ?? null, repo);
-    row[RepCol.iInfo].classes = repclasses(
-      [RepCol.iState],
-      ['checkbox-column'],
-      ['custom-repo'],
-    );
-    row[RepCol.iInfo].editable = editable();
+    const { custom } = repositories;
+    const row = repositoryToRow(state, repo, true, false);
     let newindex = repoDataIndex;
     if (newindex === -1) newindex++;
-    else if (isRepoCustom(data[newindex][RepCol.iInfo].repo)) {
+    else if (isRepoCustom(custom, data[newindex][RepCol.iInfo].repo)) {
       if (!uninstallRepository(xthis, state, newindex)) return false;
     } else return false;
     // Install the new repotable row.
@@ -841,7 +832,7 @@ export function installCustomRepository(
       if (!repositories.disabled) repositories.disabled = [];
       repositories.disabled.push(repositoryKey(repo));
     }
-    tableUpdate(xthis, state);
+    tableUpdate(state, undefined, 'remount');
     return true;
   }
   return false;
@@ -859,6 +850,7 @@ export function uninstallRepository(
   if (repositories) {
     const { repository: repotable } = tables;
     const { data, repositoryListings } = repotable;
+    const { custom } = repositories;
     let repkey = '';
     if (typeof repoOrRepkeyOrDataindex === 'number')
       repkey = repositoryKey(data[repoOrRepkeyOrDataindex][RepCol.iInfo].repo);
@@ -871,8 +863,9 @@ export function uninstallRepository(
     if (
       index > -1 &&
       index in data &&
-      isRepoCustom(data[index][RepCol.iInfo].repo)
+      isRepoCustom(custom, data[index][RepCol.iInfo].repo)
     ) {
+      switchRepo(xthis, state, [index], false);
       data.splice(index, 1);
       repositoryListings.splice(index, 1);
       (['custom', 'disabled'] as Array<keyof typeof repositories>).forEach(
@@ -885,7 +878,7 @@ export function uninstallRepository(
           }
         },
       );
-      tableUpdate(xthis, state);
+      tableUpdate(state, undefined, 'remount');
       return true;
     }
   }
@@ -897,45 +890,53 @@ export function uninstallRepository(
 export function rowSelect(
   state: ManagerState,
   e: React.MouseEvent,
-  table: 'language',
-  row: number,
+  tableName: 'language',
+  dataRowIndex: number,
 ): string[];
 export function rowSelect(
   state: ManagerState,
   e: React.MouseEvent,
-  table: 'repository' | 'module',
-  row: number,
+  tableName: 'repository' | 'module',
+  dataRowIndex: number,
 ): RowSelection;
 export function rowSelect(
   state: ManagerState,
   e: React.MouseEvent,
-  table: (typeof Tables)[number],
-  row: number,
+  tableName: (typeof Tables)[number],
+  dataRowIndex: number,
 ): RowSelection | string[] {
-  const tbl = state[table];
+  const table = state[tableName];
   let newSelection: RowSelection | string[] = [];
-  if (tbl) {
-    const { selection } = tbl;
-    let rows: number[] = [];
-    if (table === 'language') {
+  if (table) {
+    const { tableToDataRowMap } = state.tables[tableName];
+    const { selection } = table;
+    if (tableName === 'language') {
+      let selectedDataRows: number[] = [];
       const { data } = state.tables.language;
-      rows = selection
+      selectedDataRows = selection
         .map((code) => {
           const rx = data.findIndex((r) => r[LanCol.iInfo].code === code);
           return rx === -1 ? 0 : rx;
         })
         .sort((a, b) => a - b);
-    } else {
-      rows = selectionToTableRows(selection as RowSelection);
-    }
-    newSelection = tableRowsToSelection(tableSelectDataRows(row, rows, e));
-    if (table === 'language') {
-      const { data } = state.tables.language;
-      newSelection = selectionToTableRows(newSelection).map(
-        (r) => data[r][LanCol.iInfo].code,
+      const newDataRowSelection = updateSelectedIndexes(
+        dataRowIndex,
+        selectedDataRows,
+        e,
       );
+      newSelection = newDataRowSelection.map((r) => data[r][LanCol.iInfo].code);
+    } else {
+      let tableRowIndex = tableToDataRowMap.indexOf(dataRowIndex);
+      if (tableRowIndex === -1) tableRowIndex = dataRowIndex;
+      const selectedtableRows = selectionToTableRows(selection as RowSelection);
+      const newTableRowSelection = updateSelectedIndexes(
+        tableRowIndex,
+        selectedtableRows,
+        e,
+      );
+      newSelection = tableRowsToSelection(newTableRowSelection);
     }
-    if (state[table]) state[table].selection = newSelection;
+    if (state[tableName]) state[tableName].selection = newSelection;
   }
 
   return newSelection;
@@ -975,6 +976,7 @@ export function switchRepo(
   statex: ManagerState,
   datarows: number[],
   onOrOff: boolean,
+  checkForUpdates = false,
 ) {
   const rowEnableDisable = (newstate: ManagerState) => {
     const { repositories } = newstate;
@@ -995,54 +997,104 @@ export function switchRepo(
           }
         }
       });
-      tableUpdate(xthis, newstate, 'repository');
+      tableUpdate(newstate, 'repository');
     }
     return newstate;
   };
 
   const updateTables = () => {
     const state = xthis.state as ManagerState;
-    getListings(state)
-      .then((listings) => {
-        const newstate = xthis.state as ManagerState;
-        handleListings(xthis, newstate, listings);
-        newstate.language.selection = [];
-        xthis.loadLanguageTable(newstate);
-        xthis.loadModuleTable(newstate);
-        checkForModuleUpdates(xthis, newstate);
-        checkForSuggestions(xthis, newstate);
-        tableUpdate(xthis, newstate, ['module', 'language']);
-        xthis.sState(newstate);
-      })
-      .catch((er) => log.error(er));
-  };
-
-  const getListings = async (state: ManagerState) => {
     const { tables, repositories } = state;
     const { repository } = tables;
-    const { repositoryListings } = repository;
     const { disabled } = repositories ?? {};
-    // Only request listings from server when necessary. If the listing has
-    // already been retrieved it will not be retrieved again, rather the
-    // original listing is used.
-    const newrepos: Array<FTPDownload | null> = repository.data.map((r, i) => {
-      const { repo } = r[RepCol.iInfo];
-      return onOrOff &&
-        datarows.includes(i) &&
-        (!disabled || !disabled.find((k) => k === repositoryKey(repo))) &&
-        !repositoryListings[i]
-        ? {
-            ...repo,
-            file: C.SwordRepoManifest,
-            type: 'ftp',
-          }
-        : null;
-    });
-    const newlistings = await G.Module.repositoryListing(newrepos);
-    return repositoryListings.map((rl, i) => newlistings[i] ?? rl);
+    const switchRepos: Array<Repository | null> = repository.data.map(
+      (r, i) => {
+        const { repo } = r[RepCol.iInfo];
+        return datarows.includes(i) &&
+          (!disabled || !disabled.find((k) => k === repositoryKey(repo)))
+          ? repo
+          : null;
+      },
+    );
+
+    readReposAndUpdateTables(xthis, state, switchRepos, checkForUpdates).catch(
+      (er) => log.error(er),
+    );
   };
 
   xthis.sState(rowEnableDisable(statex), updateTables);
+}
+
+// Calling repositoryListing on all repos at once means it will not return
+// until all repositories have been read, and some repos take a very long time
+// to respond. So instead, read each repository separately, in parallel, when
+// server requests are required.
+export async function readReposAndUpdateTables(
+  xthis: ModuleManager,
+  state: ManagerState,
+  repos: (Repository | null)[],
+  checkForUpdates = false,
+): Promise<void> {
+  const updateTables = (newstate: ManagerState) => {
+    xthis.loadLanguageTable(newstate);
+    xthis.loadModuleTable(newstate);
+    if (checkForUpdates) {
+      checkForModuleUpdates(xthis, newstate);
+      checkForSuggestions(xthis, newstate);
+    }
+    tableUpdate(newstate, ['module', 'language'], 'remount');
+    xthis.sState(newstate);
+  };
+
+  const { repositoryListings } = state.tables.repository;
+  const { disabled } = state.repositories ?? {};
+  // Only request listings from the server when necessary. If the
+  // listing has already been retrieved it will not be retrieved
+  // again, rather the original listing will be used.
+  const needServerRequest = repos.some(
+    (r, i) =>
+      r &&
+      (!disabled || !disabled.find((k) => k === repositoryKey(r))) &&
+      !repositoryListings[i],
+  );
+  if (needServerRequest) {
+    const readrepos = repos.map((repo, index) => {
+      return async () => {
+        if (repo) {
+          let list: Array<RepositoryListing | string> = [null];
+          if (!disabled || !disabled.find((k) => k === repositoryKey(repo))) {
+            try {
+              list = await G.Module.repositoryListing([
+                { ...repo, file: C.SwordRepoManifest, type: 'ftp' },
+              ]);
+            } catch (er) {
+              log.error(er);
+              list = [];
+              return false;
+            }
+          }
+          handleListings(
+            xthis,
+            state,
+            repos.map((_l, i) => (i === index ? list[0] : null)),
+          );
+          updateTables(state);
+        }
+
+        return true;
+      };
+    });
+    await Promise.allSettled(readrepos.map((f) => f())).catch((er) =>
+      log.error(er),
+    );
+  } else {
+    handleListings(
+      xthis,
+      state,
+      repos.map((_r, i) => repositoryListings[i]),
+    );
+    updateTables(state);
+  }
 }
 
 // Handle one or more raw repository listings, also handling any errors
@@ -1052,7 +1104,7 @@ export function handleListings(
   xthis: ModuleManager,
   state: ManagerState,
   listingsAndErrors: Array<RepositoryListing | string>,
-): ManagerState {
+): void {
   let { repositories } = state;
   const { repository, module: modtable } = state.tables;
   const { data, repositoryListings } = repository;
@@ -1093,9 +1145,7 @@ export function handleListings(
   });
   modtable.modules = null;
 
-  tableUpdate(xthis, state, 'repository');
-
-  return state;
+  tableUpdate(state, 'repository');
 }
 
 // Check enabled repository listings (except beta and attic) for installed
@@ -1266,8 +1316,7 @@ function installModuleUpdates(
   state: ManagerState,
   moduleUpdates: ModuleUpdates[],
 ): number {
-  return;
-  const xulswordRepo = repositoryKey(builtInRepos()[1]);
+  const xulswordRepo = repositoryKey(G.BuiltInRepos[1]);
   const removes: [on: boolean, conf: SwordConfType][] = [];
   const installs: [on: boolean, conf: SwordConfType][] = [];
   moduleUpdates.forEach((mud) => {
@@ -1315,7 +1364,7 @@ function updateModuleInstallColumn(
     if (row) {
       if (Array.isArray(setToON) ? setToON[i] : setToON) {
         // iInstalled is being set to ON...
-        tableUpdate(xthis, state, 'module');
+        tableUpdate(state, 'module');
         if (row[ModCol.iInfo].loading) {
           // Do nothing
         } else if (
@@ -1331,7 +1380,7 @@ function updateModuleInstallColumn(
         }
       } else {
         // iInstalled is being set to OFF...
-        tableUpdate(xthis, state, 'module');
+        tableUpdate(state, 'module');
         row[ModCol.iInstalled] = OFF;
         if (row[ModCol.iInfo].loading) doCancel.push(conf);
         row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'none');
@@ -1339,7 +1388,7 @@ function updateModuleInstallColumn(
     }
   });
 
-  if (doCancel) {
+  if (doCancel.length) {
     G.Module.cancel(
       doCancel
         .map((c) => getModuleDownload(xthis, repositoryModuleKey(c)))
@@ -1367,7 +1416,7 @@ function updateModuleRemoveColumn(
         repositoryModuleKey(r[ModCol.iInfo].conf) === repositoryModuleKey(conf),
     );
     if (row) {
-      tableUpdate(xthis, state, 'module');
+      tableUpdate(state, 'module');
       if (Array.isArray(setToON) ? setToON[i] : setToON) {
         // removeON is being set to ON...
         if (row[ModCol.iInfo].loading) doCancel.push(conf);
@@ -1376,7 +1425,7 @@ function updateModuleRemoveColumn(
     }
   });
 
-  if (doCancel) {
+  if (doCancel.length) {
     G.Module.cancel(
       doCancel
         .map((c) => getModuleDownload(xthis, repositoryModuleKey(c)))
@@ -1448,13 +1497,16 @@ export function getLocalModuleOperations(
   state: ManagerState,
 ): RepositoryOperation[] {
   const operations: RepositoryOperation[] = [];
+  const { repositories } = state;
   const { repositoryListings } = state.tables.repository;
-  const [sharedRepo, xulswordLocalRepo] = builtInRepos();
+  const [sharedRepo, xulswordLocalRepo] = G.BuiltInRepos;
   state.tables.module.data.forEach((drow) => {
     const iShared = drow[ModCol.iShared] == ON;
     const iInstalled = drow[ModCol.iInstalled] === ON;
     const iRemove = drow[ModCol.iRemove] === ON;
     const destRepository = iShared ? sharedRepo : xulswordLocalRepo;
+
+    //TODO: FIX PROBLEM -> Open ModuleManager, select installed mods from different repositories, click sharedRepo, operations are repeated many times and others missing
     findRowInstalledModules(state, drow).forEach((conf) => {
       const { sourceRepository } = conf;
       const { module } = conf;
@@ -1471,6 +1523,7 @@ export function getLocalModuleOperations(
           // Only move/copy if source is different than destination.
           repositoryKey(sourceRepository) !== repositoryKey(destRepository)
         ) {
+          const { custom } = repositories ?? {};
           const removeDest = !!repositoryListings
             .find(
               (l) =>
@@ -1484,7 +1537,7 @@ export function getLocalModuleOperations(
           // No moving or copying from xulsword local to shared if the module already
           // exists in shared.
           if (
-            (!isRepoCustom(sourceRepository) || iShared) &&
+            (!isRepoCustom(custom ?? null, sourceRepository) || iShared) &&
             !(
               repositoryKey(sourceRepository) ===
                 repositoryKey(xulswordLocalRepo) &&
@@ -1504,7 +1557,9 @@ export function getLocalModuleOperations(
               module,
               sourceRepository,
               destRepository,
-              operation: isRepoCustom(sourceRepository) ? 'copy' : 'move',
+              operation: isRepoCustom(custom ?? null, sourceRepository)
+                ? 'copy'
+                : 'move',
             });
           }
         }
@@ -1523,6 +1578,7 @@ function findRowInstalledModules(
 ): SwordConfType[] {
   const result: SwordConfType[] = [];
   const { repositoryListings } = state.tables.repository;
+  const { custom } = state.repositories ?? {};
   if (drow[ModCol.iInstalled] === ON) {
     const { conf } = drow[ModCol.iInfo];
     const { sourceRepository } = conf;
@@ -1539,7 +1595,7 @@ function findRowInstalledModules(
     // Look for the modules in the same order as libxulsword will: xulsword
     // local first, then shared, then custom. Module version does not matter,
     // the first module having the correct name of any version is chosen.
-    const [sharedRepo, xulswordLocalRepo] = builtInRepos();
+    const [sharedRepo, xulswordLocalRepo] = G.BuiltInRepos;
     lookup.forEach((lu) => {
       const { module, version } = lu;
       // xulsword local repo
@@ -1557,7 +1613,10 @@ function findRowInstalledModules(
         const listing = repositoryListings
           .filter(
             (rl) =>
-              rl && rl.length && rl[0] && isRepoCustom(rl[0].sourceRepository),
+              rl &&
+              rl.length &&
+              rl[0] &&
+              isRepoCustom(custom ?? null, rl[0].sourceRepository),
           )
           .find((l) =>
             l?.find((c) => c.module === module && c.Version === version),
@@ -1798,7 +1857,7 @@ function handleError(
       row[ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
     }
   });
-  tableUpdate(xthis, state, 'module');
+  tableUpdate(state, 'module');
 }
 
 // Perform async repository module downloads corresponding to a given
@@ -1812,7 +1871,7 @@ export async function download(
   const { module: modtable } = tables;
 
   // Get download objects, prompting user as necessary.
-  const dlpromises = configs.map(async (conf) => {
+  const audioPromptPromises = configs.map(async (conf) => {
     const modkey = repositoryModuleKey(conf);
     const modkeys = getModuleRowXsmSiblings(xthis, modkey);
     const dlobj = getModuleDownload(xthis, modkey);
@@ -1843,102 +1902,138 @@ export async function download(
   });
   let dlobjs: Array<Download | null>;
   try {
-    dlobjs = await Promise.all(dlpromises);
+    dlobjs = await Promise.all(audioPromptPromises);
   } catch (er) {
     log.error(er);
     dlobjs = [];
   }
 
   // Download using the array of download objects
-  const downloads = querablePromise(G.Module.downloads(dlobjs));
-  Downloads.push(downloads);
-  let dls: Array<Record<string, string | number> | null>;
-  try {
-    dls = await downloads;
-  } catch (er) {
-    dls = [];
-    dlobjs.forEach((dl) => {
-      const k = downloadKey(dl);
-      setDownloadProgress(xthis, k, -1);
-      dls.push({ [k]: 0 });
-    });
+  let dls: Array<Record<string, string | number> | null> = [];
+  if (dlobjs.length) {
+    const downloads = G.Module.downloads(dlobjs);
+    Downloads.push(downloads);
+    try {
+      dls = await downloads;
+    } catch (er) {
+      log.error(er);
+      dls = dlobjs.map((dl) => {
+        return { [downloadKey(dl)]: 0 };
+      });
+    } finally {
+      const newstate = xthis.state as ManagerState;
+      dlobjs.forEach((dl) => {
+        updateDownloadProgress(newstate, downloadKey(dl), -1);
+      });
+      xthis.sState(newstate);
+    }
   }
 
   // Now that all downloads are complete, update the module table.
-  dls.forEach((dl, i) => {
-    if (dl) {
-      const newstate = xthis.state as ManagerState;
-      const { tables } = newstate;
-      const { module: modtable } = tables;
-      Object.values(dl).forEach((result) => {
-        const modrepkey = repositoryModuleKey(configs[i]);
-        const modkeys = getModuleRowXsmSiblings(xthis, modrepkey);
-        const modrows = modkeys.map((mk) =>
-          modtable.data.find(
-            (r) => repositoryModuleKey(r[ModCol.iInfo].conf) === mk,
-          ),
-        );
+  if (dls.length) {
+    dls.forEach((dl, i) => {
+      if (dl) {
+        const newstate = xthis.state as ManagerState;
+        const { tables } = newstate;
+        const { module: modtable } = tables;
+        Object.values(dl).forEach((result) => {
+          const modrepkey = repositoryModuleKey(configs[i]);
+          const modkeys = getModuleRowXsmSiblings(xthis, modrepkey);
+          const modrows = modkeys.map((mk) =>
+            modtable.data.find(
+              (r) => repositoryModuleKey(r[ModCol.iInfo].conf) === mk,
+            ),
+          );
 
-        let newintent: Intent = Intent.NONE;
-        if (typeof result === 'string') {
-          if (result.startsWith(C.UI.Manager.cancelMsg)) {
-            newintent = Intent.WARNING;
+          let newintent: Intent = Intent.NONE;
+          if (typeof result === 'string') {
+            if (result.startsWith(C.UI.Manager.cancelMsg)) {
+              newintent = Intent.WARNING;
+            } else {
+              newintent = Intent.DANGER;
+              xthis.addToast({
+                message: result,
+                timeout: -1,
+                intent: newintent,
+              });
+            }
+          } else if (result > 0) {
+            newintent = Intent.SUCCESS;
+            modrows.forEach((r) => {
+              if (r) r[ModCol.iInstalled] = ON;
+            });
           } else {
-            newintent = Intent.DANGER;
-            xthis.addToast({
-              message: result,
-              timeout: -1,
-              intent: newintent,
+            newintent = Intent.WARNING;
+            modrows.forEach((r) => {
+              if (r) r[ModCol.iInstalled] = OFF;
             });
           }
-        } else if (result > 0) {
-          newintent = Intent.SUCCESS;
           modrows.forEach((r) => {
-            if (r) r[ModCol.iInstalled] = ON;
+            if (r)
+              r[ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
           });
-        } else {
-          newintent = Intent.WARNING;
-          modrows.forEach((r) => {
-            if (r) r[ModCol.iInstalled] = OFF;
-          });
-        }
-        modrows.forEach((r) => {
-          if (r) r[ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
         });
-      });
-      tableUpdate(xthis, newstate, 'module');
-      xthis.sState(newstate);
+        tableUpdate(newstate, 'module');
+        xthis.sState(newstate);
+      }
+    });
+  }
+}
+
+// This functions requires state[tableName].rowSort to be updated already, then
+// this function will regenerate tableToDataRowMap for that rowSort.
+export function updateTableToDataRowMap(
+  state: ManagerState,
+  tableName: (typeof Tables)[number],
+) {
+  const { columns, rowSort } = state[tableName];
+  const { data } = state.tables[tableName];
+  const { direction, propColumnIndex: tableColIndex } = rowSort;
+  const dataColIndex = columns[tableColIndex].datacolumn;
+  state.tables[tableName].tableToDataRowMap = Utils.times(
+    data.length,
+    (i: number) => i,
+  );
+  state.tables[tableName].tableToDataRowMap.sort((ax: number, bx: number) => {
+    const a = direction === 'ascending' ? ax : bx;
+    const b = direction === 'ascending' ? bx : ax;
+    const aa = data[a][dataColIndex];
+    const bb = data[b][dataColIndex];
+    if (aa === undefined && bb !== undefined) return -1;
+    if (bb === undefined && aa !== undefined) return 1;
+    if (aa === undefined && bb === undefined) return 0;
+    return aa.toString().localeCompare(bb.toString());
+  });
+}
+
+// Cause one or more tables to be updated in one or more ways:
+// - render: invalidate the BluePrint Table's grid
+// - rowmap: render + regenerate the data row map
+// - remount: render + rowmap + remount the React Table component
+export function tableUpdate(
+  state: ManagerState,
+  tableName?: (typeof Tables)[number] | (typeof Tables)[number][],
+  type?: 'render' | 'rowmap' | 'remount',
+) {
+  // tableName default is all tables
+  const tables: (typeof Tables)[number][] = Array.isArray(tableName)
+    ? tableName
+    : tableName
+      ? [tableName]
+      : ['repository', 'module', 'language'];
+  tables.forEach((table) => {
+    const { render, remount } = state.tables[table];
+    state.tables[table].render = render + 1;
+    if (type && ['rowmap', 'remount'].includes(type)) {
+      updateTableToDataRowMap(state, table);
+      if (type === 'remount') state.tables[table].remount = remount + 1;
     }
   });
 }
 
-// Cause a table to be updated. If state is null, the table update will be
-// scheduled immediately, otherwise the passed state will be updated so that
-// when the state is set the table will also be updated.
-export function tableUpdate(
-  xthis: ModuleManager,
-  state: ManagerState | null,
-  table?: (typeof Tables)[number] | (typeof Tables)[number][],
-) {
-  const tables: (typeof Tables)[number][] = Array.isArray(table)
-    ? table
-    : table
-      ? [table]
-      : ['repository', 'module', 'language'];
-  const updated = (state: ManagerState) => {
-    tables.forEach((tbl) => {
-      const { render } = state.tables[tbl];
-      state.tables[tbl].render = render + 1;
-      state.tables[tbl].tableToDataRowMap = [];
-    });
-    return tables.length ? state : null;
-  };
-  if (!state) xthis.sState(updated);
-  else updated(state);
-}
-
 // Given a table selection, return the selected data rows in ascending order.
-// This is like selectionToRows, but returns data rows rather than table rows.
+// This is like selectionToTableRows, but returns data rows rather than table
+// rows.
 export function selectionToDataRows(
   xthis: ModuleManager,
   table: (typeof Tables)[number],
@@ -1946,6 +2041,7 @@ export function selectionToDataRows(
 ): number[] {
   const state = xthis.state as ManagerState;
   const { tables } = state;
+  const { tableToDataRowMap } = tables[table];
   if (table === 'language') {
     return selection
       .map((code) => {
@@ -1956,26 +2052,35 @@ export function selectionToDataRows(
   }
   const tablerows = selectionToTableRows(selection as RowSelection);
   return tablerows
-    .map((r) => state.tables[table].tableToDataRowMap[r] ?? r)
+    .map((tr) => tableToDataRowMap[tr] ?? tr)
     .sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
 }
 
 // Create a new repository table row from a Repository object.
 export function repositoryToRow(
-  disabled: RepoDisabled,
+  state: ManagerState,
   repo: Repository,
+  isCustom: boolean,
+  isLoading: boolean,
 ): TRepositoryTableRow {
-  const on = builtInRepos()
-    .map((r) => repositoryKey(r))
-    .includes(repositoryKey(repo))
-    ? ALWAYSON
-    : ON;
+  const repoIsDisabled =
+    state.repositories?.disabled?.includes(repositoryKey(repo)) || false;
   return [
-    repo.name || '?',
+    localizeString(G, repo.name),
     repo.domain,
     repo.path,
-    !disabled || !disabled.find((k) => k === repositoryKey(repo)) ? on : OFF,
-    { repo },
+    repoIsDisabled ? OFF : isRepoBuiltIn(repo) ? ALWAYSON : ON,
+    {
+      loading: isLoading && !repoIsDisabled ? loading(RepCol.iState) : false,
+      editable: isCustom ? editable() : false,
+      classes: repclasses(
+        [RepCol.iState],
+        ['checkbox-column'],
+        isCustom ? ['custom-repo'] : [],
+      ),
+      repo,
+      tooltip: tooltip('VALUE', [RepCol.iState]),
+    },
   ];
 }
 
@@ -2012,7 +2117,10 @@ export function scrollToSelectedLanguage(
 ) {
   const { selection } = state.language;
   if (selection.length) {
-    const selectedRegions = xthis.languageCodesToTableSelection(selection);
+    const selectedRegions = xthis.languageCodesToTableSelection(
+      state,
+      selection,
+    );
     const [firstSelectedRegion] = selectedRegions;
     if (firstSelectedRegion) {
       const { languageTableCompRef } = xthis;
