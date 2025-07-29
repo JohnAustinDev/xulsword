@@ -374,7 +374,6 @@ export default class ModuleManager
             module.data
               .filter((r) => {
                 const medl = H.getModuleDownload(
-                  this,
                   repositoryModuleKey(r[H.ModCol.iInfo].conf),
                 );
                 return medl ? downloadKey(medl) === id : false;
@@ -494,45 +493,53 @@ export default class ModuleManager
             mtype = `XSM ${G.i18n.t('audio.label')}`;
           }
           const reponame = localizeString(G, c.sourceRepository.name);
-          const r = [] as unknown as TModuleTableRow;
-          r[H.ModCol.iInfo] = {
-            repo: c.sourceRepository,
-            classes: H.modclasses(),
-            tooltip: H.tooltip('VALUE', [
-              H.ModCol.iShared,
-              H.ModCol.iInstalled,
-              H.ModCol.iRemove,
-            ]),
-            conf: c,
-          };
-          r[H.ModCol.iType] = mtype;
-          r[H.ModCol.iAbout] =
-            (c.Description &&
-              (c.Description[G.i18n.language] || c.Description.en)) ||
-            '';
-          r[H.ModCol.iModule] = c.module;
-          r[H.ModCol.iRepoName] =
-            reponame ||
-            (repoIsLocal
-              ? c.sourceRepository.path
-              : `${c.sourceRepository.domain}/${c.sourceRepository.path}`);
-          r[H.ModCol.iVersion] = c.Version || '';
-          r[H.ModCol.iLang] = c.Lang || '?';
-          r[H.ModCol.iSize] = c.InstallSize?.toString() || '';
-          r[H.ModCol.iFeatures] = c.Feature?.join(', ') || '';
-          r[H.ModCol.iVersification] = c.Versification || 'KJV';
-          r[H.ModCol.iScope] = c.Scope || '';
-          r[H.ModCol.iCopyright] =
-            (c.Copyright && (c.Copyright[G.i18n.language] || c.Copyright.en)) ||
-            '';
-          r[H.ModCol.iLicense] = c.DistributionLicense || '';
-          r[H.ModCol.iSourceType] = c.SourceType || '';
-          r[H.ModCol.iShared] =
-            repositoryKey(r[H.ModCol.iInfo].repo) === builtInRepoKeys[0]
-              ? H.ON
-              : H.OFF;
-          r[H.ModCol.iInstalled] = repoIsLocal ? H.ON : H.OFF;
-          r[H.ModCol.iRemove] = H.OFF;
+          const modrepkey = repositoryModuleKey(c);
+          // Re-use module table rows across all module table loads, so that
+          // user changes are not forgotten!
+          let r = H.findModuleRow(modrepkey);
+          if (!r) {
+            r = [] as unknown as TModuleTableRow;
+            r[H.ModCol.iInfo] = {
+              repo: c.sourceRepository,
+              classes: H.modclasses(),
+              tooltip: H.tooltip('VALUE', [
+                H.ModCol.iShared,
+                H.ModCol.iInstalled,
+                H.ModCol.iRemove,
+              ]),
+              conf: c,
+            };
+            r[H.ModCol.iType] = mtype;
+            r[H.ModCol.iAbout] =
+              (c.Description &&
+                (c.Description[G.i18n.language] || c.Description.en)) ||
+              '';
+            r[H.ModCol.iModule] = c.module;
+            r[H.ModCol.iRepoName] =
+              reponame ||
+              (repoIsLocal
+                ? c.sourceRepository.path
+                : `${c.sourceRepository.domain}/${c.sourceRepository.path}`);
+            r[H.ModCol.iVersion] = c.Version || '';
+            r[H.ModCol.iLang] = c.Lang || '?';
+            r[H.ModCol.iSize] = c.InstallSize?.toString() || '';
+            r[H.ModCol.iFeatures] = c.Feature?.join(', ') || '';
+            r[H.ModCol.iVersification] = c.Versification || 'KJV';
+            r[H.ModCol.iScope] = c.Scope || '';
+            r[H.ModCol.iCopyright] =
+              (c.Copyright &&
+                (c.Copyright[G.i18n.language] || c.Copyright.en)) ||
+              '';
+            r[H.ModCol.iLicense] = c.DistributionLicense || '';
+            r[H.ModCol.iSourceType] = c.SourceType || '';
+            r[H.ModCol.iShared] =
+              repositoryKey(r[H.ModCol.iInfo].repo) === builtInRepoKeys[0]
+                ? H.ON
+                : H.OFF;
+            r[H.ModCol.iInstalled] = repoIsLocal ? H.ON : H.OFF;
+            r[H.ModCol.iRemove] = H.OFF;
+            H.findModuleRow(modrepkey, r); // sets it
+          }
           modtable.data.push(r);
         });
       }
@@ -554,9 +561,7 @@ export default class ModuleManager
         if (drow && Array.isArray(listing) && drow[H.RepCol.iState] !== H.OFF) {
           listing.forEach((c) => {
             const modkey = repositoryModuleKey(c);
-            const modrow = modtable.data.find(
-              (r) => repositoryModuleKey(r[H.ModCol.iInfo].conf) === modkey,
-            );
+            const modrow = H.findModuleRow(modkey);
             if (modrow) {
               // NOTE: XSM modules are only remote, since once installed they
               // are simply multiple local regular modules.
@@ -709,7 +714,7 @@ export default class ModuleManager
         const { selection } = done;
         done.callback(selection);
       }
-      this.sState(newstate);
+      this.sState({ showAudioDialog });
     }
   }
 
@@ -899,10 +904,7 @@ export default class ModuleManager
                   <Box flex="1">
                     <Table
                       id="language"
-                      key={[
-                        langtable.data.length,
-                        langtable.remount,
-                      ].join('.')}
+                      key={[langtable.data.length, langtable.remount].join('.')}
                       cellRendererDependencies={[
                         language.columns,
                         langtable.data,
@@ -971,10 +973,7 @@ export default class ModuleManager
                   <Table
                     flex="1"
                     id="module"
-                    key={[
-                        modtable.data.length,
-                        modtable.remount,
-                      ].join('.')}
+                    key={[modtable.data.length, modtable.remount].join('.')}
                     cellRendererDependencies={[
                       module.columns,
                       modtable.data,
@@ -1063,10 +1062,7 @@ export default class ModuleManager
                     <Table
                       flex="1"
                       id="repository"
-                      key={[
-                        repotable.data.length,
-                        repotable.remount,
-                      ].join('.')}
+                      key={[repotable.data.length, repotable.remount].join('.')}
                       cellRendererDependencies={[
                         repository.columns,
                         repotable.data,
@@ -1231,34 +1227,32 @@ function audioDialogOnChange(
   this: ModuleManager,
   selection: SelectVKType | SelectORMType | undefined,
 ) {
-  this.sState((prevState) => {
-    const { showAudioDialog: sad } = prevState;
-    const showAudioDialog = sad.slice();
-    if (showAudioDialog.length) {
-      showAudioDialog[0] = {
-        ...showAudioDialog[0],
-        selection,
-      } as H.VersekeyDialog | H.GenBookDialog;
-      if (showAudioDialog[0].type === 'versekey') {
-        const [dvk] = showAudioDialog;
-        const { options } = dvk;
-        const sel = selection as SelectVKType;
-        if (sel.book && options) {
-          const af = dvk.chapters[sel.book];
-          let ch: number[] | undefined;
-          if (af) {
-            ch = af
-              .map((n, i) => (n ? i : undefined))
-              .filter(Boolean) as number[];
-          }
-          options.chapters = ch;
-          options.lastchapters = ch;
+  const newstate = this.state as ManagerState;
+  const { showAudioDialog: sad } = newstate;
+  const showAudioDialog = sad.slice();
+  if (showAudioDialog.length) {
+    showAudioDialog[0] = {
+      ...showAudioDialog[0],
+      selection,
+    } as H.VersekeyDialog | H.GenBookDialog;
+    if (showAudioDialog[0].type === 'versekey') {
+      const [dvk] = showAudioDialog;
+      const { options } = dvk;
+      const sel = selection as SelectVKType;
+      if (sel.book && options) {
+        const af = dvk.chapters[sel.book];
+        let ch: number[] | undefined;
+        if (af) {
+          ch = af
+            .map((n, i) => (n ? i : undefined))
+            .filter(Boolean) as number[];
         }
+        options.chapters = ch;
+        options.lastchapters = ch;
       }
-      return { showAudioDialog };
     }
-    return null;
-  });
+    this.sState({ showAudioDialog });
+  }
 }
 
 export function onunload() {

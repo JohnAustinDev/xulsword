@@ -608,7 +608,7 @@ export type Repository = {
 
 export type RepositoryOperation = {
   module: string;
-  sourceRepository: Repository;
+  sourceRepository?: Repository;
   destRepository: Repository;
   // 'remove' removes module from destRepository
   operation: 'copy' | 'move' | 'remove';

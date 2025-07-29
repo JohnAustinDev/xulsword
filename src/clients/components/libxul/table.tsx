@@ -21,13 +21,14 @@ import type { IconName } from '@blueprintjs/core';
 import type { Region, CellRenderer } from '@blueprintjs/table';
 import type { XulProps } from './xul.tsx';
 
-// This table is a controlled React component with no state of its own. Table
-// updates are not shown to the user until the table's key prop is updated or
-// one of the cellRendererDependencies changes. The table's data dimensions
-// must be included in the key value, or runtime errors may result if the data
-// dimensions change. Some table features become enabled when the related event
-// handler prop is set (ie. onColumnsReordered onColumnWidthChanged). Handlers
-// are required for updating external state when table events occur.
+// This table is a controlled React component with no state of its own.
+// Handlers are required for updating external state when table events occur.
+// Table updates are not shown to the user until the table's key prop is
+// updated or one of the cellRendererDependencies changes. The table's data
+// dimensions must be included in the key value, or runtime errors will result
+// when the data dimensions change. Some table features become enabled when the
+// related event handler prop is set (ie. onColumnsReordered
+// onColumnWidthChanged).
 
 type TableState = Record<string, never>;
 

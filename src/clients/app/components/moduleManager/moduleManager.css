@@ -42,13 +42,10 @@
   width: 100%;
   overflow: auto;
 }
-
-#repository .custom-repo.data-col-0::before {
-  margin-left: -8.5px;
-  content: '•';
-  color: #238551;
-  font-size: 16pt;
-}
+/*
+#repository .custom-repo.data-col-0 .bp5-table-editable-text {
+  font-style: italic;
+}*/
 
 .moduleManager .bp5-dialog-body .label {
   white-space: unset;

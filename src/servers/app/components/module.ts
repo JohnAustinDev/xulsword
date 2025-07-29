@@ -1039,7 +1039,9 @@ const Module = {
     if (!alreadyReset && ftpCancelableInit(key)) {
       return failCause(download, C.UI.Manager.cancelMsg);
     }
-    try { httpThrowIfCanceled(key) } catch (er) {
+    try {
+      httpThrowIfCanceled(key);
+    } catch (er) {
       return failCause(download, C.UI.Manager.cancelMsg);
     }
     let dl = ModuleDownloads.finished[key];
@@ -1330,7 +1332,11 @@ const Module = {
     Cache.clear('RepoConfigObjects');
     return modules.map((m) => {
       const { module, sourceRepository, destRepository } = m;
-      if (isRepoLocal(sourceRepository) && isRepoLocal(destRepository)) {
+      if (
+        sourceRepository &&
+        isRepoLocal(sourceRepository) &&
+        isRepoLocal(destRepository)
+      ) {
         return moveRemoveCopyModules(
           module,
           sourceRepository.path,
@@ -1348,7 +1354,11 @@ const Module = {
     Cache.clear('RepoConfigObjects');
     return modules.map((m) => {
       const { module, sourceRepository, destRepository } = m;
-      if (isRepoLocal(sourceRepository) && isRepoLocal(destRepository)) {
+      if (
+        sourceRepository &&
+        isRepoLocal(sourceRepository) &&
+        isRepoLocal(destRepository)
+      ) {
         return moveRemoveCopyModules(
           module,
           sourceRepository.path,
