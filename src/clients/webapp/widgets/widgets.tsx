@@ -1,6 +1,5 @@
 import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { G } from '../../G.ts';
 import socketConnect from '../preload.ts';
 import {
   writeSettingsToPrefsStores,
@@ -17,8 +16,6 @@ import WidgetMenulist from './widgetMenulist.tsx';
 import defaultSettings from './defaultSettings.ts';
 
 import type { ComponentData } from '../common.ts';
-
-G.Data.has('test'); // load/use G early checking common.ts has Cached G.
 
 const socket = socketConnect(
   Number(process.env.WEBAPP_PORT),
