@@ -181,6 +181,7 @@ export const RepCol = {
 export const Downloads = {
   promises: [] as Array<Promise<Array<DownloadRecordType>>>,
   modrepkeyMap: {} as { [dlkey: string]: string },
+  finished: [] as string[],
 };
 
 export const Progressing = {
@@ -345,7 +346,7 @@ export function onLangCellClick(
     dataRowIndex,
   );
   this.loadModuleTable(newstate);
-  tableUpdate(newstate, ['language', 'module'], 'remount');
+  tableUpdate(newstate, ['language', 'module']);
   this.sState(newstate);
 }
 
@@ -486,7 +487,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               newstate.language.selection,
               open,
             );
-            tableUpdate(newstate, ['language', 'module'], 'remount');
+            tableUpdate(newstate, ['language', 'module']);
             this.sState(newstate);
             scrollToSelectedLanguage(this, newstate);
             break;
@@ -691,7 +692,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               ) {
                 this.loadLanguageTable(newstate);
                 this.loadModuleTable(newstate);
-                tableUpdate(newstate, undefined, 'remount');
+                tableUpdate(newstate, undefined);
                 this.sState(newstate);
               }
             }
@@ -811,7 +812,7 @@ export function installCustomRepository(
       if (!repositories.disabled) repositories.disabled = [];
       repositories.disabled.push(repositoryKey(repo));
     }
-    tableUpdate(state, undefined, 'remount');
+    tableUpdate(state, undefined);
     return true;
   }
   return false;
@@ -857,7 +858,7 @@ export function uninstallRepository(
           }
         },
       );
-      tableUpdate(state, undefined, 'remount');
+      tableUpdate(state, undefined);
       return true;
     }
   }
@@ -985,14 +986,10 @@ export function switchRepo(
     const state = xthis.state as ManagerState;
     const { tables, repositories } = state;
     const { repository } = tables;
-    const { disabled } = repositories ?? {};
     const switchRepos: Array<Repository | null> = repository.data.map(
       (r, i) => {
         const { repo } = r[RepCol.iInfo];
-        return datarows.includes(i) &&
-          (!disabled || !disabled.find((k) => k === repositoryKey(repo)))
-          ? repo
-          : null;
+        return datarows.includes(i) ? repo : null;
       },
     );
 
@@ -1021,7 +1018,7 @@ export async function readReposAndUpdateTables(
       checkForModuleUpdates(xthis, newstate);
       checkForSuggestions(xthis, newstate);
     }
-    tableUpdate(newstate, ['module', 'language'], 'remount');
+    tableUpdate(newstate, ['module', 'language']);
     xthis.sState(newstate);
   };
 
@@ -1077,8 +1074,7 @@ export async function readReposAndUpdateTables(
 }
 
 // Handle one or more raw repository listings, also handling any errors
-// or cancelations. Also update the language and module tables, checking for
-// possible module updates of installed modules.
+// or cancelations.
 export function handleListings(
   xthis: ModuleManager,
   state: ManagerState,
@@ -1968,6 +1964,7 @@ export async function download(
           if (result > 0) {
             newintent = Intent.SUCCESS;
             modrows.forEach((r) => (r[ModCol.iInstalled] = ON));
+            Downloads.finished.push(modrepkey);
           } else {
             newintent = Intent.WARNING;
             modrows.forEach((r) => (r[ModCol.iInstalled] = OFF));

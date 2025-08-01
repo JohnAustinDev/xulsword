@@ -536,7 +536,11 @@ export default class ModuleManager
               repositoryKey(r[H.ModCol.iInfo].repo) === builtInRepoKeys[0]
                 ? H.ON
                 : H.OFF;
-            r[H.ModCol.iInstalled] = repoIsLocal ? H.ON : H.OFF;
+            r[H.ModCol.iInstalled] = repoIsLocal
+              ? H.ON
+              : H.Downloads.finished.includes(modrepkey)
+                ? H.ON
+                : H.OFF;
             r[H.ModCol.iRemove] = H.OFF;
             H.findModuleRow(modrepkey, r); // sets it
           }
@@ -600,23 +604,33 @@ export default class ModuleManager
                   ) ||
                 (isInstalledXSM && foundSomeInstalledXSM);
 
-              if (isRemote && foundInLocal) {
-                const localModKey = repositoryModuleKey(foundInLocal);
-                const localrow = modtable.data.find(
-                  (r) =>
-                    repositoryModuleKey(r[H.ModCol.iInfo].conf) === localModKey,
-                );
-                if (localrow) {
-                  // shared
-                  modrow[H.ModCol.iShared] = localrow[H.ModCol.iShared];
-                  // installed
-                  modrow[H.ModCol.iInstalled] = localrow[H.ModCol.iInstalled];
-                  // audio installed
-                  if (c.xsmType === 'XSM_audio') {
-                    const inst = H.allAudioInstalled(c) ? H.ON : H.OFF;
-                    modrow[H.ModCol.iInstalled] = inst;
-                    localrow[H.ModCol.iInstalled] = inst;
+              if (isRemote) {
+                if (foundInLocal) {
+                  const localModKey = repositoryModuleKey(foundInLocal);
+                  const localrow = modtable.data.find(
+                    (r) =>
+                      repositoryModuleKey(r[H.ModCol.iInfo].conf) ===
+                      localModKey,
+                  );
+                  if (localrow) {
+                    // shared
+                    modrow[H.ModCol.iShared] = localrow[H.ModCol.iShared];
+                    // installed
+                    modrow[H.ModCol.iInstalled] = localrow[H.ModCol.iInstalled];
+                    // audio installed
+                    if (c.xsmType === 'XSM_audio') {
+                      const inst = H.allAudioInstalled(c) ? H.ON : H.OFF;
+                      modrow[H.ModCol.iInstalled] = inst;
+                      localrow[H.ModCol.iInstalled] = inst;
+                    }
                   }
+                } else {
+                  modrow[H.ModCol.iShared] = H.OFF;
+                  modrow[H.ModCol.iInstalled] = H.Downloads.finished.includes(
+                    modkey,
+                  )
+                    ? H.ON
+                    : H.OFF;
                 }
               }
 
