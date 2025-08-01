@@ -13,8 +13,12 @@ const getStore = (aStore: string) => {
     ? Dirs.path.xsPrefDefD
     : Dirs.path.xsPrefD;
 
+  const pname = aStore.endsWith('_default')
+    ? aStore.replace(/_default$/, '')
+    : aStore;
+
   return new LocalFile(
-    path.join(pdir, aStore.concat('.json')),
+    path.join(pdir, pname.concat('.json')),
     LocalFile.NO_CREATE,
   );
 };
