@@ -113,7 +113,7 @@ export default function (opts) {
 
   const { rootPath, srcPath, appDistPath, webappDistPath } = projectPaths;
 
-  const { all, development, production, packaged } = opts;
+  const { all, packaged } = opts;
   if (all) {
     opts.appSrv = true;
     opts.preload = true;
@@ -124,6 +124,15 @@ export default function (opts) {
   }
 
   // Validate webpack arguments...
+  let { development, production } = opts;
+  if (
+    'NODE_ENV' in process.env &&
+    ['development', 'production'].includes(process.env.NODE_ENV)
+  ) {
+    opts.development = process.env.NODE_ENV === 'development';
+    opts.production = process.env.NODE_ENV === 'production';
+    ({ development, production } = opts);
+  }
   if ((!development && !production) || development === production) {
     throw new Error(
       `Must run webpack with either '--env production' or '--env development'`,
@@ -472,9 +481,12 @@ export default function (opts) {
                       )
                       .join('\n'),
                   );
-                  console.log(chalk.bgGreen.bold(
-                    `localhost:${devServerPort}/src/clients/webapp/bibleBrowser/bibleBrowserParent.html` + '\n'
-                  ));
+                  console.log(
+                    chalk.bgGreen.bold(
+                      `localhost:${devServerPort}/src/clients/webapp/bibleBrowser/bibleBrowserParent.html` +
+                        '\n',
+                    ),
+                  );
                 }
                 spawn('yarn', [start], {
                   shell: true,
