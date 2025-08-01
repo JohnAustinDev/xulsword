@@ -20,7 +20,7 @@ import {
 } from '../../../common.ts';
 import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
-import { CipherKeyModules } from '../../common.ts';
+import { CipherKeyModules, normalizeZipEntry } from '../../common.ts';
 import parseSwordConf from '../../parseSwordConf.ts';
 import {
   getFile,
@@ -61,18 +61,21 @@ import type { ListingElementR } from '../../ftphttp.ts';
 
 // CrossWire SWORD Standard TODOS:
 // TODO CrossWire wiki mentions LangSortOrder! Report change to KeySort
-// TODO CrossWire Eusebian_vs and Eusebian_num share a single conf file. Support this?
+// TODO CrossWire Eusebian_vs and Eusebian_num share a single conf file.
+// Support this?
 
-// Return a path beginning with 'modules/' to a specific module's installation
-// directory by interpereting a SWORD DataPath config entry value.
-export function confModulePath(aDataPath: string): string | null {
-  if (!aDataPath || !aDataPath.startsWith('./modules')) return null;
+// Return a path beginning with 'modules' to a specific module's
+// installation directory by interpereting a SWORD DataPath config entry value.
+export function confModulePath(aDataPathx: string): string | null {
+  const aDataPath = aDataPathx.replace(/[/\\]/g, fpath.posix.sep);
+  if (!aDataPath || !aDataPath.startsWith(`.${fpath.posix.sep}modules`))
+    return null;
   const dataPath = aDataPath.substring(2);
-  const subs = dataPath.split('/');
+  const subs = dataPath.split(fpath.posix.sep);
   let modDir = 4;
   if (['devotionals', 'glossaries'].includes(subs[3])) modDir = 5;
-  if (subs.length === modDir) return subs.join('/');
-  if (subs.length > modDir) return subs.slice(0, modDir).join('/');
+  if (subs.length === modDir) return subs.join(fpath.posix.sep);
+  if (subs.length > modDir) return subs.slice(0, modDir).join(fpath.posix.sep);
   return null;
 }
 
@@ -97,8 +100,9 @@ function recurseAudioDirectory(
     } else log.warn(`Skipping non-number audio file: ${subfile.path}`);
   });
   if (chs.length)
-    audio[`${[...ancOrSelf.map((s) => decodeURIComponent(s))].join('/')}/`] =
-      audioConfStrings(chs);
+    audio[
+      `${[...ancOrSelf.map((s) => decodeURIComponent(s))].join(C.GBKSEP)}/`
+    ] = audioConfStrings(chs);
   return audio;
 }
 
@@ -110,7 +114,6 @@ export function scanAudio(
 ): GenBookAudioConf | VerseKeyAudioConf {
   const scan = new LocalFile(repoPath);
   if (scan.exists() && scan.isDirectory()) {
-    dataPath.replace('/', fpath.sep);
     scan.append(dataPath);
     if (scan.exists() && scan.isDirectory()) {
       const subs = scan.directoryEntries;
@@ -267,7 +270,7 @@ export function moveRemoveCopyModules(
       md.append(modulePath);
       if (move) {
         const to = move.clone();
-        const dirs = modulePath.split('/').filter(Boolean);
+        const dirs = modulePath.split(fpath.posix.sep).filter(Boolean);
         dirs.pop();
         dirs.forEach((sub) => {
           to.append(sub);
@@ -372,14 +375,10 @@ export async function installZIPs(
         });
         const confs = {} as Record<string, SwordConfType>;
         sortedZipEntries.forEach((entry) => {
-          let { entryName, name } = entry;
-          // Zip entryName is \ delimited on MS-Windows!
-          entryName = entryName.replaceAll('\\', '/');
-          // Zip name is full path on MK-Windows! (Bug- should be filename)
-          name = name.replace(/^.*\\/, '');
-          if (!entryName.endsWith('/')) {
-            log.silly(`Processing Entry: ${entryName}`);
-            const type = entryName.split('/').shift();
+          const { entryName, name } = normalizeZipEntry(entry);
+          if (!entryName.endsWith(fpath.posix.sep)) {
+            log.silly(`Processing Entry: ${entryName}, ${name}`);
+            const type = entryName.split(fpath.posix.sep).shift();
             switch (type) {
               case 'mods.d': {
                 const confstr = entry.getData().toString('utf8');
@@ -519,7 +518,10 @@ export async function installZIPs(
               case 'modules': {
                 const conf = Object.values(confs).find((c) => {
                   const swmodpath = confModulePath(c.DataPath);
-                  return swmodpath && entryName.startsWith(`${swmodpath}/`);
+                  return (
+                    swmodpath &&
+                    entryName.startsWith(`${swmodpath}${fpath.posix.sep}`)
+                  );
                 });
                 const swmodpath = conf && confModulePath(conf.DataPath);
                 if (conf && swmodpath) {
@@ -530,7 +532,7 @@ export async function installZIPs(
                   if (moddest.exists()) {
                     const parts = entryName
                       .substring(swmodpath.length + 1)
-                      .split('/');
+                      .split(fpath.posix.sep);
                     parts.forEach((p, ix) => {
                       moddest.append(p);
                       if (ix === parts.length - 1) {
@@ -796,7 +798,7 @@ async function downloadRepoConfs(
       const conf = parseSwordConf(
         {
           confString: rconf.strconf,
-          filename: header.name.replace(/^.*?mods\.d\//, ''),
+          filename: header.name.replace(/^.*?mods\.d[/\\]/, ''),
           sourceRepository: manifest,
         },
         Prefs,
@@ -1142,9 +1144,7 @@ const Module = {
           // The conf file is required. Add it to the zip if not already there
           let hasConf = false;
           zip.forEach((ze) => {
-            let { entryName } = ze;
-            // Zip entryName is \ delimited on MS-Windows
-            entryName = entryName.replaceAll('\\', '/');
+            const { entryName } = normalizeZipEntry(ze);
             if (entryName.endsWith(confname)) hasConf = true;
           });
           if (!hasConf) {

@@ -534,7 +534,7 @@ const init = async () => {
       if (!Build.isDevelopment && !error.message.includes('net::ERR')) {
         dialog
           .showMessageBox({
-            title: i18n.t('error-detected'),
+            title: i18n.t('error-detected', { v1: 'Report' }),
             message: error.message,
             detail: error.stack,
             type: 'error',

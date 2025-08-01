@@ -53,7 +53,7 @@ export default class Commands {
       // Genbk keys in xulsword should not start with slash, but libxulsword
       // returns keys starting with slash. So remove it if it exists.
       const { key } = location;
-      if (key.startsWith('/')) location.key = key.substring(1);
+      if (key.startsWith(C.GBKSEP)) location.key = key.substring(1);
       const xulsword: Partial<typeof S.prefs.xulsword> = this.setXulswordPanels(
         {
           whichModuleOrLocGB: location,

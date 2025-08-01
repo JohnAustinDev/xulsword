@@ -527,7 +527,7 @@ export function getGenBookAudio(
         const r: GenBookAudio = {};
         Object.entries(audio).forEach((entry) => {
           const [pathx, str] = entry;
-          const px = pathx.split('/').filter(Boolean);
+          const px = pathx.split(C.GBKSEP).filter(Boolean);
           const parentPath: AudioPath = [];
           px.forEach((p, i) => {
             parentPath[i] = Number(p.replace(/^(\d+).*?$/, '$1'));

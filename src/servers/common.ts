@@ -32,6 +32,7 @@ import parseSwordConf, {
 } from './parseSwordConf.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
+import type ZIP from 'adm-zip';
 import type {
   TabType,
   BookType,
@@ -405,16 +406,16 @@ export function moduleConfFile(module: string): LocalFile | null {
   // then search contents when necessary.
   let p = LibSword.getModuleInformation(module, 'AbsoluteDataPath').replace(
     /[\\/]/g,
-    path.sep,
+    C.FSSEP,
   );
-  if (p.slice(-1) !== path.sep) p += path.sep;
-  const modsd = p.replace(/[\\/]modules[\\/].*?$/, `${path.sep}mods.d`);
+  if (p.slice(-1) !== C.FSSEP) p += C.FSSEP;
+  const modsd = p.replace(/[\\/]modules[\\/].*?$/, `${C.FSSEP}mods.d`);
   let confFile: LocalFile | null = new LocalFile(
-    `${modsd + path.sep + module.toLowerCase()}.conf`,
+    `${modsd}${C.FSSEP}${module.toLowerCase()}.conf`,
   );
   if (!confFile.exists()) {
     // Try another possibility (unchanged case module code).
-    confFile = new LocalFile(`${modsd + path.sep + module}.conf`);
+    confFile = new LocalFile(`${modsd}${C.FSSEP}${module}.conf`);
     if (!confFile.exists()) {
       confFile = null;
       // Otherwise parse the module code from every conf file looking for a match.
@@ -718,8 +719,8 @@ export function getModuleConfig(mod: string): ConfigType {
       const p = LibSword.getModuleInformation(
         mod,
         'AbsoluteDataPath',
-      ).replaceAll('\\', '/');
-      const p2 = `${p}${p.slice(-1) === '/' ? '' : '/'}`;
+      ).replace(/[/\\]/g, C.FSSEP);
+      const p2 = `${p}${p.slice(-1) === C.FSSEP ? '' : C.FSSEP}`;
       let pcx = `${p2}${moduleConfig.PreferredCSSXHTML}`;
       if (Build.isWebApp) pcx = serverPublicPath(pcx);
       moduleConfig.PreferredCSSXHTML = pcx;
@@ -744,7 +745,7 @@ export function getModuleConfig(mod: string): ConfigType {
     let { fontFamily } = moduleConfig;
     if (fontFamily) {
       const font = getModuleFonts().find(
-        (f) => fontFamily && f.path?.split('/').pop()?.includes(fontFamily),
+        (f) => fontFamily && f.path?.split(/[/\\]/).pop()?.includes(fontFamily),
       );
       if (font) ({ fontFamily } = font);
       moduleConfig.fontFamily = fontFamily.replace(/"/g, "'");
@@ -1184,4 +1185,18 @@ export function callResultCompress<V extends Record<string, any>>(
     }
     return p;
   }, {} as V);
+}
+
+// SWORD module zip files may have entryName that is '/' or '\' delimited,
+// depending on the publisher. When the zip is '\' delimited, the name
+// property will incorrectly be the entire path instead of file name. This
+// function returns a zip entry that is '/' delimited and name is correct.
+export function normalizeZipEntry(entry: ZIP.IZipEntry): {
+  entryName: string;
+  name: string;
+} {
+  let { entryName, name } = entry;
+  entryName = entryName.replace(/[/\\]/g, path.posix.sep);
+  name = name.replace(/^.*?([^/\\]+)$/, '$1');
+  return { entryName, name };
 }

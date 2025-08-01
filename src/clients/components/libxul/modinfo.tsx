@@ -145,7 +145,7 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
       };
       if (c && isRepoLocal(c.sourceRepository)) {
         data.confPath = [c.sourceRepository.path, 'mods.d', c.filename].join(
-          '/',
+          C.FSSEP,
         );
       }
       return {

@@ -56,7 +56,7 @@ export default function parseSwordConf(
   }
   if (typeof sourceRepositoryOrPath === 'string') {
     sourceRepositoryOrPath = sourceRepositoryOrPath.replace(
-      /[/\\]mods\.d\/.*?$/,
+      /[/\\]mods\.d[/\\].*?$/,
       '',
     );
     const srcrepo = getBuiltInRepos().find(
@@ -256,18 +256,23 @@ export function localRepoName(
 // Take a server path and return the full path IF it is public, or else return
 // null if it is not public. IMPORTANT: never return a fileFullPath string in
 // any response from a public server, as full server paths should be kept secret.
+// The full path will be C.FSSEP delimited.
 export function fileFullPath(serverPublicPath: string): string | null {
   // Electron public paths are already full paths and are all allowed.
   if (Build.isElectronApp) return serverPublicPath;
   const root = process.env.WEBAPP_SERVERROOT_DIR;
   const publics = process.env.WEBAPP_PUBPATHS;
   if (root && publics) {
+    const rootfs = root.replace(/[/\\]/g, C.FSSEP);
     const pubs = publics.split(';');
     for (let i = 0; i < pubs.length; i++) {
-      const pub = pubs[i].substring(1);
-      const serverPublicPath2 = serverPublicPath.replace(/^\//, '');
-      if (serverPublicPath2.startsWith(pub)) {
-        return [root, serverPublicPath2].join('/');
+      const pubfs = pubs[i].substring(1).replace(/[/\\]/g, C.FSSEP);
+      const sppfs = serverPublicPath.replace(/[/\\]/g, C.FSSEP);
+      const serverPublicPathfs = sppfs.startsWith(C.FSSEP)
+        ? sppfs.substring(1)
+        : sppfs;
+      if (serverPublicPathfs.startsWith(pubfs)) {
+        return [rootfs, serverPublicPathfs].join(C.FSSEP);
       }
     }
   }
@@ -275,18 +280,21 @@ export function fileFullPath(serverPublicPath: string): string | null {
 }
 
 // Returns a server public path or an empty string. If filePath is publicly
-// accessible, the public portion of the file path is returned.
+// accessible, the public portion of the file path is returned. The public
+// path will be posix.sep delimited, except Electron just uses full path as is.
 export function serverPublicPath(fileFullPath: string): string {
   // Electron public paths are always full paths and are all allowed.
   if (Build.isElectronApp) return fileFullPath;
+  const fileFullPathPos = fileFullPath.replace(/[/\\]/g, path.posix.sep);
   const root = process.env.WEBAPP_SERVERROOT_DIR;
   const publics = process.env.WEBAPP_PUBPATHS;
   if (root && publics) {
+    const rootPos = root.replace(/[/\\]/g, path.posix.sep);
     const pubs = publics.split(';');
     for (let i = 0; i < pubs.length; i++) {
-      const pub = pubs[i].substring(1);
-      if (fileFullPath.startsWith([root, pub].join('/'))) {
-        return fileFullPath.replace(root, '');
+      const pubPos = pubs[i].substring(1).replace(/[/\\]/g, path.posix.sep);
+      if (fileFullPathPos.startsWith([rootPos, pubPos].join(path.posix.sep))) {
+        return fileFullPathPos.replace(rootPos, '');
       }
     }
   }

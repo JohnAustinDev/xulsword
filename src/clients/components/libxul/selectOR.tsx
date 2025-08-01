@@ -372,7 +372,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
       let selectedValue = enableMultipleSelection ? keys : keys[0];
       if (
         typeof selectedValue === 'string' &&
-        (!selectedValue || selectedValue.endsWith('/'))
+        (!selectedValue || selectedValue.endsWith(C.GBKSEP))
       ) {
         selectedValue =
           enableParentSelection && ancestorNodes.length

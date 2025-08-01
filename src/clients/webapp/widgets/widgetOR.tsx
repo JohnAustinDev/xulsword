@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState } from 'react';
 import { findTreeNode } from '../../../common.ts';
+import C from '../../../constant.ts';
 import { Analytics } from '../../analytics.ts';
 import log from '../../log.ts';
 import { createNodeList, getProps, updateLinks } from '../common.ts';
@@ -46,9 +47,9 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
     if (actions && selection) {
       const { keys } = selection;
       const [key] = keys;
-      const segs = key.split('/');
+      const segs = key.split(C.GBKSEP);
       const chapter = segs.pop();
-      const parent = segs.join('/');
+      const parent = segs.join(C.GBKSEP);
       actions.forEach((action) => {
         switch (action) {
           case 'genbk_audio_Play': {
@@ -90,9 +91,9 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
   const updateAnalyticsInfo = (selection: SelectORMType) => {
     const { keys } = selection;
     const [key] = keys;
-    const segs = key.split('/');
+    const segs = key.split(C.GBKSEP);
     const chapter = segs.pop();
-    const parent = segs.join('/');
+    const parent = segs.join(C.GBKSEP);
     const da = data[parent].find((x) => x[0] === chapter);
     if (da) {
       const [, , , mid] = da;

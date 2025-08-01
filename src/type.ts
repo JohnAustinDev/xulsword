@@ -548,7 +548,7 @@ export type GenBookAudio = { [gbkey: string]: AudioPath };
 
 // GenBookAudioConf is similar to GenBookAudio but is short and readable for
 // use in config files. Ex: { '000 Title/002 Title/': ['0-10', '12'] }
-// NOTE: parentPath is composed of '/' delineated segments that MUST begin
+// NOTE: parentPath is composed of C.GBSEP delineated segments that MUST begin
 // with a three digit index number, but the title is optional.
 export type GenBookAudioConf = Record<string, string[]>;
 

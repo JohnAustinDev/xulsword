@@ -1,4 +1,5 @@
 import S from '../../defaultPrefs.ts';
+import C from '../../constant.ts';
 import {
   clone,
   drupalSetting,
@@ -180,8 +181,8 @@ export function createNodeList(chaplist: ChaplistType): TreeNodeInfo[] {
       if (parent !== '') {
         const parentLabel = parent.replace(/(^|\/)\d\d\d /g, '$1');
         flatNodesSorted.push({
-          id: `${parent}${parent === '' ? '' : '/'}`,
-          label: parentLabel.split('/').pop() ?? '',
+          id: `${parent}${parent === '' ? '' : C.GBKSEP}`,
+          label: parentLabel.split(C.GBKSEP).pop() ?? '',
           className: 'cs-LTR_DEFAULT',
           hasCaret: true,
         });
@@ -200,7 +201,7 @@ export function createNodeList(chaplist: ChaplistType): TreeNodeInfo[] {
             .toString()
             .replace(/(^|\/)\d\d\d /g, '$1');
           flatNodesSorted.push({
-            id: `${parent}${parent === '' ? '' : '/'}${chapter}`,
+            id: `${parent}${parent === '' ? '' : C.GBKSEP}${chapter}`,
             label: chapterLabel,
             className: 'cs-LTR_DEFAULT',
             hasCaret: false,
@@ -221,9 +222,9 @@ export function updateLinks(
   let parent = '';
   let chapter: number | string | undefined;
   if ('otherMod' in selection) {
-    const segs = selection.keys[0].split('/');
+    const segs = selection.keys[0].split(C.GBKSEP);
     chapter = segs.pop();
-    parent = segs.join('/');
+    parent = segs.join(C.GBKSEP);
   } else {
     ({ book: parent, chapter } = selection);
   }
@@ -295,9 +296,9 @@ export function updateLinks(
           sel.chapter = ch1;
           sel.lastchapter = ch2;
         } else if (sel.keys.length) {
-          const segs = sel.keys[0].split('/');
+          const segs = sel.keys[0].split(C.GBKSEP);
           if (segs.length) segs[segs.length - 1] = '';
-          const qualParent = segs.join('/');
+          const qualParent = segs.join(C.GBKSEP);
           const keys = [];
           for (let i = ch1 - 1; i <= ch2 - 1; i++) {
             const qualName = data[parent].find(

@@ -220,7 +220,7 @@ const Commands = {
           const gbpaths: { [module: string]: GenBookAudio } = {};
           audioFiles.forEach((file) => {
             const fp = fpath.parse(fpath.relative(modulesDir.path, file.path));
-            const dirs = fp.dir.split(fpath.sep);
+            const dirs = fp.dir.split(C.FSSEP);
             const module = dirs.shift();
             if (module) {
               // Copy config file once...
@@ -398,7 +398,7 @@ const Commands = {
         fromdir.append('modules');
         importFiles = getImportFiles(fromdir);
       } else {
-        singleModule = getModule(fromdir.path.split(fpath.sep).pop());
+        singleModule = getModule(fromdir.path.split(C.FSSEP).pop());
         if (/^[A-Za-z0-9_]+$/.test(singleModule)) {
           fromdir.append('..');
           importFiles = getImportFiles(fromdir);
@@ -420,7 +420,7 @@ const Commands = {
       try {
         importFiles.forEach((file) => {
           const fp = fpath.parse(fpath.relative(fromdir.path, file.path));
-          const module = getModule(fp.dir.split(fpath.sep).shift());
+          const module = getModule(fp.dir.split(C.FSSEP).shift());
 
           if (!modules.includes(module)) {
             // Copy each module's audio after file validation is complete.
@@ -444,7 +444,7 @@ const Commands = {
             (!singleModule || singleModule === module)
           ) {
             const dest: string[] = [];
-            const path = fp.dir.split(fpath.sep);
+            const path = fp.dir.split(C.FSSEP);
             path.push(fp.name);
             path.shift(); // remove module name
             // If a genbk module is installed to be validated against, the file

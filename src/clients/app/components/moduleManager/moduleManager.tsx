@@ -380,6 +380,7 @@ export default class ModuleManager
               })
               .forEach((r) => {
                 r[H.ModCol.iInfo].loading = false;
+                r[H.ModCol.iInstalled] = H.ON;
                 H.tableUpdate(newstate, 'module');
               });
           }

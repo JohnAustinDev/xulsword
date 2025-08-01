@@ -482,10 +482,10 @@ export function resolveXulswordPath(
   path: string,
 ): string {
   if (path.startsWith('xulsword://')) {
-    const dirs = path.substring('xulsword://'.length).split('/');
+    const dirs = path.substring('xulsword://'.length).split(/[/\\]/);
     if (dirs[0] && dirs[0] in DirsPath) {
       dirs[0] = DirsPath[dirs[0] as keyof typeof DirsPath];
-      return dirs.join('/');
+      return dirs.join(C.FSSEP);
     }
     throw new Error(`Unrecognized xulsword path: ${dirs[0]}`);
   }
@@ -1232,7 +1232,7 @@ export function bookmarkItemIconPath(
     if (note) fname = `${item.tabType}_note.png`;
     else fname = `${item.tabType}.png`;
   }
-  return [G.Dirs.path.xsAsset, 'icons', '16x16', fname].join('/');
+  return [G.Dirs.path.xsAsset, 'icons', '16x16', fname].join(C.FSSEP);
 }
 
 export function findParentOfBookmarkItem(
@@ -1982,14 +1982,14 @@ function IBTtemplateURL(
     // by using path name for XSPARENT/XSKEY whenever possible, since IBT's
     // widgetOR includes path names.
     const useOrd = /^\d+(\/\d+)*$/.test(keys[0]);
-    const segs = keys[0].split('/').map((seg) => {
+    const segs = keys[0].split(C.GBKSEP).map((seg) => {
       if (useOrd) return Number(seg);
       return seg.replace(/^\d\d\d /, '');
     });
     if (keys.length > 1) {
       let failed = false;
       const chs = keys.map((k) =>
-        k.split('/').map((x) => {
+        k.split(C.GBKSEP).map((x) => {
           const n = Number(x);
           if (Number.isNaN(n)) {
             const m = x.match(/^(\d\d\d)( .*)?$/);
@@ -2000,9 +2000,9 @@ function IBTtemplateURL(
         }),
       );
       if (failed) return false;
-      phs.XSKEY = segs.join('/');
+      phs.XSKEY = segs.join(C.GBKSEP);
       if (segs.length) segs[segs.length - 1] = '';
-      const parent = segs.join('/');
+      const parent = segs.join(C.GBKSEP);
       let ch = -1;
       let cl = -1;
       chs.forEach((cha) => {
@@ -2018,13 +2018,13 @@ function IBTtemplateURL(
       phs.XSCHAPTERS = `${ch}-${chl.toString()}`;
       if (typeof phs.XSPACKAGE === 'undefined') phs.XSPACKAGE = 'zip';
     } else {
-      phs.XSKEY = segs.join('/');
+      phs.XSKEY = segs.join(C.GBKSEP);
       let chapter = '';
       if (segs.length) {
         chapter = segs[segs.length - 1].toString();
         segs[segs.length - 1] = '';
       }
-      const parent = segs.join('/');
+      const parent = segs.join(C.GBKSEP);
       phs.XSPARENT = `/${parent}`;
       phs.XSCHAPTER = chapter.toString();
       phs.XSCHAPTERS = chapter.toString();
