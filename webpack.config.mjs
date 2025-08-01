@@ -125,6 +125,7 @@ export default function (opts) {
 
   // Validate webpack arguments...
   let { development, production } = opts;
+  // To enable DevTools in a packaged app, run: export NODE_ENV=development
   if (
     'NODE_ENV' in process.env &&
     ['development', 'production'].includes(process.env.NODE_ENV)

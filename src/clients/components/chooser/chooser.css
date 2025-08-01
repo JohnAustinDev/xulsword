@@ -4,7 +4,7 @@
 .chooser .fadetop,
 .chooser .fadebot {
   position: relative; /* get z-index to work */
-  opacity: 0.7;
+  opacity: 0.9;
   z-index: 1;
 }
 .chooser .fadetop {
