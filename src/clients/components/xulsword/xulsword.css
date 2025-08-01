@@ -6,24 +6,6 @@
   z-index: 2; /* hide chooser slider, allow history popup to cover tabs */
 }
 
-#player audio {
-  vertical-align: middle;
-  border: 1px solid rgb(197 197 197);
-  background: #f6f7f9;
-}
-#player audio:focus {
-  outline: none;
-}
-#audioCodeSelect {
-  height: calc(var(--input-height) - 2px);
-  margin-bottom: 0;
-}
-#audioCodeSelect select {
-  width: 100%;
-  position: relative;
-  z-index: 1;
-}
-
 #xsSearchText {
   margin-bottom: 0;
   flex-basis: 100%;

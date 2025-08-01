@@ -32,6 +32,7 @@ import Textbox from '../libxul/textbox.tsx';
 import SelectOR from '../libxul/selectOR.tsx';
 import SelectVK from '../libxul/selectVK.tsx';
 import Menulist from '../libxul/menulist.tsx';
+import AudioPlayer from '../audioPlayer/audioPlayer.tsx';
 import Viewport from '../viewport/viewport.tsx';
 import viewportParentH, {
   closeMenupopups,
@@ -351,51 +352,14 @@ export default class Xulsword
       </Hbox>
     );
 
-    const { file, defaults } = audio;
-    const { swordModule } = file ?? {};
-    const sels = audioSelections(file, renderPromise);
-    let index = 0;
-    if (sels.length && defaults && swordModule && swordModule in defaults)
-      index = sels.findIndex((a) => a.conf.module === defaults[swordModule]);
-    if (index < 0) index = 0;
-    const src = sels.length
-      ? GI.inlineAudioFile('', renderPromise, sels[index].selection)
-      : undefined;
     const audioComponent = (
       <Hbox id="player" pack="start" align="center">
         <Vbox flex="3">
-          <div>
-            {audioSelections(
-              {
-                ...file,
-                book: undefined,
-                chapter: undefined,
-                key: undefined,
-              } as AudioPlayerSelectionVK | AudioPlayerSelectionGB,
-              renderPromise,
-            ).length > 1 && (
-              <Menulist
-                id="audioCodeSelect"
-                value={sels[index].conf.module}
-                onChange={handler}
-                options={sels.map((s) => {
-                  return (
-                    <option key={s.conf.module} value={s.conf.module}>
-                      {s.conf.Description?.locale}
-                    </option>
-                  );
-                })}
-              />
-            )}
-            <audio
-              controls
-              onEnded={handler}
-              onCanPlay={handler}
-              onPlay={handler}
-              autoPlay={!!Build.isWebApp}
-              src={src}
-            />
-          </div>
+          <AudioPlayer
+            audio={audio}
+            audioHandler={handler}
+            renderPromise={renderPromise}
+          />
         </Vbox>
         <Button
           id="closeplayer"
@@ -734,7 +698,7 @@ export default class Xulsword
           <Hbox
             id="main-controlbar"
             pack="start"
-            align="start"
+            align="center"
             className="controlbar skin"
           >
             <Spacer className="start-spacer" />
