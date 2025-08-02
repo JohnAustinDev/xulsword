@@ -28,17 +28,18 @@ export default function AudioPlayer(props: {
   const src = sels.length
     ? GI.inlineAudioFile('', renderPromise, sels[index].selection)
     : undefined;
+  const installedOptions = audioSelections(
+    {
+      ...file,
+      book: undefined,
+      chapter: undefined,
+      key: undefined,
+    } as AudioPlayerSelectionVK | AudioPlayerSelectionGB,
+    renderPromise,
+  );
   return (
     <div {...htmlAttribs('audioplayer', props)}>
-      {audioSelections(
-        {
-          ...file,
-          book: undefined,
-          chapter: undefined,
-          key: undefined,
-        } as AudioPlayerSelectionVK | AudioPlayerSelectionGB,
-        renderPromise,
-      ).length > 1 && (
+      {installedOptions.length > 1 && (
         <Menulist
           id="audioCodeSelect"
           value={sels[index].conf.module}

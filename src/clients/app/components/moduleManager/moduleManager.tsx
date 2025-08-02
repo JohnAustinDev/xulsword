@@ -207,6 +207,14 @@ export default class ModuleManager
       H.Permission.internet = G.Prefs.getBoolPref('global.InternetPermission');
     }
 
+    // These repos don't work. Why??
+    if (s.repositories?.disabled === null) {
+      s.repositories.disabled = [
+        '[STEP Bible][ftp.stepbible.org][/pub/sword]',
+        '[Bible.org][ftp.bible.org][/sword]',
+      ];
+    }
+
     H.Progressing.ids = [];
 
     this.state = s;
@@ -605,6 +613,7 @@ export default class ModuleManager
                   ) ||
                 (isInstalledXSM && foundSomeInstalledXSM);
 
+              let isRemoteNotInstalledToBeInstalled = false;
               if (isRemote) {
                 if (foundInLocal) {
                   const localModKey = repositoryModuleKey(foundInLocal);
@@ -626,6 +635,7 @@ export default class ModuleManager
                     }
                   }
                 } else {
+                  isRemoteNotInstalledToBeInstalled = true;
                   modrow[H.ModCol.iShared] = H.OFF;
                   modrow[H.ModCol.iInstalled] = H.Downloads.finished.includes(
                     modkey,
@@ -657,8 +667,9 @@ export default class ModuleManager
                 ) || foundInRemoteXSM;
 
               if (
-                !(isLocal && foundInRemote) &&
-                !(isRemoteSWORD && foundInRemoteXSM)
+                isRemoteNotInstalledToBeInstalled ||
+                (!(isLocal && foundInRemote) &&
+                  !(isRemoteSWORD && foundInRemoteXSM))
               ) {
                 const code = c.Lang?.replace(/-.*$/, '') || 'en';
                 if (!(code in modules)) modules[code] = [];
@@ -780,7 +791,8 @@ export default class ModuleManager
       moduleInfoBack: false,
       moduleCancel:
         !modtable.data.find((r) => r[H.ModCol.iInfo].loading) &&
-        !progress?.length,
+        !progress?.length &&
+        infoConfigs.length > 0,
       repoAdd:
         !repositories ||
         repotable.data.findIndex(

@@ -126,7 +126,7 @@ export type DownloadRecordType = Record<string, number | string> | null;
 export type ModuleUpdates = {
   doInstall: boolean;
   installed?: SwordConfType;
-  updateTo: SwordConfType;
+  conf: SwordConfType;
 };
 
 export const Tables = ['language', 'module', 'repository'] as const;
@@ -346,7 +346,7 @@ export function onLangCellClick(
     dataRowIndex,
   );
   this.loadModuleTable(newstate);
-  tableUpdate(newstate, ['language', 'module']);
+  tableUpdate(newstate, ['language', 'module'], 'rowmap');
   this.sState(newstate);
 }
 
@@ -487,7 +487,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               newstate.language.selection,
               open,
             );
-            tableUpdate(newstate, ['language', 'module']);
+            tableUpdate(newstate, ['language', 'module'], 'rowmap');
             this.sState(newstate);
             scrollToSelectedLanguage(this, newstate);
             break;
@@ -609,7 +609,6 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                         const modrepkey = Downloads.modrepkeyMap[downloadkey];
                         if (modrepkey) {
                           const row = findModuleRow(modrepkey);
-
                           if (row && row[ModCol.iInstalled] === ON) {
                             install.push({
                               download: keyToDownload(downloadkey),
@@ -692,7 +691,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               ) {
                 this.loadLanguageTable(newstate);
                 this.loadModuleTable(newstate);
-                tableUpdate(newstate, undefined);
+                tableUpdate(newstate, undefined, 'rowmap');
                 this.sState(newstate);
               }
             }
@@ -812,7 +811,7 @@ export function installCustomRepository(
       if (!repositories.disabled) repositories.disabled = [];
       repositories.disabled.push(repositoryKey(repo));
     }
-    tableUpdate(state, undefined);
+    tableUpdate(state, undefined, 'rowmap');
     return true;
   }
   return false;
@@ -858,7 +857,7 @@ export function uninstallRepository(
           }
         },
       );
-      tableUpdate(state, undefined);
+      tableUpdate(state, undefined, 'rowmap');
       return true;
     }
   }
@@ -950,6 +949,7 @@ function repoRowEnableDisable(
   }
 }
 
+// This function updates state and sets it.
 // Enable or disable one or more repositories. Then reload all tables.
 export function switchRepo(
   xthis: ModuleManager,
@@ -977,14 +977,14 @@ export function switchRepo(
           }
         }
       });
-      tableUpdate(newstate, 'repository');
+      tableUpdate(newstate, 'repository', 'rowmap');
     }
     return newstate;
   };
 
   const updateTables = () => {
     const state = xthis.state as ManagerState;
-    const { tables, repositories } = state;
+    const { tables } = state;
     const { repository } = tables;
     const switchRepos: Array<Repository | null> = repository.data.map(
       (r, i) => {
@@ -1001,6 +1001,7 @@ export function switchRepo(
   xthis.sState(rowEnableDisable(statex), updateTables);
 }
 
+// This function updates state and sets state.
 // Calling repositoryListing on all repos at once means it will not return
 // until all repositories have been read, and some repos take a very long time
 // to respond. So instead, read each repository separately, in parallel, when
@@ -1018,7 +1019,7 @@ export async function readReposAndUpdateTables(
       checkForModuleUpdates(xthis, newstate);
       checkForSuggestions(xthis, newstate);
     }
-    tableUpdate(newstate, ['module', 'language']);
+    tableUpdate(newstate, ['module', 'language'], 'rowmap');
     xthis.sState(newstate);
   };
 
@@ -1123,6 +1124,7 @@ export function handleListings(
   tableUpdate(state, 'repository');
 }
 
+// This function updates state, but does NOT set it.
 // Check enabled repository listings (except beta and attic) for installed
 // modules that have newer versions available, or have been obsoleted. Begin
 // downloading the updates, but ask whether to replace each installed module
@@ -1135,8 +1137,8 @@ export function checkForModuleUpdates(
   const { module, repository } = state.tables;
   const { repositoryListings } = repository;
   const updateable: SwordConfType[] = [];
-  // Get the list of modules in the local xulsword repository. These modules may
-  // be overwritten by newer versions, or replaced if obsoleted.
+  // Get the list of modules in the local xulsword repository. These modules
+  // may be overwritten by newer versions, or replaced if obsoleted.
   repository.data.forEach((rtd, i) => {
     if (rtd[RepCol.iInfo].repo.path === G.Dirs.path.xsModsUser) {
       const listing = repositoryListings[i];
@@ -1201,7 +1203,7 @@ export function checkForModuleUpdates(
       ) {
         candidates.push({
           installed: inst,
-          updateTo: conf,
+          conf: conf,
           doInstall: false,
         });
       }
@@ -1209,24 +1211,24 @@ export function checkForModuleUpdates(
     // Choose the first candidate with the highest version number, XSM modules first.
     const version = (x: ModuleUpdates): string => {
       let v = '0';
-      if (x.updateTo.xsmType === 'XSM') {
+      if (x.conf.xsmType === 'XSM') {
         const i =
-          x.updateTo.SwordModules?.findIndex((m) => m === inst.module) ?? -1;
-        if (i !== -1 && x.updateTo.SwordVersions)
-          v = `2.${x.updateTo.SwordVersions[i] ?? '0'}`;
+          x.conf.SwordModules?.findIndex((m) => m === inst.module) ?? -1;
+        if (i !== -1 && x.conf.SwordVersions)
+          v = `2.${x.conf.SwordVersions[i] ?? '0'}`;
       } else {
-        v = `1.${x.updateTo.Version ?? 0}`;
+        v = `1.${x.conf.Version ?? 0}`;
       }
       return v;
     };
     candidates.sort((a, b) => versionCompare(version(b), version(a)));
     if (candidates.length) {
       // insure top candidate is not already installed (can happen with obsoletes).
-      const [{ updateTo }] = candidates;
+      const [{ conf }] = candidates;
       if (
         !(
-          updateTo.module in G.Tab &&
-          updateTo.Version === G.ModuleConfs[updateTo.module].Version
+          conf.module in G.Tab &&
+          conf.Version === G.ModuleConfs[conf.module].Version
         )
       )
         moduleUpdates.push(candidates[0]);
@@ -1236,8 +1238,74 @@ export function checkForModuleUpdates(
   return promptAndInstall(xthis, state, moduleUpdates);
 }
 
-const ModuleUpdatePrompted: string[] = [];
+// This function updates state but does NOT set it.
+export function checkForSuggestions(xthis: ModuleManager, state: ManagerState) {
+  if ('suggested' in state) {
+    const { repositoryListings } = state.tables.repository;
+    const { suggested } = state;
+    const locale = G.i18n.language;
+    const nextSuggested = new Set(suggested?.[locale]);
+    if (nextSuggested.size) {
+      // Get a list of suggested modules (choosing the latest version found
+      // in any currently loaded qualifying repository).
+      let suggestions: ModuleUpdates[] = [];
+      nextSuggested.forEach((m) => {
+        let conf: SwordConfType | null = null;
+        repositoryListings.forEach((l: RepositoryListing) => {
+          const rc = l?.find((r) => r.module === m);
+          if (
+            rc &&
+            !isRepoBuiltIn(rc.sourceRepository) &&
+            !['CrossWire Beta', 'CrossWire Attic'].includes(
+              rc.sourceRepository.name,
+            ) &&
+            (!conf || versionCompare(rc.Version || 0, conf.Version || 0) === 1)
+          )
+            conf = rc;
+        });
+        if (conf) {
+          suggestions.push({
+            doInstall: false,
+            conf: conf,
+          });
+        }
+      });
 
+      // Each module should only be requested once.
+      if (suggested && suggestions.length) {
+        const nextLocalePref = suggested[locale].filter(
+          (m) => !suggestions.find((mud) => mud.conf.module === m),
+        );
+        if (diff(suggested[locale], nextLocalePref) && state.suggested) {
+          if (!nextLocalePref.length) delete state.suggested[locale];
+          else state.suggested[locale] = nextLocalePref;
+
+          // Filter out if it's already installed into a builtin repo.
+          suggestions = suggestions.filter(
+            (mud) =>
+              !repositoryListings.find(
+                (l) =>
+                  l &&
+                  l[0] &&
+                  isRepoBuiltIn(l[0].sourceRepository) &&
+                  !!l.find(
+                    (c) =>
+                      c.module === mud.conf.module &&
+                      versionCompare(c.Version || 0, mud.conf.Version || 0) >=
+                        0,
+                  ),
+              ),
+          );
+          if (suggestions.length) promptAndInstall(xthis, state, suggestions);
+        }
+      }
+    }
+  }
+}
+
+// This function updates state but does NOT set the state. It may initiate or
+// cancel downloads, however.
+const ModuleUpdatePrompted: string[] = [];
 function promptAndInstall(
   xthis: ModuleManager,
   state: ManagerState,
@@ -1245,26 +1313,25 @@ function promptAndInstall(
 ): number {
   // Only initiate prompt/download once per module per window lifetime.
   const updates = updatesx.filter(
-    (mud) => !ModuleUpdatePrompted.includes(mud.updateTo.module),
+    (mud) => !ModuleUpdatePrompted.includes(mud.conf.module),
   );
-  ModuleUpdatePrompted.push(...updatesx.map((mud) => mud.updateTo.module));
+  ModuleUpdatePrompted.push(...updates.map((mud) => mud.conf.module));
   // Show a toast to ask permission to install each update.
   updates.forEach((mud) => {
-    const abbr =
-      (mud.updateTo.Abbreviation?.locale || mud.updateTo.module) ?? '?';
+    const abbr = (mud.conf.Abbreviation?.locale || mud.conf.module) ?? '?';
     let message: string;
     const { installed: from } = mud;
-    const toName = localizeString(G, mud.updateTo.sourceRepository.name);
+    const toName = localizeString(G, mud.conf.sourceRepository.name);
     if (from) {
       const history =
-        mud.updateTo.History?.filter(
+        mud.conf.History?.filter(
           (h) => versionCompare(h[0], from.Version ?? 0) === 1,
         )
           .map((h) => h[1].locale)
           .join('\n') ?? '';
-      message = `${abbr} ${mud.updateTo.Version}: ${history} (${toName}, ${mud.updateTo.module})`;
+      message = `${abbr} ${mud.conf.Version}: ${history} (${toName}, ${mud.conf.module})`;
     } else {
-      message = `${abbr} ${mud.updateTo.Description?.locale} (${toName}, ${mud.updateTo.module})`;
+      message = `${abbr} ${mud.conf.Description?.locale} (${toName}, ${mud.conf.module})`;
     }
     xthis.addToast({
       timeout: -1,
@@ -1294,6 +1361,8 @@ function promptAndInstall(
   return installModuleUpdates(true, xthis, state, updates);
 }
 
+// This function updates state but does NOT set state. It may however initiate
+// or cancel downloads.
 function installModuleUpdates(
   doInstallUpdate: boolean,
   xthis: ModuleManager,
@@ -1304,7 +1373,7 @@ function installModuleUpdates(
   const removes: [on: boolean, conf: SwordConfType][] = [];
   const installs: [on: boolean, conf: SwordConfType][] = [];
   moduleUpdates.forEach((mud) => {
-    const { installed, updateTo } = mud;
+    const { installed, conf } = mud;
     // Remove locally installed modules in the xulsword repo.
     if (
       installed &&
@@ -1312,8 +1381,8 @@ function installModuleUpdates(
     ) {
       removes.push([doInstallUpdate, installed]);
     }
-    // Install external updateTo modules.
-    installs.push([doInstallUpdate, updateTo]);
+    // Install external modules.
+    installs.push([doInstallUpdate, conf]);
   });
   return (
     updateModuleInstallColumn(
@@ -1431,61 +1500,6 @@ export function findModuleRow(
   }
   if (Cache.has(ckey)) return Cache.read(ckey);
   return null;
-}
-
-export function checkForSuggestions(
-  xthis: ModuleManager,
-  state: ManagerState,
-): number {
-  const { module } = state.tables;
-  const suggested = G.Prefs.getComplexValue(
-    'moduleManager.suggested',
-  ) as typeof S.prefs.moduleManager.suggested;
-  const locale = G.i18n.language;
-  if (suggested?.[locale]) {
-    // Filter from Prefs any suggested mods that are already installed.
-    suggested[locale] = suggested[locale].filter(
-      (m) =>
-        !Object.values(module.data).some(
-          (r) => r[ModCol.iModule] === m && r[ModCol.iInstalled] !== OFF,
-        ),
-    );
-    if (locale in suggested && suggested[locale].length) {
-      // Build the list of modules to suggest.
-      const suggestions: ModuleUpdates[] = [];
-      suggested[locale].forEach((m) => {
-        const row: TModuleTableRow | null = Object.values(module.data).reduce(
-          (p: TModuleTableRow | null, c: TModuleTableRow) => {
-            if (c[ModCol.iModule] !== m) return p;
-            if (!p) return c;
-            return versionCompare(
-              c[ModCol.iInfo].conf.Version || 0,
-              p[ModCol.iInfo].conf.Version || 0,
-            ) === 1
-              ? c
-              : p;
-          },
-          null,
-        );
-        if (row) {
-          const { conf } = row[ModCol.iInfo];
-          suggestions.push({
-            doInstall: false,
-            updateTo: conf,
-          });
-        }
-      });
-      // Remove modules being suggested from Prefs, so that user only sees
-      // a particular suggestion once, ever.
-      suggested[locale] = suggested[locale].filter(
-        (m) => !suggestions.find((mud) => mud.updateTo.module === m),
-      );
-      G.Prefs.setComplexValue('moduleManager.suggested', suggested);
-      return promptAndInstall(xthis, state, suggestions);
-    }
-  }
-
-  return 0;
 }
 
 // Return any requested local repository operations (remove, copy or move) for
@@ -1973,7 +1987,7 @@ export async function download(
         modrows.forEach((r) => {
           r[ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
         });
-        tableUpdate(newstate, 'module');
+        tableUpdate(newstate, 'module', 'rowmap');
         xthis.sState(newstate);
       }
     });

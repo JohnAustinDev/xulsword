@@ -21,7 +21,7 @@ import type { Download, HTTPDownload } from '../type.ts';
 
 export type ListingElementR = ListingElement & { subdir: string };
 
-const OperationTimeoutFTP = 7000;
+const OperationTimeoutFTP = 20000;
 
 let MaxDomainConnections: Record<string, number> = {};
 
@@ -599,7 +599,7 @@ async function listP(c: FTP, dirpath: string): Promise<ListingElement[]> {
       abortP(c).catch((err) => {
         log.debug(err);
       });
-      reject(new Error('timeout'));
+      reject(new Error('listP timeout'));
     }, OperationTimeoutFTP);
     c.list(dirpath, false, (er: Error, listing: ListingElement[]) => {
       clearTimeout(to);
@@ -625,7 +625,7 @@ async function sizeP(c: FTP, filepath: string): Promise<number> {
       abortP(c).catch((err) => {
         log.debug(err);
       });
-      reject(new Error('timeout'));
+      reject(new Error('sizeP timeout'));
     }, OperationTimeoutFTP);
     c.size(filepath, (er: unknown, size: number) => {
       clearTimeout(to);
@@ -643,7 +643,7 @@ async function getP(c: FTP, filepath: string): Promise<NodeJS.ReadableStream> {
       abortP(c).catch((err) => {
         log.debug(err);
       });
-      reject(new Error('timeout'));
+      reject(new Error('getP timeout'));
     }, OperationTimeoutFTP);
     c.get(filepath, (er: Error, stream: NodeJS.ReadableStream) => {
       clearTimeout(to);
