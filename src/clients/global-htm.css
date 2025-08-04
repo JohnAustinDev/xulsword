@@ -123,7 +123,7 @@ html a:hover {
 .dialog-buttons .button:first-child {
   margin-inline-start: 0;
 }
-.dialog.modulesInstalled .bp5-tag {
+.dialog.modulesInstalled .bp6-tag {
   margin-bottom: 4px;
 }
 
@@ -157,8 +157,8 @@ html a:hover {
   padding-inline-start: 4px;
   background-color: white;
 }
-.bp5-button:not([class*='bp5-intent-']):disabled,
-.bp5-button:not([class*='bp5-intent-']).bp5-disabled {
+.bp6-button:not([class*='bp6-intent-']):disabled,
+.bp6-button:not([class*='bp6-intent-']).bp6-disabled {
   -webkit-box-shadow:
     inset 0 0 0 1px rgba(17, 20, 24, 0.2),
     0 1px 2px rgba(17, 20, 24, 0.1);

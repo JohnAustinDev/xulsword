@@ -487,9 +487,9 @@ export function bmContextData(
   const { selectedItems } = this.state as BMManagerState;
   const data = this.tableData;
   const r: ContextDataType = { type: 'bookmarkManager' };
-  const point = ofClass(['bp5-table-cell'], elem);
+  const point = ofClass(['bp6-table-cell'], elem);
   if (point) {
-    const ri = point.element.className.match(/\bbp5-table-cell-row-(\d+)\b/);
+    const ri = point.element.className.match(/\bbp6-table-cell-row-(\d+)\b/);
     if (ri) {
       const tableDataRowIndex = Number(ri[1]);
       const selectedDataRows = selectedItems.map((id) =>

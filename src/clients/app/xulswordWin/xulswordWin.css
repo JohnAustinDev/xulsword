@@ -1,13 +1,13 @@
 .xulswordWin {
   overflow: hidden;
 }
-.xulswordWin .bp5-portal .dialog-body {
+.xulswordWin .bp6-portal .dialog-body {
   padding: 0 20px;
 }
 .xulswordWin .controlbar .start-spacer {
   width: 15px;
 }
-.xulswordWin .bp5-button {
+.xulswordWin .bp6-button {
   min-height: unset;
 }
 .xulswordWin #closeplayer {

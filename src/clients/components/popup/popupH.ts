@@ -47,7 +47,7 @@ export function getFailReasonHTML(
           )}</span>
           <div class="requiremod button" data-data="${d}">
             <div class="button-box">
-              <div class="bp5-button">
+              <div class="bp6-button">
                 ${GI.i18n.t('', renderPromise, 'install.label')}
               </div>
             </div>

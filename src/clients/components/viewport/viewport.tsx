@@ -491,7 +491,7 @@ class Viewport extends React.Component implements PopupParent {
     return (
       <Hbox
         domref={loadingRef}
-        {...addClass(`viewport skin ${cls} bp5-focus-disabled`, props)}
+        {...addClass(`viewport skin ${cls} bp6-focus-disabled`, props)}
         {...style}
         {...topHandle('onClick', eHandler)}
       >

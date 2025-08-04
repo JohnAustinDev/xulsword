@@ -62,7 +62,7 @@
 @media print {
   .page-buttons,
   #adjustLastColumn,
-  .bp5-toast {
+  .bp6-toast {
     display: none !important;
   }
 

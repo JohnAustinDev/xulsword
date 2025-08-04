@@ -17,7 +17,7 @@
 .printControls .vk-book {
   margin-inline-start: 0;
 }
-.printControls .bp5-progress-bar {
+.printControls .bp6-progress-bar {
   position: absolute;
   top: 70px;
   width: calc(100% - 30px);

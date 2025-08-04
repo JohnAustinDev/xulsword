@@ -59,10 +59,10 @@
   width: 100%;
   z-index: 9;
 }
-#helpButton.open .bp5-button {
+#helpButton.open .bp6-button {
   align-items: start;
 }
-#helpButton.open .bp5-button-text {
+#helpButton.open .bp6-button-text {
   margin: 25px 0 -4px -33px;
 }
 #helpButton .button-box {
@@ -209,7 +209,7 @@ html[dir='rtl'] .resultBox #displayModule {
 .searchStatus span {
   white-space: nowrap;
 }
-.searchStatus .bp5-progress-bar {
+.searchStatus .bp6-progress-bar {
   margin-inline-start: 5px;
   width: 200px;
 }

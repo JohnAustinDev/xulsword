@@ -198,7 +198,7 @@ class Table extends React.Component {
     const t = tableRef.current;
     if (t) {
       const [parent] = t.getElementsByClassName(
-        'bp5-table-quadrant-scroll-container',
+        'bp6-table-quadrant-scroll-container',
       );
       if (parent) {
         let top = 0;
@@ -233,7 +233,7 @@ class Table extends React.Component {
     const t = tableRef.current;
     if (t) {
       const [parent] = t.getElementsByClassName(
-        'bp5-table-quadrant-scroll-container',
+        'bp6-table-quadrant-scroll-container',
       );
       if (parent && id) {
         Table.scrollTop[id] = parent.scrollTop;
@@ -524,11 +524,11 @@ class Table extends React.Component {
     const props = this.props as TableProps;
     const { tableColumns, tableToDataRowMap, onCellClick } = props;
     if (onCellClick) {
-      const cell = ofClass(['bp5-table-cell'], e.target);
+      const cell = ofClass(['bp6-table-cell'], e.target);
       if (cell) {
-        const rowt = cell.element.className.match(/bp5-table-cell-row-(\d+)\b/);
+        const rowt = cell.element.className.match(/bp6-table-cell-row-(\d+)\b/);
         const tableRowIndex = rowt ? Number(rowt[1]) : -1;
-        const colt = cell.element.className.match(/bp5-table-cell-col-(\d+)\b/);
+        const colt = cell.element.className.match(/bp6-table-cell-col-(\d+)\b/);
         const internalColIndex = colt ? Number(colt[1]) : -1;
         const tableColumn = tableColumns.filter((c) => c.visible)[
           internalColIndex

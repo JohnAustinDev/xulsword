@@ -43,18 +43,18 @@
   overflow: auto;
 }
 /*
-#repository .custom-repo.data-col-0 .bp5-table-editable-text {
+#repository .custom-repo.data-col-0 .bp6-table-editable-text {
   font-style: italic;
 }*/
 
-.moduleManager .bp5-dialog-body .label {
+.moduleManager .bp6-dialog-body .label {
   white-space: unset;
   margin-bottom: 10px;
 }
 .moduleManager .dialog .modname {
   margin-inline-start: 10px;
 }
-.moduleManager .bp5-dialog-body .label:first-child {
+.moduleManager .bp6-dialog-body .label:first-child {
   font-size: large;
   margin-bottom: 20px;
 }

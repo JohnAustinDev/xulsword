@@ -120,7 +120,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     if (
       'nodeData' in node &&
       node.nodeData &&
-      !ofClass('bp5-tree-node-label', e.target)
+      !ofClass('bp6-tree-node-label', e.target)
     ) {
       onAudioClick(node.nodeData as AudioPlayerSelectionGB | null, e);
       e.stopPropagation();
