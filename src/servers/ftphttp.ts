@@ -127,11 +127,7 @@ export function httpThrowIfCanceled(key: string) {
   if (!key) return '';
 
   const { canceled } = (key in HttpCancelable && HttpCancelable[key]) || {};
-  if (
-    canceled &&
-    key &&
-    key in FtpCancelable
-  ) {
+  if (canceled && key && key in FtpCancelable) {
     throw new Error(`httpThrowIfCanceled`);
   }
 
@@ -580,8 +576,9 @@ async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 async function abortP(c: FTP): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const to = setTimeout(() => {
-      reject(`Promise rejection: FTP abort did not return in ${Math.round(OperationTimeoutFTP / 1000)}s.`
-    );
+      reject(
+        `Promise rejection: FTP abort did not return in ${Math.round(OperationTimeoutFTP / 1000)}s.`,
+      );
     }, OperationTimeoutFTP);
     c.abort((er: Error) => {
       clearTimeout(to);

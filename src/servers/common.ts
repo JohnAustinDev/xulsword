@@ -716,10 +716,10 @@ export function getModuleConfig(mod: string): ConfigType {
 
     // Make any PreferredCSSXHTML into a full path
     if (moduleConfig.PreferredCSSXHTML) {
-      const p = LibSword.getModuleInformation(
-        mod,
-        'AbsoluteDataPath',
-      ).replace(/[/\\]/g, C.FSSEP);
+      const p = LibSword.getModuleInformation(mod, 'AbsoluteDataPath').replace(
+        /[/\\]/g,
+        C.FSSEP,
+      );
       const p2 = `${p}${p.slice(-1) === C.FSSEP ? '' : C.FSSEP}`;
       let pcx = `${p2}${moduleConfig.PreferredCSSXHTML}`;
       if (Build.isWebApp) pcx = serverPublicPath(pcx);

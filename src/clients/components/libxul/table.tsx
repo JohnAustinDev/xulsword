@@ -57,7 +57,7 @@ export type TableProps = XulProps & {
   tableToDataRowMap: number[];
   rowSort?: TableRowSortState;
   selectedRegions?: Region[];
-  cellRendererDependencies?: React.DependencyList[]
+  cellRendererDependencies?: React.DependencyList[];
 
   onCellClick?: (
     dataRowIndex: number,

@@ -864,8 +864,10 @@ DEFINITION OF A 'XULSWORD REFERENCE':
             log.debug(`indexer killed`);
           }
           if (!this.isReady()) {
-            log.error(`Failed to delete index after failure (LibSword was not ready): ${modcode}`);
-	  } else if (his.luceneEnabled(modcode)) {
+            log.error(
+              `Failed to delete index after failure (LibSword was not ready): ${modcode}`,
+            );
+          } else if (his.luceneEnabled(modcode)) {
             if (!this.searchIndexDelete(modcode)) {
               log.error(`Failed to delete index after failure: ${modcode}`);
             }
