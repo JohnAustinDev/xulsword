@@ -48,19 +48,12 @@ html[dir='rtl'] .atext .text-pin {
   display: none;
 }
 
-.atext .text-win {
+.atext .towindow {
   float: left;
-  width: 20px;
-  height: 20px;
-  margin: 5px;
-  background: url(../images/towindow.png);
   z-index: 5;
 }
-html[dir='rtl'] .atext .text-win {
+html[dir='rtl'] .atext .towindow {
   float: right;
-}
-.atext .text-win:hover {
-  background-position: 20px;
 }
 
 .atext .origselect {

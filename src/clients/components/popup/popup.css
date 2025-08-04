@@ -73,16 +73,6 @@ html:not(.popupWin) .npopupTX {
 .popupheader > div {
   margin-inline-end: 5px;
 }
-.popupheader .towindow {
-  background: url('../images/towindow.png');
-  margin-inline-end: 10px;
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-}
-.towindow:hover {
-  background-position: 20px;
-}
 .popupCloseLink.backable {
   display: none;
 }
@@ -129,9 +119,6 @@ html:not(.popupWin) .npopupTX {
   margin-bottom: 5px;
   margin-inline-start: 10px;
   margin-inline-end: 0px;
-}
-html[dir='rtl'] .snbut {
-  float: left;
 }
 .snbut:after {
   display: inline-block;

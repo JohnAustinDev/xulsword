@@ -771,7 +771,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     // Index one module at a time, don't try and break their PC...
     let passed = 0;
     let failed = 0;
-    while (modulesToIndex.length) {
+    while (this.isReady() && modulesToIndex.length) {
       const module = modulesToIndex.pop();
       if (module) {
         let result: boolean;
@@ -863,7 +863,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
             indexer.kill();
             log.debug(`indexer killed`);
           }
-          if (this.luceneEnabled(modcode)) {
+          if (!this.isReady()) {
+            log.error(`Failed to delete index after failure (LibSword was not ready): ${modcode}`);
+	  } else if (his.luceneEnabled(modcode)) {
             if (!this.searchIndexDelete(modcode)) {
               log.error(`Failed to delete index after failure: ${modcode}`);
             }

@@ -2,7 +2,7 @@ import Cache from '../../cache.ts';
 import { repositoryKey } from '../../common.ts';
 import { G } from '../G.ts';
 
-import type { Repository } from "../../type.ts";
+import type { Repository } from '../../type.ts';
 
 export function isRepoBuiltIn(repo: Repository | string): boolean {
   const repokey = typeof repo === 'object' ? repositoryKey(repo) : repo;

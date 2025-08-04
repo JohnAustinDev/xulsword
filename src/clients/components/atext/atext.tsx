@@ -30,6 +30,7 @@ import {
 import DragSizer from '../libxul/dragsizer.tsx';
 import { Vbox, Hbox, Box } from '../libxul/boxes.tsx';
 import Spacer from '../libxul/spacer.tsx';
+import Button from '../libxul/button.tsx';
 import { libswordText, textChange } from './ztext.ts';
 import {
   highlight,
@@ -779,10 +780,12 @@ class Atext extends React.Component implements RenderPromiseComponent {
         data-ispinned={isPinned}
         data-data={JSON_attrib_stringify(data)}
       >
-        <div className="sbcontrols">
+        <Hbox className="sbcontrols">
           {isVerseKey && <div className="text-pin" />}
-          {!ownWindow && Build.isElectronApp && <div className="text-win" />}
-        </div>
+          {!ownWindow && Build.isElectronApp && (
+            <Button className="towindow" icon="open-application" />
+          )}
+        </Hbox>
 
         <Box className="hd" />
 

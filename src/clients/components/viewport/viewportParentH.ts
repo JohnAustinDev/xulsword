@@ -206,7 +206,7 @@ export default function handler(
       const targ = ofClass(
         [
           'text-pin',
-          'text-win',
+          'towindow',
           'chaptermenucell',
           'heading-link',
           'bookgroupitem',
@@ -235,7 +235,7 @@ export default function handler(
       const elem = targ.element;
       const p = getElementData(elem);
       switch (targ.type) {
-        case 'text-win': {
+        case 'towindow': {
           const cols = atext?.dataset.columns;
           if (Build.isElectronApp && atext && cols !== undefined) {
             // Save new window's XulswordState

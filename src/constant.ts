@@ -80,7 +80,7 @@ const C = {
     WebApp: {
       narrowW: 300, // px up to which is considered narrow screen
       mobileW: 767, // px up to which is considered mobile
-      tabletW: 1027, // px up to which is tablet
+      tabletW: 999, // px up to which is tablet
     },
     AcceleratorKey: {
       openModuleManager: 'F2',

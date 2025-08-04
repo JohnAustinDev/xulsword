@@ -1,5 +1,5 @@
 import React from 'react';
-import { Intent, Position, OverlayToaster } from '@blueprintjs/core';
+import { Intent } from '@blueprintjs/core';
 import { sanitizeHTML } from '../../../common.ts';
 import { G, GI } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
@@ -8,10 +8,10 @@ import {
   windowArguments,
   computed2inlineStyle,
   elem2text,
-  htmlVerses,
   getMaxVerse,
   getStatePref,
   setStatePref,
+  topToaster,
 } from '../../common.tsx';
 import RenderPromise, {
   RenderPromiseComponent,
@@ -30,7 +30,7 @@ import '../../libsword.css';
 import '../../components/atext/atext.css';
 import './copyPassageWin.css';
 
-import type { Toaster, ToastProps } from '@blueprintjs/core';
+import type { ToastProps } from '@blueprintjs/core';
 import type S from '../../../defaultPrefs.ts';
 import type VerseKey from '../../../verseKey.ts';
 import type { XulProps } from '../../components/libxul/xul.tsx';
@@ -61,8 +61,6 @@ export default class CopyPassageWin
   renderPromise: RenderPromise;
 
   loadingRef: React.RefObject<HTMLDivElement>;
-
-  toaster: Toaster | undefined;
 
   constructor(props: CopyPassageProps) {
     super(props);
@@ -120,8 +118,8 @@ export default class CopyPassageWin
     renderPromise.dispatch();
   }
 
-  addToast(toast: ToastProps) {
-    if (this.toaster) this.toaster.show(toast);
+  async addToast(message: ToastProps) {
+    (await topToaster).show(message);
   }
 
   passageToClipboard() {
@@ -194,7 +192,7 @@ export default class CopyPassageWin
           )}: ${passage.chapter}-${passage.lastchapter}`,
           timeout: 5000,
           intent: Intent.WARNING,
-        });
+        }).catch((er) => log.error(er));
       }
       const refdiv = testdiv.appendChild(document.createElement('div'));
       const vks: VerseKey[] = [];
@@ -242,14 +240,6 @@ export default class CopyPassageWin
     const { loadingRef, passageToClipboard } = this;
     return (
       <Vbox domref={loadingRef}>
-        <OverlayToaster
-          canEscapeKeyClear
-          position={Position.TOP}
-          usePortal
-          ref={(ref: Toaster | null) => {
-            this.toaster = ref ?? undefined;
-          }}
-        />
         <div id="testdiv" />
         <Groupbox caption={G.i18n.t('passage.label')}>
           <SelectVK

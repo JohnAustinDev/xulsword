@@ -1,4 +1,5 @@
 import React, { useEffect, useState, createRef } from 'react';
+import { OverlayToaster, Position } from '@blueprintjs/core';
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
 import {
@@ -125,6 +126,11 @@ export function component(
   }
   return null;
 }
+
+export const topToaster = OverlayToaster.create({
+  canEscapeKeyClear: true,
+  position: Position.TOP,
+});
 
 // Get this window's descriptor object and either retrieve the value of one of
 // its additionalArguments, or return the entire descriptor object.

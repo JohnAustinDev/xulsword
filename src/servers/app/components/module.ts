@@ -855,7 +855,10 @@ const Module = {
     } catch (er: any) {
       return er.message;
     }
-    const entry = fbuffer.toString('utf8').split(/[\n\r]+/);
+    const entry = fbuffer
+      .toString('utf8')
+      .split(/[\n\r]+/)
+      .filter((str) => !str.startsWith('#'));
     entry.forEach((mx: string) => {
       const m = mx.match(/FTPSource=([^|]+)\|([^|]+)\|([^|]+)\s*/);
       if (m) {

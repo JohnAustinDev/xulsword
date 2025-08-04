@@ -2,8 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Intent,
-  OverlayToaster,
-  Position,
   ProgressBar,
 } from '@blueprintjs/core';
 import {
@@ -25,6 +23,7 @@ import {
   getLangReadable,
   setStatePref,
   windowArguments,
+  topToaster,
 } from '../../../common.tsx';
 import { addClass, xulPropTypes } from '../../../components/libxul/xul.tsx';
 import Button from '../../../components/libxul/button.tsx';
@@ -153,14 +152,6 @@ export default class ModuleManager
     container: React.RefObject<HTMLDivElement>;
   };
 
-  toaster: Toaster | undefined;
-
-  refHandlers = {
-    toaster: (ref: Toaster | null) => {
-      if (ref) this.toaster = ref;
-    },
-  };
-
   lastStatePref: Partial<ManagerState> | null;
 
   onRowsReordered: Record<
@@ -205,14 +196,6 @@ export default class ModuleManager
         ...(getStatePref('prefs', id) as ManagerStatePref),
       };
       H.Permission.internet = G.Prefs.getBoolPref('global.InternetPermission');
-    }
-
-    // These repos don't work. Why??
-    if (s.repositories?.disabled === null) {
-      s.repositories.disabled = [
-        '[STEP Bible][ftp.stepbible.org][/pub/sword]',
-        '[Bible.org][ftp.bible.org][/sword]',
-      ];
     }
 
     H.Progressing.ids = [];
@@ -333,7 +316,7 @@ export default class ModuleManager
             message: `Unable to download Master Repository List.\n${msg}`,
             timeout: 5000,
             intent: Intent.WARNING,
-          });
+          }).catch((er) => log.error(er));
         }
       }
       let allrepos = xulswordRepos.concat(crossWireRepos);
@@ -375,7 +358,7 @@ export default class ModuleManager
           const repdrow = repository.data[repoIndex];
           if (repdrow && prog === -1 && repdrow[H.RepCol.iInfo].loading) {
             repdrow[H.RepCol.iInfo].loading = false;
-            H.tableUpdate(newstate, 'repository');
+            H.tableUpdate(this, newstate, 'repository');
           }
           // Set individual module progress bars
           if (prog === -1) {
@@ -389,7 +372,7 @@ export default class ModuleManager
               .forEach((r) => {
                 r[H.ModCol.iInfo].loading = false;
                 r[H.ModCol.iInstalled] = H.ON;
-                H.tableUpdate(newstate, 'module');
+                H.tableUpdate(this, newstate, 'module');
               });
           }
           this.sState(newstate);
@@ -407,7 +390,7 @@ export default class ModuleManager
       const repoIsCustom = isRepoCustom(custom ?? null, repo);
       return H.repositoryToRow(state, repo, repoIsCustom, true);
     });
-    H.tableUpdate(state, 'repository');
+    H.tableUpdate(this, state, 'repository', 'rowmap');
   }
 
   // Load the language table with all languages found in all currently enabled
@@ -617,11 +600,7 @@ export default class ModuleManager
               if (isRemote) {
                 if (foundInLocal) {
                   const localModKey = repositoryModuleKey(foundInLocal);
-                  const localrow = modtable.data.find(
-                    (r) =>
-                      repositoryModuleKey(r[H.ModCol.iInfo].conf) ===
-                      localModKey,
-                  );
+                  const localrow = H.findModuleRow(localModKey);
                   if (localrow) {
                     // shared
                     modrow[H.ModCol.iShared] = localrow[H.ModCol.iShared];
@@ -744,8 +723,8 @@ export default class ModuleManager
     }
   }
 
-  addToast(toast: ToastProps) {
-    if (this.toaster) this.toaster.show(toast);
+  async addToast(message: ToastProps) {
+    (await topToaster).show(message);
   }
 
   render() {
@@ -851,11 +830,6 @@ export default class ModuleManager
       }
       return (
         <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">
-          <OverlayToaster
-            canEscapeKeyClear
-            position={Position.TOP}
-            ref={this.refHandlers.toaster}
-          />
           {(vkAudioDialog || gbAudioDialog) && (
             <Dialog
               body={
@@ -962,7 +936,7 @@ export default class ModuleManager
                   onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
                     this.sState((prevState) => {
                       prevState.language.width = v.sizerPos;
-                      H.tableUpdate(prevState, ['language', 'module']);
+                      H.tableUpdate(this, prevState, ['language', 'module']);
                       return prevState;
                     });
                   }}

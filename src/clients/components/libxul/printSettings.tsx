@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import { Icon, Intent, Position, OverlayToaster } from '@blueprintjs/core';
+import { Icon, Intent } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
 import analytics, { BibleBrowserEventInfo } from '../../analytics.ts';
 import { clone, randomID } from '../../../common.ts';
@@ -13,7 +13,9 @@ import {
   rootRenderPromise,
   setStatePref,
   windowArguments,
+  topToaster,
 } from '../../common.tsx';
+import log from '../../log.ts';
 import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';
 import Spacer from './spacer.tsx';
@@ -24,7 +26,7 @@ import Label from './label.tsx';
 import Groupbox from './groupbox.tsx';
 import './printSettings.css';
 
-import type { Toaster, ToastProps } from '@blueprintjs/core';
+import type { ToastProps } from '@blueprintjs/core';
 import type S from '../../../defaultPrefs.ts';
 import type { ControllerState, PrintOptionsType } from '../../controller.tsx';
 import type { XulProps } from './xul.tsx';
@@ -108,8 +110,6 @@ export default class PrintSettings extends React.Component {
   pageScrollW: number;
 
   resetTO: NodeJS.Timeout | null;
-
-  toaster: Toaster | undefined;
 
   constructor(props: PrintSettingsProps) {
     super(props);
@@ -284,7 +284,7 @@ export default class PrintSettings extends React.Component {
                     .replace(/^error: promise rejection.*?:([^:]+)$/is, '$1'),
                   intent: Intent.DANGER,
                   timeout: -1,
-                });
+                }).catch((er) => log.error(er));
               });
             break;
           }
@@ -316,7 +316,7 @@ export default class PrintSettings extends React.Component {
                     .replace(/^error: promise rejection.*?:([^:]+)$/is, '$1'),
                   intent: Intent.DANGER,
                   timeout: -1,
-                });
+                }).catch((er) => log.error(er));
               });
             break;
           }
@@ -549,7 +549,7 @@ export default class PrintSettings extends React.Component {
         message: `${GI.i18n.t('', renderPromise, 'printPages.label')}: 1-${pages}`,
         timeout: 5000,
         intent: Intent.WARNING,
-      });
+      }).catch((er) => log.error(er));
     }
   }
 
@@ -559,8 +559,8 @@ export default class PrintSettings extends React.Component {
     else Subscription.publish.setControllerState({ reset: randomID() });
   }
 
-  addToast(toast: ToastProps) {
-    if (this.toaster) this.toaster.show(toast);
+  async addToast(message: ToastProps) {
+    (await topToaster).show(message);
   }
 
   scrollToPage(page?: number) {
@@ -669,15 +669,6 @@ export default class PrintSettings extends React.Component {
 
     return (
       <Vbox {...addClass('printsettings', this.props)}>
-        <OverlayToaster
-          canEscapeKeyClear
-          position={Position.TOP}
-          usePortal
-          ref={(ref: Toaster | null) => {
-            this.toaster = ref ?? undefined;
-          }}
-        />
-
         {pageViewRef?.current &&
           showpaging &&
           ReactDOM.createPortal(

@@ -339,7 +339,9 @@ class Popup extends React.Component implements RenderPromiseComponent {
           data-data={JSON_attrib_stringify(data)}
         >
           <Hbox pack="start" align="center" className="popupheader">
-            {!isWindow && Build.isElectronApp && <div className="towindow" />}
+            {!isWindow && Build.isElectronApp && (
+              <Button className="towindow" icon="open-application" />
+            )}
             <div>
               <div
                 className={`popupCloseLink${elemdata && elemdata.length > 1 ? ' backable' : ''}`}
