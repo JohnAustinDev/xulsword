@@ -611,7 +611,8 @@ export default class ModuleManager
                     }
                   }
                 } else {
-                  isRemoteNotInstalledToBeInstalled = true;
+                  isRemoteNotInstalledToBeInstalled =
+                    H.Downloads.finished.includes(modkey);
                   modrow[H.ModCol.iShared] = H.OFF;
                   modrow[H.ModCol.iInstalled] = H.Downloads.finished.includes(
                     modkey,
