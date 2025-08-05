@@ -71,7 +71,7 @@ const logfile2 = new LocalFile(path.join(Dirs.path.LogDir, 'renderer.log'));
 if (logfile2.exists()) logfile2.remove();
 log.transports.console.level = C.LogLevel;
 log.transports.file.level = C.LogLevel;
-log.transports.file.resolvePath = () => logfile.path;
+log.transports.file.resolvePathFn = () => logfile.path;
 log.info(`Starting ${app.getName()} isDevelopment='${Build.isDevelopment}'`);
 
 addBookmarkTransaction(
@@ -528,9 +528,9 @@ const init = async () => {
     log.error(er);
   });
 
-  log.catchErrors({
+  log.errorHandler.startCatching({
     showDialog: false,
-    onError(error, versions, submitIssue) {
+    onError({ createIssue, error, processType, versions }) {
       if (!Build.isDevelopment && !error.message.includes('net::ERR')) {
         dialog
           .showMessageBox({
@@ -541,14 +541,15 @@ const init = async () => {
             buttons: ['Ignore', 'Report', 'Exit'],
           })
           .then((result) => {
-            if (result.response === 1 && submitIssue) {
-              submitIssue(
+            if (result.response === 1 && createIssue) {
+              createIssue(
                 'https://github.com/JohnAustinDev/xulsword/issues/new',
                 {
                   title: `Error report for ${versions?.app || 'unknown'} ${Data.read('buildInfo')}`,
                   body:
                     `Error:\n\`\`\`${error.stack}\n\`\`\`\n` +
-                    `OS: ${versions?.os || 'unknown'}`,
+                    `OS: ${versions?.os || 'unknown'}\n` +
+                    `ProcessType: ${processType}`,
                 },
               );
               return result;

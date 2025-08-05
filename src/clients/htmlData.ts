@@ -30,22 +30,18 @@ const libSwordElemClasses = [
   'slist', // member of LibSword search results list
 ] as const;
 
-// These xulsword HTML classes carry HTMLData in their data-data attribute.
-const otherElemClasses = [
-  'text', // panel text divs,
-  'snbut', // strong's number search button
-  'crref', // notebox note-list cross-reference link
-  'fnrow', // notebox note-list row
-  'fnlink', // notebox note-list row source link
-  'introlink', // versekey chapter introduction link
-  'aboutlink', // module about link
-  'dictkey', // dictionary key in a key list
-  'requiremod', // button to install required modules
-] as const;
-
 export type DataElemClasses =
   | (typeof libSwordElemClasses)[number]
-  | (typeof otherElemClasses)[number];
+  // These xulsword HTML classes carry HTMLData in their data-data attribute.
+  | 'text' // panel text divs,
+  | 'snbut' // strong's number search button
+  | 'crref' // notebox note-list cross-reference link
+  | 'fnrow' // notebox note-list row
+  | 'fnlink' // notebox note-list row source link
+  | 'introlink' // versekey chapter introduction link
+  | 'aboutlink' // module about link
+  | 'dictkey' // dictionary key in a key list
+  | 'requiremod'; // button to install required modules
 
 // HTML element data. This data is encoded in the data-data attribute.
 export type HTMLData = {

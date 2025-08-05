@@ -286,10 +286,7 @@ export default function (opts) {
           ? env('WEBAPP_PUBLIC_DIST')
           : './',
         ...(build === 'library'
-          ? {
-              library: 'xulsword',
-              globalObject: 'globalThis',
-            }
+          ? { library: 'xulsword', globalObject: 'globalThis' }
           : {}),
       },
 
@@ -301,11 +298,7 @@ export default function (opts) {
             use: {
               loader: 'babel-loader',
               options: {
-                ...(development
-                  ? {
-                      cacheDirectory: true,
-                    }
-                  : {}),
+                ...(development ? { cacheDirectory: true } : {}),
 
                 presets: [
                   [
@@ -324,23 +317,15 @@ export default function (opts) {
                 // React refresh webpack plugin
                 ...(development &&
                 ['webappClients', 'appClients'].includes(build)
-                  ? {
-                      plugins: ['react-refresh/babel'],
-                    }
+                  ? { plugins: ['react-refresh/babel'] }
                   : {}),
               },
             },
             sideEffects: false,
           },
-          {
-            test: /\.css$/,
-            use: [MiniCssExtractPlugin.loader, 'css-loader'],
-          },
+          { test: /\.css$/, use: [MiniCssExtractPlugin.loader, 'css-loader'] },
           ...useFileLoader.map((ext) => {
-            return {
-              test: new RegExp(`\\.${ext}$`),
-              use: 'file-loader',
-            };
+            return { test: new RegExp(`\\.${ext}$`), use: 'file-loader' };
           }),
           ...useUrlLoader.map((ext) => {
             return {
@@ -348,11 +333,7 @@ export default function (opts) {
               use: {
                 loader: 'url-loader',
                 options: {
-                  ...(ext in mimeTypes
-                    ? {
-                        mimetype: mimeTypes[ext],
-                      }
-                    : {}),
+                  ...(ext in mimeTypes ? { mimetype: mimeTypes[ext] } : {}),
                 },
               },
             };

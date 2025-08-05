@@ -39,7 +39,7 @@ process.on('message', (msg: MessagesToIndexWorker) => {
       const { logfile, loglevel } = msg;
       log.transports.console.level = loglevel;
       log.transports.file.level = loglevel;
-      log.transports.file.resolvePath = () => logfile;
+      log.transports.file.resolvePathFn = () => logfile;
       return; // return doesn't disconnect!
     }
     case 'start': {

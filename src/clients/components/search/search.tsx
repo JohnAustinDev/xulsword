@@ -92,7 +92,7 @@ const defaultState = {
   module: '' as string, // search module
   searchtext: '' as string, // search text
   searchtype: 'SearchExactText' as SearchType['type'], // type of search to do
-  scoperadio: 'all' as (typeof ScopeRadioOptions)[number], // scope radio value
+  scoperadio: 'all' as 'all' | 'book' | 'ot' | 'nt' | 'other', // scope radio value
   scopeselect: 'gospel' as
     | BookGroupType
     | (typeof ScopeSelectOptions)[number]
@@ -113,8 +113,6 @@ const defaultState = {
   },
   showHelp: null as React.JSX.Element | null, // for web app to show help in div rather than window
 };
-
-const ScopeRadioOptions = ['all', 'book', 'ot', 'nt', 'other'] as const;
 
 const ScopeSelectOptions = [
   'pentateuch',

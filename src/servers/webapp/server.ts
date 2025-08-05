@@ -41,7 +41,7 @@ log.transports.console.level = C.LogLevel;
 log.transports.file.level = C.LogLevel;
 log.transports.file.sync = false;
 log.transports.file.maxSize = 0;
-log.transports.file.resolvePath = () => logfile.path;
+log.transports.file.resolvePathFn = () => logfile.path;
 
 LibSword.init();
 

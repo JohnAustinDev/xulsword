@@ -120,19 +120,17 @@ export function getBrowserWindows(
 // window's x and y position on the screen. When creating
 // new windows with useContentSize, these dimensions are
 // intended to recreate the window's exact size and location
-// on the screen. But there has been a long standing Electron
-// bug report #10388 and yAdj is an attempted workaround.
+// on the screen.
 function windowBounds(winid: number) {
   const win = BrowserWindow.fromId(winid);
   if (win) {
     const w = win.getNormalBounds();
     const c = win.getContentBounds();
-    const yAdj = process.platform === 'linux' ? -38 : 0;
     return {
       width: c.width,
       height: c.height,
       x: w.x,
-      y: w.y + yAdj,
+      y: w.y,
       windowFrameThicknessLeft: c.x - w.x,
       windowFrameThicknessTop: c.y - w.y,
     };
@@ -454,7 +452,9 @@ const Window = {
     d.id = win.id; // descriptor is now complete
     Data.write(descriptorToPref(d), d.dataID);
 
-    win.loadURL(resolveHtmlPath(`${d.type}.html`)).catch((er) => {
+    const url = resolveHtmlPath(`${d.type}.html`);
+    log.debug(`Loading URL: ${url}`);
+    win.loadURL(url).catch((er) => {
       log.error(er);
     });
 
