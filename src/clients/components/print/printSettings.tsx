@@ -14,34 +14,40 @@ import {
   setStatePref,
   windowArguments,
   topToaster,
+  iframeAutoHeight,
 } from '../../common.tsx';
 import log from '../../log.ts';
-import { Hbox, Vbox } from './boxes.tsx';
-import Button from './button.tsx';
-import Spacer from './spacer.tsx';
-import { addClass, xulPropTypes } from './xul.tsx';
-import Menulist from './menulist.tsx';
-import Textbox from './textbox.tsx';
-import Label from './label.tsx';
-import Groupbox from './groupbox.tsx';
+import { Hbox, Vbox } from '../libxul/boxes.tsx';
+import Button from '../libxul/button.tsx';
+import Spacer from '../libxul/spacer.tsx';
+import { addClass, xulPropTypes } from '../libxul/xul.tsx';
+import Menulist from '../libxul/menulist.tsx';
+import Textbox from '../libxul/textbox.tsx';
+import Label from '../libxul/label.tsx';
+import Groupbox from '../libxul/groupbox.tsx';
 import './printSettings.css';
 
 import type { ToastProps } from '@blueprintjs/core';
 import type S from '../../../defaultPrefs.ts';
 import type { ControllerState, PrintOptionsType } from '../../controller.tsx';
-import type { XulProps } from './xul.tsx';
+import type { XulProps } from '../libxul/xul.tsx';
 
 // This PrintSettings component is composed of the following parts:
 // - Optional CUSTOM SETTINGS may be rendered elsewhere and provided via the
-//   React customSettingsRef. These settings would be applied to the content
+//   React customSettingsRef. These settings may be applied to the content
 //   being printed (such as including footnotes in the printout, or not).
 // - If pageable is true, PAGING BUTTONS are rendered, and will appear via
 //   React portal within the pageViewRef element.
-// - If used in an Electron app, print format OPTION SELECTORS are rendered,
-//   such as page size, orientation, and margin selectors.
-// - DIALOG BUTTONS are rendered to print, close or cancel the print
-//   operation. If used in an Electron app, then PDF and print preview buttons
-//   are also provided.
+// - Print format OPTION SELECTORS are rendered, such as page size,
+//   orientation, and margin selectors.
+// - DIALOG BUTTONS are rendered for print, close or cancel. If used in an
+//   Electron app, then PDF and print preview buttons are also provided.
+// These parts are arranged in one of two orientations, one for wide screen and
+// another for mid to narrow screens. Since print layout is controlled by
+// user settings via Javascript, the print container is also sized by
+// Javascript.
+
+const WidePrintWidth = 1000;
 
 export const paperSizes = [
   { type: 'A3', w: 297, h: 420, u: 'mm' },
@@ -156,6 +162,7 @@ export default class PrintSettings extends React.Component {
     _prevProps: PrintSettingsProps,
     prevState: PrintSettingsState,
   ) {
+    iframeAutoHeight('.print'); // print height is not constrained
     setStatePref('prefs', 'print', prevState, this.state);
   }
 
@@ -433,13 +440,12 @@ export default class PrintSettings extends React.Component {
       '#root .printsettings-container',
     );
     if (settingsRef && printContainerRef.current) {
+      const isWideScreen = window.innerWidth >= WidePrintWidth
       const settingsW = settingsRef.clientWidth;
       // initialPageViewW can be anything, but it must have a known value.
       let initialPageViewW =
         window.innerWidth - settingsW - 3 * C.UI.Print.viewMargin;
-      if (window.innerWidth <= C.UI.WebApp.mobileW) {
-        initialPageViewW = settingsW - 20;
-      }
+      if (!isWideScreen) initialPageViewW = settingsW - 20;
       if (initialPageViewW < 100) initialPageViewW = 100;
 
       const paperSize = paperSizes.find(
@@ -448,11 +454,10 @@ export default class PrintSettings extends React.Component {
       const realPaperW = paperSize[landscape ? 'h' : 'w'];
       const realPaperH = paperSize[landscape ? 'w' : 'h'];
 
-      // WebApp window may scroll in the y direction, so use #root height
-      // instead of window.innerHeight to calculate pageViewMaxH.
+      // Print container's height is only constrained in wide screen mode.
       const rootH = document.getElementById('root');
       const winHeight = rootH ? rootH.offsetHeight : window.innerHeight;
-      const pageViewMaxH = winHeight - 2 * C.UI.Print.viewMargin;
+      const pageViewMaxH = isWideScreen ? winHeight - 2 * C.UI.Print.viewMargin : 0;
       const pagebuttonsW = pagebuttons?.current?.offsetWidth || 200;
 
       let pageToContentScale = 1;
@@ -479,7 +484,7 @@ export default class PrintSettings extends React.Component {
       let pageViewW = initialPageViewW;
       let pageViewH = pageViewW * (realPaperH / realPaperW);
       let pageViewToContentScale = pageViewW / contentW;
-      if (pageViewH > pageViewMaxH) {
+      if (pageViewMaxH && pageViewH > pageViewMaxH) {
         pageViewH = pageViewMaxH;
         pageViewW = pageViewH * (realPaperW / realPaperH);
         pageViewToContentScale = pageViewW / contentW;
@@ -669,6 +674,7 @@ export default class PrintSettings extends React.Component {
 
     return (
       <Vbox {...addClass('printsettings', this.props)}>
+        {/* PRINT CONTAINER */}
         {pageViewRef?.current &&
           showpaging &&
           ReactDOM.createPortal(
@@ -698,8 +704,10 @@ export default class PrintSettings extends React.Component {
 
         <style>{style}</style>
 
+        {/* CUSTOM SETTINGS */}
         <div className="printControls" ref={customSettingsRef} />
 
+        {/* PRINT SETTINGS */}
         <Groupbox
           className="printSettings"
           caption={GI.i18n.t('', renderPromise, 'menu.print')}
@@ -821,6 +829,7 @@ export default class PrintSettings extends React.Component {
           </Vbox>
         </Groupbox>
 
+        {/* DIALOG BUTTONS */}
         <Hbox className="dialog-buttons" pack="end" align="end">
           {
             <Button

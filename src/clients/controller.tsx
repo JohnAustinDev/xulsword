@@ -20,7 +20,7 @@ import {
   xulCaptureEvents,
   addClass,
 } from './components/libxul/xul.tsx';
-import Print, { PrintContainer } from './components/libxul/print.tsx';
+import Print, { PrintContainer } from './components/print/print.tsx';
 import { Hbox } from './components/libxul/boxes.tsx';
 import Search, { SearchProps } from './components/search/search.tsx';
 import PrintPassage from './components/printPassage/printPassage.tsx';

@@ -1,34 +1,29 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import Subscription from '../../../subscription.ts';
 import { b64toBlob } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { GI } from '../../G.ts';
-import {
-  iframeAutoHeight,
-  printRefs,
-  rootRenderPromise,
-} from '../../common.tsx';
-import { Hbox, Vbox } from './boxes.tsx';
-import Button from './button.tsx';
-import Spacer from './spacer.tsx';
+import { printRefs, rootRenderPromise } from '../../common.tsx';
+import { Hbox, Vbox } from '../libxul/boxes.tsx';
+import Button from '../libxul/button.tsx';
+import Spacer from '../libxul/spacer.tsx';
+import { htmlAttribs, type XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import PrintSettings from './printSettings.tsx';
-import { htmlAttribs, type XulProps, xulPropTypes } from './xul.tsx';
 import './print.css';
 
 import type { PrintOptionsType } from '../../controller.tsx';
 
-// The Print component is the foundation for all print related features.
-// It must be rendered to the root of a window and its children (the root
-// content) will become available for printing. PrintSettings is rendered
-// along with a scaleable PrintContainer (although for pageable content,
-// the PrintContainer must instead have been wrapped arround a root content
-// pageable descendent BEFORE the root content was passed to Print). For
-// Electron apps, iframeFilePath may be set to the path of a local PDF file
-// which was created by Electron as a print preview. Then instead of the
-// usual Print components, the content of the PDF will be shown in an iframe.
-// This provides a print preview which will be completed when the backHandler
-// is called by a back button click.
+// The Print component is the foundation for all print related features. It
+// must be rendered to the root of a window and its children (the root content)
+// will become available for printing. PrintSettings is rendered alongside a
+// scaleable PrintContainer. NOTE: for pageable content, the PrintContainer
+// must contain a root content pageable descendent BEFORE being passed to
+// Print. For Electron apps, iframeFilePath may be set to the path of a local
+// PDF file which was created by Electron as a print preview. Then instead of
+// the usual Print components, the content of the PDF will be shown in an
+// iframe. This provides a print preview which will be completed when the
+// backHandler is called by a back button click.
 
 const propTypes = {
   ...xulPropTypes,
@@ -43,10 +38,6 @@ export default function Print(props: PrintProps) {
   const { children, print } = props;
   const { pageViewRef } = printRefs;
   const { pageable, direction, iframeFilePath } = print;
-
-  useEffect(() => {
-    iframeAutoHeight('.print'); // print height is not constrained
-  });
 
   const backHandler = () => {
     Subscription.publish.setControllerState(

@@ -1,6 +1,6 @@
 import C from './constant.ts';
 
-import type { paperSizes } from './clients/components/libxul/printSettings.tsx';
+import type { paperSizes } from './clients/components/print/printSettings.tsx';
 import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
 import type { StyleType } from './clients/style.ts';
 import type {

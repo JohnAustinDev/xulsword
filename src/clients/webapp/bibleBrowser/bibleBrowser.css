@@ -1,3 +1,8 @@
+:root {
+  --input-height: 32px;
+  --min-height: 800px;
+}
+
 html .skin,
 html.skin > #root {
   background-image: unset;
@@ -8,24 +13,16 @@ body {
   height: 100%;
   overflow-y: auto;
 }
-/* root is --min-height for multi-panel and print, otherwise it's unset */
-:root {
-  --input-height: 32px;
-  --min-height: 800px;
-}
+/* root is --min-height for multi-panel, otherwise it's unset */
 #root:has(.textarea.multi-panel) {
   height: var(--min-height);
-}
-#root:has(.print) {
-  min-height: var(--min-height);
 }
 #root {
   height: unset;
 }
-/* root descendent containers are 100% height for multi-panel or print, otherwise unset */
+/* root descendent containers are 100% height for multi-panel, otherwise unset */
 #root > #reset:has(.textarea.multi-panel),
-#root > #reset > .xulsword:has(.textarea.multi-panel),
-#root > .print {
+#root > #reset > .xulsword:has(.textarea.multi-panel) {
   height: 100%;
   width: 100%;
 }
@@ -108,10 +105,6 @@ body {
   z-index: 8;
   margin: 0;
   padding: 20px;
-}
-
-.printControls .vk-vkmod > select {
-  max-width: calc(100vw - 87px);
 }
 
 @media (max-width: 300px) {

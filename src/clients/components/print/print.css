@@ -24,23 +24,31 @@
   background: white;
 }
 
-/* This width is C.UI.WebApp.tabletW */
-@media (max-width: 999px) {
-  .printPassageWin body {
-    overflow-y: auto;
-  }
-  .printPassageWin #root,
-  .printPassageWin #root > .print {
+/* This value is < WidePrintWidth. At this width and lower, the print
+controls appear below the print container. */
+@media (width < 1000px) {
+  .print {
     height: unset;
+  }
+  #root:has(> .print) {
+    height: 100%;
+    overflow-y: auto;
   }
   .print {
     flex-direction: column;
     align-items: center;
     justify-content: start;
   }
+  .pageView-container {
+    margin-bottom: 10px;
+  }
 }
 
 @media print {
+  .print {
+    /* Without 100% height the printed page may be partially hidden */
+    height: 100%;
+  }
   .print > *:not(.pageView-container),
   #overlay,
   .close-card-button {
