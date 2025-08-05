@@ -1,4 +1,4 @@
-import { app } from 'electron';
+import { app } from 'electron'; // app is undefined in web-app
 import path from 'path';
 import { fileURLToPath } from 'url';
 import LocalFile from './localFile.ts';

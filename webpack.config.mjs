@@ -17,7 +17,7 @@ const builds = {
     'electron-main',
     [
       './src/servers/app/server.ts',
-      './src/servers/indexWorker.ts'
+      './src/servers/app/indexWorker.ts'
     ]
   ],
 
@@ -32,7 +32,6 @@ const builds = {
     'node',
     [
       './src/servers/webapp/server.ts',
-      './src/servers/indexWorker.ts'
     ]
   ],
 
@@ -252,6 +251,9 @@ export default function (opts) {
       // libxulsword is packaged by electron-builder not Webpack.
       externals: {
         './build/Release/xulsword.node': `node-commonjs ../../node_modules/libxulsword/build/Release/xulsword.node`,
+        ...(!builds[build][0].startsWith('electron')
+          ? { electron: 'return {};' }
+          : {}),
       },
 
       entry: builds[build][1].reduce((entries, entry) => {

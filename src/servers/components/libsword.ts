@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron'; // undefined in server mode
+import { BrowserWindow } from 'electron'; // BrowserWindow is undefined in web-app
 import { fork } from 'child_process';
 import log from 'electron-log';
 import path from 'path';

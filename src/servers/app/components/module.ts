@@ -22,6 +22,11 @@ import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
 import { CipherKeyModules, normalizeZipEntry } from '../../common.ts';
 import parseSwordConf from '../../parseSwordConf.ts';
+import DiskCache from '../../components/diskcache.ts';
+import LocalFile from '../../components/localFile.ts';
+import Dirs from '../../components/dirs.ts';
+import LibSword, { moduleUnsupported } from '../../components/libsword.ts';
+import Prefs from '../prefs.ts';
 import {
   getFile,
   getDir,
@@ -36,12 +41,7 @@ import {
   logid,
   destroyFTPconnections,
   httpThrowIfCanceled,
-} from '../../ftphttp.ts';
-import DiskCache from '../../components/diskcache.ts';
-import LocalFile from '../../components/localFile.ts';
-import Dirs from '../../components/dirs.ts';
-import LibSword, { moduleUnsupported } from '../../components/libsword.ts';
-import Prefs from '../prefs.ts';
+} from '../ftphttp.ts';
 import Window, { getBrowserWindows } from './window.ts';
 
 import type {
@@ -57,7 +57,7 @@ import type {
   OSISBookType,
   RepositoryOperation,
 } from '../../../type.ts';
-import type { ListingElementR } from '../../ftphttp.ts';
+import type { ListingElementR } from '../ftphttp.ts';
 
 // CrossWire SWORD Standard TODOS:
 // TODO CrossWire wiki mentions LangSortOrder! Report change to KeySort
