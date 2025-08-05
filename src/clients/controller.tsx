@@ -212,42 +212,45 @@ function Controller(props: ControllerProps) {
   });
 
   // Installer drag-and-drop setup:
+  /*
+  By electron 37, security restrictions on e.dataTransfer seem to make
+  Drag-and-Drop impossible since file path is no longer available.
   useEffect(() => {
     if (!Build.isElectronApp) return;
     const root = document.getElementById('root');
-    if (
-      root &&
-      ['xulswordWin', 'viewportWin'].includes(descriptor?.type ?? '')
-    ) {
-      root.ondragover = (e) => {
-        e.preventDefault();
-        s.modal[1]('outlined');
-      };
-      root.ondragleave = (e) => {
-        e.preventDefault();
-        if (!root.contains(e.relatedTarget as HTMLElement)) s.modal[1]('off');
-      };
-      root.ondrop = (e) => {
-        e.preventDefault();
-        if (e.dataTransfer?.files.length) {
-          G.Commands.installXulswordModules(
-            Array.from(e.dataTransfer.files).map((f) => f.path) || [],
-          ).catch((er) => {
-            log.error(er);
-          });
-        } else {
-          s.modal[1]('off');
-        }
+    if (!root) return;
+    const outline = (e: DragEvent) => {
+      e.preventDefault();
+      s.modal[1]('outlined');
+    };
+    const normal = (e: DragEvent) => {
+      e.preventDefault();
+      if (!root.contains(e.relatedTarget as HTMLElement)) s.modal[1]('off');
+    };
+    const install = (e: DragEvent) => {
+      e.preventDefault();
+      if (e.dataTransfer?.files.length) {
+        G.Commands.installXulswordModules(
+          Array.from(e.dataTransfer.files).map((f) => f.path) || [],
+        ).catch((er) => {
+          log.error(er);
+        });
+      } else {
+        s.modal[1]('off');
+      }
+      e.stopPropagation();
+    };
+    if (['xulswordWin', 'viewportWin'].includes(descriptor?.type ?? '')) {
+      root.addEventListener('dragover', outline);
+      root.addEventListener('dragleave', normal);
+      root.addEventListener('drop', install);
+      return () => {
+        root.removeEventListener('dragover', outline);
+        root.removeEventListener('dragleave', normal);
+        root.removeEventListener('drop', install);
       };
     }
-    return () => {
-      if (root) {
-        root.ondrop = null;
-        root.ondragover = null;
-        root.ondragleave = null;
-      }
-    };
-  });
+  });*/
 
   // Modal warn/error/cipher-keys dialog on modulesInstalled:
   useEffect(() => {
