@@ -183,7 +183,7 @@ export default class PrintPassage
           componentInstanceID,
         );
         if (tdiv.dataset.renderkey !== renderkey) {
-          // Set renderkey now because soon the soon-to-be scheduled operations will
+          // Set renderkey now because the soon-to-be scheduled operations will
           // self terminate if tdiv renderkey changes.
           tdiv.dataset.renderkey = renderkey;
           this.renderChapters(

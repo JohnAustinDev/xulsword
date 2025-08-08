@@ -173,7 +173,7 @@ const S = {
       },
       language: {
         open: true as boolean,
-        selection: [] as string[],
+        selection: [] as RowSelection,
         width: 150 as number,
         rowSort: {
           propColumnIndex: 0,
@@ -376,7 +376,7 @@ const S = {
       repositories: null,
       language: {
         open: false as boolean,
-        selection: [] as string[],
+        selection: [] as RowSelection,
         rowSort: {
           propColumnIndex: 0,
           direction: 'ascending',

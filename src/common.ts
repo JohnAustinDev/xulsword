@@ -4,7 +4,7 @@ import C from './constant.ts';
 import S, { completePanelPrefDefaultArrays } from './defaultPrefs.ts';
 import Cache from './cache.ts';
 
-import type { ElectronLog } from 'electron-log';
+import type { Logger } from 'electron-log';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { Region } from '@blueprintjs/table';
 import type {
@@ -346,7 +346,7 @@ export function drupalSetting(dotkey: string) {
 export function isInvalidWebAppData(
   data: unknown,
   depth = 0,
-  log?: ElectronLog,
+  log?: Logger,
 ): string | null {
   if (C.LogLevel === 'silly' && depth === 0 && log) testData(data, log);
 
@@ -381,7 +381,7 @@ export function isInvalidWebAppData(
 // This is used just to report data packet sizes and is only called during debug.
 export function testData(
   data: unknown,
-  log: ElectronLog,
+  log: Logger,
   depth = 0,
   info = {
     maxDataRecursion: 0,

@@ -6,7 +6,6 @@ import {
   isRepoLocal,
   selectionToTableRows,
   repositoryKey,
-  tableRowsToSelection,
   repositoryModuleKey,
   localizeString,
   isRepoCustom,
@@ -41,12 +40,12 @@ import Modinfo, {
 import * as H from './moduleManagerH.ts';
 import './moduleManager.css';
 
-import type { Toaster, ToastProps } from '@blueprintjs/core';
+import type { ToastProps } from '@blueprintjs/core';
+import type { Table2 } from '@blueprintjs/table';
 import type {
   ModTypes,
   Repository,
   RepositoryListing,
-  RowSelection,
   SwordConfType,
 } from '../../../../type.ts';
 import type {
@@ -58,14 +57,8 @@ import type {
   TableColumnInfo,
   TableProps,
 } from '../../../components/libxul/table.tsx';
-import type {
-  SelectVKProps,
-  SelectVKType,
-} from '../../../components/libxul/selectVK.tsx';
-import type {
-  SelectORProps,
-  SelectORMType,
-} from '../../../components/libxul/selectOR.tsx';
+import type { SelectVKType } from '../../../components/libxul/selectVK.tsx';
+import type { SelectORMType } from '../../../components/libxul/selectOR.tsx';
 import type { ModinfoParent } from '../../../components/libxul/modinfo.tsx';
 import type { XulProps } from '../../../components/libxul/xul.tsx';
 import type { DragSizerVal } from '../../../components/libxul/dragsizer.tsx';
@@ -74,6 +67,13 @@ import type { ControllerState } from '../../../controller.tsx';
 G.Module.cancel().catch((er) => {
   log.error(er);
 });
+
+export function onunload() {
+  // close all FTP connections
+  G.Module.cancel().catch((er) => {
+    log.error(er);
+  });
+}
 
 let MasterRepoListDownloaded = false;
 let resetOnResize = false;
@@ -138,17 +138,6 @@ export default class ModuleManager
 
   destroy: Array<() => void>;
 
-  tableRef: {
-    [table in (typeof H.Tables)[number]]: React.RefObject<HTMLDivElement>;
-  };
-
-  languageTableCompRef;
-
-  modinfoRefs: {
-    textarea: React.RefObject<HTMLTextAreaElement>;
-    container: React.RefObject<HTMLDivElement>;
-  };
-
   lastStatePref: Partial<ManagerState> | null;
 
   onRowsReordered: Record<
@@ -166,10 +155,6 @@ export default class ModuleManager
 
   eventHandler;
 
-  audioDialogOnChange:
-    | SelectVKProps['onSelection']
-    | SelectORProps['onSelection'];
-
   modinfoParentHandler: typeof modinfoParentHandlerH;
 
   sState: (
@@ -179,6 +164,19 @@ export default class ModuleManager
       | ((prevState: ManagerState) => Partial<ManagerState> | null),
     callback?: () => void,
   ) => void;
+
+  tableDomRefs: {
+    [table in (typeof H.Tables)[number]]: React.RefObject<HTMLDivElement>;
+  };
+
+  tableComponentRefs: {
+    [table in (typeof H.Tables)[number]]: React.RefObject<Table2>;
+  };
+
+  modinfoRefs: {
+    textarea: React.RefObject<HTMLTextAreaElement>;
+    container: React.RefObject<HTMLDivElement>;
+  };
 
   constructor(props: ManagerProps) {
     super(props);
@@ -199,13 +197,12 @@ export default class ModuleManager
 
     this.state = s;
 
-    this.tableRef = {} as typeof this.tableRef;
+    this.tableDomRefs = {} as typeof this.tableDomRefs;
+    this.tableComponentRefs = {} as typeof this.tableComponentRefs;
     H.Tables.forEach((t: (typeof H.Tables)[number]) => {
-      this.tableRef[t] = React.createRef();
+      this.tableDomRefs[t] = React.createRef();
+      this.tableComponentRefs[t] = React.createRef();
     });
-
-    this.languageTableCompRef = React.createRef();
-
     this.modinfoRefs = {
       textarea: React.createRef(),
       container: React.createRef(),
@@ -215,25 +212,23 @@ export default class ModuleManager
 
     this.lastStatePref = null;
 
-    this.loadRepositoryTable = this.loadRepositoryTable.bind(this);
-    this.loadModuleTable = this.loadModuleTable.bind(this);
-    this.filterModuleTable = this.filterModuleTable.bind(this);
-    this.onRepoCellClick = H.onRepoCellClick.bind(this);
-    this.onLangCellClick = H.onLangCellClick.bind(this);
-    this.onModCellClick = H.onModCellClick.bind(this);
-    this.onCustomRepositoryEdited = H.onCustomRepositoryEdited.bind(this);
-    this.eventHandler = H.eventHandler.bind(this);
-    this.modinfoParentHandler = modinfoParentHandlerH.bind(this);
     this.onRowsReordered = {
       language: H.onRowsReordered.bind(this, 'language'),
       module: H.onRowsReordered.bind(this, 'module'),
       repository: H.onRowsReordered.bind(this, 'repository'),
     };
-    this.audioDialogOnChange = audioDialogOnChange.bind(this);
+    this.loadRepositoryTable = this.loadRepositoryTable.bind(this);
+    this.loadModuleTable = this.loadModuleTable.bind(this);
+    this.onRepoCellClick = H.onRepoCellClick.bind(this);
+    this.onLangCellClick = H.onLangCellClick.bind(this);
+    this.onModCellClick = H.onModCellClick.bind(this);
+    this.onCustomRepositoryEdited = H.onCustomRepositoryCellEdited.bind(this);
+    this.eventHandler = H.eventHandler.bind(this);
+    this.modinfoParentHandler = modinfoParentHandlerH.bind(this);
+    this.handleColumns = this.handleColumns.bind(this);
+    this.audioDialogChange = this.audioDialogChange.bind(this);
     this.audioDialogClose = this.audioDialogClose.bind(this);
     this.audioDialogAccept = this.audioDialogAccept.bind(this);
-    this.languageCodesToTableSelection =
-      this.languageCodesToTableSelection.bind(this);
     this.installProgressHandler = this.installProgressHandler.bind(this);
     this.sState = this.setState.bind(this);
   }
@@ -344,18 +339,12 @@ export default class ModuleManager
           // Set individual repository progress bars
           const { repository, module } = newstate.tables;
           const repoIndex = repository.data.findIndex(
-            (r) =>
-              id ===
-              downloadKey({
-                ...r[H.RepCol.iInfo].repo,
-                file: C.SwordRepoManifest,
-                type: 'ftp',
-              }),
+            (r) => id === downloadKey(H.listDownload(r[H.RepCol.iInfo].repo)),
           );
-          const repdrow = repository.data[repoIndex];
-          if (repdrow && prog === -1 && repdrow[H.RepCol.iInfo].loading) {
-            repdrow[H.RepCol.iInfo].loading = false;
-            H.tableUpdate(this, newstate, 'repository');
+          const drow = repository.data[repoIndex];
+          if (drow && prog === -1 && drow[H.RepCol.iInfo].loading) {
+            drow[H.RepCol.iInfo].loading = false;
+            H.tableUpdate(newstate, 'repository');
           }
           // Set individual module progress bars
           if (prog === -1) {
@@ -368,8 +357,7 @@ export default class ModuleManager
               })
               .forEach((r) => {
                 r[H.ModCol.iInfo].loading = false;
-                r[H.ModCol.iInstalled] = H.ON;
-                H.tableUpdate(this, newstate, 'module');
+                H.tableUpdate(newstate, 'module');
               });
           }
           this.sState(newstate);
@@ -385,9 +373,9 @@ export default class ModuleManager
     const { custom } = state.repositories ?? {};
     repository.data = repos.map((repo) => {
       const repoIsCustom = isRepoCustom(custom ?? null, repo);
-      return H.repositoryToRow(state, repo, repoIsCustom, true);
+      return H.repositoryToRow(state, repo, repoIsCustom);
     });
-    H.tableUpdate(this, state, 'repository', 'rowmap');
+    H.tableUpdate(state, 'repository', 'rowmap');
   }
 
   // Load the language table with all languages found in all currently enabled
@@ -414,23 +402,7 @@ export default class ModuleManager
       newTableData.push([getLangReadable(l), { code: l }]),
     );
     language.data = newTableData.sort((a, b) => a[0].localeCompare(b[0]));
-    H.scrollToSelectedLanguage(this, state);
-  }
-
-  // Convert the language table string array selection to a current language table
-  // row selection.
-  languageCodesToTableSelection(
-    state: ManagerState,
-    codes: string[],
-  ): RowSelection {
-    const { data } = state.tables.language;
-    return tableRowsToSelection(
-      codes
-        .map((code) => {
-          return data.findIndex((r) => r[H.LanCol.iInfo].code === code);
-        })
-        .filter((r) => r !== -1),
-    );
+    H.scrollToSelection(this, state, 'language');
   }
 
   // Create and save moduleData data taken from all listings found in saved
@@ -442,7 +414,7 @@ export default class ModuleManager
   loadModuleTable(state: ManagerState): void {
     // Insure there is one moduleData row object for each module in
     // each repository (local and remote).
-    const { module, language } = state;
+    const { language } = state;
     const { repository: repotable, module: modtable } = state.tables;
     const { repositoryListings } = repotable;
 
@@ -497,6 +469,7 @@ export default class ModuleManager
                 H.ModCol.iRemove,
               ]),
               conf: c,
+              shadowedRows: [],
             };
             r[H.ModCol.iType] = mtype;
             r[H.ModCol.iAbout] =
@@ -521,17 +494,24 @@ export default class ModuleManager
               '';
             r[H.ModCol.iLicense] = c.DistributionLicense || '';
             r[H.ModCol.iSourceType] = c.SourceType || '';
-            r[H.ModCol.iShared] =
-              repositoryKey(r[H.ModCol.iInfo].repo) === builtInRepoKeys[0]
-                ? H.ON
-                : H.OFF;
-            r[H.ModCol.iInstalled] = repoIsLocal
-              ? H.ON
-              : H.Downloads.finished.includes(modrepkey)
-                ? H.ON
-                : H.OFF;
-            r[H.ModCol.iRemove] = H.OFF;
-            H.findModuleRow(modrepkey, r); // sets it
+            if (repoIsLocal) {
+              r[H.ModCol.iShared] =
+                repositoryKey(r[H.ModCol.iInfo].repo) === builtInRepoKeys[0]
+                  ? H.ON
+                  : H.OFF;
+              r[H.ModCol.iInstalled] =
+                c.xsmType !== 'XSM_audio'
+                  ? H.ON
+                  : H.allAudioInstalled(c)
+                    ? H.ON
+                    : H.OFF;
+              r[H.ModCol.iRemove] = H.OFF;
+            } else {
+              r[H.ModCol.iShared] = H.modCheckbox;
+              r[H.ModCol.iInstalled] = H.modCheckbox;
+              r[H.ModCol.iRemove] = H.modCheckbox;
+            }
+            H.findModuleRow(modrepkey, r); // sets new module row
           }
           modtable.data.push(r);
         });
@@ -539,30 +519,33 @@ export default class ModuleManager
     });
     // Modules in a local file system repository which are found in an enabled
     // remote repository (meaning they have same name and version) are not
-    // included in the table. Rather their 'installed' and 'shared' checkboxes
-    // are applied to the remote repository module (but in the case of XSM
-    // modules, this application only happens when all modules in the XSM are
-    // installed). Also, SWORD modules in remote repositories which are part of
-    // an XSM module are not listed.
+    // included in the table, but are shadowed by the remote module. Then the
+    // remote module's shared, installed and remove checkbox values are copied
+    // from the shadowed module. Local members of XSM modules are only shadowed
+    // when all local members are installed. Also, SWORD modules in remote
+    // repositories which are part of an XSM module are also shadowed.
     if (!modtable.modules) {
+      // modtable.modules is set to null by handleListings() so modules are
+      // untouched here if only the language selection changes.
       modtable.modules = {
         allmodules: [] as TModuleTableRow[],
       };
       const { modules } = modtable;
       repositoryListings.forEach((listing, i) => {
-        const drow = repotable.data[i];
-        if (drow && Array.isArray(listing) && drow[H.RepCol.iState] !== H.OFF) {
+        const reprow = repotable.data[i];
+        if (reprow && Array.isArray(listing)) {
           listing.forEach((c) => {
             const modkey = repositoryModuleKey(c);
             const modrow = H.findModuleRow(modkey);
             if (modrow) {
+              modrow[H.ModCol.iInfo].shadowedRows = [];
+
               // NOTE: XSM modules are only remote, since once installed they
               // are simply multiple local regular modules.
-
               const isLocal = isRepoLocal(c.sourceRepository);
               const isRemote = !isLocal;
 
-              let foundSomeInstalledXSM: SwordConfType | undefined;
+              const foundInstalledXSMs: SwordConfType[] = [];
               const isInstalledXSM =
                 c.xsmType === 'XSM' &&
                 c.SwordModules?.every((m, i) => {
@@ -575,52 +558,32 @@ export default class ModuleManager
                         c.SwordVersions &&
                         mc.Version === c.SwordVersions[i],
                     );
-                  if (mcc) foundSomeInstalledXSM = mcc;
+                  if (mcc) foundInstalledXSMs?.push(mcc);
                   return mcc;
                 });
 
-              const foundInLocal =
-                localUser
-                  .concat(localShared)
-                  .concat(localOther)
-                  .concat(localAudio)
-                  .find(
-                    (ci) =>
-                      c.xsmType === ci.xsmType &&
-                      c.module === ci.module &&
-                      // Audio modules are unversioned
-                      (c.xsmType === 'XSM_audio' || c.Version === ci.Version),
-                  ) ||
-                (isInstalledXSM && foundSomeInstalledXSM);
+              const foundInLocalNonXSM = localUser
+                .concat(localShared)
+                .concat(localOther)
+                .concat(localAudio)
+                .find(
+                  (ci) =>
+                    c.xsmType === ci.xsmType &&
+                    c.module === ci.module &&
+                    // Audio modules are unversioned
+                    (c.xsmType === 'XSM_audio' || c.Version === ci.Version),
+                );
 
-              let isRemoteNotInstalledToBeInstalled = false;
-              if (isRemote) {
-                if (foundInLocal) {
-                  const localModKey = repositoryModuleKey(foundInLocal);
-                  const localrow = H.findModuleRow(localModKey);
-                  if (localrow) {
-                    // shared
-                    modrow[H.ModCol.iShared] = localrow[H.ModCol.iShared];
-                    // installed
-                    modrow[H.ModCol.iInstalled] = localrow[H.ModCol.iInstalled];
-                    // audio installed
-                    if (c.xsmType === 'XSM_audio') {
-                      const inst = H.allAudioInstalled(c) ? H.ON : H.OFF;
-                      modrow[H.ModCol.iInstalled] = inst;
-                      localrow[H.ModCol.iInstalled] = inst;
-                    }
-                  }
-                } else {
-                  isRemoteNotInstalledToBeInstalled =
-                    H.Downloads.finished.includes(modkey);
-                  modrow[H.ModCol.iShared] = H.OFF;
-                  modrow[H.ModCol.iInstalled] = H.Downloads.finished.includes(
-                    modkey,
-                  )
-                    ? H.ON
-                    : H.OFF;
-                }
-              }
+              const foundInLocals = foundInLocalNonXSM
+                ? [foundInLocalNonXSM]
+                : isInstalledXSM
+                  ? foundInstalledXSMs
+                  : [];
+
+              const isRemoteNotInstalledToBeInstalled =
+                isRemote && !foundInLocals.length
+                  ? H.Downloads.finished.includes(modkey)
+                  : false;
 
               const isRemoteSWORD = isRemote && c.xsmType === 'none';
 
@@ -643,11 +606,23 @@ export default class ModuleManager
                     (c.xsmType === 'XSM_audio' || c.Version === ci.Version),
                 ) || foundInRemoteXSM;
 
-              if (
-                isRemoteNotInstalledToBeInstalled ||
-                (!(isLocal && foundInRemote) &&
-                  !(isRemoteSWORD && foundInRemoteXSM))
-              ) {
+              const isShadowed =
+                (isLocal && foundInRemote) ||
+                (isRemoteSWORD && foundInRemoteXSM);
+
+              const doShow =
+                reprow[H.RepCol.iState] !== H.OFF &&
+                (isRemoteNotInstalledToBeInstalled || !isShadowed);
+
+              if (doShow && isRemote && foundInLocals.length) {
+                const shadowedRows = foundInLocals
+                  .map((conf) => H.findModuleRow(repositoryModuleKey(conf)))
+                  .filter(Boolean) as H.TModuleTableRow[];
+                if (shadowedRows.length)
+                  modrow[H.ModCol.iInfo].shadowedRows = shadowedRows;
+              }
+
+              if (doShow) {
                 const code = c.Lang?.replace(/-.*$/, '') || 'en';
                 if (!(code in modules)) modules[code] = [];
                 modules[code].push(modrow);
@@ -662,40 +637,24 @@ export default class ModuleManager
       `loadModuleTable: ${modtable.modules?.allmodules.length} modules`,
     );
 
-    module.selection = [];
-    modtable.data = this.filterModuleTable(
-      modtable.modules,
-      language.selection,
-      language.open,
-    );
+    H.filterModuleTable(state);
   }
 
-  // Return sorted and filtered (by language selection) module table data.
-  filterModuleTable(
-    modules: ManagerState['tables']['module']['modules'],
-    codes: string[] | null,
-    isOpen: boolean | null,
-  ): TModuleTableRow[] {
-    // Select the appropriate moduleLangData lists.
-    let tableData: TModuleTableRow[] = [];
-    if (isOpen && codes?.length && modules) {
-      tableData = Object.entries(modules)
-        .filter((ent) => codes.includes(ent[0]))
-        .map((ent) => ent[1])
-        .flat();
-    }
-    if (!tableData.length && modules) tableData = modules.allmodules;
-    // Return sorted rows.
-    const taborder = [C.BIBLE, C.COMMENTARY, C.GENBOOK, C.DICTIONARY];
-    return tableData.sort((a: TModuleTableRow, b: TModuleTableRow) => {
-      const ta = taborder.indexOf(a[H.ModCol.iType] as ModTypes);
-      const tb = taborder.indexOf(b[H.ModCol.iType] as ModTypes);
-      if (ta > tb) return 1;
-      if (ta < tb) return -1;
-      const ma = a[H.ModCol.iModule];
-      const mb = b[H.ModCol.iModule];
-      return (ma && mb && ma.localeCompare(mb)) || 0;
-    });
+  handleColumns(tableName: (typeof H.Tables)[number]) {
+    return (columns: TableColumnInfo[]) => {
+      const newstate = this.state as ManagerState;
+      const table = newstate[tableName];
+      if (table) {
+        const { rowSort } = table;
+        const { propColumnIndex: tableColIndex } = rowSort;
+        // make sure sorting row does not get hidden
+        if (!(tableColIndex in columns)) {
+          rowSort.propColumnIndex = columns.findIndex((tc) => tc.visible);
+        }
+        table.columns = columns;
+        this.sState({ [tableName]: table });
+      }
+    };
   }
 
   audioDialogClose() {
@@ -721,6 +680,35 @@ export default class ModuleManager
     }
   }
 
+  audioDialogChange(selection: SelectVKType | SelectORMType | undefined) {
+    const newstate = this.state as ManagerState;
+    const { showAudioDialog: sad } = newstate;
+    const showAudioDialog = sad.slice();
+    if (showAudioDialog.length) {
+      showAudioDialog[0] = {
+        ...showAudioDialog[0],
+        selection,
+      } as H.VersekeyDialog | H.GenBookDialog;
+      if (showAudioDialog[0].type === 'versekey') {
+        const [dvk] = showAudioDialog;
+        const { options } = dvk;
+        const sel = selection as SelectVKType;
+        if (sel.book && options) {
+          const af = dvk.chapters[sel.book];
+          let ch: number[] | undefined;
+          if (af) {
+            ch = af
+              .map((n, i) => (n ? i : undefined))
+              .filter(Boolean) as number[];
+          }
+          options.chapters = ch;
+          options.lastchapters = ch;
+        }
+      }
+      this.sState({ showAudioDialog });
+    }
+  }
+
   async addToast(message: ToastProps) {
     (await topToaster).show(message);
   }
@@ -728,7 +716,22 @@ export default class ModuleManager
   render() {
     const state = this.state as ManagerState;
     const props = this.props as ManagerProps;
-    const { id } = props;
+    const {
+      onRowsReordered,
+      eventHandler,
+      modinfoParentHandler,
+      onCustomRepositoryEdited,
+      onLangCellClick,
+      onModCellClick,
+      onRepoCellClick,
+      handleColumns,
+      audioDialogClose,
+      audioDialogAccept,
+      audioDialogChange,
+      tableDomRefs,
+      tableComponentRefs,
+      modinfoRefs,
+    } = this;
     const {
       language,
       module,
@@ -740,28 +743,19 @@ export default class ModuleManager
       showAudioDialog,
       progress,
     } = state;
+    const { id } = props;
     const {
       language: langtable,
       module: modtable,
       repository: repotable,
     } = state.tables;
-    const {
-      eventHandler,
-      modinfoParentHandler,
-      onCustomRepositoryEdited,
-      onLangCellClick,
-      onModCellClick,
-      onRepoCellClick,
-      onRowsReordered,
-      audioDialogClose: dialogClose,
-      audioDialogAccept: dialogAccept,
-      tableRef,
-      modinfoRefs,
-      audioDialogOnChange: dialogOnChange,
-      languageCodesToTableSelection: selectedRegions,
-      languageTableCompRef,
-    } = this;
     const { custom } = repositories ?? {};
+
+    const selectedRepoDataRows = H.selectionToDataRows(
+      state,
+      'repository',
+      repository.selection,
+    );
 
     const disable = {
       moduleInfo: !selectionToTableRows(module.selection).length,
@@ -777,16 +771,13 @@ export default class ModuleManager
             repositoryKey(r[H.RepCol.iInfo].repo) === H.DefaultCustomRepoKey,
         ) !== -1,
       repoDelete:
-        !repository?.selection.length ||
-        !H.selectionToDataRows(this, 'repository', repository.selection).every(
-          (r) =>
-            repotable.data[r] &&
-            repotable.data[r][H.RepCol.iInfo]?.repo &&
-            isRepoCustom(
-              custom ?? null,
-              repotable.data[r][H.RepCol.iInfo].repo,
-            ),
-        ),
+        !selectedRepoDataRows.length ||
+        selectedRepoDataRows.length > 1 ||
+        (typeof selectedRepoDataRows[0] !== 'undefined' &&
+          !isRepoCustom(
+            custom ?? null,
+            repotable.data[selectedRepoDataRows[0]][H.RepCol.iInfo].repo,
+          )),
       repoCancel: !repotable.data.find((r) => r[H.RepCol.iInfo].loading),
     };
 
@@ -798,23 +789,6 @@ export default class ModuleManager
       if (nextDialog.type === 'versekey') vkAudioDialog = nextDialog;
       else gbAudioDialog = nextDialog;
     }
-
-    const handleColumns = (tableName: (typeof H.Tables)[number]) => {
-      return (columns: TableColumnInfo[]) => {
-        const newstate = this.state as ManagerState;
-        const table = newstate[tableName];
-        if (table) {
-          const { rowSort } = table;
-          const { propColumnIndex: tableColIndex } = rowSort;
-          // make sure sorting row does not get hidden
-          if (!(tableColIndex in columns)) {
-            rowSort.propColumnIndex = columns.findIndex((tc) => tc.visible);
-          }
-          table.columns = columns;
-          this.sState({ [tableName]: table });
-        }
-      };
-    };
 
     // The removeModule window does not (must not!) access Internet, otherwise
     // Internet permission is required.
@@ -845,7 +819,7 @@ export default class ModuleManager
                         initialVK={vkAudioDialog.initial}
                         options={vkAudioDialog.options}
                         allowNotInstalled
-                        onSelection={dialogOnChange}
+                        onSelection={audioDialogChange}
                       />
                     </>
                   )}
@@ -861,7 +835,7 @@ export default class ModuleManager
                         otherMods={[]}
                         nodeLists={gbAudioDialog.options.nodeLists}
                         enableMultipleSelection
-                        onSelection={dialogOnChange}
+                        onSelection={audioDialogChange}
                       />
                     </>
                   )}
@@ -870,7 +844,12 @@ export default class ModuleManager
               buttons={
                 <Hbox className="dialog-buttons" pack="end" align="end">
                   <Spacer flex="10" />
-                  <Button id="cancel" flex="1" fill="x" onClick={dialogClose}>
+                  <Button
+                    id="cancel"
+                    flex="1"
+                    fill="x"
+                    onClick={audioDialogClose}
+                  >
                     {G.i18n.t('cancel.label')}
                   </Button>
                   <Button
@@ -881,7 +860,7 @@ export default class ModuleManager
                     }
                     flex="1"
                     fill="x"
-                    onClick={dialogAccept}
+                    onClick={audioDialogAccept}
                   >
                     {G.i18n.t('ok.label')}
                   </Button>
@@ -913,13 +892,11 @@ export default class ModuleManager
                       data={langtable.data}
                       tableColumns={language.columns}
                       tableToDataRowMap={langtable.tableToDataRowMap}
-                      selectedRegions={selectedRegions(
-                        state,
-                        language.selection,
-                      )}
-                      domref={tableRef.language}
-                      tableCompRef={languageTableCompRef}
+                      selectedRegions={language.selection}
                       onCellClick={onLangCellClick}
+                      onRowsReordered={onRowsReordered.language}
+                      domref={tableDomRefs.language}
+                      tableCompRef={tableComponentRefs.language}
                     />
                   </Box>
                   <Button
@@ -934,7 +911,7 @@ export default class ModuleManager
                   onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
                     this.sState((prevState) => {
                       prevState.language.width = v.sizerPos;
-                      H.tableUpdate(this, prevState, ['language', 'module']);
+                      H.tableUpdate(prevState, ['language', 'module']);
                       return prevState;
                     });
                   }}
@@ -983,12 +960,13 @@ export default class ModuleManager
                     tableColumns={module.columns}
                     selectedRegions={module.selection}
                     tableToDataRowMap={modtable.tableToDataRowMap}
-                    domref={tableRef.module}
                     onCellClick={onModCellClick}
                     onColumnsReordered={handleColumns('module')}
                     onColumnHide={handleColumns('module')}
                     onColumnWidthChanged={handleColumns('module')}
                     onRowsReordered={onRowsReordered.module}
+                    domref={tableDomRefs.module}
+                    tableCompRef={tableComponentRefs.module}
                   />
                 )}
               </Hbox>
@@ -1072,11 +1050,12 @@ export default class ModuleManager
                       tableColumns={repository.columns}
                       selectedRegions={repository.selection}
                       tableToDataRowMap={repotable.tableToDataRowMap}
-                      domref={tableRef.repository}
                       onEditableCellChanged={onCustomRepositoryEdited}
                       onRowsReordered={onRowsReordered.repository}
                       onCellClick={onRepoCellClick}
                       onColumnWidthChanged={handleColumns('repository')}
+                      domref={tableDomRefs.repository}
+                      tableCompRef={tableComponentRefs.repository}
                     />
                   )}
                 </Box>
@@ -1221,42 +1200,3 @@ export default class ModuleManager
   }
 }
 ModuleManager.propTypes = propTypes;
-
-function audioDialogOnChange(
-  this: ModuleManager,
-  selection: SelectVKType | SelectORMType | undefined,
-) {
-  const newstate = this.state as ManagerState;
-  const { showAudioDialog: sad } = newstate;
-  const showAudioDialog = sad.slice();
-  if (showAudioDialog.length) {
-    showAudioDialog[0] = {
-      ...showAudioDialog[0],
-      selection,
-    } as H.VersekeyDialog | H.GenBookDialog;
-    if (showAudioDialog[0].type === 'versekey') {
-      const [dvk] = showAudioDialog;
-      const { options } = dvk;
-      const sel = selection as SelectVKType;
-      if (sel.book && options) {
-        const af = dvk.chapters[sel.book];
-        let ch: number[] | undefined;
-        if (af) {
-          ch = af
-            .map((n, i) => (n ? i : undefined))
-            .filter(Boolean) as number[];
-        }
-        options.chapters = ch;
-        options.lastchapters = ch;
-      }
-    }
-    this.sState({ showAudioDialog });
-  }
-}
-
-export function onunload() {
-  // close all FTP connections
-  G.Module.cancel().catch((er) => {
-    log.error(er);
-  });
-}

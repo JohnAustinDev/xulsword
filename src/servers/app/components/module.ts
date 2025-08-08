@@ -1235,8 +1235,8 @@ const Module = {
     }
   },
 
-  async cancelOngoingDownloads(downloads?: Download[]): Promise<number> {
-    let cnt = 0;
+  async cancelOngoingDownloads(downloads?: Download[]): Promise<string[]> {
+    const cancelled: string[] = [];
     const toCancel = downloads
       ? downloads.reduce<typeof ModuleDownloads.ongoing>((p, c) => {
           const k = downloadKey(c);
@@ -1244,27 +1244,31 @@ const Module = {
           return p;
         }, {})
       : ModuleDownloads.ongoing;
-    const keys = Object.keys(toCancel);
-    if (keys.length) {
-      log.debug(`CANCEL-ONGOING: ${keys.length} items! ${logdls()}`);
-      downloadCancel(keys);
-      let canceled: any[] = [];
+    const entries = Object.entries(toCancel);
+    if (entries.length) {
+      log.debug(`CANCEL-ONGOING: ${entries.length} items! ${logdls()}`);
+      downloadCancel(entries.map((e) => e[0]));
+      let cancelResults: PromiseSettledResult<string | ZIP>[] = [];
       try {
-        canceled = await Promise.allSettled(Object.values(toCancel));
+        cancelResults = await Promise.allSettled(
+          entries.map((e) => e[1]) as Promise<string | ZIP>[],
+        );
       } catch (er) {
         // Do nothing, handled by this.download()
       }
-      canceled.forEach((r) => {
+      cancelResults.forEach((r, i) => {
         if (r.status === 'fulfilled') {
-          cnt += 1;
+          cancelled.push(entries[i][0]);
         } else {
           log.debug(r.reason);
         }
       });
-      keys.forEach((key) => delete ModuleDownloads.ongoing[key]);
-      log.debug(`CANCEL-ONGOING COMPLETE: ${keys.length} items! ${logdls()}`);
+      entries.forEach((e) => delete ModuleDownloads.ongoing[e[0]]);
+      log.debug(
+        `CANCEL-ONGOING COMPLETE: ${entries.length} items! ${logdls()}`,
+      );
     }
-    return cnt;
+    return cancelled;
   },
 
   // Cancel ongoing downloads AND previous downloads.
@@ -1272,7 +1276,14 @@ const Module = {
   // called when a session is finished, to delete all waiting
   // FTP connections etc.
   async cancel(downloads?: Download[]): Promise<number> {
-    let cnt = await this.cancelOngoingDownloads(downloads);
+    let dlkeys: string[];
+    try {
+      dlkeys = await this.cancelOngoingDownloads(downloads);
+    } catch (er) {
+      log.error(er);
+      dlkeys = [];
+    }
+    let cnt = dlkeys.length;
     if (!downloads) destroyFTPconnections();
     const finished = downloads
       ? downloads.reduce<typeof ModuleDownloads.finished>((p, c) => {
@@ -1321,8 +1332,10 @@ const Module = {
     Cache.clear('RepoConfigObjects');
     return modules.map((m) => {
       const { module, destRepository } = m;
-      if (isRepoLocal(destRepository)) {
-        return moveRemoveCopyModules(module, destRepository.path);
+      if (typeof module === 'string') {
+        if (isRepoLocal(destRepository)) {
+          return moveRemoveCopyModules(module, destRepository.path);
+        }
       }
       return false;
     });
@@ -1336,6 +1349,7 @@ const Module = {
     return modules.map((m) => {
       const { module, sourceRepository, destRepository } = m;
       if (
+        typeof module === 'string' &&
         sourceRepository &&
         isRepoLocal(sourceRepository) &&
         isRepoLocal(destRepository)
@@ -1358,6 +1372,7 @@ const Module = {
     return modules.map((m) => {
       const { module, sourceRepository, destRepository } = m;
       if (
+        typeof module === 'string' &&
         sourceRepository &&
         isRepoLocal(sourceRepository) &&
         isRepoLocal(destRepository)

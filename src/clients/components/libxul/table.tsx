@@ -6,7 +6,7 @@ import {
   Column,
   ColumnHeaderCell,
   EditableCell2,
-  Table2 as BPTable,
+  Table2,
   Utils,
   SelectionModes,
 } from '@blueprintjs/table';
@@ -48,7 +48,7 @@ const propTypes = {
   onColumnWidthChanged: PropTypes.func,
   onColumnHide: PropTypes.func,
 
-  tableCompRef: PropTypes.object,
+  tableCompRef: PropTypes.any,
 };
 
 export type TableProps = XulProps & {
@@ -78,7 +78,7 @@ export type TableProps = XulProps & {
   onColumnWidthChanged?: (tableColumns: TableColumnInfo[]) => void;
   onColumnHide?: (tableColumns: TableColumnInfo[]) => void;
 
-  tableCompRef?: React.LegacyRef<BPTable>;
+  tableCompRef?: React.RefObject<Table2>;
 };
 
 export type TableColumnInfo = {
@@ -599,7 +599,7 @@ class Table extends React.Component {
         {...addClass(classes, props)}
         dir="ltr"
       >
-        <BPTable
+        <Table2
           numRows={data.length}
           columnWidths={tableColumnWidths}
           selectedRegions={selectedRegions}
@@ -608,14 +608,13 @@ class Table extends React.Component {
           enableColumnReordering={!!propOnColumnsReordered}
           enableColumnResizing={!!propOnColumnWidthChanged}
           enableRowHeader={false}
-          enableFocusedCell={false}
           cellRendererDependencies={cellRendererDependencies}
           onColumnsReordered={onColumnsReordered}
           onColumnWidthChanged={onColumnWidthChanged}
           ref={tableCompRef}
         >
           {bpColumns}
-        </BPTable>
+        </Table2>
       </Box>
     );
   }

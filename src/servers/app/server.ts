@@ -51,6 +51,7 @@ import type { LogLevel } from 'electron-log';
 import type {
   GCallType,
   NewModulesType,
+  RowSelection,
   WindowDescriptorPrefType,
   WindowDescriptorType,
 } from '../../type.ts';
@@ -583,7 +584,7 @@ const init = async () => {
       S.prefs.moduleManager.repositories.xulsword,
     );
   }
-  // - moduleManager.module.columns[13] heading changed in 4.0.10-alpha.5
+  // - moduleManager.module.columns[13] heading was changed in 4.0.10-alpha.5
   const columns = Prefs.getComplexValue(
     'moduleManager.module.columns',
   ) as typeof S.prefs.moduleManager.module.columns;
@@ -593,6 +594,13 @@ const init = async () => {
     columns[13] = S.prefs.moduleManager.module.columns[13];
     Prefs.setComplexValue('moduleManager.module.columns', columns);
   }
+  // prefs.(moduleManager | removeModule).language.selection changed from
+  // string[] to RowSelection in 4.1.0
+  (['moduleManager', 'removeModule'] as const).forEach((id) => {
+    const k = `${id}.language.selection`;
+    const v = Prefs.getComplexValue(k) as string[] | RowSelection;
+    if (typeof v[0] === 'string') Prefs.setComplexValue(k, [] as RowSelection);
+  });
 };
 
 app.on('will-quit', () => {

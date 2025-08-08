@@ -607,11 +607,11 @@ export type Repository = {
 };
 
 export type RepositoryOperation = {
-  module: string;
+  module: string | Download;
   sourceRepository?: Repository;
   destRepository: Repository;
   // 'remove' removes module from destRepository
-  operation: 'copy' | 'move' | 'remove';
+  operation: 'copy' | 'move' | 'remove' | 'install';
 };
 
 export type RepoDisabled = string[] | null;
