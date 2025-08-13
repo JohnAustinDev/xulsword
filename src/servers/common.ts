@@ -969,7 +969,7 @@ export function inlineAudioFile(
         const [, conf] = confe;
         const { DataPath } = conf;
         if (DataPath.startsWith('http')) {
-          return resolveTemplateURL(DataPath, audio, 'none');
+          return resolveTemplateURL(DataPath, audio, 'none', '1');
         } else if (DataPath.startsWith('.')) {
           file.append(DataPath);
           const findAudio = (

@@ -440,7 +440,7 @@ export default class PrintSettings extends React.Component {
       '#root .printsettings-container',
     );
     if (settingsRef && printContainerRef.current) {
-      const isWideScreen = window.innerWidth >= WidePrintWidth
+      const isWideScreen = window.innerWidth >= WidePrintWidth;
       const settingsW = settingsRef.clientWidth;
       // initialPageViewW can be anything, but it must have a known value.
       let initialPageViewW =
@@ -457,7 +457,9 @@ export default class PrintSettings extends React.Component {
       // Print container's height is only constrained in wide screen mode.
       const rootH = document.getElementById('root');
       const winHeight = rootH ? rootH.offsetHeight : window.innerHeight;
-      const pageViewMaxH = isWideScreen ? winHeight - 2 * C.UI.Print.viewMargin : 0;
+      const pageViewMaxH = isWideScreen
+        ? winHeight - 2 * C.UI.Print.viewMargin
+        : 0;
       const pagebuttonsW = pagebuttons?.current?.offsetWidth || 200;
 
       let pageToContentScale = 1;

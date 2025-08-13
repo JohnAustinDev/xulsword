@@ -1939,7 +1939,8 @@ export function subtractGenBookAudioChapters(
 }
 
 // Follow IBT's audio download API specification to convert a selection into
-// the necessary parameter values required by that API.
+// the necessary parameter values required by the API for the request. Returns
+// true if the selection could be converted, or false otherwise.
 function IBTtemplateURL(
   selection:
     | SelectVKType
@@ -1951,7 +1952,8 @@ function IBTtemplateURL(
     XSPARENT: string;
     XSCHAPTER: string;
     XSCHAPTERS: string;
-    XSPACKAGE: 'none' | 'zip' | undefined;
+    XSPACKAGE: 'none' | 'zip' | 'auto';
+    XSREDIRECT: '0' | '1';
   },
 ) {
   if ('book' in selection) {
@@ -1967,8 +1969,9 @@ function IBTtemplateURL(
     phs.XSCHAPTER = chapter.toString();
     const chl = lastchapter > chapter ? lastchapter : chapter;
     phs.XSCHAPTERS = `${chapter.toString()}-${chl}`;
-    if (typeof phs.XSPACKAGE === 'undefined')
-      phs.XSPACKAGE = lastchapter > chapter ? 'zip' : 'none';
+    if (phs.XSPACKAGE === 'auto')
+      phs.XSPACKAGE = chl > chapter ? 'zip' : 'none';
+    else if (phs.XSPACKAGE === 'none' && chl > chapter) return false;
   } else {
     let keys: string[] = [];
     if ('keys' in selection) ({ keys } = selection);
@@ -2016,7 +2019,8 @@ function IBTtemplateURL(
       phs.XSCHAPTER = ch.toString();
       const chl = cl > ch ? cl : ch;
       phs.XSCHAPTERS = `${ch}-${chl.toString()}`;
-      if (typeof phs.XSPACKAGE === 'undefined') phs.XSPACKAGE = 'zip';
+      if (phs.XSPACKAGE === 'auto') phs.XSPACKAGE = chl > ch ? 'zip' : 'none';
+      else if (phs.XSPACKAGE === 'none' && chl > ch) return false;
     } else {
       phs.XSKEY = segs.join(C.GBKSEP);
       let chapter = '';
@@ -2028,7 +2032,7 @@ function IBTtemplateURL(
       phs.XSPARENT = `/${parent}`;
       phs.XSCHAPTER = chapter.toString();
       phs.XSCHAPTERS = chapter.toString();
-      if (typeof phs.XSPACKAGE === 'undefined') phs.XSPACKAGE = 'none';
+      if (phs.XSPACKAGE === 'auto') phs.XSPACKAGE = 'none';
     }
   }
 
@@ -2045,7 +2049,9 @@ export function resolveTemplateURL(
     | SelectORMType
     | AudioPlayerSelectionVK
     | AudioPlayerSelectionGB,
-  XSPACKAGE?: 'none' | 'zip',
+  // 'auto' becomes 'none' for one file, or 'zip' for multiple files.
+  XSPACKAGE: 'none' | 'zip' | 'auto',
+  XSREDIRECT: '0' | '1', // redirect to the file's absolute url?
 ) {
   // Supported replacements
   const phs = {
@@ -2054,6 +2060,7 @@ export function resolveTemplateURL(
     XSCHAPTER: '',
     XSCHAPTERS: '',
     XSPACKAGE,
+    XSREDIRECT,
   };
 
   if (!IBTtemplateURL(selection, phs)) return url;

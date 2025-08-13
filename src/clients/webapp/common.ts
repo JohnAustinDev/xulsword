@@ -310,7 +310,10 @@ export function updateLinks(
           sel.keys = keys;
         }
       }
-      anchor.setAttribute('href', resolveTemplateURL(urlTemplate, sel));
+      anchor.setAttribute(
+        'href',
+        resolveTemplateURL(urlTemplate, sel, 'auto', '0'),
+      );
     }
 
     // Animate the link so the user sees the change

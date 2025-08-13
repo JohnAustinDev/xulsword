@@ -60,7 +60,7 @@ export function logid(
   } else if (type === 'module') did = download.module;
   else if (type === 'http') {
     did = download.http;
-    if (download.data) did = resolveTemplateURL(did, download.data, 'zip');
+    if (download.data) did = resolveTemplateURL(did, download.data, 'zip', '1');
   }
   let cbi = '';
   if (printCancelInfo) {

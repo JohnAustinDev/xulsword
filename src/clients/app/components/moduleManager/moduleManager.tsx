@@ -362,7 +362,7 @@ export default class ModuleManager
               });
           }
           // Update main progress bar (shows module downloads only)
-          if  (repoIndex === -1) H.updateDownloadProgress(newstate, id, prog);
+          if (repoIndex === -1) H.updateDownloadProgress(newstate, id, prog);
           this.sState(newstate);
         }
       }),
