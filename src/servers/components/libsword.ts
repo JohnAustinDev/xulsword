@@ -146,6 +146,8 @@ const LibSword = {
 
   backgroundIndexerTO: null as NodeJS.Timeout | null,
 
+  backgroundIndexerEnabled: false as boolean,
+
   init(repositories?: ManagerStatePref['repositories']): boolean {
     if (this.initialized) return false;
 
@@ -735,12 +737,22 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     return success;
   },
 
+  stopBackgroundSearchIndexer() {
+    if (Cache.has('startBackgroundSearchIndexer'))
+      clearTimeout(Cache.read('startBackgroundSearchIndexer'));
+    this.backgroundIndexerEnabled = false;
+    Object.keys(this.indexingID).forEach((module) => {
+      this.searchIndexCancel(module);
+    });
+  },
+
   // Index each unindexed module in the background. Does nothing if any modules are
   // already being indexed. If an index fails, or takes too long and is canceled, it
   // will not be attempted again unless the module is re-installed. However the user
   // can always click the create index button.
   async startBackgroundSearchIndexer(Prefs: GType['Prefs']) {
     if (Object.keys(this.indexingID).length !== 0 || !this.isReady()) return;
+    this.backgroundIndexerEnabled = true;
     const start = new Date().valueOf();
     const timeout = C.UI.Search.backgroundIndexerTimeout; // milliseconds
     const modlist = LibSword.getModuleList();
@@ -771,7 +783,11 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     // Index one module at a time, don't try and break their PC...
     let passed = 0;
     let failed = 0;
-    while (this.isReady() && modulesToIndex.length) {
+    while (
+      this.backgroundIndexerEnabled &&
+      this.isReady() &&
+      modulesToIndex.length
+    ) {
       const module = modulesToIndex.pop();
       if (module) {
         let result: boolean;
@@ -1055,6 +1071,7 @@ export type LibSwordType = Omit<
   | 'busy'
   | 'indexingID'
   | 'backgroundIndexerTO'
+  | 'backgroundIndexerEnabled'
 >;
 
 export default LibSword as LibSwordType;

@@ -726,6 +726,11 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             cancelDownloads(newstate, cancelListings).catch((er) =>
               log.error(er),
             );
+            this.addToast({
+              message: C.UI.Manager.cancelMsg,
+              timeout: 5000,
+              intent: Intent.SUCCESS,
+            }).catch((er) => log.error(er));
             tableUpdate(newstate, 'repository');
             this.sState(newstate);
             break;
@@ -1074,27 +1079,33 @@ export function handleListings(
 
   if (!repositories)
     repositories = { disabled: null, xulsword: [], custom: [] };
+  const { disabled } = repositories;
   listingsAndErrors.forEach((l, i) => {
     const drow = repository.data[i];
-    if (l !== null && drow) {
-      drow[RepCol.iInfo].intent = intent(RepCol.iState, Intent.SUCCESS);
+    if (drow) {
+      const { repo } = drow[RepCol.iInfo];
+      drow[RepCol.iInfo].intent = intent(
+        RepCol.iState,
+        disabled?.includes(repositoryKey(repo)) ? Intent.NONE : Intent.SUCCESS,
+      );
       if (typeof l === 'string') {
         repositoryListings[i] = null;
-        const newintent = l.startsWith(C.UI.Manager.cancelMsg)
-          ? Intent.WARNING
-          : Intent.DANGER;
-        xthis
-          .addToast({
-            message: l,
-            timeout: newintent === Intent.WARNING ? 5000 : -1,
-            intent: newintent,
-          })
-          .catch((er) => log.error(er));
+        if (!l.startsWith(C.UI.Manager.cancelMsg)) {
+          xthis
+            .addToast({
+              message: l,
+              timeout: -1,
+              intent: Intent.DANGER,
+            })
+            .catch((er) => log.error(er));
+        }
         repoRowEnableDisable(state, i, false);
-        drow[RepCol.iInfo].intent = intent(RepCol.iState, newintent);
-      } else {
+        drow[RepCol.iInfo].intent = intent(
+          RepCol.iState,
+          l.startsWith(C.UI.Manager.cancelMsg) ? Intent.NONE : Intent.DANGER,
+        );
+      } else if (l !== null) {
         repositoryListings[i] = l;
-        drow[RepCol.iInfo].intent = intent(RepCol.iState, Intent.SUCCESS);
       }
     }
   });
@@ -1912,13 +1923,14 @@ export async function cancelDownloads(
 ) {
   let dlkeys: string[] = [];
   if (downloads === 'ongoing') {
-    // Cancel only the ongoing downloads.
-    dlkeys = await G.Module.cancelOngoingDownloads();
+    // Cancel ongoing module downloads.
+    dlkeys = await G.Module.cancelModuleDownloads();
   } else if (downloads === 'all') {
-    // Cancel ongoing and previous downloads.
+    // Cancel and forget all downloads.
     dlkeys = Downloads.finished;
     G.Module.cancel().catch((er) => log.error(er));
   } else {
+    // Cancel and forget certain downloads.
     let dlobjs: Download[] = [];
     if (typeof downloads[0] === 'string') {
       dlkeys = downloads as string[];

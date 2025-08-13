@@ -345,11 +345,14 @@ const openXulswordWindow = () => {
           }
         });
         Prefs.setComplexValue('global.noAutoSearchIndex', nasi);
-        setTimeout(() => {
-          LibSword.startBackgroundSearchIndexer(Prefs).catch((er) => {
-            log.error(er);
-          });
-        }, C.UI.Search.backgroundIndexerStartupWait);
+        Cache.write(
+          setTimeout(() => {
+            LibSword.startBackgroundSearchIndexer(Prefs).catch((er) => {
+              log.error(er);
+            });
+          }, C.UI.Search.backgroundIndexerStartupWait),
+          'startBackgroundSearchIndexer',
+        );
       },
     ),
   );
@@ -368,11 +371,14 @@ const openXulswordWindow = () => {
   }
 
   xulswordWindow.on('ready-to-show', () =>
-    setTimeout(() => {
-      LibSword.startBackgroundSearchIndexer(Prefs).catch((er) => {
-        log.error(er);
-      });
-    }, C.UI.Search.backgroundIndexerStartupWait),
+    Cache.write(
+      setTimeout(() => {
+        LibSword.startBackgroundSearchIndexer(Prefs).catch((er) => {
+          log.error(er);
+        });
+      }, C.UI.Search.backgroundIndexerStartupWait),
+      'startBackgroundSearchIndexer',
+    ),
   );
 
   xulswordWindow.on('close', () => {

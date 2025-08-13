@@ -113,7 +113,6 @@ export function ftpThrowIfCanceled(key: string) {
     // Run downloadCancel in case new cancel functions were added
     // since the last ftpCancel call.
     downloadCancel(key, cause);
-    if (typeof cause === 'string') throw new Error(cause);
     if (cause) throw cause;
   }
 
@@ -668,8 +667,8 @@ async function getFileP(
       if (s && 'destroy' in s && typeof s.destroy === 'function') {
         killedOnce = true;
         try {
-          await s.destroy();
           await abortP(c);
+          await s.destroy();
           log.silly(`Killed FTP stream: ${filepath}`);
         } catch (er) {
           log.error(`Killing FTP stream: ${er}`);

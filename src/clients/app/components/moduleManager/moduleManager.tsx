@@ -64,6 +64,8 @@ import type { XulProps } from '../../../components/libxul/xul.tsx';
 import type { DragSizerVal } from '../../../components/libxul/dragsizer.tsx';
 import type { ControllerState } from '../../../controller.tsx';
 
+G.LibSword.stopBackgroundSearchIndexer();
+
 G.Module.cancel().catch((er) => {
   log.error(er);
 });
@@ -335,7 +337,6 @@ export default class ModuleManager
         log.silly(`moduleManager progress: id=${id} prog=${prog}`);
         const newstate = this.state as ManagerState;
         if (id) {
-          H.updateDownloadProgress(newstate, id, prog);
           // Set individual repository progress bars
           const { repository, module } = newstate.tables;
           const repoIndex = repository.data.findIndex(
@@ -360,6 +361,8 @@ export default class ModuleManager
                 H.tableUpdate(newstate, 'module');
               });
           }
+          // Update main progress bar (shows module downloads only)
+          if  (repoIndex === -1) H.updateDownloadProgress(newstate, id, prog);
           this.sState(newstate);
         }
       }),
@@ -761,8 +764,8 @@ export default class ModuleManager
       moduleInfo: !selectionToTableRows(module.selection).length,
       moduleInfoBack: false,
       moduleCancel:
-        !modtable.data.find((r) => r[H.ModCol.iInfo].loading) &&
-        !progress?.length &&
+        !modtable.data.find((r) => r[H.ModCol.iInfo].loading) ||
+        !progress?.length ||
         infoConfigs.length > 0,
       repoAdd:
         !repositories ||

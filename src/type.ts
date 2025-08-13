@@ -632,7 +632,7 @@ export type ModFTPDownload = {
 export type HTTPDownload = {
   type: 'http';
   http: string; // https?://...
-  confname: string;
+  confname?: string;
   data?: SelectVKType | SelectORMType;
 } & Repository;
 export type Download = FTPDownload | ModFTPDownload | HTTPDownload;
@@ -962,7 +962,7 @@ export const GBuilder: GType & {
         'repositoryListing',
         'download',
         'downloads',
-        'cancelOngoingDownloads',
+        'cancelModuleDownloads',
         'cancel',
         'installDownloads',
       ],
@@ -1120,6 +1120,7 @@ export const GBuilder: GType & {
     search: CACHEfunc as any,
     luceneEnabled: (Build.isElectronApp ? func : CACHEfunc) as any,
     startBackgroundSearchIndexer: func as any,
+    stopBackgroundSearchIndexer: func as any,
     searchIndexDelete: func as any,
     searchIndexCancel: func as any,
     searchIndexBuild: func as any,
@@ -1175,7 +1176,7 @@ export const GBuilder: GType & {
     repositoryListing: func as any,
     download: func as any,
     downloads: func as any,
-    cancelOngoingDownloads: func as any,
+    cancelModuleDownloads: func as any,
     cancel: func as any,
     installDownloads: func as any,
     remove: func as any,
