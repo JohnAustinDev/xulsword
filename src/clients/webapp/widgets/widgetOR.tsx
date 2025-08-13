@@ -61,7 +61,7 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
             if (player) {
               const da = data[parent].find((x) => x[0] === chapter);
               if (da) {
-                player.setAttribute('src', da[1].replace(/^base:/, ''));
+                player.setAttribute('src', da[1]);
                 player.play().catch(() => {});
               }
             }

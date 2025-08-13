@@ -64,10 +64,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
                   const chaparray =
                     data && data[book]?.find((ca) => ca[0] === chapter);
                   if (chaparray) {
-                    player.setAttribute(
-                      'src',
-                      chaparray[1].replace(/^base:/, ''),
-                    );
+                    player.setAttribute('src', chaparray[1]);
                     player.play().catch(() => {});
                   }
                 }
