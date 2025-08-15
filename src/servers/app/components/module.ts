@@ -3,7 +3,6 @@ import fpath from 'path';
 import { BrowserWindow } from 'electron';
 import ZIP from 'adm-zip';
 import log from 'electron-log';
-import Cache from '../../../cache.ts';
 import {
   clone,
   downloadKey,
@@ -39,8 +38,8 @@ import {
   ftpThrowIfCanceled,
   downloadCancel,
   logid,
-  destroyFTPconnections,
   httpThrowIfCanceled,
+  resetAll,
 } from '../ftphttp.ts';
 import Window, { getBrowserWindows } from './window.ts';
 
@@ -159,8 +158,11 @@ export function scanAudio(
   return {};
 }
 
-// Move or remove one or more modules. Returns the number of modules
-// succesfully (re)moved. If moveTo is set, the removed modules will
+// Move, remove or copy one or more SWORD modules. Returns true for each module
+// successfully handled, otherwise false. If toPath is falsy, the operation
+// is 'remove', if copy is false the operation is 'move', otherwise it is
+// 'copy'. If toPath does not exist, the operations fail (it will not be
+// created). If moveTo is set, the removed modules will
 // be copied to moveTo if moveTo exists. If it does not exist, nothing
 // will be done and 0 is returned. If the copy destination fails to
 // delete, or the copy fails, the source module will not be deleted. If
@@ -173,130 +175,169 @@ export function scanAudio(
 // for restarting it.
 export function moveRemoveCopyModules(
   modules: string,
-  repositoryPath: string,
-  moveTo?: string,
+  fromPath: string,
+  toPath?: string,
   copy?: boolean,
 ): boolean;
 export function moveRemoveCopyModules(
   modules: string[],
-  repositoryPath: string,
-  moveTo?: string,
+  fromPath: string,
+  toPath?: string,
   copy?: boolean,
 ): boolean[];
 export function moveRemoveCopyModules(
   modules: string | string[],
-  repositoryPath: string,
-  moveTo?: string,
-  copy?: boolean,
+  fromPath: string, // if the following arg is falsy, operation is 'remove'
+  toPath?: string, // if the following arg is falsy, operation is 'move'
+  copy?: boolean, // if no args are falsy, operation is 'copy'
 ): boolean | boolean[] {
-  let move = (moveTo && new LocalFile(moveTo)) || null;
-  if (move && (!move.exists() || !move.isDirectory())) move = null;
-  if (moveTo && move === null) {
-    log.error(`Destination does not exist '${moveTo}'.`);
+  const operation = !toPath ? 'remove' : !copy ? 'move' : 'copy';
+  let moveToOrCopyTo = (toPath && new LocalFile(toPath)) || null;
+  if (
+    moveToOrCopyTo &&
+    (!moveToOrCopyTo.exists() || !moveToOrCopyTo.isDirectory())
+  )
+    moveToOrCopyTo = null;
+  if (toPath && moveToOrCopyTo === null) {
+    log.error(`Destination does not exist '${toPath}'.`);
     return Array.isArray(modules) ? modules.map(() => false) : false;
   }
-  if (moveTo && repositoryPath === Dirs.path.xsAudio) {
-    log.error(`Cannot move audio '${moveTo}'.`);
+  if (toPath && fromPath === Dirs.path.xsAudio) {
+    log.error(`Cannot move audio '${toPath}'.`);
     return Array.isArray(modules) ? modules.map(() => false) : false;
   }
   if (LibSword.isReady()) LibSword.quit();
-  const moddir = new LocalFile(repositoryPath);
-  moddir.append('mods.d');
 
-  if (!Cache.has('RepoConfigObjects', repositoryPath)) {
-    Cache.write(
-      moddir.directoryEntries.map((c) => {
-        const confFile = moddir.clone().append(c);
-        if (!confFile.isDirectory() && confFile.path.endsWith('.conf')) {
-          return parseSwordConf(confFile, Prefs);
-        }
-        return null;
-      }),
-      'RepoConfigObjects',
-      repositoryPath,
-    );
-  }
-  const confs = Cache.read(
-    'RepoConfigObjects',
-    repositoryPath,
-  ) as SwordConfType[];
+  // Scan source repository config files, to find our module names.
+  const moddir = new LocalFile(fromPath);
+  moddir.append('mods.d');
+  const confs = moddir.directoryEntries.map((c) => {
+    const confFile = moddir.clone().append(c);
+    if (!confFile.isDirectory() && confFile.path.endsWith('.conf')) {
+      return parseSwordConf(confFile, Prefs);
+    }
+    return null;
+  });
 
   const results = (Array.isArray(modules) ? modules : [modules]).map((m) => {
     const conf = confs.find((c) => c && c.module === m);
-    if (!conf) return !move;
+    if (!conf) return !moveToOrCopyTo;
     const confFile = moddir.clone().append(conf.filename);
-    // If we're moving, delete any destination module first, so we can
-    // abort the move that fails.
-    if (move && !moveRemoveCopyModules(m, move.clone().path)) {
+    // If we're moving or copying, delete any destination module first, and
+    // abort if that fails.
+    if (
+      ['move', 'copy'].includes(operation) &&
+      !(moveToOrCopyTo && moveRemoveCopyModules(m, moveToOrCopyTo.clone().path))
+    ) {
       return false;
     }
+
+    // Keep contents of conf file, so it can be restored in case module
+    // delete fails.
+    const conftext = confFile.readFile();
+
+    // Copy config file if requested.
     let toConfFile;
-    if (move) {
-      const tomodsd = move.clone().append('mods.d');
+    if (['move', 'copy'].includes(operation) && moveToOrCopyTo) {
+      const tomodsd = moveToOrCopyTo.clone().append('mods.d');
+      // copyTo will report error if this fails
       tomodsd.create(LocalFile.DIRECTORY_TYPE);
-      confFile.copyTo(tomodsd);
+      if (!confFile.copyTo(tomodsd)) {
+        log.error(confFile.error);
+        return false;
+      }
       toConfFile = tomodsd.append(confFile.leafName);
       if (!toConfFile.exists()) {
         return false;
       }
     }
-    // Keep contents of conf file in case module delete fails, so
-    // original state an be restored if needed.
-    const conftext = confFile.readFile();
-    if (!copy) {
+
+    // Delete original config file if requested.
+    if (['move', 'remove'].includes(operation)) {
       confFile.remove();
       if (confFile.exists()) {
         return false;
       }
     }
-    if (!copy && repositoryPath === Dirs.path.xsAudio) {
-      const audiodir = new LocalFile(repositoryPath);
+
+    // Remove audio module content, if requested.
+    if (operation === 'remove' && fromPath === Dirs.path.xsAudio) {
+      const audiodir = new LocalFile(fromPath);
       audiodir.append('modules').append(conf.module);
       if (audiodir.isDirectory()) {
         audiodir.remove(true);
       }
       if (audiodir.exists()) {
         if (!confFile.exists() && conftext) {
-          confFile.writeFile(conftext);
+          try {
+            confFile.writeFile(conftext);
+          } catch (er) {
+            log.error(er);
+          }
         }
         return false;
       }
     } else {
+      // Handle other module content
       const modulePath = confModulePath(conf.DataPath);
       if (!modulePath) {
-        confFile.writeFile(conftext);
+        if (!confFile.exists()) {
+          try {
+            confFile.writeFile(conftext);
+          } catch (er) {
+            log.error(er);
+          }
+        }
         return false;
       }
-      const md = new LocalFile(repositoryPath);
-      md.append(modulePath);
-      if (move) {
-        const to = move.clone();
+
+      const from = new LocalFile(fromPath);
+      from.append(modulePath);
+
+      // Copy module content, if requested
+      if (['move', 'copy'].includes(operation) && moveToOrCopyTo) {
+        const to = moveToOrCopyTo.clone();
         const dirs = modulePath.split(fpath.posix.sep).filter(Boolean);
         dirs.pop();
         dirs.forEach((sub) => {
           to.append(sub);
-          if (!to.exists()) {
-            to.create(LocalFile.DIRECTORY_TYPE);
+          if (!to.exists() && !to.create(LocalFile.DIRECTORY_TYPE)) {
+            log.error(to.error);
+            return false;
           }
         });
-        md.copyTo(to, null, true);
-        if (!to.append(md.leafName).exists()) {
+        if (!from.copyTo(to, null, true)) {
+          log.error(from.error);
+          return false;
+        }
+        if (!to.append(from.leafName).exists()) {
           // Don't leave a half moved module, then abort.
           toConfFile?.remove();
           return false;
         }
       }
-      if (md.exists()) md.remove(true);
-      if (md.exists()) {
-        if (!confFile.exists() && conftext) {
-          confFile.writeFile(conftext);
+
+      // Remove original module content, if requested
+      if (['move', 'remove'].includes(operation)) {
+        if (from.exists()) from.remove(true);
+        if (from.exists()) {
+          // The source module may have been partially deleted, but at least
+          // be sure the config file is there, and report the failure.
+          if (!confFile.exists() && conftext) {
+            try {
+              confFile.writeFile(conftext);
+            } catch (er) {
+              log.error(er);
+            }
+          }
+          return false;
         }
-        return false;
       }
     }
     DiskCache.delete(null, m);
     return true;
   });
+
   return Array.isArray(modules) ? results : results[0];
 }
 
@@ -314,7 +355,6 @@ export async function installZIPs(
   callingWinID?: number,
 ): Promise<NewModulesType> {
   return await new Promise((resolve) => {
-    Cache.clear('RepoConfigObjects');
     const newmods: NewModulesType = clone(C.NEWMODS);
     if (zips.length) {
       // Get installed modules (to remove any obsoleted modules).
@@ -434,11 +474,15 @@ export async function installZIPs(
                   const confdest = dest.clone();
                   if (!modreports.some((r) => r.error)) {
                     confdest.append('mods.d');
-                    if (!confdest.exists()) {
-                      confdest.create(LocalFile.DIRECTORY_TYPE);
-                    }
+                    if (
+                      !confdest.exists() &&
+                      !confdest.create(LocalFile.DIRECTORY_TYPE)
+                    )
+                      modreports.push({
+                        error: `(${conf.module}) Could not create mods.d directory '${confdest.path}' (${confdest.error}).`,
+                      });
                     confdest.append(name);
-                    if (confdest.exists()) {
+                    if (!modreports.some((r) => r.error) && confdest.exists()) {
                       if (swmodpath === 'XSM_audio') {
                         // Audio is not treated as a single module but as an updatable set of audio
                         // files so just delete the conf file and it will be overwritten by the new.
@@ -512,7 +556,7 @@ export async function installZIPs(
                       })
                     ) {
                       modreports.push({
-                        error: `(${conf.module}) Could not create module directory '${moddest.path}'.`,
+                        error: `(${conf.module}) Could not create module directory '${moddest.path}' (${moddest.error}).`,
                       });
                     }
                   }
@@ -562,7 +606,7 @@ export async function installZIPs(
                     });
                     if (!moddest.exists()) {
                       newmods.reports.push({
-                        error: `(${conf.module}) Could not copy file " ${moddest.path}.`,
+                        error: `(${conf.module}) Failed to create module file '${moddest.path}' (${moddest.error}).`,
                       });
                     }
                   } else {
@@ -641,52 +685,58 @@ export async function installZIPs(
                     audio.create(LocalFile.DIRECTORY_TYPE);
                   }
                 }
-                if (isVerseKey && audioCode) {
-                  const book = bookOrSub as OSISBookType;
-                  // VerseKey audio file...
-                  if (audioCode && book && !Number.isNaN(chapter)) {
-                    audio.append(pad(chapter, 3, 0) + pobj.ext);
+                if (audio.exists()) {
+                  if (isVerseKey && audioCode) {
+                    const book = bookOrSub as OSISBookType;
+                    // VerseKey audio file...
+                    if (audioCode && book && !Number.isNaN(chapter)) {
+                      audio.append(pad(chapter, 3, 0) + pobj.ext);
+                      audio.writeFile(entry.getData());
+                    } else audioCode = '';
+                  } else if (audioCode) {
+                    // GenBook audio file...
+                    audio.append(pobj.base);
                     audio.writeFile(entry.getData());
-                  } else audioCode = '';
-                } else if (audioCode) {
-                  // GenBook audio file...
-                  audio.append(pobj.base);
-                  audio.writeFile(entry.getData());
-                }
-                // Modify the config file to show currently installed audio.
-                if (audioCode && conf) {
-                  const confFile = Dirs.xsAudio;
-                  confFile.append('mods.d');
-                  confFile.append(conf.filename);
-                  if (confFile.exists()) {
-                    const dataPath = `./modules/${audioCode}`;
-                    let str = confFile.readFile();
-                    str = str.replace(
-                      /^DataPath\b.*$/m,
-                      `DataPath=${dataPath}`,
-                    );
-                    const audioChapters = scanAudio(
-                      Dirs.xsAudio.path,
-                      dataPath,
-                    );
-                    str = str.replace(
-                      /^AudioChapters\b.*$/m,
-                      `AudioChapters=${JSON_stringify(audioChapters)}`,
-                    );
-                    confFile.writeFile(str);
-                    const nconf = parseSwordConf(confFile, Prefs);
-                    if (nconf) {
-                      const index = newmods.audio.findIndex(
-                        (c) => c.module === nconf.module,
+                  }
+                  // Modify the config file to show currently installed audio.
+                  if (audioCode && conf) {
+                    const confFile = Dirs.xsAudio;
+                    confFile.append('mods.d');
+                    confFile.append(conf.filename);
+                    if (confFile.exists()) {
+                      const dataPath = `./modules/${audioCode}`;
+                      let str = confFile.readFile();
+                      str = str.replace(
+                        /^DataPath\b.*$/m,
+                        `DataPath=${dataPath}`,
                       );
-                      if (index === -1) newmods.audio.push(nconf);
-                      else newmods.audio[index] = nconf;
-                    } else {
-                      newmods.reports.push({
-                        error: `(${conf.module}) New config file was not parseable: ${confFile.leafName}.`,
-                      });
+                      const audioChapters = scanAudio(
+                        Dirs.xsAudio.path,
+                        dataPath,
+                      );
+                      str = str.replace(
+                        /^AudioChapters\b.*$/m,
+                        `AudioChapters=${JSON_stringify(audioChapters)}`,
+                      );
+                      confFile.writeFile(str);
+                      const nconf = parseSwordConf(confFile, Prefs);
+                      if (nconf) {
+                        const index = newmods.audio.findIndex(
+                          (c) => c.module === nconf.module,
+                        );
+                        if (index === -1) newmods.audio.push(nconf);
+                        else newmods.audio[index] = nconf;
+                      } else {
+                        newmods.reports.push({
+                          error: `(${conf.module}) New config file was not parseable: ${confFile.leafName}.`,
+                        });
+                      }
                     }
                   }
+                } else {
+                  newmods.reports.push({
+                    error: `(${conf?.module}) Audio path failure: ${audio.error}.`,
+                  });
                 }
                 break;
               }
@@ -1300,12 +1350,15 @@ const Module = {
 
   // Cancel all or some downloads, current AND previous. This function returns
   // immediately without waiting for the downloads to cancel.
-  // IMPORTANT: cancel() without arguments should always be
-  // called when a session is finished, to delete all waiting
-  // FTP connections etc.
+  // IMPORTANT: cancel() without arguments should always be called when a
+  // session is finished, to delete all waiting FTP connections and reset
+  // all state variables.
   async cancel(downloads?: Download[]): Promise<void> {
-    if (!downloads) destroyFTPconnections();
-    else downloadCancel(downloads.map((dl) => downloadKey(dl)));
+    if (!downloads) {
+      resetAll();
+      DownloadModuleZips.ongoing = {};
+      DownloadModuleZips.finished = {};
+    } else downloadCancel(downloads.map((dl) => downloadKey(dl)));
     const finished = downloads
       ? downloads.reduce<typeof DownloadModuleZips.finished>((p, c) => {
           const k = downloadKey(c);
@@ -1349,7 +1402,6 @@ const Module = {
   // After this function, if installDownloads() will not be called,
   // then modulesInstalled must be published on the main process.
   remove(modules: RepositoryOperation[]): boolean[] {
-    Cache.clear('RepoConfigObjects');
     return modules.map((m) => {
       const { module, destRepository } = m;
       if (typeof module === 'string') {
@@ -1365,7 +1417,6 @@ const Module = {
   // After this function, if installDownloads() will not be called,
   // then modulesInstalled must be published on the main process.
   move(modules: RepositoryOperation[]): boolean[] {
-    Cache.clear('RepoConfigObjects');
     return modules.map((m) => {
       const { module, sourceRepository, destRepository } = m;
       if (
@@ -1388,7 +1439,6 @@ const Module = {
   // After this function, if installDownloads() will not be called,
   // then modulesInstalled must be published on the main process.
   copy(modules: RepositoryOperation[]): boolean[] {
-    Cache.clear('RepoConfigObjects');
     return modules.map((m) => {
       const { module, sourceRepository, destRepository } = m;
       if (
@@ -1418,6 +1468,7 @@ const Module = {
       if (conf.exists()) {
         conf.writeFile(contents);
         Subscription.publish.resetMain();
+        Window.reset('cache-reset', 'all');
       }
     }
   },

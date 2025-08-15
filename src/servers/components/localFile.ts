@@ -14,25 +14,27 @@ export default class LocalFile {
 
   static NORMAL_FILE_TYPE = 2;
 
+  error = '';
+
   // Optionally create an empty directory or file
   constructor(aPath: string, createType?: number) {
     if (aPath) {
-      this.initWithPath(aPath, createType);
+      if (!this.initWithPath(aPath, createType)) throw new Error(this.error);
     }
   }
 
   // Set the absolute path of the LocalFile
-  initWithPath(aPath: string, createType?: number) {
+  initWithPath(aPath: string, createType?: number): boolean {
     if (path.isAbsolute(aPath)) {
       this.path = aPath;
       if (createType) {
-        this.create(createType);
+        if (!this.create(createType)) return false;
       }
     } else {
-      throw new Error(
-        `ERROR: initWithPath requires an absolute path: "${aPath}"`,
-      );
+      throw new Error(`initWithPath requires an absolute path: "${aPath}"`);
     }
+
+    return true;
   }
 
   // Append a relative path string to the current path
@@ -44,7 +46,8 @@ export default class LocalFile {
   // Copy this.path to a directory as leafName. If leafName is falsey, then
   // this.leafName will be used. If recursive is set, a directory's contents
   // will be copied. Destination file will be overwritten if it already exists.
-  copyTo(dir: LocalFile, leafName?: string | null, recursive = false) {
+  copyTo(dir: LocalFile, leafName?: string | null, recursive = false): boolean {
+    this.error = '';
     const name = leafName || this.leafName;
 
     const newFile = new LocalFile(
@@ -52,30 +55,36 @@ export default class LocalFile {
       LocalFile.NO_CREATE,
     );
 
-    if (this.exists() && dir.exists()) {
-      if (this.isDirectory()) {
-        newFile.create(LocalFile.DIRECTORY_TYPE);
-        if (recursive) {
-          this.directoryEntries.forEach((d) => {
-            const f = this.clone().append(d);
-            f.copyTo(newFile, null, true);
-          });
+    if (this.exists()) {
+      if (dir.exists()) {
+        if (this.isDirectory()) {
+          if (newFile.create(LocalFile.DIRECTORY_TYPE)) {
+            if (recursive) {
+              this.directoryEntries.forEach((d) => {
+                const f = this.clone().append(d);
+                // continue on error...
+                f.copyTo(newFile, null, true);
+              });
+            }
+          } else this.error = `Failed creating dir: ${newFile.path}`;
+        } else {
+          fs.copyFileSync(this.path, newFile.path);
         }
       } else {
-        fs.copyFileSync(this.path, newFile.path);
+        this.error = `Destination dir must exist: ${this.path} -> ${dir.path}`;
+        return false;
       }
     } else {
-      throw new Error(
-        `ERROR: copyTo source and destination dir must exist: ${this.path} -> ${dir.path}`,
-      );
+      this.error = `Source must exist: ${this.path} -> ${dir.path}`;
+      return false;
     }
 
     // Return the new LocalFile
     if (!newFile.exists()) {
-      throw Error(`ERROR: copyTo failed: ${newFile.path}`);
+      this.error = `Failed to create: ${newFile.path}`;
     }
 
-    return newFile;
+    return !this.error;
   }
 
   // Create a new directory or an empty file for this.path, depending on the
@@ -86,6 +95,7 @@ export default class LocalFile {
     type: number,
     options?: fs.MakeDirectoryOptions | fs.WriteFileOptions,
   ): boolean {
+    this.error = '';
     if (this.path) {
       if (!this.exists()) {
         if (type === LocalFile.DIRECTORY_TYPE) {
@@ -93,13 +103,14 @@ export default class LocalFile {
         } else if (type === LocalFile.NORMAL_FILE_TYPE) {
           fs.writeFileSync(this.path, '');
         } else {
-          throw Error(`Unsupported file type ${type}`);
+          throw new Error(`Unsupported file type ${type}`);
         }
       }
     } else {
-      throw Error(`Cannot create before initWithPath`);
+      throw new Error(`Cannot create before initWithPath`);
     }
-    return this.exists();
+    if (!this.exists()) this.error = `File was not created: ${this.path}.`;
+    return !this.error;
   }
 
   clone(): LocalFile {
@@ -113,6 +124,7 @@ export default class LocalFile {
     type: number,
     options?: fs.MakeDirectoryOptions | fs.WriteFileOptions,
   ) {
+    this.error = '';
     if (this.path) {
       const max = 999;
       let n = 0;
@@ -125,12 +137,13 @@ export default class LocalFile {
       } while (n <= max);
       if (!fs.existsSync(p)) {
         this.path = p;
+        // continue on error...
         this.create(type, options);
         return fs.existsSync(p);
       }
       return false;
     }
-    throw Error(`Cannot createUnique before initWithPath`);
+    throw new Error(`Cannot createUnique before initWithPath`);
   }
 
   // Return boolean value of true if this file or directory exists.
@@ -198,6 +211,7 @@ export default class LocalFile {
       o.encoding = 'utf8';
     }
     fs.writeFileSync(this.path, data as any, o);
+    return true;
   }
 
   // Return the file name as a string.

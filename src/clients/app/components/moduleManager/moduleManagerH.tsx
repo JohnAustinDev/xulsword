@@ -1,3 +1,4 @@
+import React from 'react';
 import { Intent } from '@blueprintjs/core';
 import { Utils } from '@blueprintjs/table';
 import {
@@ -28,6 +29,7 @@ import log from '../../../log.ts';
 import { forEachNode } from '../../../components/libxul/treeview.tsx';
 import { isRepoBuiltIn } from '../../common.ts';
 
+import type { ReactNode } from 'react';
 import type {
   Download,
   Repository,
@@ -262,21 +264,25 @@ export function modclasses() {
   };
 }
 
-// A modtable cell function that should be used as the initial checkbox value
+// This modtable cell function that should be used as the initial checkbox value
 // function for remote repositories. If the row is shadowing another row, the
-// first shadowed row's value is returned, otherwise OFF is returned. Once
-// a checkbox is clicked, this function should be replaced by a string value.
-// In this way, user interactions are recorded and kept throughout the life of
-// the window.
+// shadowed row's value is returned. If the row is shadowing multiple rows
+// (which happens with XSM modules) then ON will be returned only if all
+// shadowed rows are ON, otherwise OFF is returned. Once a checkbox is clicked,
+// this function should be replaced by a string value. In this way, user
+// interactions are recorded and kept throughout the life of the window.
 export function modCheckbox(
   dri: number,
   dci: number,
   data: TModuleTableRow[],
 ): typeof ON | typeof OFF {
   const { shadowedRows } = data[dri][ModCol.iInfo];
-  const [shadowedRow] = shadowedRows;
-  if (shadowedRow) return shadowedRow[dci] as typeof ON | typeof OFF;
-  return OFF;
+  if (!shadowedRows.length) return OFF;
+  return shadowedRows
+    .filter(Boolean)
+    .every((r) => (r as TModuleTableRow)[dci] === ON)
+    ? ON
+    : OFF;
 }
 
 // Read the value of any modtable checkbox. This works for all modtable checkbox
@@ -1120,8 +1126,8 @@ export function handleListings(
 }
 
 // This function updates state, but does NOT set it.
-// Check enabled repository listings (except beta and attic) for installed
-// modules that have newer versions available, or have been obsoleted. Begin
+// Check enabled repository listings (except beta and attic) for newer versions
+// of builtin repository modules, or replacements for obsoleted ones. Begin
 // downloading the updates, but ask whether to replace each installed module
 // with the update before doing so. This function should be called after
 // updateRepositoryLists().
@@ -1129,35 +1135,10 @@ export function checkForModuleUpdates(
   xthis: ModuleManager,
   state: ManagerState,
 ) {
-  const { module, repository } = state.tables;
-  const { repositoryListings } = repository;
-  const updateable: SwordConfType[] = [];
-  // Get the list of modules in the local xulsword repository. These modules
-  // may be overwritten by newer versions, or replaced if obsoleted.
-  repository.data.forEach((rtd, i) => {
-    if (rtd[RepCol.iInfo].repo.path === G.Dirs.path.xsModsUser) {
-      const listing = repositoryListings[i];
-      if (Array.isArray(listing)) listing.forEach((c) => updateable.push(c));
-    }
-  });
-  // Add to the list modules in other local SWORD repositories, including
-  // shared, IF they are not also in the local xulsword repository (same name
-  // and version?). Modules in these repositories are never overwritten,
-  // newer or obsolete-replacements are installed in the xulsword repo.
-  repository.data.forEach((rtd, i) => {
-    if (
-      isRepoLocal(rtd[RepCol.iInfo].repo) &&
-      rtd[RepCol.iInfo].repo.path !== G.Dirs.path.xsAudio
-    ) {
-      const listing = repositoryListings[i];
-      if (Array.isArray(listing)) {
-        listing.forEach((c) => {
-          if (!updateable.some((uc) => uc.module === c.module))
-            updateable.push(c);
-        });
-      }
-    }
-  });
+  const { module } = state.tables;
+  const updateable: SwordConfType[] = Object.values(G.ModuleConfs).filter(
+    (c) => isRepoBuiltIn(c.sourceRepository) && c.xsmType !== 'XSM_audio',
+  );
 
   // Search all module table data for candidate updates.
   const moduleUpdates: ModuleUpdates[] = [];
@@ -1166,14 +1147,14 @@ export function checkForModuleUpdates(
     module.data.forEach((row) => {
       const { conf } = row[ModCol.iInfo];
       if (
-        inst.sourceRepository &&
+        !isRepoLocal(conf.sourceRepository) &&
         !['CrossWire Attic', 'CrossWire Beta'].includes(
           conf.sourceRepository.name,
         ) &&
         conf.xsmType !== 'XSM_audio' &&
-        // module is to be obsoleted
+        // inst is to be obsoleted
         (conf.Obsoletes?.includes(inst.module) ||
-          // module is to be replaced by a newer version
+          // inst is to be replaced by a newer version
           (conf.xsmType !== 'XSM' &&
             conf.module === inst.module &&
             versionCompare(conf.Version ?? 0, inst.Version ?? 0) === 1) ||
@@ -1181,18 +1162,18 @@ export function checkForModuleUpdates(
           // version, as long as we don't downgrade any installed modules
           (conf.xsmType === 'XSM' &&
             conf.SwordModules?.some(
-              (swm, x) =>
+              (swm, i) =>
                 inst.module === swm &&
                 versionCompare(
-                  conf.SwordVersions?.[x] ?? 0,
+                  conf.SwordVersions?.[i] ?? 0,
                   inst.Version ?? 0,
                 ) === 1,
             ) &&
             !conf.SwordModules?.some(
-              (swm, x) =>
+              (swm, i) =>
                 versionCompare(
                   updateable.find((im) => im.module === swm)?.Version ?? 0,
-                  conf.SwordVersions?.[x] ?? 0,
+                  conf.SwordVersions?.[i] ?? 0,
                 ) === 1,
             )))
       ) {
@@ -1217,17 +1198,7 @@ export function checkForModuleUpdates(
       return v;
     };
     candidates.sort((a, b) => versionCompare(version(b), version(a)));
-    if (candidates.length) {
-      // insure top candidate is not already installed (can happen with obsoletes).
-      const [{ conf }] = candidates;
-      if (
-        !(
-          conf.module in G.Tab &&
-          conf.Version === G.ModuleConfs[conf.module].Version
-        )
-      )
-        moduleUpdates.push(candidates[0]);
-    }
+    if (candidates.length) moduleUpdates.push(candidates[0]);
   });
 
   return promptAndInstall(xthis, state, moduleUpdates);
@@ -1310,31 +1281,40 @@ function promptAndInstall(
   ModuleUpdatePrompted.push(...updates.map((mud) => mud.conf.module));
   // Show a toast to ask permission to install each update.
   updates.forEach((mud) => {
-    const abbr = (mud.conf.Abbreviation?.locale || mud.conf.module) ?? '?';
-    let message: string;
+    const { module, Version, Abbreviation } = mud.conf;
     const { remove } = mud;
-    const toName = localizeString(G, mud.conf.sourceRepository.name);
-    if (remove) {
-      const history =
-        mud.conf.History?.filter(
-          (h) => versionCompare(h[0], remove.Version ?? 0) === 1,
-        )
-          .map((h) => h[1].locale)
-          .join('\n') ?? '';
-      message = `${abbr} ${mud.conf.Version}: ${history} (${toName}, ${mud.conf.module})`;
-    } else {
-      message = `${abbr} ${mud.conf.Description?.locale} (${toName}, ${mud.conf.module})`;
-    }
+    const toRepoName = localizeString(G, mud.conf.sourceRepository.name);
+    const msgs = remove
+      ? [mud.conf.History?.at(-1)].map((h) => h && h[1].locale)
+      : [mud.conf.Description?.locale];
+    const mod = `${module} ${Version}:${(Abbreviation && ' ' + Abbreviation.locale) || ''} (${toRepoName})`;
+    /*
+      const history = mud.conf.History?.filter(
+        (h) => versionCompare(h[0], remove.Version ?? 0) === 1,
+      ).map((h) => h[1].locale);
+      */
+    const message: ReactNode = (
+      <div
+        className={['module-toast', remove ? 'update' : 'suggestion'].join(' ')}
+      >
+        <div className="messages">
+          {msgs.map((msg, i) => msg && <div key={i}>{msg}</div>)}
+        </div>
+        <div className="module-info">{mod}</div>
+      </div>
+    );
+
     xthis
       .addToast({
         timeout: -1,
         intent: Intent.SUCCESS,
         message,
+        // After 'yes' is clicked and runs, then onDismiss will also run.
         action: {
+          text: G.i18n.t('yes.label'),
           onClick: () => {
             mud.permissionGiven = true;
           },
-          text: G.i18n.t('yes.label'),
         },
         onDismiss: () =>
           setTimeout(() => {
@@ -1363,24 +1343,26 @@ function installModuleUpdates(
   doInstallUpdate: boolean,
   moduleUpdates: ModuleUpdates[],
 ): number {
-  const xulswordRepo = repositoryKey(G.BuiltInRepos[1]);
   const removes: [on: boolean, conf: SwordConfType][] = [];
   const installs: [on: boolean, conf: SwordConfType][] = [];
   moduleUpdates.forEach((mud) => {
     const { remove, conf } = mud;
-    // Remove locally installed modules in the xulsword repo.
-    if (remove && repositoryKey(remove.sourceRepository) === xulswordRepo) {
+    // Remove locally installed modules in the built-in repos.
+    if (remove && isRepoBuiltIn(remove.sourceRepository)) {
       removes.push([doInstallUpdate, remove]);
     }
     // Install external modules.
     installs.push([doInstallUpdate, conf]);
   });
+  const sharedkey = repositoryKey(G.BuiltInRepos[0]);
   return (
     updateModuleInstallColumn(
       xthis,
       state,
       installs.map((i) => i[0]),
       installs.map((i) => i[1]),
+      // If removing from shared, also install to shared
+      removes.map((rm) => repositoryKey(rm[1].sourceRepository) === sharedkey),
     ) +
     updateModuleRemoveColumn(
       xthis,
@@ -1396,6 +1378,7 @@ function updateModuleInstallColumn(
   state: ManagerState,
   setToON: boolean | boolean[],
   configs: SwordConfType[],
+  shared?: boolean[],
 ): number {
   const doDownload: SwordConfType[] = [];
   const doCancel: SwordConfType[] = [];
@@ -1412,13 +1395,16 @@ function updateModuleInstallColumn(
         if (row[ModCol.iInfo].loading) {
           // Do nothing
         } else if (
-          readModCheckbox(data.indexOf(row), ModCol.iInstalled, data) === ON ||
+          (typeof row[ModCol.iInstalled] !== 'function' &&
+            readModCheckbox(data.indexOf(row), ModCol.iInstalled, data) ===
+              ON) ||
           isRepoLocal(row[ModCol.iInfo].repo)
         ) {
           // Module is already ON or local, so iInstalled is unchanged.
         } else {
           // otherwise download from remote repo.
           doDownload.push(conf);
+          if (shared && shared[i]) row[ModCol.iShared] = ON;
         }
       } else {
         // iInstalled is being set to OFF...
@@ -1577,18 +1563,11 @@ export function getLocalModuleOperations(
           )
           ?.find((c) => c.module === conf.module);
         // No moving or copying from custom to xulsword local.
-        // No moving or copying from xulsword local to shared if the module already
-        // exists in shared.
-        // No moving  or copying if it requires destination to be removed but it
+        // No moving or copying if it requires destination to be removed but it
         // cannot be.
         if (
-          (!isRepoCustom(custom ?? null, sourceRepository) || iShared) &&
-          !(
-            sourceRepositoryKey === repositoryKey(xulswordLocalRepo) &&
-            iShared &&
-            removeDestMod
-          ) &&
-          (!removeDestMod || canRemoveModule(removeDestMod))
+          !(isRepoCustom(custom ?? null, sourceRepository) && !iShared) &&
+          !(removeDestMod && !canRemoveModule(removeDestMod))
         ) {
           if (removeDestMod) {
             operations.push({
@@ -1610,6 +1589,7 @@ export function getLocalModuleOperations(
     }
   });
 
+  log.debug('Module operations: ', operations);
   return operations;
 }
 

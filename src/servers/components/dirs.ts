@@ -2,6 +2,7 @@ import { app } from 'electron'; // app is undefined in web-app
 import path from 'path';
 import { fileURLToPath } from 'url';
 import LocalFile from './localFile.ts';
+import log from 'electron-log';
 
 const dirs = {
   TmpD: '',
@@ -119,13 +120,17 @@ const Dirs = {
         // Install default resources?
         if (Dirs.xsResDefD.exists()) {
           if (!Dirs.xsResD.exists()) {
-            Dirs.xsResD.create(LocalFile.DIRECTORY_TYPE, { recursive: true });
+            if (
+              !Dirs.xsResD.create(LocalFile.DIRECTORY_TYPE, { recursive: true })
+            )
+              log.error(Dirs.xsResD.error);
           }
           Dirs.xsResDefD.directoryEntries.forEach((sub) => {
             const to = Dirs.xsResD.clone().append(sub);
             if (!to.exists()) {
               const from = Dirs.xsResDefD.clone().append(sub);
-              from.copyTo(to.parent, from.leafName, true);
+              if (!from.copyTo(to.parent, from.leafName, true))
+                log.error(from.error);
             }
           });
         }
@@ -146,13 +151,17 @@ const Dirs = {
           ] as const
         ).forEach((d) => {
           if (d !== 'xsModsCommon' || Dirs.path.xsModsCommon) {
-            Dirs[d].create(LocalFile.DIRECTORY_TYPE, { recursive: true });
+            if (!Dirs[d].create(LocalFile.DIRECTORY_TYPE, { recursive: true }))
+              log.error(Dirs[d].error);
           }
         });
         (['xsModsUser', 'xsModsCommon', 'xsAudio'] as const).forEach((d) => {
           if (d !== 'xsModsCommon' || Dirs.path.xsModsCommon) {
-            Dirs[d].clone().append('mods.d').create(LocalFile.DIRECTORY_TYPE);
-            Dirs[d].clone().append('modules').create(LocalFile.DIRECTORY_TYPE);
+            const modsd = Dirs[d].clone().append('mods.d');
+            if (!modsd.create(LocalFile.DIRECTORY_TYPE)) log.error(modsd.error);
+            const modules = Dirs[d].clone().append('modules');
+            if (!modules.create(LocalFile.DIRECTORY_TYPE))
+              log.error(modules.error);
           }
         });
       }

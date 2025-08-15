@@ -197,8 +197,9 @@ const LibSword = {
       .clone()
       .append('bannedSearches.json');
     if (!bannedSearchesFile.exists()) {
-      bannedSearchesFile.create(LocalFile.NORMAL_FILE_TYPE);
-      bannedSearchesFile.writeFile(JSON_stringify([]));
+      if (bannedSearchesFile.create(LocalFile.NORMAL_FILE_TYPE))
+        bannedSearchesFile.writeFile(JSON_stringify([]));
+      else log.error(bannedSearchesFile.error);
     }
     this.bannedSearches = JSON_parse(bannedSearchesFile.readFile()) as string[];
     this.bannedSearchesFile = bannedSearchesFile;
@@ -738,8 +739,10 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   },
 
   stopBackgroundSearchIndexer() {
-    if (Cache.has('startBackgroundSearchIndexer'))
+    if (Cache.has('startBackgroundSearchIndexer')) {
       clearTimeout(Cache.read('startBackgroundSearchIndexer'));
+      Cache.clear('startBackgroundSearchIndexer');
+    }
     this.backgroundIndexerEnabled = false;
     Object.keys(this.indexingID).forEach((module) => {
       this.searchIndexCancel(module);

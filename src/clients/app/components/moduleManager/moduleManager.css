@@ -66,3 +66,12 @@
 .allowInternet-message {
   margin-top: 10px;
 }
+
+.module-toast {
+  border-right: 1px solid var(--light);
+  padding-right: 10px;
+  margin-right: -8px;
+}
+.module-toast .module-info {
+  font-weight: bold;
+}

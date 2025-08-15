@@ -277,6 +277,18 @@ export function failCause(
   return cause;
 }
 
+export function resetAll() {
+  destroyHTTPconnections();
+  destroyFTPconnections();
+}
+
+export function destroyHTTPconnections() {
+  httpCancel();
+  Object.keys(HttpCancelable).forEach((key) => {
+    delete HttpCancelable[key];
+  });
+}
+
 // Close and free FTP connections to a particular domain, or all domains. Also
 // reset MaxDomainConnections.
 export function destroyFTPconnections(domain?: string | null) {
@@ -284,7 +296,7 @@ export function destroyFTPconnections(domain?: string | null) {
     if (domain in activeConnections) {
       Object.keys(FtpCancelable).forEach((key) => {
         const { domain: d } = keyToDownload(key);
-        if (domain === d) downloadCancel(key);
+        if (domain === d) ftpCancel(key);
       });
       activeConnections[domain].forEach((c) => {
         abortP(c)
@@ -310,6 +322,9 @@ export function destroyFTPconnections(domain?: string | null) {
   } else {
     Object.keys(activeConnections).forEach((d) => {
       destroyFTPconnections(d);
+    });
+    Object.keys(FtpCancelable).forEach((key) => {
+      delete FtpCancelable[key];
     });
   }
   MaxDomainConnections = {};

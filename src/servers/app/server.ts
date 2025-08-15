@@ -345,6 +345,10 @@ const openXulswordWindow = () => {
           }
         });
         Prefs.setComplexValue('global.noAutoSearchIndex', nasi);
+        if (Cache.has('startBackgroundSearchIndexer')) {
+          clearTimeout(Cache.read('startBackgroundSearchIndexer'));
+          Cache.clear('startBackgroundSearchIndexer');
+        }
         Cache.write(
           setTimeout(() => {
             LibSword.startBackgroundSearchIndexer(Prefs).catch((er) => {

@@ -583,7 +583,7 @@ const Window = {
       } else {
         const dir = Dirs.TmpD;
         dir.append(`xulsword_${win.id}`);
-        dir.create(LocalFile.DIRECTORY_TYPE);
+        if (!dir.create(LocalFile.DIRECTORY_TYPE)) log.error(dir.error);
         if (dir.exists()) {
           ret.push(dir.path);
           (win as any).xstmpDir = dir.path;

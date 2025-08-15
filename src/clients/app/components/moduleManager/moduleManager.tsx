@@ -37,7 +37,7 @@ import Modinfo, {
   modinfoParentInitialState,
   modinfoParentHandler as modinfoParentHandlerH,
 } from '../../../components/libxul/modinfo.tsx';
-import * as H from './moduleManagerH.ts';
+import * as H from './moduleManagerH.tsx';
 import './moduleManager.css';
 
 import type { ToastProps } from '@blueprintjs/core';
@@ -52,7 +52,7 @@ import type {
   TLanguageTableRow,
   TModuleTableRow,
   TRepositoryTableRow,
-} from './moduleManagerH.ts';
+} from './moduleManagerH.tsx';
 import type {
   TableColumnInfo,
   TableProps,

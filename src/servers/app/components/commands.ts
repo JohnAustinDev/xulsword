@@ -232,9 +232,13 @@ const Commands = {
                 !conf.isDirectory()
               ) {
                 const confdest = destdir.clone().append('mods.d');
-                if (!confdest.exists())
-                  confdest.create(LocalFile.DIRECTORY_TYPE);
-                conf.copyTo(confdest);
+                if (
+                  !confdest.exists() &&
+                  !confdest.create(LocalFile.DIRECTORY_TYPE)
+                )
+                  log.error(confdest.error);
+                if (confdest.exists() && !conf.copyTo(confdest))
+                  log.error(conf.error);
                 confWritten.push(conf.path);
               }
               if (
@@ -255,12 +259,18 @@ const Commands = {
                       .append('modules')
                       .append(module)
                       .append(bookFileName);
-                    if (!dest.exists())
-                      dest.create(LocalFile.DIRECTORY_TYPE, {
+                    if (
+                      !dest.exists() &&
+                      !dest.create(LocalFile.DIRECTORY_TYPE, {
                         recursive: true,
-                      });
-                    file.copyTo(dest, fp.base);
-                    tot += 1;
+                      })
+                    )
+                      log.error(dest.error);
+                    if (dest.exists()) {
+                      if (file.copyTo(dest, fp.base)) {
+                        tot += 1;
+                      } else log.error(file.error);
+                    }
                   }
                 }
               } else {
@@ -287,12 +297,23 @@ const Commands = {
                   const leafname = path.pop();
                   const dest = destdir.clone().append('modules').append(module);
                   path.forEach((p) => dest.append(p));
-                  if (!dest.exists())
-                    dest.create(LocalFile.DIRECTORY_TYPE, {
+                  if (
+                    !dest.exists() &&
+                    !dest.create(LocalFile.DIRECTORY_TYPE, {
                       recursive: true,
-                    });
-                  file.copyTo(dest, `${leafname}${fpath.parse(file.path).ext}`);
-                  tot += 1;
+                    })
+                  )
+                    log.error(dest.error);
+                  if (dest.exists()) {
+                    if (
+                      file.copyTo(
+                        dest,
+                        `${leafname}${fpath.parse(file.path).ext}`,
+                      )
+                    ) {
+                      tot += 1;
+                    } else log.error(file.error);
+                  }
                 } else {
                   log.error(
                     `Failed to parse audio file path during export: ${file.path}`,
@@ -373,11 +394,19 @@ const Commands = {
           const leafname = dest.pop();
           const destDir = Dirs.xsAudio.append('modules').append(module);
           while (dest.length) destDir.append(dest.shift() as string);
-          if (!destDir.exists()) {
-            destDir.create(LocalFile.DIRECTORY_TYPE, { recursive: true });
+          if (
+            !destDir.exists() &&
+            !destDir.create(LocalFile.DIRECTORY_TYPE, { recursive: true })
+          ) {
+            log.error(destDir.error);
           }
-          file.copyTo(destDir, `${leafname}${fpath.parse(file.path).ext}`);
-          tot += 1;
+          if (destDir.exists()) {
+            if (
+              file.copyTo(destDir, `${leafname}${fpath.parse(file.path).ext}`)
+            ) {
+              tot += 1;
+            } else log.error(file.error);
+          }
         });
         progress(tot / importFiles.length);
       };
@@ -582,7 +611,11 @@ const Commands = {
           (!instcfile?.exists() || versionCompare(impvers, instvers) === 1)
         ) {
           instcfile = Dirs.xsAudio.append('mods.d').append(confname);
-          impcfile?.copyTo(Dirs.xsAudio.append('mods.d'), confname);
+          if (
+            impcfile &&
+            !impcfile.copyTo(Dirs.xsAudio.append('mods.d'), confname)
+          )
+            log.error(impcfile.error);
         } else if (!instcfile?.exists()) {
           // If necessary, auto-generate bare minimum config file
           instcfile = Dirs.xsAudio.append('mods.d').append(confname);
