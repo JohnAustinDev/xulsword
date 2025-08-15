@@ -54,6 +54,7 @@ import type {
   TableRowSortState,
   TCellInfo,
   TData,
+  TDataRow,
 } from '../../../components/libxul/table.tsx';
 
 export type VersekeyDialog = {
@@ -303,7 +304,7 @@ export function readModCheckboxShadowing(
   drow: TModuleTableRow,
   dci: number,
 ): typeof ON | typeof OFF {
-  const shadowing = Object.values(moduleRows).filter((r) =>
+  const shadowing = Object.values(tableRows.module).filter((r) =>
     r[ModCol.iInfo].shadowedRows.includes(drow),
   );
   const v1 = drow[dci];
@@ -358,7 +359,7 @@ export function onRowsReordered(
   dataColIndex: number,
 ) {
   const state = this.state as ManagerState;
-  const { columns, selection } = state[tableName];
+  const { columns } = state[tableName];
   const rowSort: TableRowSortState = {
     direction,
     propColumnIndex: columns.findIndex((tc) => tc.datacolumn === dataColIndex),
@@ -512,8 +513,12 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             const newstate = this.state as ManagerState;
             const open = id === 'languageListOpen';
             newstate.language.open = open;
-            newstate.module.selection = [];
+            const selections = retainSelectedValues(newstate, null, [
+              'language',
+              'module',
+            ]);
             filterModuleTable(newstate);
+            retainSelectedValues(newstate, selections);
             tableUpdate(newstate, ['language', 'module'], 'rowmap');
             this.sState(newstate);
             scrollToSelection(this, newstate, 'language');
@@ -1396,7 +1401,10 @@ function updateModuleInstallColumn(
   const doCancel: SwordConfType[] = [];
   const { data } = state.tables.module;
   configs.forEach((conf, i) => {
-    const row = findModuleRow(repositoryModuleKey(conf));
+    const row = findTableRow(
+      repositoryModuleKey(conf),
+      'module',
+    ) as TModuleTableRow;
     if (row) {
       if (Array.isArray(setToON) ? setToON[i] : setToON) {
         // iInstalled is being set to ON...
@@ -1439,7 +1447,10 @@ function updateModuleRemoveColumn(
   const doCancel: SwordConfType[] = [];
   const { data } = state.tables.module;
   configs.forEach((conf, i) => {
-    const row = findModuleRow(repositoryModuleKey(conf));
+    const row = findTableRow(
+      repositoryModuleKey(conf),
+      'module',
+    ) as TModuleTableRow;
     if (row) {
       tableUpdate(state, 'module');
       const currentVal = readModCheckbox(
@@ -1470,17 +1481,42 @@ function updateModuleRemoveColumn(
   return configs.length;
 }
 
-// Find (or set) a module table row.
-const moduleRows: { [modrepkay: string]: TModuleTableRow } = {};
-export function findModuleRow(
-  modrepkey: string,
+// Find (or set) a table row. All rows are created once and reused for the
+// lifetime of the window. This allows recording of all user actions.
+const tableRows: {
+  language: { [code: string]: TLanguageTableRow };
+  module: { [modrepkey: string]: TModuleTableRow };
+  repository: { [repkey: string]: TRepositoryTableRow };
+} = {
+  language: {},
+  module: {},
+  repository: {},
+};
+export function findTableRow(
+  key: string,
+  tableName: 'language',
+  setTo?: TLanguageTableRow,
+): TLanguageTableRow | null;
+export function findTableRow(
+  key: string,
+  tableName: 'module',
   setTo?: TModuleTableRow,
-): TModuleTableRow | null {
+): TModuleTableRow | null;
+export function findTableRow(
+  key: string,
+  tableName: 'repository',
+  setTo?: TRepositoryTableRow,
+): TRepositoryTableRow | null;
+export function findTableRow(
+  key: string,
+  tableName: (typeof Tables)[number],
+  setTo?: TLanguageTableRow | TModuleTableRow | TRepositoryTableRow,
+): TLanguageTableRow | TModuleTableRow | TRepositoryTableRow | null {
   if (setTo) {
-    moduleRows[modrepkey] = setTo;
+    tableRows[tableName][key] = setTo;
     return setTo;
   }
-  return modrepkey in moduleRows ? moduleRows[modrepkey] : null;
+  return key in tableRows[tableName] ? tableRows[tableName][key] : null;
 }
 
 // Return any requested local repository operations (remove, copy, move or
@@ -1494,7 +1530,7 @@ export function getLocalModuleOperations(
   const { repositoryListings } = state.tables.repository;
   const [sharedRepo, xulswordLocalRepo, audioRepo] = G.BuiltInRepos;
 
-  Object.entries(moduleRows).forEach((entry) => {
+  Object.entries(tableRows.module).forEach((entry) => {
     const [modrepkey, drow] = entry;
     const { conf } = drow[ModCol.iInfo];
     const { module, sourceRepository } = conf;
@@ -1589,22 +1625,25 @@ export function getModuleRowXsmSiblings(
   const state = xthis.state as ManagerState;
   const { module: modTable } = state.tables;
   const { data } = modTable;
-  const row = findModuleRow(modrepkey);
-  if (!row) return [];
-  if (row[ModCol.iInfo].conf.xsmType === 'XSM') {
-    return data
-      .map((r) => {
-        return r[ModCol.iInfo].conf.DataPath === row[ModCol.iInfo].conf.DataPath
-          ? repositoryModuleKey(r[ModCol.iInfo].conf)
-          : null;
-      })
-      .filter(Boolean) as string[];
+  const row = findTableRow(modrepkey, 'module') as TModuleTableRow;
+  if (row) {
+    if (row[ModCol.iInfo].conf.xsmType === 'XSM') {
+      return data
+        .map((r) => {
+          return r[ModCol.iInfo].conf.DataPath ===
+            row[ModCol.iInfo].conf.DataPath
+            ? repositoryModuleKey(r[ModCol.iInfo].conf)
+            : null;
+        })
+        .filter(Boolean) as string[];
+    }
+    return [modrepkey];
   }
-  return [modrepkey];
+  return [];
 }
 
 export function getModuleDownload(modrepkey: string): Download | null {
-  const row = findModuleRow(modrepkey);
+  const row = findTableRow(modrepkey, 'module') as TModuleTableRow;
   if (!row) return null;
   const { xsmType } = row[ModCol.iInfo].conf;
   if (xsmType === 'XSM') {
@@ -1810,7 +1849,12 @@ export async function download(
   // Show downloads as loading.
   if (dlobjs.filter(Boolean).length) {
     const newstate = xthis.state as ManagerState;
-    downloadsLoading(xthis, newstate, configs, true);
+    downloadsLoading(
+      xthis,
+      newstate,
+      configs.filter((_c, i) => dlobjs[i]),
+      true,
+    );
     xthis.sState(newstate);
   }
 
@@ -1836,7 +1880,12 @@ export async function download(
 
   // Show downloads as finished.
   const newstate = xthis.state as ManagerState;
-  downloadsLoading(xthis, newstate, configs, false);
+  downloadsLoading(
+    xthis,
+    newstate,
+    configs.filter((_c, i) => dlobjs[i]),
+    false,
+  );
 
   // Update the module table.
   dlobjs.forEach((_dlobj, i) => {
@@ -1846,7 +1895,7 @@ export async function download(
       const modrepkey = repositoryModuleKey(configs[i]);
       const modkeys = getModuleRowXsmSiblings(xthis, modrepkey);
       const modrows = modkeys
-        .map((mk) => findModuleRow(mk))
+        .map((mk) => findTableRow(mk, 'module') as TModuleTableRow)
         .filter(Boolean) as TModuleTableRow[];
       let failed: Intent | null = null;
       if (Downloads.cancelled.includes(dlkey)) failed = Intent.NONE;
@@ -1897,7 +1946,7 @@ function downloadsLoading(
 ) {
   configs.forEach((conf) => {
     getModuleRowXsmSiblings(xthis, repositoryModuleKey(conf)).forEach((mk) => {
-      const row = findModuleRow(mk);
+      const row = findTableRow(mk, 'module') as TModuleTableRow;
       if (row) {
         if (isLoading) {
           row[ModCol.iInfo].loading = loading(ModCol.iInstalled);
@@ -1950,6 +1999,62 @@ export async function cancelDownloads(
     if (!Downloads.cancelled.includes(dlkey)) Downloads.cancelled.push(dlkey);
     updateDownloadProgress(state, dlkey, -1);
   });
+}
+
+// If selectedRows is undefined return the currently selected rows of a table,
+// otherwise apply selectedRows to the table.
+export function retainSelectedValues(
+  state: ManagerState,
+  selectedRows?: { [k in (typeof Tables)[number]]?: TDataRow[] } | null,
+  tableNames?: (typeof Tables)[number][] | null,
+): { [k in (typeof Tables)[number]]?: TDataRow[] } {
+  const r: { [k in (typeof Tables)[number]]?: TDataRow[] } = {};
+  (tableNames ?? (['repository', 'module', 'language'] as const)).forEach(
+    (tableName) => {
+      const { data } = state.tables[tableName];
+      const { selection } = state[tableName];
+      const { tableToDataRowMap } = state.tables[tableName];
+      let cols;
+      if (tableName === 'repository') cols = RepCol;
+      else if (tableName === 'module') cols = ModCol;
+      else cols = LanCol;
+      const { iInfo } = cols;
+      if (!selectedRows) {
+        // Return the current selection's data rows, and any rows they are
+        // currently shadowing.
+        r[tableName] = selectionToDataRows(state, tableName, selection)
+          .map((dri) =>
+            [data[dri]].concat((data[dri] as any)[iInfo].shadowedRows),
+          )
+          .flat()
+          .filter(Boolean);
+      } else {
+        // Select the given rows values (if they exist) in the current table.
+        if (tableName in selectedRows && selectedRows[tableName]) {
+          state[tableName].selection = tableRowsToSelection(
+            selectedRows[tableName]
+              .map((dr) => {
+                let dri = (data as TDataRow[]).indexOf(dr);
+                if (dri === -1) {
+                  // If the selected row is not in the table, check if it is
+                  // being shadowed by another row in the table and select that
+                  // one instead.
+                  dri = (data as TDataRow[]).findIndex((r) =>
+                    (r as any)[iInfo].shadowedRows?.includes(dr),
+                  );
+                }
+                if (dri === -1) return null;
+                const tri = tableToDataRowMap.indexOf(dri);
+                return tri === -1 ? dri : tri;
+              })
+              .filter((tri) => tri !== null),
+          );
+          r[tableName] = selectedRows[tableName];
+        }
+      }
+    },
+  );
+  return r;
 }
 
 // This functions requires state[tableName].rowSort to be updated already, then
@@ -2021,37 +2126,43 @@ export function tableUpdate(
   });
 }
 
-// Create a new repository table row from a Repository object.
+// Get, or create, the repository table row for a Repository object.
 export function repositoryToRow(
   state: ManagerState,
   repo: Repository,
   isCustom: boolean,
 ): TRepositoryTableRow {
-  const repoIsDisabled =
-    state.repositories?.disabled?.includes(repositoryKey(repo)) || false;
-  return [
-    localizeString(G, repo.name),
-    repo.domain,
-    repo.path,
-    repoIsDisabled ? OFF : isRepoBuiltIn(repo) ? ALWAYSON : ON,
-    {
-      loading: false,
-      editable: isCustom ? editable() : false,
-      classes: repclasses(
-        [RepCol.iState],
-        ['checkbox-column'],
-        isCustom ? ['custom-repo'] : [],
-      ),
-      repo,
-      tooltip: tooltip('VALUE', [RepCol.iState]),
-    },
-  ];
+  const repokey = repositoryKey(repo);
+  let r = findTableRow(repokey, 'repository');
+  if (!r) {
+    const repoIsDisabled =
+      state.repositories?.disabled?.includes(repokey) || false;
+    r = findTableRow(repokey, 'repository', [
+      localizeString(G, repo.name),
+      repo.domain,
+      repo.path,
+      repoIsDisabled ? OFF : isRepoBuiltIn(repo) ? ALWAYSON : ON,
+      {
+        loading: false,
+        editable: isCustom ? editable() : false,
+        classes: repclasses(
+          [RepCol.iState],
+          ['checkbox-column'],
+          isCustom ? ['custom-repo'] : [],
+        ),
+        repo,
+        tooltip: tooltip('VALUE', [RepCol.iState]),
+      },
+    ]) as TRepositoryTableRow;
+  }
+  return r;
 }
 
-export function allAudioInstalled(conf: SwordConfType): boolean {
+export function allAudioInstalled(
+  localAudioChapters: SwordConfType['AudioChapters'],
+  remoteAudioChapters: SwordConfType['AudioChapters'],
+): boolean {
   let allInstalled = false;
-  const remoteAudioChapters = conf.AudioChapters;
-  const localAudioChapters = G.AudioConfs[conf.module]?.AudioChapters;
   if (
     !remoteAudioChapters ||
     !localAudioChapters ||
@@ -2100,9 +2211,17 @@ export function scrollToSelection(
   if (selection.length) {
     setTimeout(() => {
       const { current } = xthis.tableComponentRefs[tableName];
-      current?.scrollToRegion(selection[0]);
+      try {
+        current?.scrollToRegion(selection[0]);
+      } catch (er) {
+        // ok
+      }
       setTimeout(() => {
-        current?.scrollByOffset({ top: -100, left: 0 });
+        try {
+          current?.scrollByOffset({ top: -100, left: 0 });
+        } catch (er) {
+          // ok
+        }
       }, 1);
     }, 1);
   }

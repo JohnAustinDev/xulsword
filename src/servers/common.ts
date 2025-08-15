@@ -328,7 +328,9 @@ export function getTabs(): TabType[] {
 
         const confFile = moduleConfFile(module);
         if (!confFile) return;
-        ParsedConfigFiles[module] = parseSwordConf(confFile);
+        const parsedFile = parseSwordConf(confFile);
+        if (!parsedFile) return;
+        ParsedConfigFiles[module] = parsedFile;
         const cipherKey = LibSword.getModuleInformation(module, 'CipherKey');
         if (confFile && cipherKey !== C.NOTFOUND) {
           CipherKeyModules[module] = {
@@ -466,7 +468,7 @@ export function getAudioConfs(): Record<string, SwordConfType> {
       const f = audio.clone().append(d);
       if (!f.isDirectory() && f.leafName.endsWith('.conf')) {
         const c = parseSwordConf(f);
-        confs[c.module] = c;
+        if (c) confs[c.module] = c;
       }
     });
     Cache.write(confs, 'getAudioConfs');

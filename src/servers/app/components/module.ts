@@ -56,6 +56,7 @@ import type {
   VerseKeyAudioConf,
   OSISBookType,
   RepositoryOperation,
+  NewModuleReportType,
 } from '../../../type.ts';
 import type { ListingElementR } from '../ftphttp.ts';
 
@@ -327,12 +328,14 @@ export async function installZIPs(
           const file = modsd.clone().append(confFile);
           if (!file.isDirectory && file.leafName.endsWith('.conf')) {
             const conf = parseSwordConf(file, Prefs);
-            const { module, CipherKey } = conf;
-            installed.push({
-              module,
-              CipherKey,
-              repoDir: modsd.append('..').path,
-            });
+            if (conf) {
+              const { module, CipherKey } = conf;
+              installed.push({
+                module,
+                CipherKey,
+                repoDir: modsd.append('..').path,
+              });
+            }
           }
         });
       };
@@ -395,121 +398,137 @@ export async function installZIPs(
                   },
                   Prefs,
                 );
-                // Look for any problems with the module itself
-                const modreports = clone(conf.reports);
-                modreports.push(...moduleUnsupported(conf));
-                const swmodpath =
-                  conf.xsmType === 'XSM_audio'
-                    ? 'XSM_audio'
-                    : conf.DataPath && confModulePath(conf.DataPath);
-                if (!swmodpath) {
-                  modreports.push({
-                    warning: `(${conf.module}) Has non-standard module path '${conf.DataPath}'.`,
-                  });
-                }
-                if (!dest.exists() || !dest.isDirectory()) {
-                  modreports.push({
-                    error: `(${conf.module}) Destination directory does not exist '${dest.path}.`,
-                  });
-                }
-                // If the module requires a CipherKey, don't replace an existing encrypted
-                // module that has a key.
-                if (
-                  conf.CipherKey === '' &&
-                  installed.find(
-                    (mo) => mo.CipherKey !== '' && mo.CipherKey !== C.NOTFOUND,
-                  )
-                ) {
-                  modreports.push({
-                    error: `(${conf.module}) Will not replace encrypted module; new encrypted module has no encrpytion key.`,
-                  });
-                }
-                // If module is ok, prepare target config location and look for problems there
-                const confdest = dest.clone();
-                if (!modreports.some((r) => r.error)) {
-                  confdest.append('mods.d');
-                  if (!confdest.exists()) {
-                    confdest.create(LocalFile.DIRECTORY_TYPE);
+                const modreports: NewModuleReportType[] = [];
+                if (conf) {
+                  // Look for any problems with the module itself
+                  modreports.push(...clone(conf.reports));
+                  modreports.push(...moduleUnsupported(conf));
+                  const swmodpath =
+                    conf.xsmType === 'XSM_audio'
+                      ? 'XSM_audio'
+                      : conf.DataPath && confModulePath(conf.DataPath);
+                  if (!swmodpath) {
+                    modreports.push({
+                      warning: `(${conf.module}) Has non-standard module path '${conf.DataPath}'.`,
+                    });
                   }
-                  confdest.append(name);
-                  if (confdest.exists()) {
-                    if (swmodpath === 'XSM_audio') {
-                      // Audio is not treated as a single module but as an updatable set of audio
-                      // files so just delete the conf file and it will be overwritten by the new.
-                      confdest.remove();
-                    } else {
-                      // Remove any existing module having this name unless it would be downgraded.
-                      const existing = parseSwordConf(confdest, Prefs);
-                      if (
-                        versionCompare(
-                          conf.Version ?? 0,
-                          existing.Version ?? 0,
-                        ) === -1
-                      ) {
-                        modreports.push({
-                          error: `(${conf.module}) ${
-                            conf.Version ?? 0
-                          } Will not overwrite newer module ${
-                            existing.module
-                          }.`,
-                        });
-                      } else if (!moveRemoveCopyModules(conf.module, destdir)) {
-                        modreports.push({
-                          error: `(${conf.module}) Could not remove existing module.`,
-                        });
+                  if (!dest.exists() || !dest.isDirectory()) {
+                    modreports.push({
+                      error: `(${conf.module}) Destination directory does not exist '${dest.path}.`,
+                    });
+                  }
+                  // If the module requires a CipherKey, don't replace an existing encrypted
+                  // module that has a key.
+                  if (
+                    conf.CipherKey === '' &&
+                    installed.find(
+                      (mo) =>
+                        mo.CipherKey !== '' && mo.CipherKey !== C.NOTFOUND,
+                    )
+                  ) {
+                    modreports.push({
+                      error: `(${conf.module}) Will not replace encrypted module; new encrypted module has no encrpytion key.`,
+                    });
+                  }
+                  // If module is ok, prepare target config location and look for problems there
+                  const confdest = dest.clone();
+                  if (!modreports.some((r) => r.error)) {
+                    confdest.append('mods.d');
+                    if (!confdest.exists()) {
+                      confdest.create(LocalFile.DIRECTORY_TYPE);
+                    }
+                    confdest.append(name);
+                    if (confdest.exists()) {
+                      if (swmodpath === 'XSM_audio') {
+                        // Audio is not treated as a single module but as an updatable set of audio
+                        // files so just delete the conf file and it will be overwritten by the new.
+                        confdest.remove();
+                      } else {
+                        // Remove any existing module having this name unless it would be downgraded.
+                        const existing = parseSwordConf(confdest, Prefs);
+                        if (
+                          existing &&
+                          versionCompare(
+                            conf.Version ?? 0,
+                            existing.Version ?? 0,
+                          ) === -1
+                        ) {
+                          modreports.push({
+                            error: `(${conf.module}) ${
+                              conf.Version ?? 0
+                            } Will not overwrite newer module ${
+                              existing.module
+                            }.`,
+                          });
+                        } else if (
+                          !moveRemoveCopyModules(conf.module, destdir)
+                        ) {
+                          modreports.push({
+                            error: `(${conf.module}) Could not remove existing module.`,
+                          });
+                        }
                       }
                     }
                   }
-                }
-                // If module and target is ok, check valid swmodpath, remove obsoletes,
-                // create module directory path.
-                if (
-                  !modreports.some((r) => r.error) &&
-                  swmodpath &&
-                  swmodpath !== 'XSM_audio'
-                ) {
-                  // Remove any module(s) obsoleted by this module.
-                  if (conf.Obsoletes?.length) {
-                    const obsoletes = conf.Obsoletes.filter((m) => {
-                      return installed.find((ins) => ins.module === m);
-                    });
-                    obsoletes.forEach((om) => {
-                      const omdir = installed.find((ins) => ins.module === om);
-                      if (omdir && !moveRemoveCopyModules(om, omdir.repoDir)) {
-                        modreports.push({
-                          warning: `(${conf.module}) Could not remove obsoleted module(s).`,
-                        });
-                      }
-                    });
-                  }
-                  // Make sure module destination directory exists and is empty.
-                  const moddest = dest.clone();
-                  moddest.append(swmodpath);
-                  if (moddest.exists()) {
-                    moddest.remove(true);
-                  }
-                  if (moddest.exists())
-                    modreports.push({
-                      error: `(${conf.module}) Could not remove directory '${moddest.path}'.`,
-                    });
+                  // If module and target is ok, check valid swmodpath, remove obsoletes,
+                  // create module directory path.
                   if (
-                    !moddest.create(LocalFile.DIRECTORY_TYPE, {
-                      recursive: true,
-                    })
+                    !modreports.some((r) => r.error) &&
+                    swmodpath &&
+                    swmodpath !== 'XSM_audio'
                   ) {
-                    modreports.push({
-                      error: `(${conf.module}) Could not create module directory '${moddest.path}'.`,
-                    });
+                    // Remove any module(s) obsoleted by this module.
+                    if (conf.Obsoletes?.length) {
+                      const obsoletes = conf.Obsoletes.filter((m) => {
+                        return installed.find((ins) => ins.module === m);
+                      });
+                      obsoletes.forEach((om) => {
+                        const omdir = installed.find(
+                          (ins) => ins.module === om,
+                        );
+                        if (
+                          omdir &&
+                          !moveRemoveCopyModules(om, omdir.repoDir)
+                        ) {
+                          modreports.push({
+                            warning: `(${conf.module}) Could not remove obsoleted module(s).`,
+                          });
+                        }
+                      });
+                    }
+                    // Make sure module destination directory exists and is empty.
+                    const moddest = dest.clone();
+                    moddest.append(swmodpath);
+                    if (moddest.exists()) {
+                      moddest.remove(true);
+                    }
+                    if (moddest.exists())
+                      modreports.push({
+                        error: `(${conf.module}) Could not remove directory '${moddest.path}'.`,
+                      });
+                    if (
+                      !moddest.create(LocalFile.DIRECTORY_TYPE, {
+                        recursive: true,
+                      })
+                    ) {
+                      modreports.push({
+                        error: `(${conf.module}) Could not create module directory '${moddest.path}'.`,
+                      });
+                    }
                   }
-                }
-                // If still ok, copy config file etc.
-                if (!modreports.some((r) => r.error)) {
-                  confdest.writeFile(confstr);
-                  confs[conf.module] = conf;
-                  newmods.modules.push(conf);
-                  if (conf.CipherKey === '') {
-                    newmods.nokeymods.push(conf);
+                  // If still ok, copy config file etc.
+                  if (!modreports.some((r) => r.error)) {
+                    confdest.writeFile(confstr);
+                    confs[conf.module] = conf;
+                    newmods.modules.push(conf);
+                    if (conf.CipherKey === '') {
+                      newmods.nokeymods.push(conf);
+                    }
                   }
+                } else {
+                  modreports.push({
+                    error: `(unknown) Failed to parse config file.`,
+                  });
                 }
                 newmods.reports.push(...modreports);
                 break;
@@ -656,11 +675,17 @@ export async function installZIPs(
                     );
                     confFile.writeFile(str);
                     const nconf = parseSwordConf(confFile, Prefs);
-                    const index = newmods.audio.findIndex(
-                      (c) => c.module === nconf.module,
-                    );
-                    if (index === -1) newmods.audio.push(nconf);
-                    else newmods.audio[index] = nconf;
+                    if (nconf) {
+                      const index = newmods.audio.findIndex(
+                        (c) => c.module === nconf.module,
+                      );
+                      if (index === -1) newmods.audio.push(nconf);
+                      else newmods.audio[index] = nconf;
+                    } else {
+                      newmods.reports.push({
+                        error: `(${conf.module}) New config file was not parseable: ${confFile.leafName}.`,
+                      });
+                    }
                   }
                 }
                 break;
@@ -743,7 +768,7 @@ type DownloadRepoConfsType = {
   module: string;
   strconf: string;
   conf: SwordConfType;
-};
+} | null;
 
 async function repoConfigs(
   manifest: FTPDownload,
@@ -793,18 +818,20 @@ async function repoConfigs(
   files.forEach((r) => {
     const { header, content: buffer } = r;
     if (header.name.endsWith('.conf')) {
-      const rconf = {} as DownloadRepoConfsType;
-      rconf.strconf = buffer.toString('utf8');
+      const strconf = buffer.toString('utf8');
+      let rconf = null as DownloadRepoConfsType;
       const conf = parseSwordConf(
         {
-          confString: rconf.strconf,
+          confString: strconf,
           filename: header.name.replace(/^.*?mods\.d[/\\]/, ''),
           sourceRepository: manifest,
         },
         Prefs,
       );
-      rconf.conf = conf;
-      rconf.module = conf.module;
+      if (conf) {
+        const { module } = conf;
+        rconf = { strconf, conf, module };
+      }
       repositoryConfs.push(rconf);
       /*
       if (conf.module === 'Kapingamarangi') {
@@ -916,7 +943,7 @@ const Module = {
                   const f = modsd.clone().append(de);
                   if (!f.isDirectory() && f.path.endsWith('.conf')) {
                     const conf = parseSwordConf(f, Prefs);
-                    confs.push(conf);
+                    if (conf) confs.push(conf);
                   }
                 });
                 return await Promise.resolve(confs);
@@ -953,7 +980,9 @@ const Module = {
               failCause(manifest, C.UI.Manager.cancelMsg),
             );
           }
-          return await Promise.resolve(repconfs.map((rc) => rc.conf));
+          return await Promise.resolve(
+            repconfs.filter((rc) => rc).map((rc) => rc?.conf as SwordConfType),
+          );
         }
         return null;
       },
@@ -992,7 +1021,9 @@ const Module = {
     const dls: Array<Download | string | null> = downloads.map((dl) => {
       if (dl !== null) {
         const downloadkey = downloadKey(dl);
-        if (dl.type !== 'http' && ftpCancelableInit(downloadkey)) {
+        // HTTP module downloads may also use FTP to download a config file,
+        // so always init FTP cancelable.
+        if (ftpCancelableInit(downloadkey)) {
           return failCause(dl, C.UI.Manager.cancelMsg);
         }
       }
@@ -1037,7 +1068,9 @@ const Module = {
     let callingWinID = (arguments[3] ?? -1) as number;
     if (typeof winID === 'number') callingWinID = winID;
     const dlkey = downloadKey(download);
-    if (!alreadyReset && download.type !== 'http' && ftpCancelableInit(dlkey)) {
+    // HTTP module downloads may also use FTP to download a config file,
+    // so always init FTP cancelable.
+    if (!alreadyReset && ftpCancelableInit(dlkey)) {
       return failCause(download, C.UI.Manager.cancelMsg);
     }
     try {
@@ -1123,7 +1156,7 @@ const Module = {
               if (p && p !== -1) progress(p);
             },
           );
-          ftpThrowIfCanceled(downloadkey);
+          httpThrowIfCanceled(downloadkey);
 
           result = new ZIP(dlfile.path);
 
@@ -1144,7 +1177,7 @@ const Module = {
               );
               ftpThrowIfCanceled(downloadkey);
               const strconf = confs.find(
-                (rc) => rc.conf.filename === confname,
+                (rc) => rc && rc.conf.filename === confname,
               )?.strconf;
               if (strconf) {
                 result.addFile(
@@ -1174,28 +1207,34 @@ const Module = {
             },
             Prefs,
           );
-          // Then download module contents
-          const datapath = confModulePath(conf.DataPath);
-          if (!datapath) {
-            result = `Unexpected DataPath in ${confname}: ${conf.DataPath}`;
-          } else {
-            const modpath = fpath.posix.join(path, datapath);
-            const modfiles = await getDir(
-              domain,
-              modpath,
-              /\/lucene\//,
-              downloadkey,
-              progress,
-            );
-            ftpThrowIfCanceled(downloadkey);
-            result = new ZIP();
-            result.addFile(fpath.posix.join('mods.d', confname), confbuf);
-            modfiles.forEach((fp) => {
-              (result as ZIP).addFile(
-                fpath.posix.join(datapath, fp.listing.subdir, fp.listing.name),
-                fp.buffer,
+          if (conf) {
+            // Then download module contents
+            const datapath = confModulePath(conf.DataPath);
+            if (!datapath) {
+              result = `Unexpected DataPath in ${confname}: ${conf.DataPath}`;
+            } else {
+              const modpath = fpath.posix.join(path, datapath);
+              const modfiles = await getDir(
+                domain,
+                modpath,
+                /\/lucene\//,
+                downloadkey,
+                progress,
               );
-            });
+              ftpThrowIfCanceled(downloadkey);
+              result = new ZIP();
+              result.addFile(fpath.posix.join('mods.d', confname), confbuf);
+              modfiles.forEach((fp) => {
+                (result as ZIP).addFile(
+                  fpath.posix.join(
+                    datapath,
+                    fp.listing.subdir,
+                    fp.listing.name,
+                  ),
+                  fp.buffer,
+                );
+              });
+            }
           }
         }
       }

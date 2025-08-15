@@ -21,7 +21,8 @@ import type S from '../defaultPrefs.ts';
 import type LocalFile from './components/localFile.ts';
 
 // Return a SwordConfType object from a config LocalFile, or else from
-// the string contents of a config file.
+// the string contents of a config file. If no valid config can be
+// parsed (ie. no module name) the null is returned.
 export default function parseSwordConf(
   config:
     | LocalFile
@@ -31,7 +32,7 @@ export default function parseSwordConf(
         sourceRepository: Repository | string;
       },
   prefs?: GType['Prefs'],
-): SwordConfType {
+): SwordConfType | null {
   const Prefs: GType['Prefs'] | undefined = prefs
     ? prefs
     : Data.has('PrefsElectron')
@@ -236,7 +237,9 @@ export default function parseSwordConf(
     }
   }
 
-  return r;
+  // Currently only validating config module name.
+  const { module } = r;
+  return module && C.SwordModuleCharsRE.test(module) ? r : null;
 }
 
 // Given a local repository path, find its name from prefs.

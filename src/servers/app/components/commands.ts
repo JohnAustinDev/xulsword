@@ -603,8 +603,15 @@ const Commands = {
             `AudioChapters=${JSON_stringify(audioChapters)}`,
           );
           instcfile.writeFile(str);
-          newmods.audio.push(parseSwordConf(instcfile, Prefs));
-          ctot += 1;
+          const instconf = parseSwordConf(instcfile, Prefs);
+          if (instconf) {
+            newmods.audio.push(instconf);
+            ctot += 1;
+          } else {
+            newmods.reports.push({
+              error: `(${module}) New config file was not parseable.`,
+            });
+          }
         } else {
           newmods.reports.push({ error: `(${module}) Missing config file.` });
         }

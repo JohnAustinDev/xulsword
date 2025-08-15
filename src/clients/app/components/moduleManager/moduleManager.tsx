@@ -104,20 +104,20 @@ const notStatePref = {
     module: {
       data: [] as TModuleTableRow[],
       tableToDataRowMap: [] as number[],
+      render: 0,
+      remount: 0,
       modules: null as {
         allmodules: TModuleTableRow[];
         [code: string]: TModuleTableRow[];
       } | null,
-      render: 0,
-      remount: 0,
     },
 
     repository: {
       data: [] as TRepositoryTableRow[],
       tableToDataRowMap: [] as number[],
-      repositoryListings: [] as RepositoryListing[],
       render: 0,
       remount: 0,
+      repositoryListings: [] as RepositoryListing[],
     },
   },
 };
@@ -278,7 +278,7 @@ export default class ModuleManager
   }
 
   async loadTables(): Promise<void> {
-    const state = this.state as ManagerState;
+    let state = this.state as ManagerState;
     const { id } = this.props as ManagerProps;
 
     // Download data for the repository and module tables
@@ -298,7 +298,11 @@ export default class ModuleManager
       if (id !== 'removeModule') {
         try {
           if (!navigator.onLine) throw new Error(`No Internet connection.`);
+          state.progress = [9, 10];
+          this.sState(state);
           const result = await G.Module.crossWireMasterRepoList();
+          state = this.state as ManagerState;
+          state.progress = null;
           if (typeof result === 'string') throw new Error(result);
           crossWireRepos = result;
         } catch (er: any) {
@@ -388,6 +392,7 @@ export default class ModuleManager
     const { language, repository: repotable } = state.tables;
     const { repositoryListings } = repotable;
     const langs = new Set<string>();
+    const lngselection = H.retainSelectedValues(state, null, ['language']);
     repositoryListings.forEach((listing, i) => {
       if (
         Array.isArray(listing) &&
@@ -401,10 +406,15 @@ export default class ModuleManager
       }
     });
     const newTableData: TLanguageTableRow[] = [];
-    Array.from(langs).forEach((l) =>
-      newTableData.push([getLangReadable(l), { code: l }]),
-    );
+    Array.from(langs).forEach((code) => {
+      let r = H.findTableRow(code, 'language');
+      if (!r) {
+        r = H.findTableRow(code, 'language', [getLangReadable(code), { code }]);
+      }
+      if (r) newTableData.push(r);
+    });
     language.data = newTableData.sort((a, b) => a[0].localeCompare(b[0]));
+    H.retainSelectedValues(state, lngselection);
     H.scrollToSelection(this, state, 'language');
   }
 
@@ -417,7 +427,6 @@ export default class ModuleManager
   loadModuleTable(state: ManagerState): void {
     // Insure there is one moduleData row object for each module in
     // each repository (local and remote).
-    const { language } = state;
     const { repository: repotable, module: modtable } = state.tables;
     const { repositoryListings } = repotable;
 
@@ -430,6 +439,7 @@ export default class ModuleManager
     const remoteXSM: SwordConfType[] = [];
 
     const builtInRepoKeys = G.BuiltInRepos.map((r) => repositoryKey(r));
+    const modselection = H.retainSelectedValues(state, null, ['module']);
 
     modtable.data = [];
     repositoryListings.forEach((listing, i) => {
@@ -460,7 +470,7 @@ export default class ModuleManager
           const modrepkey = repositoryModuleKey(c);
           // Re-use module table rows across all module table loads, so that
           // user changes are not forgotten!
-          let r = H.findModuleRow(modrepkey);
+          let r = H.findTableRow(modrepkey, 'module') as TModuleTableRow;
           if (!r) {
             r = [] as unknown as TModuleTableRow;
             r[H.ModCol.iInfo] = {
@@ -502,19 +512,14 @@ export default class ModuleManager
                 repositoryKey(r[H.ModCol.iInfo].repo) === builtInRepoKeys[0]
                   ? H.ON
                   : H.OFF;
-              r[H.ModCol.iInstalled] =
-                c.xsmType !== 'XSM_audio'
-                  ? H.ON
-                  : H.allAudioInstalled(c)
-                    ? H.ON
-                    : H.OFF;
+              r[H.ModCol.iInstalled] = H.ON;
               r[H.ModCol.iRemove] = H.OFF;
             } else {
               r[H.ModCol.iShared] = H.modCheckbox;
               r[H.ModCol.iInstalled] = H.modCheckbox;
               r[H.ModCol.iRemove] = H.modCheckbox;
             }
-            H.findModuleRow(modrepkey, r); // sets new module row
+            H.findTableRow(modrepkey, 'module', r); // sets new module row
           }
           modtable.data.push(r);
         });
@@ -539,7 +544,7 @@ export default class ModuleManager
         if (reprow && Array.isArray(listing)) {
           listing.forEach((c) => {
             const modkey = repositoryModuleKey(c);
-            const modrow = H.findModuleRow(modkey);
+            const modrow = H.findTableRow(modkey, 'module') as TModuleTableRow;
             if (modrow) {
               modrow[H.ModCol.iInfo].shadowedRows = [];
 
@@ -548,6 +553,8 @@ export default class ModuleManager
               const isLocal = isRepoLocal(c.sourceRepository);
               const isRemote = !isLocal;
 
+              // NOTE: In variable names, XSM refers only to type=XSM (not
+              // type=XSM_audio).
               const foundInstalledXSMs: SwordConfType[] = [];
               const isInstalledXSM =
                 c.xsmType === 'XSM' &&
@@ -619,7 +626,13 @@ export default class ModuleManager
 
               if (doShow && isRemote && foundInLocals.length) {
                 const shadowedRows = foundInLocals
-                  .map((conf) => H.findModuleRow(repositoryModuleKey(conf)))
+                  .map(
+                    (conf) =>
+                      H.findTableRow(
+                        repositoryModuleKey(conf),
+                        'module',
+                      ) as TModuleTableRow,
+                  )
                   .filter(Boolean) as H.TModuleTableRow[];
                 if (shadowedRows.length)
                   modrow[H.ModCol.iInfo].shadowedRows = shadowedRows;
@@ -631,6 +644,19 @@ export default class ModuleManager
                 modules[code].push(modrow);
                 modules.allmodules.push(modrow);
               }
+
+              // If a remote audio repo has files that are not installed
+              // locally, then iInstalled must be OFF to allow them to be
+              // installed.
+              if (isLocal && c.xsmType === 'XSM_audio')
+                modrow[H.ModCol.iInstalled] =
+                  !foundInRemote ||
+                  H.allAudioInstalled(
+                    c.AudioChapters,
+                    foundInRemote.AudioChapters,
+                  )
+                    ? H.ON
+                    : H.OFF;
             }
           });
         }
@@ -641,6 +667,7 @@ export default class ModuleManager
     );
 
     H.filterModuleTable(state);
+    H.retainSelectedValues(state, modselection);
   }
 
   handleColumns(tableName: (typeof H.Tables)[number]) {
