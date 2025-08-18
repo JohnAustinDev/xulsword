@@ -787,6 +787,11 @@ export default class ModuleManager
       repository.selection,
     );
 
+    const numReposLoading = repotable.data.reduce(
+      (p, c) => (c[H.RepCol.iInfo].loading ? p + 1 : p),
+      0,
+    );
+
     const disable = {
       moduleInfo: !selectionToTableRows(module.selection).length,
       moduleInfoBack: false,
@@ -808,8 +813,19 @@ export default class ModuleManager
             custom ?? null,
             repotable.data[selectedRepoDataRows[0]][H.RepCol.iInfo].repo,
           )),
-      repoCancel: !repotable.data.find((r) => r[H.RepCol.iInfo].loading),
+      repoCancel: numReposLoading === 0,
     };
+
+    // Accurate repository total progress is unnecessary and problematic,
+    // however, the main progress bar must show if any repositories are
+    // loading. For instance, dictionary auto-install may open the manager
+    // while the repository table is hidden, and the user needs to be made
+    // aware that they need to wait.
+    const progress2 =
+      progress ??
+      (numReposLoading && repotable.data.length
+        ? [repotable.data.length - numReposLoading, repotable.data.length]
+        : null);
 
     // Set one or the other or neither (never both)
     let vkAudioDialog;
@@ -1162,11 +1178,11 @@ export default class ModuleManager
                 {G.i18n.t('moduleSources.label')}
               </Button>
             )}
-            {!progress && <Spacer flex="10" />}
-            {progress && (
+            {!progress2 && <Spacer flex="10" />}
+            {progress2 && (
               <Hbox className="progress-container" align="center" flex="10">
                 <ProgressBar
-                  value={progress[0] / progress[1]}
+                  value={progress2[0] / progress2[1]}
                   intent="primary"
                   animate
                   stripes

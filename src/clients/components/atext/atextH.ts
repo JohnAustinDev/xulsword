@@ -13,8 +13,6 @@ import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G, GI } from '../../G.ts';
 import { doUntilDone, getExtRefHTML } from '../../common.tsx';
-import RenderPromise from '../../renderPromise.ts';
-import analytics from '../../analytics.ts';
 import { getElementData } from '../../htmlData.ts';
 import log from '../../log.ts';
 import { delayHandler } from '../libxul/xul.tsx';
