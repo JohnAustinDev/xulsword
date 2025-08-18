@@ -1692,9 +1692,9 @@ async function promptAudioChapters(
             chapter: 1,
             lastchapter: 1,
             vkMod: conf.module,
-            v11n: 'KJV',
+            v11n: conf.Versification ?? 'KJV',
           };
-          dialog.selection = dialog.initial;
+          dialog.selection = clone(dialog.initial);
           let ch: number[] | undefined;
           const acbk0 = ac[books[0]];
           if (acbk0) {

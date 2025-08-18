@@ -92,9 +92,9 @@ export function getRefBible(
 // Each note is an 'nlist' div. A single note may be an extended cross-
 // reference containing many individual cross-references. All cross-
 // references are displayed in one of these possible ways:
-// - Reference text only, for quick display, as required in browser mode.
-// - Links only, requires server processing to parse and determine link
-//   targets.
+// - Reference label only, for quick display, as required in browser mode.
+// - Links only, requires server processing to parse reference labels and
+//   determine link targets.
 // - Links plus reference texts, requires even more server processing to
 //   determine link targets plus locate installed modules capable of
 //   suppling the reference text for each target. In browser mode, this
@@ -105,7 +105,7 @@ export function getNoteHTML(
   panelIndex = 0, // used for IDs
   openCRs = false, // show scripture reference texts or not
   keepOnlyThisNote = '', // type.title of a single note to keep
-  userTarget = false,
+  vklookup = false, // use any user pref vkmod for versekey lookups
   renderPromise: RenderPromise,
 ) {
   if (!notes) return '';
@@ -237,7 +237,7 @@ export function getNoteHTML(
                   let tmod = /^[\w\d]+:/.test(innerHtmlValue)
                     ? innerHtmlValue.split(':')[0]
                     : context;
-                  if (userTarget && context) {
+                  if (vklookup && context) {
                     const vklookup = G.Prefs.getComplexValue(
                       'global.popup.vklookup',
                     );
