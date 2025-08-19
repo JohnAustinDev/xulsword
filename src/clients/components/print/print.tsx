@@ -47,7 +47,6 @@ export default function Print(props: PrintProps) {
         } as PrintOptionsType,
         progress: -1,
       },
-      true,
     );
   };
 

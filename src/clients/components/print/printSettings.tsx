@@ -281,7 +281,6 @@ export default class PrintSettings extends React.Component {
                       iframeFilePath: '',
                     } as PrintOptionsType,
                   },
-                  true,
                 );
               })
               .catch((er) => {
@@ -313,7 +312,6 @@ export default class PrintSettings extends React.Component {
                     modal: 'off',
                     progress: -1,
                   },
-                  true,
                 );
               })
               .catch((er) => {

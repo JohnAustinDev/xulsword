@@ -62,6 +62,12 @@ type ControllerProps = {
   children: ReactElement;
 };
 
+if (Build.isWebApp)
+  window.addEventListener('popstate', (event) => {
+    const { state } = event;
+    if (state) Subscription.publish.setControllerState(state);
+  });
+
 const defaultControllerState = {
   reset: '' as string,
   dialogs: [] as ReactElement[],
@@ -72,6 +78,8 @@ const defaultControllerState = {
 
 export type ControllerState = Omit<ControllerProps, 'children'> &
   typeof defaultControllerState;
+
+type ControllerStateObj = { [k in keyof ControllerState]: StateArray<k> };
 
 // Key order must never change for React hooks to work!
 const stateK = Object.keys(defaultControllerState) as Array<
@@ -92,7 +100,7 @@ const delayHandlerThis = {};
 function Controller(props: ControllerProps) {
   const { children } = props;
   const s0 = { ...defaultControllerState, ...props };
-  const s = {} as { [k in keyof ControllerState]: StateArray<k> };
+  const s = {} as ControllerStateObj;
   stateKeys.forEach((me) => {
     s[me] = useState(s0[me]) as any;
   });
@@ -104,6 +112,21 @@ function Controller(props: ControllerProps) {
   }
 
   const textbox: React.RefObject<HTMLInputElement> = React.createRef();
+
+  function addStateToHistory(state: ControllerState, push: boolean) {
+    if (Build.isWebApp && history) {
+      const controllerState = {} as ControllerState;
+      stateKeys.forEach((key) => {
+        const v = state[key];
+        (controllerState as any)[key] = v;
+      });
+      const { card } = controllerState;
+      const { name } = card ?? {};
+      const url = document.location.href + (name ? `/${name}` : '');
+      if (push) history.pushState(controllerState, '', url);
+      else history.replaceState(controllerState, '', url);
+    }
+  }
 
   // IPC component-reset setup:
   useEffect(() => {
@@ -142,35 +165,40 @@ function Controller(props: ControllerProps) {
 
   // Set Window State:
   useEffect(() => {
-    return Subscription.subscribe.setControllerState(
-      (state, mergeValue = false) => {
-        Object.entries(state).forEach((entry) => {
-          const [sp, v] = entry;
-          const S = sp as keyof ControllerState;
-          let val = v as any;
-          const [v0] = s[S];
-          // If mergeValue is set, and both old and new values are objects,
-          // then merge their keys to form the new value (useful for print).
-          if (
-            mergeValue &&
-            val &&
-            typeof val === 'object' &&
-            v0 &&
-            typeof v0 === 'object'
-          ) {
-            val = { ...v0, ...val };
-          }
-          if (S === 'dialogs' || stringHash(v0) !== stringHash(val)) {
-            if (S === 'reset')
-              log.debug(`Controller reset: ${JSON_stringify(state)}`);
-            const setMe = s[S][1] as (a: any) => void;
-            if (state.print !== null && S === 'reset') {
-              setTimeout(() => setMe(val), 1);
-            } else setMe(val);
-          }
-        });
-      },
-    );
+    return Subscription.subscribe.setControllerState((partialState) => {
+      const fullState = {} as ControllerState;
+      stateKeys.forEach((me) => ([(fullState as any)[me]] = s[me]));
+      if (history && !history.state) addStateToHistory(fullState, false);
+      Object.entries(partialState).forEach((entry) => {
+        const [sp, v] = entry;
+        const S = sp as keyof ControllerState;
+        let val = v as any;
+        const [v0] = s[S];
+        // If mergeValue is set, and both old and new values are objects,
+        // then merge their keys to form the new value (useful for print).
+        if (
+          sp === 'print' &&
+          val &&
+          typeof val === 'object' &&
+          v0 &&
+          typeof v0 === 'object'
+        ) {
+          val = { ...v0, ...val };
+        }
+        (fullState as any)[S] = val;
+        if (S === 'dialogs' || stringHash(v0) !== stringHash(val)) {
+          if (S === 'reset')
+            log.debug(`Controller reset: ${JSON_stringify(partialState)}`);
+          const setMe = s[S][1] as (a: any) => void;
+          if (partialState.print !== null && S === 'reset') {
+            setTimeout(() => setMe(val), 1);
+          } else setMe(val);
+        }
+      });
+      // If card is changing from null to string, record this in history.
+      const showingCard = s.card?.[0] === null && !!partialState.card;
+      if (Build.isWebApp) addStateToHistory(fullState, showingCard);
+    });
   });
 
   // Progress meter:

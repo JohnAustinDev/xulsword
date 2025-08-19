@@ -164,7 +164,6 @@ export default class PrintPassage
               direction: G.Tab[vkMod].direction || 'auto',
             } as PrintOptionsType,
           },
-          true, // merge above into existing PrintOptionsType
         );
 
         // Insure current selection will be rendered to tdiv.
@@ -271,7 +270,6 @@ export default class PrintPassage
         {
           print: { printDisabled: true } as PrintOptionsType,
         },
-        true, // merge above into existing PrintOptionsType
       );
       this.setState({ progress: 0 } as PrintPassageState);
 
@@ -364,7 +362,6 @@ export default class PrintPassage
               printDisabled: false,
             } as PrintOptionsType,
           },
-          true, // merge above into existing PrintOptionsType
         );
         printRefs.setPages();
         resolve(finished ? numChapters : 0);
