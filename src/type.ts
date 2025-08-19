@@ -967,7 +967,10 @@ export const GBuilder: GType & {
         'installDownloads',
       ],
     ],
-    ['LibSword', ['searchIndexBuild', 'search']],
+    [
+      'LibSword',
+      ['searchIndexBuild', 'search', 'startBackgroundSearchIndexer'],
+    ],
     ['Window', ['print', 'printToPDF']],
   ],
 

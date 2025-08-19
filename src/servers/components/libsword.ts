@@ -35,9 +35,9 @@ import type {
   NewModuleReportType,
   SwordConfType,
   ModTypes,
-  GType,
 } from '../../type.ts';
 import type S from '../../defaultPrefs.ts';
+import type { PrefsGType } from '../../prefs.ts';
 import type { ManagerStatePref } from '../../clients/app/components/moduleManager/moduleManager.tsx';
 
 export type CppGlobalMethods = {
@@ -146,7 +146,9 @@ const LibSword = {
 
   backgroundIndexerTO: null as NodeJS.Timeout | null,
 
-  backgroundIndexerEnabled: false as boolean,
+  startBackgroundIndexerTO: null as NodeJS.Timeout | null,
+
+  backgroundIndexerInterrupt: false as boolean,
 
   init(repositories?: ManagerStatePref['repositories']): boolean {
     if (this.initialized) return false;
@@ -739,11 +741,10 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   },
 
   stopBackgroundSearchIndexer() {
-    if (Cache.has('startBackgroundSearchIndexer')) {
-      clearTimeout(Cache.read('startBackgroundSearchIndexer'));
-      Cache.clear('startBackgroundSearchIndexer');
-    }
-    this.backgroundIndexerEnabled = false;
+    const { startBackgroundIndexerTO } = this;
+    if (startBackgroundIndexerTO) clearTimeout(startBackgroundIndexerTO);
+    this.startBackgroundIndexerTO = null;
+    this.backgroundIndexerInterrupt = true;
     Object.keys(this.indexingID).forEach((module) => {
       this.searchIndexCancel(module);
     });
@@ -753,71 +754,87 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // already being indexed. If an index fails, or takes too long and is canceled, it
   // will not be attempted again unless the module is re-installed. However the user
   // can always click the create index button.
-  async startBackgroundSearchIndexer(Prefs: GType['Prefs']) {
-    if (Object.keys(this.indexingID).length !== 0 || !this.isReady()) return;
-    this.backgroundIndexerEnabled = true;
-    const start = new Date().valueOf();
-    const timeout = C.UI.Search.backgroundIndexerTimeout; // milliseconds
-    const modlist = LibSword.getModuleList();
-    const modules = Array.from(
-      new Set(
-        modlist === C.NOMODULES
-          ? []
-          : modlist.split('<nx>').map((x) => x.split(';')[0]),
-      ),
-    );
-    const modulesToIndex = modules.filter(
-      (m) =>
-        !(
-          Prefs.getComplexValue(
-            'global.noAutoSearchIndex',
-          ) as typeof S.prefs.global.noAutoSearchIndex
-        ).includes(m) && !this.luceneEnabled(m),
-    );
-
-    if (modulesToIndex.length) {
-      log.info(
-        `Starting background indexer. (${modulesToIndex.length} modules to index, ${
-          modules.length - modulesToIndex.length
-        } skipped, ${Math.floor(timeout / 60000)} minute timeout per module)`,
-      );
-    }
-
-    // Index one module at a time, don't try and break their PC...
-    let passed = 0;
-    let failed = 0;
-    while (
-      this.backgroundIndexerEnabled &&
-      this.isReady() &&
-      modulesToIndex.length
-    ) {
-      const module = modulesToIndex.pop();
-      if (module) {
-        let result: boolean;
-        try {
-          result = await this.timedIndexer(module, timeout);
-        } catch (er: unknown) {
-          result = false;
+  async startBackgroundSearchIndexer(delay = 0) {
+    if (delay) {
+      const { startBackgroundIndexerTO } = this;
+      if (startBackgroundIndexerTO) clearTimeout(startBackgroundIndexerTO);
+      this.startBackgroundIndexerTO = setTimeout(() => {
+        LibSword.startBackgroundSearchIndexer().catch((er) => {
           log.error(er);
-        }
-        if (result) passed += 1;
-        else {
-          failed += 1;
-          log.warn(`Failed background index: ${module}`);
-          noAutoSearchIndex(Prefs, module);
+        });
+      }, C.UI.Search.backgroundIndexerStartupWait);
+      return;
+    }
+    if (Build.isElectronApp && Data.has('PrefsElectron')) {
+      if (Object.keys(this.indexingID).length !== 0 || !this.isReady()) return;
+      this.backgroundIndexerInterrupt = false;
+      const prefs = Data.read('PrefsElectron') as PrefsGType;
+      const start = new Date().valueOf();
+      const timeout = C.UI.Search.backgroundIndexerTimeout; // milliseconds
+      const modlist = LibSword.getModuleList();
+      const modules = Array.from(
+        new Set(
+          modlist === C.NOMODULES
+            ? []
+            : modlist.split('<nx>').map((x) => x.split(';')[0]),
+        ),
+      );
+      const modulesToIndex = modules.filter(
+        (m) =>
+          !(
+            prefs.getComplexValue(
+              'global.noAutoSearchIndex',
+            ) as typeof S.prefs.global.noAutoSearchIndex
+          ).includes(m) && !this.luceneEnabled(m),
+      );
+
+      if (modulesToIndex.length) {
+        log.info(
+          `Starting background indexer. (${modulesToIndex.length} modules to index, ${
+            modules.length - modulesToIndex.length
+          } skipped, ${Math.floor(timeout / 60000)} minute timeout per module)`,
+        );
+      }
+
+      // Index one module at a time, don't try and break their PC...
+      let passed = 0;
+      let failed = 0;
+      while (
+        !this.backgroundIndexerInterrupt &&
+        this.isReady() &&
+        modulesToIndex.length
+      ) {
+        const module = modulesToIndex.pop();
+        if (module) {
+          let result: boolean;
+          try {
+            result = await this.timedIndexer(module, timeout);
+          } catch (er: unknown) {
+            result = false;
+            log.error(er);
+          }
+          if (result) passed += 1;
+          else {
+            failed += 1;
+            log.warn(`Failed background index: ${module}`);
+            // Only prohibit re-indexing if the failure cause is other than
+            // LibSword not ready or backgroundIndexerInterrupt.
+            if (!(!this.isReady() || this.backgroundIndexerInterrupt))
+              noAutoSearchIndex(prefs, module);
+          }
         }
       }
-    }
 
-    if (passed || failed) {
-      const end = new Date().valueOf();
-      log.info(
-        `Finished background indexer. (${failed} failed, ${
-          Math.round((end - start) / 600) / 100
-        } minutes)`,
-      );
-    } else {
-      log.info(`No modules to index. (${modulesToIndex.length} modules)`);
+      if (passed || failed) {
+        const end = new Date().valueOf();
+        log.info(
+          `Finished background indexer. (${failed} failed, ${
+            Math.round((end - start) / 600) / 100
+          } minutes)`,
+        );
+      } else {
+        log.debug(`No modules to index. (${modulesToIndex.length} modules)`);
+      }
     }
   },
 
@@ -1074,7 +1091,8 @@ export type LibSwordType = Omit<
   | 'busy'
   | 'indexingID'
   | 'backgroundIndexerTO'
-  | 'backgroundIndexerEnabled'
+  | 'startBackgroundIndexerTO'
+  | 'backgroundIndexerInterrupt'
 >;
 
 export default LibSword as LibSwordType;

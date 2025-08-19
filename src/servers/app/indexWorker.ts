@@ -13,6 +13,11 @@ import type {
 // the server process via NodeJS subprocess. It build a search index for a
 // requested module, reports the result, and exits.
 
+let LogFilePath = '';
+log.transports.console.level = 'error';
+log.transports.file.level = 'error';
+log.transports.file.resolvePathFn = () => LogFilePath;
+
 // Libxulsword requires both these callbacks to be defined.
 (globalThis as CppGlobalMethods).ToUpperCase = (aString) => {
   if (aString) {
@@ -39,7 +44,7 @@ process.on('message', (msg: MessagesToIndexWorker) => {
       const { logfile, loglevel } = msg;
       log.transports.console.level = loglevel;
       log.transports.file.level = loglevel;
-      log.transports.file.resolvePathFn = () => logfile;
+      LogFilePath = logfile;
       return; // return doesn't disconnect!
     }
     case 'start': {

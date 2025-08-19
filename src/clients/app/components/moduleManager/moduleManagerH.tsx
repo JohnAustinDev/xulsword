@@ -47,7 +47,7 @@ import type {
   SelectVKProps,
 } from '../../../components/libxul/selectVK.tsx';
 import type ModuleManager from './moduleManager.tsx';
-import type { ManagerState } from './moduleManager.tsx';
+import type { ManagerProps, ManagerState } from './moduleManager.tsx';
 import type {
   NodeListOR,
   SelectORMType,
@@ -131,8 +131,8 @@ export type TRepositoryTableRow = [
 
 export type DownloadRecordType = Record<string, number | string> | null;
 
-export type ModuleUpdates = {
-  permissionGiven: boolean;
+export type ModuleUpdatesType = {
+  permissionGiven: boolean | null;
   remove?: SwordConfType;
   conf: SwordConfType;
 };
@@ -588,7 +588,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             break;
           }
           case 'cancel': {
-            G.Window.close();
+            closeWindow(this.state as ManagerState);
             break;
           }
           case 'ok': {
@@ -682,7 +682,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                 message: errors.slice(0, 10).join('\n'),
                 icon: 'error',
               }).catch((er) => log.error(er));
-            } else G.Window.close();
+            } else closeWindow(state);
             break;
           }
           case 'repoAdd': {
@@ -791,6 +791,23 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
   })().catch((er) => {
     log.error(er);
   });
+}
+
+function closeWindow(state: ManagerState) {
+  const { selection } = state.language;
+  const { data } = state.tables.language;
+  G.Prefs.setComplexValue(
+    'moduleManager.initialLanguages',
+    selectionToDataRows(state, 'language', selection).map(
+      (dri) => data[dri][LanCol.iInfo].code,
+    ),
+  );
+  // Indexer was stopped when this window opened, so restart it.
+  G.LibSword.startBackgroundSearchIndexer(
+    C.UI.Search.backgroundIndexerStartupWait,
+  )
+    .then(() => G.Window.close())
+    .catch((er) => log.error(er));
 }
 
 // Install a new custom repository (if repoDataIndex is -1) or update the
@@ -1003,6 +1020,34 @@ export async function readReposAndUpdateTables(
   const updateTables = (newstate: ManagerState) => {
     xthis.loadLanguageTable(newstate);
     xthis.loadModuleTable(newstate);
+    // If there is a moduleManager initialLanguages selection, apply it now.
+    const { id } = xthis.props as ManagerProps;
+    const { selection } = state.language;
+    const { data, tableToDataRowMap } = state.tables.language;
+    if (id === 'moduleManager') {
+      const initialLanguages = G.Prefs.getPrefOrCreate(
+        'moduleManager.initialLanguages',
+        'complex',
+        [],
+      ) as string[];
+      const selectDRIs = initialLanguages
+        .map((code) => data.findIndex((dr) => dr[LanCol.iInfo].code === code))
+        .filter((dri) => dri !== -1);
+      const selectTRIs = selectDRIs.map((dri) => {
+        const tri = tableToDataRowMap.indexOf(dri);
+        return tri === -1 ? dri : tri;
+      });
+      const selectLangs = selectDRIs.map((dri) => data[dri][LanCol.iInfo].code);
+      // Subtract new selections from the saved initialLanguages Pref value (it
+      // will be written again when the manager component unmounts).
+      G.Prefs.setComplexValue(
+        'moduleManager.initialLanguages',
+        initialLanguages.filter((code) => !selectLangs.includes(code)),
+      );
+      state.language.selection = tableRowsToSelection(
+        selectionToTableRows(selection).concat(...selectTRIs),
+      );
+    }
     tableUpdate(newstate, ['module', 'language'], 'rowmap');
     xthis.sState(newstate);
   };
@@ -1141,9 +1186,9 @@ export function checkForModuleUpdates(
   );
 
   // Search all module table data for candidate updates.
-  const moduleUpdates: ModuleUpdates[] = [];
+  const moduleUpdates: ModuleUpdatesType[] = [];
   updateable.forEach((inst) => {
-    const candidates: ModuleUpdates[] = [];
+    const candidates: ModuleUpdatesType[] = [];
     module.data.forEach((row) => {
       const { conf } = row[ModCol.iInfo];
       if (
@@ -1180,12 +1225,12 @@ export function checkForModuleUpdates(
         candidates.push({
           remove: inst,
           conf: conf,
-          permissionGiven: false,
+          permissionGiven: null,
         });
       }
     });
     // Choose the first candidate with the highest version number, XSM modules first.
-    const version = (x: ModuleUpdates): string => {
+    const version = (x: ModuleUpdatesType): string => {
       let v = '0';
       if (x.conf.xsmType === 'XSM') {
         const i =
@@ -1201,7 +1246,7 @@ export function checkForModuleUpdates(
     if (candidates.length) moduleUpdates.push(candidates[0]);
   });
 
-  return promptAndInstall(xthis, state, moduleUpdates);
+  promptAndInstall(xthis, state, moduleUpdates);
 }
 
 // This function updates state but does NOT set it.
@@ -1214,7 +1259,7 @@ export function checkForSuggestions(xthis: ModuleManager, state: ManagerState) {
     if (nextSuggested.size) {
       // Get a list of suggested modules (choosing the latest version found
       // in any currently loaded qualifying repository).
-      let suggestions: ModuleUpdates[] = [];
+      let suggestions: ModuleUpdatesType[] = [];
       nextSuggested.forEach((m) => {
         let conf: SwordConfType | null = null;
         repositoryListings.forEach((l: RepositoryListing) => {
@@ -1228,7 +1273,7 @@ export function checkForSuggestions(xthis: ModuleManager, state: ManagerState) {
         });
         if (conf) {
           suggestions.push({
-            permissionGiven: false,
+            permissionGiven: null,
             conf: conf,
           });
         }
@@ -1268,17 +1313,18 @@ export function checkForSuggestions(xthis: ModuleManager, state: ManagerState) {
 
 // This function updates state but does NOT set the state. It may initiate or
 // cancel downloads, however.
-const ModuleUpdatePrompted: string[] = [];
+const ModuleUpdates = [] as ModuleUpdatesType[];
 function promptAndInstall(
   xthis: ModuleManager,
   state: ManagerState,
-  updatesx: ModuleUpdates[],
-): number {
+  updatesx: ModuleUpdatesType[],
+) {
   // Only initiate prompt/download once per module per window lifetime.
   const updates = updatesx.filter(
-    (mud) => !ModuleUpdatePrompted.includes(mud.conf.module),
+    (mud) =>
+      !ModuleUpdates.find((mud2) => mud.conf.module === mud2.conf.module),
   );
-  ModuleUpdatePrompted.push(...updates.map((mud) => mud.conf.module));
+  ModuleUpdates.push(...updates);
   // Show a toast to ask permission to install each update.
   updates.forEach((mud) => {
     const { module, Version, Abbreviation } = mud.conf;
@@ -1316,23 +1362,29 @@ function promptAndInstall(
             mud.permissionGiven = true;
           },
         },
-        onDismiss: () =>
-          setTimeout(() => {
-            if (!mud.permissionGiven) {
-              // Must use prevState here.
-              xthis.sState((prevState) => {
-                return installModuleUpdates(xthis, prevState, false, [mud])
-                  ? prevState
-                  : null;
-              });
-            }
-          }, 100),
+        onDismiss: () => {
+          if (mud.permissionGiven !== true) {
+            mud.permissionGiven = false;
+            // Must use prevState here.
+            xthis.sState((prevState) => {
+              installModuleUpdates(xthis, prevState, false, [
+                ModuleUpdates.indexOf(mud),
+              ]);
+              return prevState;
+            });
+          }
+        },
         icon: 'confirm',
       })
       .catch((er) => log.error(er));
   });
   // Download each update (to be canceled if prompt isn't accepted).
-  return installModuleUpdates(xthis, state, true, updates);
+  installModuleUpdates(
+    xthis,
+    state,
+    true,
+    updates.map((mud) => ModuleUpdates.indexOf(mud)),
+  );
 }
 
 // This function updates state but does NOT set state. It may however initiate
@@ -1340,13 +1392,15 @@ function promptAndInstall(
 function installModuleUpdates(
   xthis: ModuleManager,
   state: ManagerState,
-  doInstallUpdate: boolean,
-  moduleUpdates: ModuleUpdates[],
-): number {
+  installUpdate: boolean,
+  moduleUpdates: number[],
+) {
   const removes: [on: boolean, conf: SwordConfType][] = [];
   const installs: [on: boolean, conf: SwordConfType][] = [];
-  moduleUpdates.forEach((mud) => {
-    const { remove, conf } = mud;
+  moduleUpdates.forEach((mudIndex) => {
+    const mud = ModuleUpdates[mudIndex];
+    const { remove, conf, permissionGiven } = mud;
+    const doInstallUpdate = permissionGiven === false ? false : installUpdate;
     // Remove locally installed modules in the built-in repos.
     if (remove && isRepoBuiltIn(remove.sourceRepository)) {
       removes.push([doInstallUpdate, remove]);
@@ -1355,21 +1409,19 @@ function installModuleUpdates(
     installs.push([doInstallUpdate, conf]);
   });
   const sharedkey = repositoryKey(G.BuiltInRepos[0]);
-  return (
-    updateModuleInstallColumn(
-      xthis,
-      state,
-      installs.map((i) => i[0]),
-      installs.map((i) => i[1]),
-      // If removing from shared, also install to shared
-      removes.map((rm) => repositoryKey(rm[1].sourceRepository) === sharedkey),
-    ) +
-    updateModuleRemoveColumn(
-      xthis,
-      state,
-      removes.map((i) => i[0]),
-      removes.map((i) => i[1]),
-    )
+  updateModuleInstallColumn(
+    xthis,
+    state,
+    installs.map((i) => i[0]),
+    installs.map((i) => i[1]),
+    // If removing from shared, also install to shared
+    removes.map((rm) => repositoryKey(rm[1].sourceRepository) === sharedkey),
+  );
+  updateModuleRemoveColumn(
+    xthis,
+    state,
+    removes.map((i) => i[0]),
+    removes.map((i) => i[1]),
   );
 }
 
@@ -1787,43 +1839,27 @@ export async function download(
   const dlkeys = dlobjs.map((dlobj) => downloadKey(dlobj));
 
   // Prompt for audio any chapters.
-  try {
-    await Promise.all(
-      dlobjs.map(async (dlobj, i) => {
-        if (dlobj) {
-          const conf = configs[i];
-          if (conf.xsmType === 'XSM_audio' && 'http' in dlobj) {
-            return promptAudioChapters(state, conf)
-              .then((audio) => {
-                if (!audio) dlobjs[i] = null;
-                else dlobj.data = audio;
-              })
-              .catch((er) => {
-                dlobjs[i] = null;
-                let message: string | undefined;
-                if (typeof er === 'string') message = er;
-                if (er && typeof er === 'object' && 'message' in er) {
-                  ({ message } = er);
-                }
-                if (message) {
-                  const intent = message?.startsWith(C.UI.Manager.cancelMsg)
-                    ? Intent.NONE
-                    : Intent.DANGER;
-                  xthis
-                    .addToast({
-                      message,
-                      timeout: intent === Intent.DANGER ? -1 : 5000,
-                      intent: intent,
-                    })
-                    .catch((er) => log.error(er));
-                }
-              });
-          }
-        }
-      }),
-    );
-  } catch (er) {
-    log.error(er);
+  const audioPrompts = dlobjs.map((dlobj, i) => {
+    if (dlobj) {
+      const conf = configs[i];
+      if (conf.xsmType === 'XSM_audio' && 'http' in dlobj) {
+        return promptAudioChapters(state, conf);
+      }
+    }
+    return null;
+  });
+
+  if (!audioPrompts.every((p) => p === null)) {
+    try {
+      const promptResults = await Promise.all(audioPrompts);
+      promptResults.forEach((promptResult, i) => {
+        if (!promptResult) dlobjs[i] = null;
+        else if (dlobjs[i] && 'http' in dlobjs[i])
+          dlobjs[i].data = promptResult;
+      });
+    } catch (er) {
+      log.error(er);
+    }
   }
 
   // Show downloads as loading.
@@ -1878,7 +1914,16 @@ export async function download(
         .map((mk) => findTableRow(mk, 'module') as TModuleTableRow)
         .filter(Boolean) as TModuleTableRow[];
       let failed: Intent | null = null;
-      if (Downloads.cancelled.includes(dlkey)) failed = Intent.NONE;
+      if (
+        Downloads.cancelled.includes(dlkey) ||
+        ModuleUpdates.find(
+          (mud) =>
+            mud.permissionGiven === false &&
+            dlkey ===
+              downloadKey(getModuleDownload(repositoryModuleKey(mud.conf))),
+        )
+      )
+        failed = Intent.NONE;
       else if (typeof result === 'string')
         failed = result.startsWith(C.UI.Manager.cancelMsg)
           ? Intent.NONE

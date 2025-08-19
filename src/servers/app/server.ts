@@ -52,6 +52,7 @@ import type {
   GCallType,
   NewModulesType,
   RowSelection,
+  SwordConfType,
   WindowDescriptorPrefType,
   WindowDescriptorType,
 } from '../../type.ts';
@@ -66,15 +67,12 @@ const logfile = new LocalFile(
 );
 if (logfile.exists()) logfile.remove();
 Data.write(logfile.path, 'logfile');
-// The renderer log contains any renderer window entries that occur before
-// renderer.tsx, where their file is changed to the main/renderer log file.
-const logfile2 = new LocalFile(path.join(Dirs.path.LogDir, 'renderer.log'));
-if (logfile2.exists()) logfile2.remove();
 log.transports.console.level = C.LogLevel;
 log.transports.file.level = C.LogLevel;
 log.transports.file.resolvePathFn = () => logfile.path;
-log.info(`Starting ${app.getName()} isDevelopment='${Build.isDevelopment}'`);
-
+log.info(
+  `Starting ${app.getName()} isDevelopment='${Build.isDevelopment}' LogLevel='${C.LogLevel}' logfile='${logfile.leafName}' Port='${process.env.WEBAPP_PORT}'`,
+);
 addBookmarkTransaction(
   -1,
   'bookmarks',
@@ -101,9 +99,6 @@ LibSword.init(
 const modlist = LibSword.getModuleList();
 const mods = modlist === C.NOMODULES ? [] : modlist.split('<nx>');
 log.info(`Loaded ${mods.length} SWORD modules.`);
-log.info(
-  `LogLevel: ${C.LogLevel}, Logfile: ${logfile.path}, Port: ${process.env.WEBAPP_PORT}`,
-);
 
 let ProgramTitle = '';
 
@@ -278,24 +273,31 @@ const openXulswordWindow = () => {
         }
         const newErrors = newmods.reports.map((r) => r.error).filter(Boolean);
         const newWarns = newmods.reports.map((r) => r.warning).filter(Boolean);
+        const modstr = (['modules', 'audio', 'bookmarks', 'fonts'] as const)
+          .map((type) => {
+            const ms = newmods[type];
+            const strings =
+              typeof ms[0] === 'string'
+                ? ms
+                : ms.map((c) => (c as SwordConfType).module);
+            let s = (type === 'modules' ? 'sword' : type) + ' module(s)';
+            if (['bookmarks', 'fonts'].includes(type)) s = type;
+            return strings.length
+              ? `${strings.length} ${s}: ${strings.join(', ')}`
+              : '';
+          })
+          .filter(Boolean)
+          .join('. ');
         if (newErrors.length) {
           log.error(
-            `${
-              newmods.modules.length
-            } Module(s) installed with problems:\n${newErrors.join('\n')}`,
+            `Installed with errors: ${modstr}\n${newErrors.join('\n')}`,
           );
         } else if (newWarns.length) {
           log.warn(
-            `${
-              newmods.modules.length
-            } Module(s) installed with warnings:\n${newWarns.join('\n')}`,
+            `Installed with warnings: ${modstr}\n${newWarns.join('\n')}`,
           );
-        } else {
-          log.info(
-            `${
-              newmods.modules.length + newmods.bookmarks.length
-            } MODULE(S) SUCCESSFULLY INSTALLED!`,
-          );
+        } else if (modstr.length) {
+          log.info(`Installed SUCCESSFULLY: ${modstr}`);
         }
         newmods.modules.forEach((m) => {
           DiskCache.delete(null, m.module);
@@ -345,18 +347,11 @@ const openXulswordWindow = () => {
           }
         });
         Prefs.setComplexValue('global.noAutoSearchIndex', nasi);
-        if (Cache.has('startBackgroundSearchIndexer')) {
-          clearTimeout(Cache.read('startBackgroundSearchIndexer'));
-          Cache.clear('startBackgroundSearchIndexer');
-        }
-        Cache.write(
-          setTimeout(() => {
-            LibSword.startBackgroundSearchIndexer(Prefs).catch((er) => {
-              log.error(er);
-            });
-          }, C.UI.Search.backgroundIndexerStartupWait),
-          'startBackgroundSearchIndexer',
-        );
+        LibSword.startBackgroundSearchIndexer(
+          C.UI.Search.backgroundIndexerStartupWait,
+        ).catch((er) => {
+          log.error(er);
+        });
       },
     ),
   );
@@ -374,15 +369,12 @@ const openXulswordWindow = () => {
     );
   }
 
-  xulswordWindow.on('ready-to-show', () =>
-    Cache.write(
-      setTimeout(() => {
-        LibSword.startBackgroundSearchIndexer(Prefs).catch((er) => {
-          log.error(er);
-        });
-      }, C.UI.Search.backgroundIndexerStartupWait),
-      'startBackgroundSearchIndexer',
-    ),
+  xulswordWindow.on(
+    'ready-to-show',
+    () =>
+      void LibSword.startBackgroundSearchIndexer(
+        C.UI.Search.backgroundIndexerStartupWait,
+      ).catch((er) => log.error(er)),
   );
 
   xulswordWindow.on('close', () => {
@@ -522,7 +514,11 @@ const init = async () => {
 
   ProgramTitle = localizeString(i18n, 'i18n:program.title');
 
-  if (Prefs.getBoolPref('global.InternetPermission')) {
+  // autoUpdater currently (8/19/25) only supports macOS and Windows.
+  if (
+    ['darwin', 'win32'].includes(process.platform ?? '') &&
+    Prefs.getBoolPref('global.InternetPermission')
+  ) {
     autoUpdater.logger = log;
     autoUpdater
       .checkForUpdatesAndNotify({
@@ -609,7 +605,10 @@ const init = async () => {
   (['moduleManager', 'removeModule'] as const).forEach((id) => {
     const k = `${id}.language.selection`;
     const v = Prefs.getComplexValue(k) as string[] | RowSelection;
-    if (typeof v[0] === 'string') Prefs.setComplexValue(k, [] as RowSelection);
+    if (typeof v[0] === 'string') {
+      log.info(`Applying pref update to: ${k}`);
+      Prefs.setComplexValue(k, [] as RowSelection);
+    }
   });
 };
 

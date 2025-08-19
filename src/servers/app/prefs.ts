@@ -30,6 +30,6 @@ const Prefs = new PrefsBase(
   BrowserWindow,
 );
 
-Data.write(Prefs, 'PrefsElectron'); // for buried fontURL()
+Data.write(Prefs, 'PrefsElectron'); // for buried fontURL() etc.
 
 export default Prefs as PrefsGType;
