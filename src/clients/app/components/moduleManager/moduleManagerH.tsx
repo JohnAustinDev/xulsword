@@ -588,7 +588,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             break;
           }
           case 'cancel': {
-            closeWindow(this.state as ManagerState);
+            closeWindow(this, this.state as ManagerState);
             break;
           }
           case 'ok': {
@@ -682,7 +682,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                 message: errors.slice(0, 10).join('\n'),
                 icon: 'error',
               }).catch((er) => log.error(er));
-            } else closeWindow(state);
+            } else closeWindow(this, state);
             break;
           }
           case 'repoAdd': {
@@ -793,11 +793,12 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
   });
 }
 
-function closeWindow(state: ManagerState) {
+function closeWindow(xthis: ModuleManager, state: ManagerState) {
+  const { id } = xthis.props as ManagerProps;
   const { selection } = state.language;
   const { data } = state.tables.language;
   G.Prefs.setComplexValue(
-    'moduleManager.initialLanguages',
+    `${id}.initialLanguages`,
     selectionToDataRows(state, 'language', selection).map(
       (dri) => data[dri][LanCol.iInfo].code,
     ),
@@ -1024,30 +1025,34 @@ export async function readReposAndUpdateTables(
     const { id } = xthis.props as ManagerProps;
     const { selection } = state.language;
     const { data, tableToDataRowMap } = state.tables.language;
-    if (id === 'moduleManager') {
-      const initialLanguages = G.Prefs.getPrefOrCreate(
-        'moduleManager.initialLanguages',
-        'complex',
-        [],
-      ) as string[];
-      const selectDRIs = initialLanguages
-        .map((code) => data.findIndex((dr) => dr[LanCol.iInfo].code === code))
-        .filter((dri) => dri !== -1);
-      const selectTRIs = selectDRIs.map((dri) => {
-        const tri = tableToDataRowMap.indexOf(dri);
-        return tri === -1 ? dri : tri;
-      });
-      const selectLangs = selectDRIs.map((dri) => data[dri][LanCol.iInfo].code);
-      // Subtract new selections from the saved initialLanguages Pref value (it
-      // will be written again when the manager component unmounts).
-      G.Prefs.setComplexValue(
-        'moduleManager.initialLanguages',
-        initialLanguages.filter((code) => !selectLangs.includes(code)),
-      );
-      state.language.selection = tableRowsToSelection(
-        selectionToTableRows(selection).concat(...selectTRIs),
-      );
-    }
+
+    // Maintain the language table selection across window opens. The
+    // repository table already maintains its selection, because table
+    // data rows are the same across window opens. Module table selection
+    // is better not being remembered anyway.
+    const initialLanguages = G.Prefs.getPrefOrCreate(
+      `${id}.initialLanguages`,
+      'complex',
+      [],
+    ) as string[];
+    const selectDRIs = initialLanguages
+      .map((code) => data.findIndex((dr) => dr[LanCol.iInfo].code === code))
+      .filter((dri) => dri !== -1);
+    const selectTRIs = selectDRIs.map((dri) => {
+      const tri = tableToDataRowMap.indexOf(dri);
+      return tri === -1 ? dri : tri;
+    });
+    const selectLangs = selectDRIs.map((dri) => data[dri][LanCol.iInfo].code);
+    // Subtract new selections from the saved initialLanguages Pref value (it
+    // will be written again when the manager component unmounts).
+    G.Prefs.setComplexValue(
+      `${id}.initialLanguages`,
+      initialLanguages.filter((code) => !selectLangs.includes(code)),
+    );
+    state.language.selection = tableRowsToSelection(
+      selectionToTableRows(selection).concat(...selectTRIs),
+    );
+
     tableUpdate(newstate, ['module', 'language'], 'rowmap');
     xthis.sState(newstate);
   };
@@ -1848,7 +1853,6 @@ export async function download(
     }
     return null;
   });
-
   if (!audioPrompts.every((p) => p === null)) {
     try {
       const promptResults = await Promise.all(audioPrompts);
@@ -1879,6 +1883,7 @@ export async function download(
     (cancel) => !dlkeys.includes(cancel),
   );
 
+  // Initiate the actual download.
   const downloads = G.Module.downloads(dlobjs);
   Downloads.promises.push(downloads);
   dlobjs.forEach((_dlobj, i) => {
@@ -1903,7 +1908,7 @@ export async function download(
     false,
   );
 
-  // Update the module table.
+  // Display toast on download error or else set iInstalled to ON.
   dlobjs.forEach((_dlobj, i) => {
     const dl = dls[i];
     if (dl) {
@@ -1957,7 +1962,8 @@ export async function download(
       }
     }
   });
-  // Don't update the rowmap after downloads are complete. When sorting by
+
+  // Don't update the rowmap after downloads are completed. When sorting by
   // iInstalled row, the results may seem to mysteriously disappear.
   tableUpdate(newstate, 'module');
   xthis.sState(newstate);
@@ -1978,7 +1984,7 @@ function downloadsLoading(
           row[ModCol.iInfo].intent = intent(ModCol.iInstalled, Intent.SUCCESS);
         } else {
           row[ModCol.iInfo].loading = false;
-          // Intent is set later when results are read...
+          // Intent is set later when results are read. Remove progress now.
           updateDownloadProgress(
             state,
             downloadKey(getModuleDownload(repositoryModuleKey(conf))),
@@ -2026,8 +2032,9 @@ export async function cancelDownloads(
   });
 }
 
-// If selectedRows is undefined return the currently selected rows of a table,
-// otherwise apply selectedRows to the table.
+// If selectedRows is undefined, return the currently selected rows of a table,
+// otherwise apply selectedRows to the table. This is used to maintain
+// table row selections across table data updates.
 export function retainSelectedValues(
   state: ManagerState,
   selectedRows?: { [k in (typeof Tables)[number]]?: TDataRow[] } | null,
@@ -2082,18 +2089,17 @@ export function retainSelectedValues(
   return r;
 }
 
-// This functions requires state[tableName].rowSort to be updated already, then
+// This function requires state[tableName].rowSort to be updated already, then
 // this function will regenerate tableToDataRowMap for that rowSort.
 export function updateTableToDataRowMap(
   state: ManagerState,
   tableName: (typeof Tables)[number],
 ) {
-  const { columns, rowSort, selection } = state[tableName];
+  const { columns, rowSort } = state[tableName];
   const { data } = state.tables[tableName];
   const { direction, propColumnIndex: tableColIndex } = rowSort;
 
-  // Save the current data selection.
-  const oldDataRowSelection = selectionToDataRows(state, tableName, selection);
+  const selectedValues = retainSelectedValues(state, undefined, [tableName]);
 
   // Re-sort the data rows.
   const dataColIndex = columns[tableColIndex].datacolumn;
@@ -2114,15 +2120,7 @@ export function updateTableToDataRowMap(
     return aa.toString().localeCompare(bb.toString());
   });
 
-  // Re-select the original data selection.
-  const { tableToDataRowMap } = state.tables[tableName];
-  const newselection = tableRowsToSelection(
-    oldDataRowSelection.map((dr) => {
-      const tr = tableToDataRowMap.indexOf(dr);
-      return tr === -1 ? dr : tr;
-    }),
-  );
-  state[tableName].selection = newselection;
+  retainSelectedValues(state, selectedValues);
 }
 
 // Cause one or more tables to be updated in one or more ways.

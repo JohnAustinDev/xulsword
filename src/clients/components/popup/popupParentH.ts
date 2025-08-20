@@ -28,7 +28,7 @@ export type PopupParent = RenderPromiseComponent & {
   popupUnblockTO?: NodeJS.Timeout | undefined;
   popupHandler: typeof popupHandler;
   popupParentHandler?: typeof popupParentHandler;
-  popupUpClickClose?: typeof popupUpClickClose;
+  popupUpClickClose?: typeof popupUpClickClose; // Far WebApp only
 };
 
 export const PopupParentInitState = {
