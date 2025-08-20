@@ -6,14 +6,12 @@ import type S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
-import log from '../../log.ts';
 import {
   rootRenderPromise,
   scrollIntoView,
   windowArguments,
 } from '../../common.tsx';
 import { delayHandler } from '../libxul/xul.tsx';
-import { getPopupHTML } from './popupH.ts';
 
 import type { PlaceType, SearchType, ShowType } from '../../../type.ts';
 import type { RenderPromiseComponent } from '../../renderPromise.ts';
@@ -30,6 +28,7 @@ export type PopupParent = RenderPromiseComponent & {
   popupUnblockTO?: NodeJS.Timeout | undefined;
   popupHandler: typeof popupHandler;
   popupParentHandler?: typeof popupParentHandler;
+  popupUpClickClose?: typeof popupUpClickClose;
 };
 
 export const PopupParentInitState = {
@@ -468,5 +467,25 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
 
     default:
       throw Error(`Unhandled popupHandler event type: '${es.type}'`);
+  }
+}
+
+// WebApp closes the popup if the user clicks outside of it.
+let WindowClickFunc: ((e: MouseEvent) => void) | null = null;
+export function popupUpClickClose(this: PopupParent, onlyRemove = false) {
+  if (Build.isWebApp) {
+    if (WindowClickFunc) window.removeEventListener('click', WindowClickFunc);
+    if (!onlyRemove) {
+      WindowClickFunc = (e: MouseEvent) => {
+        const { popupParent } = this.state as PopupParentState;
+        if (
+          popupParent &&
+          !ofClass('npopupTX', e.target, 'ancestor-or-self')
+        ) {
+          this.setState({ popupParent: null });
+        }
+      };
+      window.addEventListener('click', WindowClickFunc);
+    }
   }
 }

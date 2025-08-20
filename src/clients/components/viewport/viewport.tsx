@@ -13,6 +13,7 @@ import Popup from '../popup/popup.tsx';
 import {
   popupParentHandler as popupParentHandlerH,
   popupHandler as popupHandlerH,
+  popupUpClickClose as popupUpClickCloseH,
   PopupParentInitState,
 } from '../popup/popupParentH.ts';
 import { G, GI } from '../../G.ts';
@@ -107,6 +108,8 @@ class Viewport extends React.Component implements PopupParent {
 
   popupHandler: typeof popupHandlerH;
 
+  popupUpClickClose: typeof popupUpClickCloseH;
+
   popupDelayTO: PopupParent['popupDelayTO'];
 
   popupUnblockTO: PopupParent['popupUnblockTO'];
@@ -128,6 +131,7 @@ class Viewport extends React.Component implements PopupParent {
     this.popupParentHandler = popupParentHandlerH.bind(this);
     this.popupHandler = popupHandlerH.bind(this);
     this.audioHandler = this.audioHandler.bind(this);
+    this.popupUpClickClose = popupUpClickCloseH.bind(this);
 
     this.loadingRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
@@ -144,10 +148,12 @@ class Viewport extends React.Component implements PopupParent {
       popupParent.getElementsByClassName('npopup')[0]?.classList.remove('hide');
     }
     renderPromise.dispatch();
+    this.popupUpClickClose();
   }
 
   componentWillUnmount() {
     clearPending(this, ['popupDelayTO', 'popupUnblockTO']);
+    this.popupUpClickClose(true);
   }
 
   audioHandler(

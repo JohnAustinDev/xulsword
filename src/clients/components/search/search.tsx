@@ -25,6 +25,7 @@ import Popup from '../../components/popup/popup.tsx';
 import {
   popupParentHandler as popupParentHandlerH,
   popupHandler as popupHandlerH,
+  popupUpClickClose as popupUpClickCloseH,
   PopupParentInitState,
 } from '../../components/popup/popupParentH.ts';
 import Button from '../../components/libxul/button.tsx';
@@ -161,6 +162,8 @@ export default class Search
 
   popupHandler: typeof popupHandlerH;
 
+  popupUpClickClose: typeof popupUpClickCloseH;
+
   popupDelayTO: PopupParent['popupDelayTO'];
 
   popupUnblockTO: PopupParent['popupUnblockTO'];
@@ -218,6 +221,7 @@ export default class Search
     this.handler = handlerH.bind(this);
     this.popupParentHandler = popupParentHandlerH.bind(this);
     this.popupHandler = popupHandlerH.bind(this);
+    this.popupUpClickClose = popupUpClickCloseH.bind(this);
 
     this.resref = React.createRef();
     this.lexref = React.createRef();
@@ -247,6 +251,7 @@ export default class Search
       );
     }
     renderPromise.dispatch();
+    this.popupUpClickClose();
   }
 
   componentDidUpdate(_prevProps: any, prevState: SearchState) {
@@ -296,6 +301,7 @@ export default class Search
     this.destroy.forEach((d) => {
       d();
     });
+    this.popupUpClickClose(true);
   }
 
   updateResults() {

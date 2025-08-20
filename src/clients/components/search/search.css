@@ -6,14 +6,15 @@
   position: relative;
   overflow: hidden;
   gap: 10px 10px;
-  transition: height 0.5s;
-  height: 270px;
+  transition: max-height 0.5s;
+  max-height: 340px;
+  height: 100%;
 }
 .search-grid .groupbox {
   margin: 0 0 0 0;
 }
 .search-grid.less {
-  height: 100px;
+  max-height: 100px;
 }
 .search-grid > .grid-row-cell:nth-of-type(2) .groupbox {
   min-width: 360px;
@@ -76,10 +77,10 @@
   height: 100%;
 }
 .search-type > div:nth-child(2) {
-  top: -5px;
-  left: -5px;
-  width: calc(100% + 10px);
-  height: calc(100% + 10px);
+  top: -4px;
+  left: -0;
+  width: 100%;
+  height: 100%;
   background: rgb(220, 220, 220);
   border: 2px solid grey;
   border-radius: 8px;

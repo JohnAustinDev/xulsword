@@ -815,16 +815,16 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
           const { module } = state;
           const { descriptor } = this.props as SearchProps;
           if (descriptor && module && G.Tab[module]) {
-            const s: Partial<SearchState> = {
-              searchtype: 'SearchAnyWord',
-            };
-            this.setState(s);
             const result = await createSearchIndex(
               this,
               module,
               descriptor,
               new RenderPromise(null),
             );
+            this.setState({
+              searchtype: 'SearchAnyWord',
+              progress: -1,
+            } as SearchState);
             if (result)
               search(this).catch((er) => {
                 log.error(er);
