@@ -113,12 +113,13 @@ socket.on('connect', () => {
         ).length;
       if (numPanels > maxPanels) numPanels = maxPanels;
 
-      // Never let user pref global.locale or place overwrite settings. This
-      // insures they will be set by the server. The user can't change locale
-      // without changing the URL, and place also can't be changed by the user.
+      // These prefs cannot be set by the user so server settings should always
+      // override regardless of applyUserPrefs. When applyUserPrefs is 'after'
+      // the override must be done explicitly here.
       if (applyUserPrefs === 'after') {
         Prefs.setComplexValue('xulsword.place', settings.prefs.xulsword.place);
         Prefs.setCharPref('global.locale', settings.prefs.global.locale);
+        Prefs.setIntPref('global.fontSize', settings.prefs.global.fontSize);
       }
 
       // Since servers may not receive URL fragments from browsers, any URL

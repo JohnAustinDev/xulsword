@@ -235,7 +235,9 @@ export default class DynamicStyleSheet {
       });
 
       // Create userFontBase rule according to the global.font user pref.
-      const x = G.Prefs.getIntPref('global.fontSize'); // from 0 to 4
+      const x = G.Prefs.getIntPref(
+        'global.fontSize',
+      ) as typeof S.prefs.global.fontSize;
       const px = C.UI.Atext.fontSize + C.UI.Atext.fontSizeOptionDelta * (x - 2);
       sheet.insertRule(
         `.userFontBase {font-size:${px}px;}`,

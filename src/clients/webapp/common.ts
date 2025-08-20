@@ -117,10 +117,10 @@ export function mergePrefsRoots(
 ): PrefRoot {
   const complete: PrefRoot = clone(S);
   Object.entries(complete).forEach((entry) => {
-    // ex: prefs, xulsword
+    // ex: [prefs, xulsword]
     const [store, prefobj] = entry as [keyof PrefRoot, PrefObject];
     Object.entries(prefobj).forEach((entry2) => {
-      // ex: location, { book: Gen... }
+      // ex: [location, { book: Gen... }]
       const [key, defValue] = entry2;
       const sparseStore = sparse[store];
       const value =

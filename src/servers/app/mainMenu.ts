@@ -781,7 +781,10 @@ export default class MainMenuBuilder {
               id: `global.fontSize_val_0`,
               type: 'radio',
               click: d(() => {
-                radioSwitch('global.fontSize', 0);
+                radioSwitch(
+                  'global.fontSize',
+                  0 satisfies typeof S.prefs.global.fontSize,
+                );
               }),
             },
             {
@@ -789,7 +792,10 @@ export default class MainMenuBuilder {
               id: `global.fontSize_val_1`,
               type: 'radio',
               click: d(() => {
-                radioSwitch('global.fontSize', 1);
+                radioSwitch(
+                  'global.fontSize',
+                  1 satisfies typeof S.prefs.global.fontSize,
+                );
               }),
             },
             {
@@ -797,7 +803,10 @@ export default class MainMenuBuilder {
               id: `global.fontSize_val_2`,
               type: 'radio',
               click: d(() => {
-                radioSwitch('global.fontSize', 2);
+                radioSwitch(
+                  'global.fontSize',
+                  2 satisfies typeof S.prefs.global.fontSize,
+                );
               }),
             },
             {
@@ -805,7 +814,10 @@ export default class MainMenuBuilder {
               id: `global.fontSize_val_3`,
               type: 'radio',
               click: d(() => {
-                radioSwitch('global.fontSize', 3);
+                radioSwitch(
+                  'global.fontSize',
+                  3 satisfies typeof S.prefs.global.fontSize,
+                );
               }),
             },
             {
@@ -813,7 +825,10 @@ export default class MainMenuBuilder {
               id: `global.fontSize_val_4`,
               type: 'radio',
               click: d(() => {
-                radioSwitch('global.fontSize', 4);
+                radioSwitch(
+                  'global.fontSize',
+                  4 satisfies typeof S.prefs.global.fontSize,
+                );
               }),
             },
             { type: 'separator' },

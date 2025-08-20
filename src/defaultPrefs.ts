@@ -96,8 +96,8 @@ const S = {
       ],
       crashReporterURL: '' as string,
       InternetPermission: false as boolean,
-      fontSize: 2 as number,
-      locale: '' as string,
+      fontSize: 2 as 0 | 1 | 2 | 3 | 4,
+      locale: '' as (typeof C.Locales)[number][0],
       popup: {
         vklookup: {} as { [anyTypeModule: string]: string },
         feature: {} as {

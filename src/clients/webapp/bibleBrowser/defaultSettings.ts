@@ -18,6 +18,7 @@ export type BibleBrowserData = {
       xulsword: Partial<(typeof S)['prefs']['xulsword']>;
       global: {
         locale: (typeof C.Locales)[number][0];
+        fontSize: number;
       };
     };
   };
@@ -30,6 +31,10 @@ export type BibleBrowserData = {
 export function setDefaultBibleBrowserPrefs(
   prefs: BibleBrowserData['settings']['prefs'] | PrefsGType,
 ) {
+  const global =
+    'getComplexValue' in prefs
+      ? (prefs.getComplexValue('global') as typeof S.prefs.global)
+      : prefs.global;
   const xulsword =
     'getComplexValue' in prefs
       ? (prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword)
@@ -78,9 +83,15 @@ export function setDefaultBibleBrowserPrefs(
     xulsword.showChooser = window.innerWidth > C.UI.WebApp.mobileW;
   }
 
+  if (global.fontSize === -1) {
+    global.fontSize = window.innerWidth > C.UI.WebApp.mobileW ? 2 : 4;
+  }
+
   if ('setComplexValue' in prefs) {
+    prefs.setComplexValue('global', global);
     prefs.setComplexValue('xulsword', xulsword);
   } else {
+    prefs.global = global;
     prefs.xulsword = xulsword;
   }
 }
@@ -137,6 +148,7 @@ const defaultSettings: AllComponentsData = {
           },
           global: {
             locale: 'en',
+            fontSize: -1, // leave -1 to set at runtime
           },
         },
       },
