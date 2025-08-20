@@ -478,10 +478,7 @@ export function popupUpClickClose(this: PopupParent, onlyRemove = false) {
     if (!onlyRemove) {
       WindowClickFunc = (e: MouseEvent) => {
         const { popupParent } = this.state as PopupParentState;
-        if (
-          popupParent &&
-          !ofClass('npopupTX', e.target, 'ancestor-or-self')
-        ) {
+        if (popupParent && !ofClass('npopupTX', e.target, 'ancestor-or-self')) {
           this.setState({ popupParent: null });
         }
       };

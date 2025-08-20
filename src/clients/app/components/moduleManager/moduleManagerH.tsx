@@ -988,7 +988,10 @@ export async function readReposAndUpdateTables(
             try {
               data[index][RepCol.iInfo].loading = loading(RepCol.iState);
               list = await G.Module.repositoryListing([listDownload(repo)]);
-              if (list[0]) data[index][RepCol.iName] = data[index][RepCol.iName].replace(/ \(\d+\)$/, '') + ` (${list[0].length})`;
+              if (list[0])
+                data[index][RepCol.iName] =
+                  data[index][RepCol.iName].replace(/ \(\d+\)$/, '') +
+                  ` (${list[0].length})`;
             } catch (er) {
               list = [`${er}`];
             }

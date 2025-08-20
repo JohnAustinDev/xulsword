@@ -40,14 +40,12 @@ export default function Print(props: PrintProps) {
   const { pageable, direction, iframeFilePath } = print;
 
   const backHandler = () => {
-    Subscription.publish.setControllerState(
-      {
-        print: {
-          iframeFilePath: '',
-        } as PrintOptionsType,
-        progress: -1,
-      },
-    );
+    Subscription.publish.setControllerState({
+      print: {
+        iframeFilePath: '',
+      } as PrintOptionsType,
+      progress: -1,
+    });
   };
 
   const renderPromise = rootRenderPromise();

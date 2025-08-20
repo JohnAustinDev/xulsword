@@ -273,15 +273,13 @@ export default class PrintSettings extends React.Component {
               ...electronOptions,
             })
               .then(() => {
-                return Subscription.publish.setControllerState(
-                  {
-                    reset: randomID(),
-                    ...normal,
-                    print: {
-                      iframeFilePath: '',
-                    } as PrintOptionsType,
-                  },
-                );
+                return Subscription.publish.setControllerState({
+                  reset: randomID(),
+                  ...normal,
+                  print: {
+                    iframeFilePath: '',
+                  } as PrintOptionsType,
+                });
               })
               .catch((er) => {
                 this.addToast({
@@ -302,17 +300,15 @@ export default class PrintSettings extends React.Component {
               ...electronOptions,
             })
               .then((iframeFilePath: string) => {
-                return Subscription.publish.setControllerState(
-                  {
-                    reset: randomID(),
-                    print: {
-                      iframeFilePath,
-                      printDisabled: false,
-                    } as PrintOptionsType,
-                    modal: 'off',
-                    progress: -1,
-                  },
-                );
+                return Subscription.publish.setControllerState({
+                  reset: randomID(),
+                  print: {
+                    iframeFilePath,
+                    printDisabled: false,
+                  } as PrintOptionsType,
+                  modal: 'off',
+                  progress: -1,
+                });
               })
               .catch((er) => {
                 this.addToast({

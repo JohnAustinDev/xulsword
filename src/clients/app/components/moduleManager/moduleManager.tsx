@@ -799,10 +799,7 @@ export default class ModuleManager
         !selectedRepoDataRows.length ||
         selectedRepoDataRows.length > 1 ||
         (typeof selectedRepoDataRows[0] !== 'undefined' &&
-          !H.isRepoCustom(
-            state,
-            selectedRepoDataRows[0][H.RepCol.iInfo].repo,
-          )),
+          !H.isRepoCustom(state, selectedRepoDataRows[0][H.RepCol.iInfo].repo)),
       repoCancel: numReposLoading === 0,
     };
 

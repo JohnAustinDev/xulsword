@@ -157,14 +157,12 @@ export default class PrintPassage
       const { vkMod, book, chapter, lastchapter, v11n } = chapters;
       if (vkMod && lastchapter && tdiv) {
         // Insure controller has current direction and printDisabled settings.
-        Subscription.publish.setControllerState(
-          {
-            print: {
-              printDisabled: progress !== -1,
-              direction: G.Tab[vkMod].direction || 'auto',
-            } as PrintOptionsType,
-          },
-        );
+        Subscription.publish.setControllerState({
+          print: {
+            printDisabled: progress !== -1,
+            direction: G.Tab[vkMod].direction || 'auto',
+          } as PrintOptionsType,
+        });
 
         // Insure current selection will be rendered to tdiv.
         const show: AtextPropsType['show'] & {
@@ -266,11 +264,9 @@ export default class PrintPassage
 
     // Render the remaining chapters asynchronously with a progress bar
     return new Promise((resolve) => {
-      Subscription.publish.setControllerState(
-        {
-          print: { printDisabled: true } as PrintOptionsType,
-        },
-      );
+      Subscription.publish.setControllerState({
+        print: { printDisabled: true } as PrintOptionsType,
+      });
       this.setState({ progress: 0 } as PrintPassageState);
 
       let pages = 0;
@@ -356,13 +352,11 @@ export default class PrintPassage
 
         const finished = !!(div && div.dataset.renderkey === renderkey);
         this.setState({ progress: -1 } as PrintPassageState);
-        Subscription.publish.setControllerState(
-          {
-            print: {
-              printDisabled: false,
-            } as PrintOptionsType,
-          },
-        );
+        Subscription.publish.setControllerState({
+          print: {
+            printDisabled: false,
+          } as PrintOptionsType,
+        });
         printRefs.setPages();
         resolve(finished ? numChapters : 0);
       };
