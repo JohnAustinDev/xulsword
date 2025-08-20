@@ -173,7 +173,7 @@ const S = {
       },
       language: {
         open: true as boolean,
-        selection: [] as RowSelection,
+        selection: [] as string[],
         width: 150 as number,
         rowSort: {
           propColumnIndex: 0,
@@ -192,7 +192,7 @@ const S = {
       },
       repository: {
         open: true as boolean,
-        selection: [] as RowSelection,
+        selection: [] as string[],
         height: 392 as number,
         rowSort: {
           propColumnIndex: 2,
@@ -234,7 +234,7 @@ const S = {
         ] as TableColumnInfo[],
       },
       module: {
-        selection: [] as RowSelection,
+        selection: [] as string[],
         rowSort: {
           propColumnIndex: 0,
           direction: 'ascending',
@@ -376,7 +376,7 @@ const S = {
       repositories: null,
       language: {
         open: false as boolean,
-        selection: [] as RowSelection,
+        selection: [] as string[],
         rowSort: {
           propColumnIndex: 0,
           direction: 'ascending',
@@ -394,7 +394,7 @@ const S = {
         ] as TableColumnInfo[],
       },
       module: {
-        selection: [] as RowSelection,
+        selection: [] as string[],
         rowSort: {
           propColumnIndex: 0,
           direction: 'ascending',
@@ -532,7 +532,7 @@ const S = {
       },
       repository: {
         open: false as boolean,
-        selection: [] as RowSelection,
+        selection: [] as string[],
         height: 160 as number,
         rowSort: {
           propColumnIndex: 2,

@@ -7,7 +7,7 @@ import {
   localizeBookmarks,
   randomID,
   stringHash,
-  tableRowsToSelection,
+  tableRowIndexesToBPSelection,
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
@@ -209,7 +209,7 @@ export default class BMManagerWin extends React.Component {
       }
     }
 
-    const selectedRegions = tableRowsToSelection(
+    const selectedRegions = tableRowIndexesToBPSelection(
       selectedItems
         .map((id) => this.tableData.findIndex((r) => r[H.Col.iInfo].id === id))
         .filter((i) => i !== -1),

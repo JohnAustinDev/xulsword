@@ -2100,14 +2100,6 @@ export function versionCompare(v1: string | number, v2: string | number) {
   return 0;
 }
 
-export function isRepoCustom(
-  custom: Repository[] | null,
-  repo: Repository | string,
-): boolean {
-  const repokey = typeof repo === 'object' ? repositoryKey(repo) : repo;
-  return custom !== null && !!custom.find((r) => repositoryKey(r) === repokey);
-}
-
 export function isRepoLocal(repo: Repository | string): boolean {
   let r: Repository | null = null;
   if (typeof repo === 'object') r = repo;
@@ -2189,7 +2181,7 @@ export function repositoryModuleKey(conf: SwordConfType): string {
 }
 
 // Convert a Blueprint.js Region selection to a list of table rows.
-export function selectionToTableRows(regions: Region[]): number[] {
+export function BPSelectionToTableRowIndexes(regions: Region[]): number[] {
   const sels = new Set<number>();
   regions?.forEach((region) => {
     if (region.rows) {
@@ -2202,7 +2194,7 @@ export function selectionToTableRows(regions: Region[]): number[] {
 }
 
 // Convert a list of table rows to a Blueprint.js Region.
-export function tableRowsToSelection(rows: number[]): RowSelection {
+export function tableRowIndexesToBPSelection(rows: number[]): RowSelection {
   const unique = new Set(rows);
   const sorted = Array.from(unique).sort((a: number, b: number) =>
     a > b ? 1 : a < b ? -1 : 0,

@@ -8,7 +8,7 @@ import {
   ofClass,
   randomID,
   stringHash,
-  tableRowsToSelection,
+  tableRowIndexesToBPSelection,
   updateSelectedIndexes,
   xulswordLocation,
 } from '../../../common.ts';
@@ -129,7 +129,7 @@ export function scrollToItem(this: BMManagerWin, id: string) {
     const data = this.tableData;
     const selectedItem = data.findIndex((r) => r[Col.iInfo].id === id);
     if (selectedItem !== -1) {
-      const [selectedRegion] = tableRowsToSelection([selectedItem]);
+      const [selectedRegion] = tableRowIndexesToBPSelection([selectedItem]);
       if (selectedRegion) {
         const [r0, r1] = selectedRegion.rows;
         selectedRegion.rows = [r0 > 5 ? r0 - 5 : r0, r1 > 5 ? r1 - 5 : r1];

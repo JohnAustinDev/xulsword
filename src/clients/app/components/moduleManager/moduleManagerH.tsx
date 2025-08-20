@@ -8,8 +8,7 @@ import {
   keyToDownload,
   ofClass,
   repositoryKey,
-  tableRowsToSelection,
-  selectionToTableRows,
+  tableRowIndexesToBPSelection,
   versionCompare,
   isAudioVerseKey,
   subtractVerseKeyAudioChapters,
@@ -21,7 +20,6 @@ import {
   gbPaths,
   localizeString,
   findFirstLeafNode,
-  isRepoCustom,
 } from '../../../../common.ts';
 import C from '../../../../constant.ts';
 import { G } from '../../../G.ts';
@@ -47,7 +45,7 @@ import type {
   SelectVKProps,
 } from '../../../components/libxul/selectVK.tsx';
 import type ModuleManager from './moduleManager.tsx';
-import type { ManagerProps, ManagerState } from './moduleManager.tsx';
+import type { ManagerState } from './moduleManager.tsx';
 import type {
   NodeListOR,
   SelectORMType,
@@ -95,6 +93,8 @@ export type TLangCellInfo = TCellInfo & {
 
 export type TLanguageTableRow = [string, TLangCellInfo];
 
+type TLanguageTableRowLength = TLanguageTableRow['length'];
+
 type TModuleTableRowCheckboxFunc = (
   dri: number,
   dci: number,
@@ -121,6 +121,8 @@ export type TModuleTableRow = [
   TModCellInfo,
 ];
 
+type TModuleTableRowLength = TModuleTableRow['length'];
+
 export type TRepositoryTableRow = [
   string,
   string,
@@ -128,6 +130,8 @@ export type TRepositoryTableRow = [
   typeof ON | typeof OFF | typeof ALWAYSON,
   TRepCellInfo,
 ];
+
+type TRepositoryTableRowLength = TRepositoryTableRow['length'];
 
 export type DownloadRecordType = Record<string, number | string> | null;
 
@@ -361,19 +365,19 @@ export function onModCellClick(
   const disabled = ofClass(['disabled'], e.target);
   if (!disabled) {
     const newstate = this.state as ManagerState;
-    const { module, tables } = newstate;
+    const { tables } = newstate;
     const { module: modtable } = tables;
     const { data } = modtable;
-    const { selection } = module;
-    let datarows = selectionToDataRows(newstate, 'module', selection);
-    if (datarows.indexOf(dataRowIndex) === -1) datarows = [dataRowIndex];
+    let dataRowIndexes = selectionToDataRowIndexes(newstate, 'module');
+    if (dataRowIndexes.indexOf(dataRowIndex) === -1)
+      dataRowIndexes = [dataRowIndex];
     const drow = modtable.data[dataRowIndex];
     if (drow) {
       const checkbox = readModCheckbox(dataRowIndex, dataColIndex, data);
       if (checkbox !== null && !drow[ModCol.iInfo].loading) {
         if (dataColIndex === ModCol.iShared) {
           let updated = false;
-          datarows.forEach((dri) => {
+          dataRowIndexes.forEach((dri) => {
             const r = modtable.data[dri];
             if (r && readModCheckbox(dri, ModCol.iInstalled, data) === ON) {
               r[ModCol.iShared] = checkbox === OFF ? ON : OFF;
@@ -393,7 +397,7 @@ export function onModCellClick(
             this,
             newstate,
             checkbox === OFF,
-            datarows.map((dri) => modtable.data[dri][ModCol.iInfo].conf),
+            dataRowIndexes.map((dri) => modtable.data[dri][ModCol.iInfo].conf),
           );
           if (updated) return this.sState(newstate);
         }
@@ -416,20 +420,15 @@ export function onRepoCellClick(
   const { repository } = newstate;
   const { repository: repotable } = newstate.tables;
   if (repository) {
-    const { selection } = repository;
     const checkbox = repotable.data[dataRowIndex][RepCol.iState] === ON;
-    let selectedDataRows = selectionToDataRows(
-      newstate,
-      'repository',
-      selection,
-    );
-    if (selectedDataRows.indexOf(dataRowIndex) === -1)
-      selectedDataRows = [dataRowIndex];
+    let dataRowIndexes = selectionToDataRowIndexes(newstate, 'repository');
+    if (dataRowIndexes.indexOf(dataRowIndex) === -1)
+      dataRowIndexes = [dataRowIndex];
     if (
       dataColIndex === RepCol.iState &&
       !isRepoBuiltIn(repotable.data[dataRowIndex][RepCol.iInfo].repo)
     ) {
-      switchRepo(this, newstate, selectedDataRows, !checkbox);
+      switchRepo(this, newstate, dataRowIndexes, !checkbox);
     } else {
       rowSelect(newstate, e, 'repository', dataRowIndex);
       tableUpdate(newstate, 'repository');
@@ -482,12 +481,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             const newstate = this.state as ManagerState;
             const open = id === 'languageListOpen';
             newstate.language.open = open;
-            const selections = retainSelectedValues(newstate, null, [
-              'language',
-              'module',
-            ]);
             filterModuleTable(newstate);
-            retainSelectedValues(newstate, selections);
             tableUpdate(newstate, ['language', 'module'], 'rowmap');
             this.sState(newstate);
             scrollToSelection(this, newstate, 'language');
@@ -497,18 +491,12 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             const div = document.getElementById('moduleInfo');
             if (div) {
               const state = this.state as ManagerState;
-              const { module } = state;
               const { module: modtable, repository: repotable } = state.tables;
               const { repositoryListings } = repotable;
-              const { selection } = module;
-              const dataIndexes = selectionToDataRows(
-                state,
-                'module',
-                selection,
-              );
+              const dataRowIndexes = selectionToDataRowIndexes(state, 'module');
               const infoConfigs: SwordConfType[] = [];
-              dataIndexes.forEach((di) => {
-                const { conf } = modtable.data[di][ModCol.iInfo];
+              dataRowIndexes.forEach((dri) => {
+                const { conf } = modtable.data[dri][ModCol.iInfo];
                 infoConfigs.push(conf);
                 // If this is an XSM module and the IBT repo is loaded, show
                 // conf files for each XSM member.
@@ -551,7 +539,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             break;
           }
           case 'cancel': {
-            closeWindow(this, this.state as ManagerState);
+            closeWindow();
             break;
           }
           case 'ok': {
@@ -642,10 +630,12 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               this.addToast({
                 timeout: -1,
                 intent: Intent.DANGER,
-                message: errors.slice(0, 10).join('\n'),
+                message: errors
+                  .slice(0, 10)
+                  .map((msg) => <div key={msg}>{msg}</div>),
                 icon: 'error',
               }).catch((er) => log.error(er));
-            } else closeWindow(this, state);
+            } else closeWindow();
             break;
           }
           case 'repoAdd': {
@@ -667,16 +657,15 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             const newstate = this.state as ManagerState;
             const { repositories, repository } = newstate;
             if (repositories && repository) {
-              const { selection } = repository;
               // Only delete one repo and not an entire selection of them. It
               // would also be more difficult to bail on error (without changes).
-              const drows =
+              const dataRowIndexes =
                 (repository &&
-                  selectionToDataRows(newstate, 'repository', selection)) ||
+                  selectionToDataRowIndexes(newstate, 'repository')) ||
                 [];
               if (
-                drows.length &&
-                uninstallRepository(this, newstate, drows[0])
+                dataRowIndexes.length &&
+                uninstallRepository(this, newstate, dataRowIndexes[0])
               ) {
                 this.loadLanguageTable(newstate);
                 this.loadModuleTable(newstate);
@@ -756,16 +745,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
   });
 }
 
-function closeWindow(xthis: ModuleManager, state: ManagerState) {
-  const { id } = xthis.props as ManagerProps;
-  const { selection } = state.language;
-  const { data } = state.tables.language;
-  G.Prefs.setComplexValue(
-    `${id}.initialLanguages`,
-    selectionToDataRows(state, 'language', selection).map(
-      (dri) => data[dri][LanCol.iInfo].code,
-    ),
-  );
+function closeWindow() {
   // Indexer was stopped when this window opened, so restart it.
   G.LibSword.startBackgroundSearchIndexer(
     C.UI.Search.backgroundIndexerStartupWait,
@@ -794,11 +774,10 @@ export function installCustomRepository(
     repositories &&
     !data.find((r) => repositoryKey(r[RepCol.iInfo].repo) === repokey)
   ) {
-    const { custom } = repositories;
     const row = repositoryToRow(state, repo, true);
     let newindex = dataRowIndex;
     if (newindex === -1) newindex++;
-    else if (isRepoCustom(custom, data[newindex][RepCol.iInfo].repo)) {
+    else if (isRepoCustom(state, data[newindex][RepCol.iInfo].repo)) {
       if (!uninstallRepository(xthis, state, newindex)) return false;
     } else return false;
     // Install the new repotable row.
@@ -827,7 +806,6 @@ export function uninstallRepository(
   if (repositories) {
     const { repository: repotable } = tables;
     const { data, repositoryListings } = repotable;
-    const { custom } = repositories;
     let repkey = '';
     if (typeof repoOrRepkeyOrDataindex === 'number')
       repkey = repositoryKey(data[repoOrRepkeyOrDataindex][RepCol.iInfo].repo);
@@ -837,7 +815,7 @@ export function uninstallRepository(
     const index = data.findIndex(
       (r) => repositoryKey(r[RepCol.iInfo].repo) === repkey,
     );
-    if (index > -1 && isRepoCustom(custom, data[index][RepCol.iInfo].repo)) {
+    if (index > -1 && isRepoCustom(state, data[index][RepCol.iInfo].repo)) {
       switchRepo(xthis, state, [index], false);
       data.splice(index, 1);
       repositoryListings.splice(index, 1);
@@ -867,24 +845,25 @@ export function rowSelect(
 ) {
   const table = state[tableName];
   if (table) {
-    const { tableToDataRowMap } = state.tables[tableName];
-    const { selection } = table;
+    const { data, tableToDataRowMap } = state.tables[tableName];
     let tableRowIndex = tableToDataRowMap.indexOf(dataRowIndex);
     if (tableRowIndex === -1) tableRowIndex = dataRowIndex;
-    table.selection = tableRowsToSelection(
-      updateSelectedIndexes(tableRowIndex, selectionToTableRows(selection), e),
-    );
+    table.selection = updateSelectedIndexes(
+      tableRowIndex,
+      selectionToTableRowIndexes(state, tableName),
+      e,
+    ).map((tri) => getDataRowSelectKey(data[tableToDataRowMap[tri] ?? tri]));
   }
 }
 
 // Filter modules according to language selection.
 export function filterModuleTable(state: ManagerState) {
   const { language } = state;
-  const { selection, open } = language;
+  const { open } = language;
   const { module: modtable, language: langtable } = state.tables;
   const { data: langdata } = langtable;
   const { modules } = modtable;
-  const codes = selectionToDataRows(state, 'language', selection).map(
+  const codes = selectionToDataRowIndexes(state, 'language').map(
     (dri) => langdata[dri][LanCol.iInfo].code,
   );
   modtable.data = modules ? modules.allmodules : [];
@@ -907,15 +886,15 @@ function repoRowEnableDisable(
   const { disabled } = repositories ?? {};
   const drow = data[dataRowIndex];
   const rowkey = repositoryKey(drow[RepCol.iInfo].repo);
-  let di = -1;
-  if (disabled) di = disabled.findIndex((k) => k === rowkey);
+  let i = -1;
+  if (disabled) i = disabled.findIndex((k) => k === rowkey);
   if (enable) {
-    if (disabled && di !== -1) disabled.splice(di, 1);
+    if (disabled && i !== -1) disabled.splice(i, 1);
     drow[RepCol.iState] = isRepoBuiltIn(drow[RepCol.iInfo].repo)
       ? ALWAYSON
       : ON;
   } else {
-    if (di === -1) {
+    if (i === -1) {
       if (disabled) disabled.push(rowkey);
       else if (repositories) repositories.disabled = [rowkey];
     }
@@ -984,38 +963,6 @@ export async function readReposAndUpdateTables(
   const updateTables = (newstate: ManagerState) => {
     xthis.loadLanguageTable(newstate);
     xthis.loadModuleTable(newstate);
-    // If there is a moduleManager initialLanguages selection, apply it now.
-    const { id } = xthis.props as ManagerProps;
-    const { selection } = state.language;
-    const { data, tableToDataRowMap } = state.tables.language;
-
-    // Maintain the language table selection across window opens. The
-    // repository table already maintains its selection, because table
-    // data rows are the same across window opens. Module table selection
-    // is better not being remembered anyway.
-    const initialLanguages = G.Prefs.getPrefOrCreate(
-      `${id}.initialLanguages`,
-      'complex',
-      [],
-    ) as string[];
-    const selectDRIs = initialLanguages
-      .map((code) => data.findIndex((dr) => dr[LanCol.iInfo].code === code))
-      .filter((dri) => dri !== -1);
-    const selectTRIs = selectDRIs.map((dri) => {
-      const tri = tableToDataRowMap.indexOf(dri);
-      return tri === -1 ? dri : tri;
-    });
-    const selectLangs = selectDRIs.map((dri) => data[dri][LanCol.iInfo].code);
-    // Subtract new selections from the saved initialLanguages Pref value (it
-    // will be written again when the manager component unmounts).
-    G.Prefs.setComplexValue(
-      `${id}.initialLanguages`,
-      initialLanguages.filter((code) => !selectLangs.includes(code)),
-    );
-    state.language.selection = tableRowsToSelection(
-      selectionToTableRows(selection).concat(...selectTRIs),
-    );
-
     tableUpdate(newstate, ['module', 'language'], 'rowmap');
     xthis.sState(newstate);
   };
@@ -1041,7 +988,7 @@ export async function readReposAndUpdateTables(
             try {
               data[index][RepCol.iInfo].loading = loading(RepCol.iState);
               list = await G.Module.repositoryListing([listDownload(repo)]);
-              if (list[0]) data[index][RepCol.iName] += ` (${list[0].length})`;
+              if (list[0]) data[index][RepCol.iName] = data[index][RepCol.iName].replace(/ \(\d+\)$/, '') + ` (${list[0].length})`;
             } catch (er) {
               list = [`${er}`];
             }
@@ -1948,7 +1895,9 @@ export function getLocalModuleOperations(
         sourceRepositoryKey !== repositoryKey(audioRepo) &&
         sourceRepositoryKey !== repositoryKey(destRepository)
       ) {
-        const { custom } = repositories ?? {};
+        const operation = isRepoCustom(state, sourceRepository)
+          ? 'copy'
+          : 'move';
         const removeDestMod = repositoryListings
           .find(
             (l) =>
@@ -1958,12 +1907,12 @@ export function getLocalModuleOperations(
                 repositoryKey(destRepository),
           )
           ?.find((c) => c.module === conf.module);
-        // No moving or copying from custom to xulsword local.
-        // No moving or copying if it requires destination to be removed but it
-        // cannot be.
         if (
-          !(isRepoCustom(custom ?? null, sourceRepository) && !iShared) &&
-          !(removeDestMod && !canRemoveModule(removeDestMod))
+          !(removeDestMod && !canRemoveModule(removeDestMod)) &&
+          ((operation === 'copy' &&
+            canCopyModule(state, conf, destRepository)) ||
+            (operation === 'move' &&
+              canMoveModule(state, conf, destRepository)))
         ) {
           if (removeDestMod) {
             operations.push({
@@ -1976,9 +1925,7 @@ export function getLocalModuleOperations(
             module,
             sourceRepository,
             destRepository,
-            operation: isRepoCustom(custom ?? null, sourceRepository)
-              ? 'copy'
-              : 'move',
+            operation,
           });
         }
       }
@@ -1994,61 +1941,43 @@ function canRemoveModule(conf: SwordConfType): boolean {
   return isRepoBuiltIn(sourceRepository);
 }
 
-// If selectedRows is undefined, return the currently selected rows of a table,
-// otherwise apply selectedRows to the table. This is used to maintain
-// table row selections across table data updates.
-export function retainSelectedValues(
+function canCopyModule(
   state: ManagerState,
-  selectedRows?: { [k in (typeof Tables)[number]]?: TDataRow[] } | null,
-  tableNames?: (typeof Tables)[number][] | null,
-): { [k in (typeof Tables)[number]]?: TDataRow[] } {
-  const r: { [k in (typeof Tables)[number]]?: TDataRow[] } = {};
-  (tableNames ?? (['repository', 'module', 'language'] as const)).forEach(
-    (tableName) => {
-      const { data } = state.tables[tableName];
-      const { selection } = state[tableName];
-      const { tableToDataRowMap } = state.tables[tableName];
-      let cols;
-      if (tableName === 'repository') cols = RepCol;
-      else if (tableName === 'module') cols = ModCol;
-      else cols = LanCol;
-      const { iInfo } = cols;
-      if (!selectedRows) {
-        // Return the current selection's data rows, and any rows they are
-        // currently shadowing.
-        r[tableName] = selectionToDataRows(state, tableName, selection)
-          .map((dri) =>
-            [data[dri]].concat((data[dri] as any)[iInfo].shadowedRows),
-          )
-          .flat()
-          .filter(Boolean);
-      } else {
-        // Select the given rows values (if they exist) in the current table.
-        if (tableName in selectedRows && selectedRows[tableName]) {
-          state[tableName].selection = tableRowsToSelection(
-            selectedRows[tableName]
-              .map((dr) => {
-                let dri = (data as TDataRow[]).indexOf(dr);
-                if (dri === -1) {
-                  // If the selected row is not in the table, check if it is
-                  // being shadowed by another row in the table and select that
-                  // one instead.
-                  dri = (data as TDataRow[]).findIndex((r) =>
-                    (r as any)[iInfo].shadowedRows?.includes(dr),
-                  );
-                }
-                if (dri === -1) return null;
-                const tri = tableToDataRowMap.indexOf(dri);
-                return tri === -1 ? dri : tri;
-              })
-              .filter((tri) => tri !== null),
-          );
-          r[tableName] = selectedRows[tableName];
-        }
-      }
-    },
-  );
-  return r;
+  conf: SwordConfType,
+  destRepo: Repository | string,
+) {
+  const { sourceRepository } = conf;
+  if (isRepoLocal(sourceRepository) && isRepoLocal(destRepo)) {
+    const destRepoKey =
+      typeof destRepo === 'string' ? destRepo : repositoryKey(destRepo);
+    const sharedRepoKey = repositoryKey(G.BuiltInRepos[0]);
+    // Cannot copy to custom repos, or from custom repos to other than shared.
+    // The second resriction is neccessary because otherwise local custom repo
+    // modules would always be copied to the local xulsword repo (because
+    // the shared column is not checked).
+    return (
+      !isRepoCustom(state, destRepo) &&
+      !(isRepoCustom(state, sourceRepository) && destRepoKey !== sharedRepoKey)
+    );
+  }
+  return false;
+}
+
+function canMoveModule(
+  state: ManagerState,
+  conf: SwordConfType,
+  destRepo: Repository | string,
+) {
+  return canRemoveModule(conf) && canCopyModule(state, conf, destRepo);
+}
+
+export function isRepoCustom(
+  state: ManagerState,
+  repo: Repository | string,
+): boolean {
+  const { custom } = state.repositories ?? {};
+  const repokey = typeof repo === 'object' ? repositoryKey(repo) : repo;
+  return !!custom?.find((r) => repositoryKey(r) === repokey);
 }
 
 // This function requires state[tableName].rowSort to be updated already, then
@@ -2060,8 +1989,6 @@ export function updateTableToDataRowMap(
   const { columns, rowSort } = state[tableName];
   const { data } = state.tables[tableName];
   const { direction, propColumnIndex: tableColIndex } = rowSort;
-
-  const selectedValues = retainSelectedValues(state, undefined, [tableName]);
 
   // Re-sort the data rows.
   const dataColIndex = columns[tableColIndex].datacolumn;
@@ -2081,8 +2008,6 @@ export function updateTableToDataRowMap(
     if (aa === undefined && bb === undefined) return 0;
     return aa.toString().localeCompare(bb.toString());
   });
-
-  retainSelectedValues(state, selectedValues);
 }
 
 // Cause one or more tables to be updated in one or more ways.
@@ -2209,20 +2134,72 @@ export function getXulswordRepos(state: ManagerState): Repository[] {
   return builtIns;
 }
 
-// Given a table selection, return the selected data rows in ascending order.
-// This is like selectionToTableRows, but returns data rows rather than table
-// rows.
+export function getDataRowSelectKey(dataRow: TDataRow): string {
+  const repositoryTableRowLength: TRepositoryTableRowLength = 5;
+  const languageTableRowLength: TLanguageTableRowLength = 2;
+  const moduleTableRowLength: TModuleTableRowLength = 17;
+  if (
+    new Set([
+      moduleTableRowLength,
+      repositoryTableRowLength,
+      languageTableRowLength,
+    ]).size !== 3
+  ) {
+    throw new Error(
+      `This implementation requires each table row type to be a different length.`,
+    );
+  } else if (dataRow.length === repositoryTableRowLength) {
+    return repositoryKey((dataRow as TRepositoryTableRow)[RepCol.iInfo].repo);
+  } else if (dataRow.length === languageTableRowLength) {
+    return (dataRow as TLanguageTableRow)[LanCol.iInfo].code;
+  }
+  return repositoryModuleKey((dataRow as TModuleTableRow)[ModCol.iInfo].conf);
+}
+
+export function selectionToDataRowIndexes(
+  state: ManagerState,
+  tableName: (typeof Tables)[number],
+): number[] {
+  const { selection } = state[tableName];
+  const { data } = state.tables[tableName];
+  return selection
+    .map((k) => data.findIndex((dr) => k === getDataRowSelectKey(dr)))
+    .filter((dri) => dri !== -1)
+    .sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
+}
+
 export function selectionToDataRows(
   state: ManagerState,
-  table: (typeof Tables)[number],
-  selection: RowSelection | string[],
+  tableName: (typeof Tables)[number],
+): TDataRow[] {
+  const { selection } = state[tableName];
+  const { data } = state.tables[tableName];
+  return selection
+    .map((k) => data.find((dr) => k === getDataRowSelectKey(dr)))
+    .filter(Boolean) as TDataRow[];
+}
+
+export function selectionToTableRowIndexes(
+  state: ManagerState,
+  tableName: (typeof Tables)[number],
 ): number[] {
-  const { data, tableToDataRowMap } = state.tables[table];
-  const tablerows = selectionToTableRows(selection as RowSelection);
-  return tablerows
-    .map((tri) => tableToDataRowMap[tri] ?? tri)
-    .filter((dri) => dri > -1 && dri < data.length)
+  const { data, tableToDataRowMap } = state.tables[tableName];
+  return selectionToDataRowIndexes(state, tableName)
+    .map((dri) => {
+      const tri = tableToDataRowMap.indexOf(dri);
+      return tri === -1 ? dri : tri;
+    })
+    .filter((tri) => tri < data.length)
     .sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
+}
+
+export function selectionToBPSelection(
+  state: ManagerState,
+  tableName: (typeof Tables)[number],
+): RowSelection {
+  return tableRowIndexesToBPSelection(
+    selectionToTableRowIndexes(state, tableName),
+  );
 }
 
 export function scrollToSelection(
@@ -2235,7 +2212,7 @@ export function scrollToSelection(
     setTimeout(() => {
       const { current } = xthis.tableComponentRefs[tableName];
       try {
-        current?.scrollToRegion(selection[0]);
+        current?.scrollToRegion(selectionToBPSelection(state, tableName)[0]);
       } catch (er) {
         // ok
       }

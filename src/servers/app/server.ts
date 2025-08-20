@@ -600,15 +600,17 @@ const init = async () => {
     columns[13] = S.prefs.moduleManager.module.columns[13];
     Prefs.setComplexValue('moduleManager.module.columns', columns);
   }
-  // prefs.(moduleManager | removeModule).language.selection changed from
-  // string[] to RowSelection in 4.1.0
+  // prefs.(moduleManager | removeModule).[repository | module].selection
+  // changed from RowSelection to string[] in 4.1.0
   (['moduleManager', 'removeModule'] as const).forEach((id) => {
-    const k = `${id}.language.selection`;
-    const v = Prefs.getComplexValue(k) as string[] | RowSelection;
-    if (typeof v[0] === 'string') {
-      log.info(`Applying pref update to: ${k}`);
-      Prefs.setComplexValue(k, [] as RowSelection);
-    }
+    (['repository', 'module'] as const).forEach((tableName) => {
+      const k = `${id}.${tableName}.selection`;
+      const v = Prefs.getComplexValue(k) as string[] | RowSelection;
+      if (typeof v[0] !== 'string') {
+        log.info(`Applying pref update to: ${k}`);
+        Prefs.setComplexValue(k, [] as string[]);
+      }
+    });
   });
 };
 

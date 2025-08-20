@@ -4,11 +4,9 @@ import { Intent, ProgressBar } from '@blueprintjs/core';
 import {
   downloadKey,
   isRepoLocal,
-  selectionToTableRows,
   repositoryKey,
   repositoryModuleKey,
   localizeString,
-  isRepoCustom,
 } from '../../../../common.ts';
 import S from '../../../../defaultPrefs.ts';
 import C from '../../../../constant.ts';
@@ -268,7 +266,6 @@ export default class ModuleManager
     this.lastStatePref = setStatePref('prefs', id, this.lastStatePref, state);
     ModuleManagerUnmountState = {
       ...(this.state as ManagerState),
-      progress: null,
     };
   }
 
@@ -377,9 +374,8 @@ export default class ModuleManager
   loadRepositoryTable(state: ManagerState, repos: Repository[]): void {
     const { tables } = state;
     const { repository } = tables;
-    const { custom } = state.repositories ?? {};
     repository.data = repos.map((repo) => {
-      const repoIsCustom = isRepoCustom(custom ?? null, repo);
+      const repoIsCustom = H.isRepoCustom(state, repo);
       return H.repositoryToRow(state, repo, repoIsCustom);
     });
     H.tableUpdate(state, 'repository', 'rowmap');
@@ -392,7 +388,6 @@ export default class ModuleManager
     const { language, repository: repotable } = state.tables;
     const { repositoryListings } = repotable;
     const langs = new Set<string>();
-    const lngselection = H.retainSelectedValues(state, null, ['language']);
     repositoryListings.forEach((listing, i) => {
       if (
         Array.isArray(listing) &&
@@ -414,7 +409,6 @@ export default class ModuleManager
       if (r) newTableData.push(r);
     });
     language.data = newTableData.sort((a, b) => a[0].localeCompare(b[0]));
-    H.retainSelectedValues(state, lngselection);
     H.scrollToSelection(this, state, 'language');
   }
 
@@ -439,7 +433,6 @@ export default class ModuleManager
     const remoteXSM: SwordConfType[] = [];
 
     const builtInRepoKeys = G.BuiltInRepos.map((r) => repositoryKey(r));
-    const modselection = H.retainSelectedValues(state, null, ['module']);
 
     modtable.data = [];
     repositoryListings.forEach((listing, i) => {
@@ -667,7 +660,6 @@ export default class ModuleManager
     );
 
     H.filterModuleTable(state);
-    H.retainSelectedValues(state, modselection);
   }
 
   handleColumns(tableName: (typeof H.Tables)[number]) {
@@ -779,13 +771,11 @@ export default class ModuleManager
       module: modtable,
       repository: repotable,
     } = state.tables;
-    const { custom } = repositories ?? {};
 
     const selectedRepoDataRows = H.selectionToDataRows(
       state,
       'repository',
-      repository.selection,
-    );
+    ) as TRepositoryTableRow[];
 
     const numReposLoading = repotable.data.reduce(
       (p, c) => (c[H.RepCol.iInfo].loading ? p + 1 : p),
@@ -793,7 +783,7 @@ export default class ModuleManager
     );
 
     const disable = {
-      moduleInfo: !selectionToTableRows(module.selection).length,
+      moduleInfo: !H.selectionToDataRows(state, 'module').length,
       moduleInfoBack: false,
       moduleCancel:
         !modtable.data.find((r) => r[H.ModCol.iInfo].loading) ||
@@ -809,9 +799,9 @@ export default class ModuleManager
         !selectedRepoDataRows.length ||
         selectedRepoDataRows.length > 1 ||
         (typeof selectedRepoDataRows[0] !== 'undefined' &&
-          !isRepoCustom(
-            custom ?? null,
-            repotable.data[selectedRepoDataRows[0]][H.RepCol.iInfo].repo,
+          !H.isRepoCustom(
+            state,
+            selectedRepoDataRows[0][H.RepCol.iInfo].repo,
           )),
       repoCancel: numReposLoading === 0,
     };
@@ -938,7 +928,10 @@ export default class ModuleManager
                       data={langtable.data}
                       tableColumns={language.columns}
                       tableToDataRowMap={langtable.tableToDataRowMap}
-                      selectedRegions={language.selection}
+                      selectedRegions={H.selectionToBPSelection(
+                        state,
+                        'language',
+                      )}
                       onCellClick={onLangCellClick}
                       onRowsReordered={onRowsReordered.language}
                       domref={tableDomRefs.language}
@@ -1004,7 +997,7 @@ export default class ModuleManager
                     ]}
                     data={modtable.data}
                     tableColumns={module.columns}
-                    selectedRegions={module.selection}
+                    selectedRegions={H.selectionToBPSelection(state, 'module')}
                     tableToDataRowMap={modtable.tableToDataRowMap}
                     onCellClick={onModCellClick}
                     onColumnsReordered={handleColumns('module')}
@@ -1094,7 +1087,10 @@ export default class ModuleManager
                       ]}
                       data={repotable.data}
                       tableColumns={repository.columns}
-                      selectedRegions={repository.selection}
+                      selectedRegions={H.selectionToBPSelection(
+                        state,
+                        'repository',
+                      )}
                       tableToDataRowMap={repotable.tableToDataRowMap}
                       onEditableCellChanged={onCustomRepositoryEdited}
                       onRowsReordered={onRowsReordered.repository}
