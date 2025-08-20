@@ -321,43 +321,6 @@ export function readModCheckboxShadowing(
   return typeof v2 === 'string' ? (v2 as typeof ON | typeof OFF) : OFF;
 }
 
-// Get built in repos, xulsword repos and custom repos, which are usually local
-// but customs can also be remote. Only CrossWire list repos are not returned.
-export function getXulswordRepos(state: ManagerState): Repository[] {
-  const { repositories } = state;
-  const builtIns = clone(G.BuiltInRepos);
-
-  if (repositories) {
-    const { xulsword, custom } = repositories;
-    return builtIns.concat(xulsword, custom);
-  }
-
-  return builtIns;
-}
-
-// Progress for any dlkey is ignored after -1 is received, until another 0
-// is received to reset dlkey progress. This is to allow the possibility of
-// extraneous progress being reported by dangling operations after abort.
-const RequireZero: { [dlkey: string]: boolean } = {};
-export function updateDownloadProgress(
-  state: ManagerState,
-  dlkey: string,
-  prog: number,
-) {
-  if (!RequireZero[dlkey] || prog === 0) {
-    RequireZero[dlkey] = prog === -1;
-    let { ids } = Progressing;
-    const idi = ids.findIndex((d) => d[0] === dlkey);
-    if (idi === -1) ids.push([dlkey, prog]);
-    else ids[idi][1] = prog;
-    if (ids.every((d) => d[1] === -1)) ids = [];
-    Progressing.ids = ids;
-    const total = ids.reduce((p, c) => p + (c[1] === -1 ? 1 : c[1]), 0);
-    if (!ids.length || total === ids.length) state.progress = null;
-    else state.progress = [total, ids.length];
-  }
-}
-
 export function onRowsReordered(
   this: ModuleManager,
   tableName: (typeof Tables)[number],
@@ -1119,10 +1082,6 @@ export async function readReposAndUpdateTables(
   }
 }
 
-export function listDownload(repo: Repository): FTPDownload {
-  return { ...repo, file: C.SwordRepoManifest, type: 'ftp' };
-}
-
 // Handle one or more raw repository listings, also handling any errors
 // or cancelations.
 export function handleListings(
@@ -1524,196 +1483,6 @@ function updateModuleRemoveColumn(
   return configs.length;
 }
 
-// Find (or set) a table row. All rows are created once and reused for the
-// lifetime of the window. This allows recording of all user actions.
-const tableRows: {
-  language: { [code: string]: TLanguageTableRow };
-  module: { [modrepkey: string]: TModuleTableRow };
-  repository: { [repkey: string]: TRepositoryTableRow };
-} = {
-  language: {},
-  module: {},
-  repository: {},
-};
-export function findTableRow(
-  key: string,
-  tableName: 'language',
-  setTo?: TLanguageTableRow,
-): TLanguageTableRow | null;
-export function findTableRow(
-  key: string,
-  tableName: 'module',
-  setTo?: TModuleTableRow,
-): TModuleTableRow | null;
-export function findTableRow(
-  key: string,
-  tableName: 'repository',
-  setTo?: TRepositoryTableRow,
-): TRepositoryTableRow | null;
-export function findTableRow(
-  key: string,
-  tableName: (typeof Tables)[number],
-  setTo?: TLanguageTableRow | TModuleTableRow | TRepositoryTableRow,
-): TLanguageTableRow | TModuleTableRow | TRepositoryTableRow | null {
-  if (setTo) {
-    tableRows[tableName][key] = setTo;
-    return setTo;
-  }
-  return key in tableRows[tableName] ? tableRows[tableName][key] : null;
-}
-
-// Return any requested local repository operations (remove, copy, move or
-// install) for all modules in all repositories.
-export function getLocalModuleOperations(
-  state: ManagerState,
-  downloadKeys: string[],
-): RepositoryOperation[] {
-  const operations: RepositoryOperation[] = [];
-  const { repositories } = state;
-  const { repositoryListings } = state.tables.repository;
-  const [sharedRepo, xulswordLocalRepo, audioRepo] = G.BuiltInRepos;
-
-  Object.entries(tableRows.module).forEach((entry) => {
-    const [modrepkey, drow] = entry;
-    const { conf } = drow[ModCol.iInfo];
-    const { module, sourceRepository } = conf;
-    const { domain } = sourceRepository;
-    const sourceRepositoryKey = repositoryKey(sourceRepository);
-    const [iShared, iInstalled, iRemove] = (
-      ['iShared', 'iInstalled', 'iRemove'] as const
-    ).map((col) => readModCheckboxShadowing(drow, ModCol[col]) == ON);
-    const destRepository = iShared ? sharedRepo : xulswordLocalRepo;
-    const dlkey = Object.entries(Downloads.dl2mrkeyMap).find(
-      (e) => e[1] === modrepkey,
-    )?.[0];
-
-    if (dlkey && downloadKeys.includes(dlkey) && iInstalled && !iRemove) {
-      operations.push({
-        module: keyToDownload(dlkey),
-        destRepository: iShared ? sharedRepo : xulswordLocalRepo,
-        operation: 'install',
-      });
-    }
-
-    if (iInstalled && domain.startsWith('file://')) {
-      if (iRemove) {
-        if (canRemoveModule(conf))
-          operations.push({
-            module,
-            destRepository: sourceRepository,
-            operation: 'remove',
-          });
-      } else if (
-        // Only move/copy if source is different than destination and not an
-        // audio module.
-        sourceRepositoryKey !== repositoryKey(audioRepo) &&
-        sourceRepositoryKey !== repositoryKey(destRepository)
-      ) {
-        const { custom } = repositories ?? {};
-        const removeDestMod = repositoryListings
-          .find(
-            (l) =>
-              l &&
-              l.length &&
-              repositoryKey(l[0].sourceRepository) ===
-                repositoryKey(destRepository),
-          )
-          ?.find((c) => c.module === conf.module);
-        // No moving or copying from custom to xulsword local.
-        // No moving or copying if it requires destination to be removed but it
-        // cannot be.
-        if (
-          !(isRepoCustom(custom ?? null, sourceRepository) && !iShared) &&
-          !(removeDestMod && !canRemoveModule(removeDestMod))
-        ) {
-          if (removeDestMod) {
-            operations.push({
-              module,
-              destRepository,
-              operation: 'remove',
-            });
-          }
-          operations.push({
-            module,
-            sourceRepository,
-            destRepository,
-            operation: isRepoCustom(custom ?? null, sourceRepository)
-              ? 'copy'
-              : 'move',
-          });
-        }
-      }
-    }
-  });
-
-  log.debug('Module operations: ', operations);
-  return operations;
-}
-
-function canRemoveModule(conf: SwordConfType): boolean {
-  const { sourceRepository } = conf;
-  return isRepoBuiltIn(sourceRepository);
-}
-
-export function getModuleRowXsmSiblings(
-  xthis: ModuleManager,
-  modrepkey: string,
-): string[] {
-  const state = xthis.state as ManagerState;
-  const { module: modTable } = state.tables;
-  const { data } = modTable;
-  const row = findTableRow(modrepkey, 'module') as TModuleTableRow;
-  if (row) {
-    if (row[ModCol.iInfo].conf.xsmType === 'XSM') {
-      return data
-        .map((r) => {
-          return r[ModCol.iInfo].conf.DataPath ===
-            row[ModCol.iInfo].conf.DataPath
-            ? repositoryModuleKey(r[ModCol.iInfo].conf)
-            : null;
-        })
-        .filter(Boolean) as string[];
-    }
-    return [modrepkey];
-  }
-  return [];
-}
-
-export function getModuleDownload(modrepkey: string): Download | null {
-  const row = findTableRow(modrepkey, 'module') as TModuleTableRow;
-  if (!row) return null;
-  const { xsmType } = row[ModCol.iInfo].conf;
-  if (xsmType === 'XSM') {
-    return {
-      ...row[ModCol.iInfo].repo,
-      file: row[ModCol.iInfo].conf.DataPath,
-      type: 'ftp',
-    };
-  }
-  if (xsmType === 'XSM_audio') {
-    // Remote audio repositories have URL as DataPath.
-    if (row[ModCol.iInfo].conf.DataPath.startsWith('http'))
-      return {
-        http: row[ModCol.iInfo].conf.DataPath,
-        confname: row[ModCol.iInfo].conf.filename,
-        ...row[ModCol.iInfo].repo,
-        type: 'http',
-      };
-    // Local audio repositories have local path as DataPath.
-    return {
-      ...row[ModCol.iInfo].repo,
-      file: row[ModCol.iInfo].conf.DataPath,
-      type: 'ftp',
-    };
-  }
-  return {
-    module: row[ModCol.iModule],
-    confname: row[ModCol.iInfo].conf.filename,
-    ...row[ModCol.iInfo].repo,
-    type: 'module',
-  };
-}
-
 async function promptAudioChapters(
   state: ManagerState,
   conf: SwordConfType,
@@ -2032,6 +1801,199 @@ export async function cancelDownloads(
   });
 }
 
+export function getModuleDownload(modrepkey: string): Download | null {
+  const row = findTableRow(modrepkey, 'module') as TModuleTableRow;
+  if (!row) return null;
+  const { xsmType } = row[ModCol.iInfo].conf;
+  if (xsmType === 'XSM') {
+    return {
+      ...row[ModCol.iInfo].repo,
+      file: row[ModCol.iInfo].conf.DataPath,
+      type: 'ftp',
+    };
+  }
+  if (xsmType === 'XSM_audio') {
+    // Remote audio repositories have URL as DataPath.
+    if (row[ModCol.iInfo].conf.DataPath.startsWith('http'))
+      return {
+        http: row[ModCol.iInfo].conf.DataPath,
+        confname: row[ModCol.iInfo].conf.filename,
+        ...row[ModCol.iInfo].repo,
+        type: 'http',
+      };
+    // Local audio repositories have local path as DataPath.
+    return {
+      ...row[ModCol.iInfo].repo,
+      file: row[ModCol.iInfo].conf.DataPath,
+      type: 'ftp',
+    };
+  }
+  return {
+    module: row[ModCol.iModule],
+    confname: row[ModCol.iInfo].conf.filename,
+    ...row[ModCol.iInfo].repo,
+    type: 'module',
+  };
+}
+
+// Progress for any dlkey is ignored after -1 is received, until another 0
+// is received to reset dlkey progress. This is to allow the possibility of
+// extraneous progress being reported by dangling operations from abort.
+const RequireZeroProgress: { [dlkey: string]: boolean } = {};
+export function updateDownloadProgress(
+  state: ManagerState,
+  dlkey: string,
+  prog: number,
+) {
+  if (!RequireZeroProgress[dlkey] || prog === 0) {
+    RequireZeroProgress[dlkey] = prog === -1;
+    let { ids } = Progressing;
+    const idi = ids.findIndex((d) => d[0] === dlkey);
+    if (idi === -1) ids.push([dlkey, prog]);
+    else ids[idi][1] = prog;
+    if (ids.every((d) => d[1] === -1)) ids = [];
+    Progressing.ids = ids;
+    const total = ids.reduce((p, c) => p + (c[1] === -1 ? 1 : c[1]), 0);
+    if (!ids.length || total === ids.length) state.progress = null;
+    else state.progress = [total, ids.length];
+  }
+}
+
+export function listDownload(repo: Repository): FTPDownload {
+  return { ...repo, file: C.SwordRepoManifest, type: 'ftp' };
+}
+
+// Find (or set) a table row. All rows are created once and reused for the
+// lifetime of the window. This allows recording of all user actions.
+const tableRows: {
+  language: { [code: string]: TLanguageTableRow };
+  module: { [modrepkey: string]: TModuleTableRow };
+  repository: { [repkey: string]: TRepositoryTableRow };
+} = {
+  language: {},
+  module: {},
+  repository: {},
+};
+export function findTableRow(
+  key: string,
+  tableName: 'language',
+  setTo?: TLanguageTableRow,
+): TLanguageTableRow | null;
+export function findTableRow(
+  key: string,
+  tableName: 'module',
+  setTo?: TModuleTableRow,
+): TModuleTableRow | null;
+export function findTableRow(
+  key: string,
+  tableName: 'repository',
+  setTo?: TRepositoryTableRow,
+): TRepositoryTableRow | null;
+export function findTableRow(
+  key: string,
+  tableName: (typeof Tables)[number],
+  setTo?: TLanguageTableRow | TModuleTableRow | TRepositoryTableRow,
+): TLanguageTableRow | TModuleTableRow | TRepositoryTableRow | null {
+  if (setTo) {
+    tableRows[tableName][key] = setTo;
+    return setTo;
+  }
+  return key in tableRows[tableName] ? tableRows[tableName][key] : null;
+}
+
+// Return any requested local repository operations (remove, copy, move or
+// install) for all modules in all repositories.
+export function getLocalModuleOperations(
+  state: ManagerState,
+  downloadKeys: string[],
+): RepositoryOperation[] {
+  const operations: RepositoryOperation[] = [];
+  const { repositories } = state;
+  const { repositoryListings } = state.tables.repository;
+  const [sharedRepo, xulswordLocalRepo, audioRepo] = G.BuiltInRepos;
+
+  Object.entries(tableRows.module).forEach((entry) => {
+    const [modrepkey, drow] = entry;
+    const { conf } = drow[ModCol.iInfo];
+    const { module, sourceRepository } = conf;
+    const { domain } = sourceRepository;
+    const sourceRepositoryKey = repositoryKey(sourceRepository);
+    const [iShared, iInstalled, iRemove] = (
+      ['iShared', 'iInstalled', 'iRemove'] as const
+    ).map((col) => readModCheckboxShadowing(drow, ModCol[col]) == ON);
+    const destRepository = iShared ? sharedRepo : xulswordLocalRepo;
+    const dlkey = Object.entries(Downloads.dl2mrkeyMap).find(
+      (e) => e[1] === modrepkey,
+    )?.[0];
+
+    if (dlkey && downloadKeys.includes(dlkey) && iInstalled && !iRemove) {
+      operations.push({
+        module: keyToDownload(dlkey),
+        destRepository: iShared ? sharedRepo : xulswordLocalRepo,
+        operation: 'install',
+      });
+    }
+
+    if (iInstalled && domain.startsWith('file://')) {
+      if (iRemove) {
+        if (canRemoveModule(conf))
+          operations.push({
+            module,
+            destRepository: sourceRepository,
+            operation: 'remove',
+          });
+      } else if (
+        // Only move/copy if source is different than destination and not an
+        // audio module.
+        sourceRepositoryKey !== repositoryKey(audioRepo) &&
+        sourceRepositoryKey !== repositoryKey(destRepository)
+      ) {
+        const { custom } = repositories ?? {};
+        const removeDestMod = repositoryListings
+          .find(
+            (l) =>
+              l &&
+              l.length &&
+              repositoryKey(l[0].sourceRepository) ===
+                repositoryKey(destRepository),
+          )
+          ?.find((c) => c.module === conf.module);
+        // No moving or copying from custom to xulsword local.
+        // No moving or copying if it requires destination to be removed but it
+        // cannot be.
+        if (
+          !(isRepoCustom(custom ?? null, sourceRepository) && !iShared) &&
+          !(removeDestMod && !canRemoveModule(removeDestMod))
+        ) {
+          if (removeDestMod) {
+            operations.push({
+              module,
+              destRepository,
+              operation: 'remove',
+            });
+          }
+          operations.push({
+            module,
+            sourceRepository,
+            destRepository,
+            operation: isRepoCustom(custom ?? null, sourceRepository)
+              ? 'copy'
+              : 'move',
+          });
+        }
+      }
+    }
+  });
+
+  log.debug('Module operations: ', operations);
+  return operations;
+}
+
+function canRemoveModule(conf: SwordConfType): boolean {
+  const { sourceRepository } = conf;
+  return isRepoBuiltIn(sourceRepository);
+}
+
 // If selectedRows is undefined, return the currently selected rows of a table,
 // otherwise apply selectedRows to the table. This is used to maintain
 // table row selections across table data updates.
@@ -2181,6 +2143,30 @@ export function repositoryToRow(
   return r;
 }
 
+export function getModuleRowXsmSiblings(
+  xthis: ModuleManager,
+  modrepkey: string,
+): string[] {
+  const state = xthis.state as ManagerState;
+  const { module: modTable } = state.tables;
+  const { data } = modTable;
+  const row = findTableRow(modrepkey, 'module') as TModuleTableRow;
+  if (row) {
+    if (row[ModCol.iInfo].conf.xsmType === 'XSM') {
+      return data
+        .map((r) => {
+          return r[ModCol.iInfo].conf.DataPath ===
+            row[ModCol.iInfo].conf.DataPath
+            ? repositoryModuleKey(r[ModCol.iInfo].conf)
+            : null;
+        })
+        .filter(Boolean) as string[];
+    }
+    return [modrepkey];
+  }
+  return [];
+}
+
 export function allAudioInstalled(
   localAudioChapters: SwordConfType['AudioChapters'],
   remoteAudioChapters: SwordConfType['AudioChapters'],
@@ -2207,6 +2193,20 @@ export function allAudioInstalled(
     allInstalled = true;
   }
   return allInstalled;
+}
+
+// Get built in repos, xulsword repos and custom repos, which are usually local
+// but customs can also be remote. Only CrossWire list repos are not returned.
+export function getXulswordRepos(state: ManagerState): Repository[] {
+  const { repositories } = state;
+  const builtIns = clone(G.BuiltInRepos);
+
+  if (repositories) {
+    const { xulsword, custom } = repositories;
+    return builtIns.concat(xulsword, custom);
+  }
+
+  return builtIns;
 }
 
 // Given a table selection, return the selected data rows in ascending order.
