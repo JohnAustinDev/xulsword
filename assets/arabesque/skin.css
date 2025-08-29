@@ -42,3 +42,12 @@
 .atext {
   border-radius: 8px;
 }
+
+@media print {
+  #root,
+  .chooser .fadetop,
+  .chooser .fadebot {
+    background-image: unset;
+    background-color: white;
+  }
+}

@@ -166,6 +166,7 @@ html[dir='rtl'] .bookgrouplist {
 }
 .bookgroupitem.disabled {
   background-color: var(--bg-disabled);
+  border-style: inset;
   color: rgb(160, 160, 160);
   cursor: default;
 }
