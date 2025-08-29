@@ -160,7 +160,7 @@ export function setGlobalSkin(skin: string) {
     let css = '';
     if (skin) {
       css = G.inlineFile(
-        [G.Dirs.path.xsAsset, `skin-${skin}.css`].join(C.FSSEP),
+        [G.Dirs.path.xsAsset, skin, 'skin.css'].join(C.FSSEP),
         'utf8',
         true,
       );

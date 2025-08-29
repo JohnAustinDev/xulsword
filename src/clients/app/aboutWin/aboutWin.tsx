@@ -114,7 +114,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
       (G.Prefs.getComplexValue('global.Contributors') as string[]) || [];
 
     const overlay = G.inlineFile(
-      `${G.Dirs.path.xsAsset}/splash-overlay-${G.i18n.language}.png`,
+      `${G.Dirs.path.xsAsset}/locales/splash-overlay-${G.i18n.language}.png`,
     );
     const style = overlay ? (
       <style>

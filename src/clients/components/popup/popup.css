@@ -83,7 +83,7 @@ html:not(.popupWin) .npopupTX {
 }
 .draghandle {
   cursor: move;
-  background-image: url('../images/draghandle.png');
+  background-image: url(../../images/draghandle.png);
   height: 12px;
   width: 40px;
 }
@@ -116,7 +116,7 @@ html:not(.popupWin) .npopupTX {
 }
 .snbut:after {
   display: inline-block;
-  content: url(../images/search.png);
+  content: url(../../images/search.png);
   width: 30px;
   height: 18px;
   overflow: hidden;

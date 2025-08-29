@@ -181,25 +181,25 @@ html[dir='rtl'] .bookgrouplist {
   position: relative;
   top: 2px;
   margin-inline-end: 2px;
-  background: url(../images/arrow.png);
+  background: url(../../images/arrow.png);
   width: 15px;
   height: 12px;
 }
 .bookgroupitem .hasAudo {
   margin-inline-end: 2px;
-  background-image: url('../images/listen-small.png');
+  background-image: url(../../images/listen-small.png);
   opacity: 0.6;
   width: 15px;
   height: 13px;
 }
 html[dir='rtl'] .bookgroupitem .charrow {
-  background: url(../images/arrow-rtl.png);
+  background: url(../../images/arrow-rtl.png);
 }
 .bookgroupitem:not(.disabled):hover .charrow {
-  background: url(../images/arrow2.png);
+  background: url(../../images/arrow2.png);
 }
 html[dir='rtl'] .bookgroupitem:not(.disabled):hover .charrow {
-  background: url(../images/arrow2-rtl.png);
+  background: url(../../images/arrow2-rtl.png);
 }
 
 /* ChapterMenu Component */
@@ -244,7 +244,7 @@ html[dir='rtl'] .chaptermenu {
   margin-inline-start: 2px;
   position: relative;
   top: 2px;
-  content: url('../images/listen-small.png');
+  content: url(../../images/listen-small.png);
   width: 15px;
   height: 13px;
   opacity: 0.5;

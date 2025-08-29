@@ -27,7 +27,7 @@
   top: -15px;
   left: -8px;
   margin-inline-end: -8px;
-  background: url(../images/pushpin0.png);
+  background: url(../../images/pushpin0.png);
   z-index: 5;
 }
 html[dir='rtl'] .atext .text-pin {
@@ -37,10 +37,10 @@ html[dir='rtl'] .atext .text-pin {
   right: -8px;
 }
 .atext.pinned .text-pin {
-  background: url(../images/pushpin1.png);
+  background: url(../../images/pushpin1.png);
 }
 .atext .text-pin:hover {
-  background: url(../images/pushpin2.png);
+  background: url(../../images/pushpin2.png);
 }
 .atext.Dicts .text-pin,
 .atext.Genbks .text-pin {
@@ -145,7 +145,7 @@ html[dir='rtl'] .sbcontrols {
 }
 .atext .notebox-maximizer {
   position: absolute;
-  background: url(../images/max.png);
+  background: url(../../images/max.png);
   width: 15px;
   height: 14px;
   top: 0px;
@@ -156,7 +156,7 @@ html[dir='rtl'] .notebox-maximizer {
   left: 42px;
 }
 .atext.noteboxMaximized .notebox-maximizer {
-  background: url(../images/norm.png);
+  background: url(../../images/norm.png);
 }
 .atext.columns1 .notebox-maximizer {
   display: none;
@@ -311,7 +311,7 @@ html[dir='rtl'] .notebox-maximizer {
   position: absolute;
   display: inline-block;
   left: -25px;
-  background: url('../images/versePerLine.png');
+  background: url(../../images/versePerLine.png);
   background-position: 0px 0px;
   width: 17px;
   height: 20px;
@@ -360,10 +360,10 @@ html[dir='rtl'] .notebox-maximizer {
 .crtwisty {
   width: 9px;
   height: 9px;
-  background: url(../images/twisty-open.png);
+  background: url(../../images/twisty-open.png);
 }
 .cropened .crtwisty {
-  background: url(../images/twisty-close.png);
+  background: url(../../images/twisty-close.png);
 }
 .fncol2 {
   display: table-cell;

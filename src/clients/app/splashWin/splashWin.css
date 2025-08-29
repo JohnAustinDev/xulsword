@@ -7,14 +7,14 @@ html.splashWin,
 }
 
 #layer1 {
-  background-image: url(../../../../assets/splash.png);
+  background-image: url(../../images/splash.png);
   background-repeat: no-repeat;
   width: 500px;
   height: 375px;
 }
 
 #layer2 {
-  background-image: url('../../../../assets/splash-overlay.png');
+  background-image: url(../../images/splash-overlay.png);
   background-repeat: no-repeat;
   width: 100%;
   height: 100%;

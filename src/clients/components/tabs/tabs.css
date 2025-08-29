@@ -55,7 +55,7 @@
   width: 15px;
   height: 15px;
   color: transparent;
-  background-image: url('../../../../assets/plus.svg');
+  background-image: url(../../images/plus.svg);
 }
 .tabs .tabPlus select * {
   color: var(--bp6-text-color);
@@ -83,7 +83,7 @@ html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
 .tabs .mts-tab .anchorbutton {
   width: 12px;
   height: 12px;
-  background-image: url(../images/dropdown-menu.png);
+  background-image: url(../../images/dropdown-menu.png);
 }
 .tabs .mts-tab .anchorbutton .menupopup .tab {
   max-width: calc(50vw - 10px);
