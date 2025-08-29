@@ -138,7 +138,6 @@ span[data-rend='small-caps'] {
   font-weight: bold;
 }
 .quote {
-  background-color: #cfcfdf;
   padding: 0.3em;
   margin: 0.5em;
   border-width: 1px;
@@ -200,7 +199,7 @@ span.sense-level-2 {
 .head2,
 .head3,
 .head4 {
-  color: rgb(110, 85, 110);
+  color: var(--font-heading-color);
   text-align: center;
   font-weight: bold;
   clear: both;
@@ -593,7 +592,7 @@ span.foreign {
   cursor: pointer;
 }
 .gfn {
-  color: rgb(0, 200, 250);
+  color: var(--color-primary);
 }
 .gfn:before {
   content: '[';

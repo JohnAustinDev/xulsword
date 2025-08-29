@@ -19,13 +19,17 @@
   background-image: url(../../assets/b2.png);
 }
 
+.splash-text .label {
+  color: rgb(77, 37, 143);
+}
+
 .chooser .fadetop,
 .chooser .fadebot {
   background-image: url(../../assets/b2.png);
   opacity: 0.8;
 }
 .chooser .fadetop {
-  background-position: -15px 40px;
+  background-position: -15px 35px;
   margin-top: -10px;
 }
 .chooser .fadebot {

@@ -13,6 +13,7 @@
 
 .chooseFontWin .picker-button {
   margin: 0;
+  z-index: 1;
 }
 .chooseFontWin .picker-button.disabled {
   background-color: whitesmoke;
@@ -27,8 +28,8 @@
 
 .chooseFontWin .picker-button .chrome-picker {
   position: absolute;
-  top: 0px;
-  right: 50%;
+  top: -100px;
+  right: 100%;
 }
 html[dir='rtl'].chooseFontWin .picker-button .chrome-picker {
   right: unset;

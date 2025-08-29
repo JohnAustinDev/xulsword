@@ -23,12 +23,12 @@
   height: 100%;
 }
 
-.button.on:not(.disabled) .bp6-icon {
-  color: var(--color-primary) !important;
+.button.on:not(.disabled):not(.bp6-fill) .bp6-icon {
+  color: var(--color-primary);
 }
 
 /* bp6 disabled was 0.6 opacity, which looks bad with a patterned background */
 html.isElectron .bp6-button:not([class*='bp6-intent-']):disabled,
 html.isElectron .button .bp6-button:not([class*='bp6-intent-']).bp6-disabled {
-  background-color: rgb(211, 216, 222);
+  background-color: var(--bg-disabled);
 }

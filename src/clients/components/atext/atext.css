@@ -10,7 +10,7 @@
   margin-inline-end: 10px;
 }
 .atext.pinned {
-  background: var(--bg-text-pinned);
+  background-color: var(--bg-text-pinned);
 }
 
 .atext .hd,
@@ -91,7 +91,7 @@ html[dir='rtl'] .atext .origselect {
 .atext:not(.columns1) .sb {
   overflow: hidden;
   column-gap: 80px;
-  column-rule: 14px solid var(--border-light);
+  column-rule: 4px solid var(--border-light);
   column-fill: auto;
 }
 @media (max-width: 767px) {
@@ -165,7 +165,7 @@ html[dir='rtl'] .notebox-maximizer {
 .atext .nb {
   height: 100%;
   overflow: auto;
-  background: var(--bg-interface-light);
+  background-color: var(--bg-interface-light);
   border: 2px solid var(--border-dark);
   border-radius: 8px;
   padding: 0px 5px 0px 5px;
@@ -216,7 +216,7 @@ html[dir='rtl'] .notebox-maximizer {
   float: left;
   font-size: 1.6rem;
   font-weight: bold;
-  color: rgb(110, 85, 110);
+  color: var(--font-heading-color);
 }
 @media (max-width: 767px) {
   .bibleBrowser .chaptitle {
@@ -251,7 +251,7 @@ html[dir='rtl'] .notebox-maximizer {
 .chapinfo {
   float: right;
   min-width: 40px;
-  color: rgb(110, 85, 110);
+  color: var(--font-heading-color);
   margin-top: 1em;
 }
 .sb[dir='rtl'] .chapinfo {
@@ -287,17 +287,17 @@ html[dir='rtl'] .notebox-maximizer {
   margin-bottom: 4px;
 }
 .matchingStrongs2 {
-  background: hsla(298, 100%, 50%, 0.562);
+  background-color: hsla(298, 100%, 50%, 0.562);
 }
 .matchingStrongs1 {
-  background: hsla(123, 100%, 50%, 0.507);
+  background-color: hsla(123, 100%, 50%, 0.507);
 }
 .matchingStrongs0 {
-  background: yellow;
+  background-color: yellow;
 }
 
 .atext.Texts .bmnote {
-  background: #ffff0044;
+  background-color: #ffff0044;
   border-radius: 4px;
 }
 
@@ -413,7 +413,7 @@ html[dir='rtl'] .fncol3 {
   background-color: var(--bg-text-light);
 }
 .pinned .fnselected .fncol5 {
-  background: var(--bg-text-light);
+  background-color: var(--bg-text-light);
 }
 .crref {
   text-decoration: underline;
@@ -486,9 +486,6 @@ html[dir='rtl'] .fncol3 {
   display: table-cell;
   vertical-align: middle;
 }
-.Dicts .nb {
-  color: rgb(80, 80, 80);
-}
 .dictlist {
   padding: 0 16px 16px 16px;
 }
@@ -496,6 +493,7 @@ html[dir='rtl'] .fncol3 {
   position: sticky;
   top: 0px;
   padding: 16px 0px 5px 0px;
+  background-color: var(--bg-interface-light);
 }
 .dictlist input {
   width: calc(100% - 8px);
@@ -508,7 +506,7 @@ html[dir='rtl'] .fncol3 {
   cursor: pointer;
 }
 .dictselectkey {
-  background: #1e90ff;
+  background-color: var(--bg-interface-selection);
   color: white;
 }
 .dict-description {

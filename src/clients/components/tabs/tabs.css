@@ -58,8 +58,10 @@
   background-image: url('../../../../assets/plus.svg');
 }
 .tabs .tabPlus select * {
-  color: #1c2127;
+  color: var(--bp6-text-color);
 }
+/* NOTE: builtin select option:hover color and background-color cannot be
+changed */
 .tabs .mts-tab {
   position: relative;
   padding-inline-end: 0px;
@@ -88,11 +90,11 @@ html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
   border-bottom: none;
 }
 a.anchorbutton .tab {
-  color: #1c2127; /* BluePrintJS default color */
+  color: var(--bp6-text-color);
 }
 a.anchorbutton .tab:hover {
   color: white;
-  background-color: #1e90ff;
+  background-color: var(--bg-interface-selection);
 }
 .tabs .mto-tab {
   display: block;
@@ -114,8 +116,8 @@ a.anchorbutton .tab:hover {
 }
 .tabs.pinned .tab.active {
   /* same as atext.css .atext.pinned */
-  background: var(--bg-text-dark);
-  border-bottom-color: var(--bg-text-dark);
+  background-color: var(--bg-text-pinned);
+  border-bottom-color: var(--bg-text-pinned);
 }
 .tabs .tabTexts {
   border-top-color: var(--color-primary);

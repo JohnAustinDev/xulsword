@@ -30,3 +30,10 @@
 .viewport.ownWindow .atext {
   margin: 0;
 }
+
+@media (max-width: 767px) {
+  .viewport {
+    padding: 10px 5px;
+    margin: 0;
+  }
+}

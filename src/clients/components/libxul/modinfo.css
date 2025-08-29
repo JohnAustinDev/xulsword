@@ -8,7 +8,7 @@
 }
 
 .linklist .listbox {
-  background-color: var(--bg-text-light);
+  background-color: white;
   border-radius: 8px;
   border: 2px solid var(--border-light);
   margin: 10px 10px 20px 10px;
@@ -22,7 +22,7 @@
 .modlist {
   margin: 20px 10px;
   padding: 5px;
-  background-color: var(--bg-text-light);
+  background-color: white;
   border-radius: 8px;
   border: 2px solid var(--border-light);
 }

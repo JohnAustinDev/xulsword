@@ -22,7 +22,7 @@ html.splashWin,
 
 .splash-text .label {
   font-size: 14px;
-  color: rgb(77, 37, 143);
+  color: var(--font-heading-color);
 }
 .splash-text {
   padding-bottom: 3px;

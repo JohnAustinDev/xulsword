@@ -16,8 +16,8 @@
 
 .dragsizer > div {
   position: absolute;
-  background: rgb(233, 233, 233);
-  border: 1px outset rgba(150, 150, 150, 0.2);
+  background-color: var(--bg-interface-dark);
+  box-shadow: var(--bp6-box-shadow);
   border-radius: 4px;
 }
 
@@ -37,6 +37,6 @@
 
 .dragsizer > .dragging {
   border: 1px dashed var(--border-dark);
-  background: #1e90ff;
+  background-color: var(--bg-interface-selection);
   z-index: 10;
 }

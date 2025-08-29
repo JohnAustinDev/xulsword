@@ -21,7 +21,7 @@
 
 .content {
   position: relative; /* for overlay */
-  background: white;
+  background-color: white;
 }
 
 /* This value is < WidePrintWidth. At this width and lower, the print

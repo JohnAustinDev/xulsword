@@ -9,7 +9,7 @@
   z-index: 1;
 }
 .chooser .fadetop {
-  height: 25px;
+  height: 35px;
 }
 .chooser {
   font-size: 15px;
@@ -24,7 +24,7 @@
   padding-bottom: 6px;
   padding-inline-start: 3px;
   border: 2px solid var(--border-light);
-  background: white;
+  background-color: white;
   cursor: pointer;
   flex-shrink: 1;
   max-height: 760px; /* NT height */
@@ -133,7 +133,7 @@ html[dir='rtl'] .bookgrouplist {
   padding-bottom: 2px;
   padding-inline-start: 10px;
   padding-inline-end: 2px;
-  background: var(--bg-interface-light);
+  background-color: var(--bg-interface-light);
   border: 1px outset var(--border-dark);
   border-radius: 6px;
 }
@@ -150,7 +150,7 @@ html[dir='rtl'] .bookgrouplist {
   padding-inline-end: 20px;
 }
 .bookgroupitem.selected {
-  background: var(--color-primary);
+  background-color: var(--color-primary);
   color: white;
 }
 .other .bookgroupitem.selected {
@@ -161,12 +161,12 @@ html[dir='rtl'] .bookgrouplist {
   );
 }
 .bookgroupitem:not(.selected):hover {
-  background: yellow;
+  background-color: var(--bg-interface-selection);
+  color: white;
 }
 .bookgroupitem.disabled {
-  background: var(--bg-disabled);
+  background-color: var(--bg-disabled);
   color: rgb(160, 160, 160);
-  border: 1px inset black;
   cursor: default;
 }
 .bookgroupitem .label {
@@ -224,20 +224,21 @@ html[dir='rtl'] .chaptermenu {
 }
 .chaptermenu .chaptermenurow {
   display: table-row;
-  background: transparent;
+  background-color: transparent;
 }
 .chaptermenu .chaptermenucell {
   display: table-cell;
   width: 26px;
   font-size: inherit;
   text-align: center;
-  background: var(--bg-interface-dark);
+  background-color: var(--bg-interface-dark);
   border: 1px outset var(--bg-interface-light);
   color: var(--color-primary);
   padding: 2px;
 }
 .chaptermenu .chaptermenucell:hover {
-  background: yellow;
+  background-color: var(--bg-interface-selection);
+  color: white;
 }
 .chaptermenu .chaptermenucell.hasAudio:after {
   margin-inline-start: 2px;
@@ -262,7 +263,7 @@ html[dir='rtl'] .chaptermenu {
   padding-top: 10px;
   padding-bottom: 10px;
   border: 1px outset black;
-  background: rgb(233, 233, 233);
+  background-color: var(--bg-interface-light);
   color: var(--color-primary);
   box-shadow: var(--shadow);
   border-radius: 6px;

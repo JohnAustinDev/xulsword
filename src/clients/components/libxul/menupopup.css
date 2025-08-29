@@ -4,7 +4,7 @@
   top: 100%;
   width: fit-content;
   z-index: 11;
-  background: white;
+  background-color: white;
   padding: 2px 0px 0px;
   text-align: start;
   border: 1px solid #999;
@@ -21,6 +21,6 @@ html[dir='rtl'] .menupopup {
 
 .menupopup:not(:hover) > .selected,
 .menupopup > *:hover {
-  background: #1e90ff;
+  background-color: var(--bg-interface-selection);
   color: white;
 }

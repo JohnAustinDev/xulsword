@@ -110,9 +110,6 @@ html:not(.is-vagrant) .popup-fail.reason,
   #controls {
     display: flex;
   }
-  #main-viewport {
-    padding: 10px 5px;
-  }
   #main-controlbar > div {
     width: 100%;
     justify-content: space-around;

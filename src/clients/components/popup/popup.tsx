@@ -183,7 +183,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
         // Adjust the popup upward if it would extend beyond the bottom of the text area.
         const margin = 10;
         const box = popup.firstChild as HTMLElement | null;
-        const text = ofClass('atext', popup);
+        const text = ofClass(['atext', 'resultBox'], popup);
         if (box && text) {
           const pupbottom = box.getBoundingClientRect().bottom;
           const textbottom = text.element.getBoundingClientRect().bottom;
