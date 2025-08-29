@@ -160,7 +160,7 @@ html[dir='rtl'] .bookgrouplist {
     transparent 1px 4px
   );
 }
-.bookgroupitem:not(.selected):hover {
+.bookgroupitem:not(.selected):not(.disabled):hover {
   background-color: var(--bg-interface-selection);
   color: white;
 }
