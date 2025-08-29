@@ -178,6 +178,8 @@ export default class Search
 
   loadingRef: React.RefObject<HTMLDivElement>;
 
+  popupRef: React.RefObject<Popup>;
+
   constructor(props: SearchProps) {
     super(props);
 
@@ -225,6 +227,7 @@ export default class Search
 
     this.resref = React.createRef();
     this.lexref = React.createRef();
+    this.popupRef = React.createRef();
     this.destroy = [];
   }
 
@@ -357,6 +360,7 @@ export default class Search
     const {
       renderPromise,
       loadingRef,
+      popupRef,
       handler,
       popupHandler,
       popupParentHandler,
@@ -494,6 +498,7 @@ export default class Search
                 onSelectChange={popupHandler}
                 onMouseLeftPopup={popupHandler}
                 onPopupContextMenu={popupHandler}
+                ref={popupRef}
               />,
               popupParent,
             )}

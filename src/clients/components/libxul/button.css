@@ -23,8 +23,8 @@
   height: 100%;
 }
 
-.button.on .bp6-icon {
-  color: #4444c1;
+.button.on:not(.disabled) .bp6-icon {
+  color: var(--color-primary) !important;
 }
 
 /* bp6 disabled was 0.6 opacity, which looks bad with a patterned background */

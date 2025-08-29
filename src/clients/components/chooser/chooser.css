@@ -4,19 +4,13 @@
 .chooser .fadetop,
 .chooser .fadebot {
   position: relative; /* get z-index to work */
-  opacity: 0.9;
+  background-color: var(--bg-interface-light);
+  opacity: 0.8;
   z-index: 1;
 }
 .chooser .fadetop {
-  height: 32px;
-  background-position: -15px 40px;
-  margin-top: -10px;
+  height: 25px;
 }
-.chooser .fadebot {
-  background-position: -15px 0;
-  margin-bottom: -25px;
-}
-
 .chooser {
   font-size: 15px;
 }
@@ -29,11 +23,7 @@
   padding-inline-end: 6px;
   padding-bottom: 6px;
   padding-inline-start: 3px;
-  border-inline-start: 2px solid rgb(175, 145, 180);
-  border-top: 2px solid rgb(175, 145, 180);
-  border-inline-end: 2px solid rgb(225, 195, 230);
-  border-bottom: 2px solid rgb(225, 195, 230);
-  border-radius: 8px;
+  border: 2px solid var(--border-light);
   background: white;
   cursor: pointer;
   flex-shrink: 1;
@@ -44,7 +34,7 @@
   flex-basis: 0;
   overflow: hidden;
   color: rgb(0, 0, 100);
-  background-color: rgb(233, 233, 233);
+  background-color: var(--bg-interface-light);
   border: 1px outset rgb(200, 200, 200);
   font-size: inherit;
   text-align: center;
@@ -58,23 +48,8 @@
   );
 }
 .chooser .bookgroup.selected {
-  background-color: rgb(230, 200, 255);
-}
-.chooser .close-chooser {
-  position: absolute;
-  background: url(../images/close0.png);
-  width: 15px;
-  height: 15px;
-  top: 13px;
-  left: 9px;
-  z-index: 8;
-}
-html[dir='rtl'] .chooser .close-chooser {
-  left: auto;
-  right: 9px;
-}
-.chooser .close-chooser:hover {
-  background: url(../images/close1.png);
+  background-color: var(--color-primary);
+  color: white;
 }
 .chooser .bookgroup:first-child {
   border-top-left-radius: 8px;
@@ -120,7 +95,6 @@ html.ug .label.nt {
 }
 .chooser .book-list {
   position: relative;
-  background: rgb(240, 235, 240);
   border-top-right-radius: 8px;
   border-bottom-right-radius: 8px;
 }
@@ -134,10 +108,10 @@ html[dir='rtl'] .chooser .book-list {
 /* BookGroupList Component */
 .bookgrouplist {
   width: 100%;
-  background: rgb(255, 230, 255);
-  border: 1px outset rgb(200, 200, 200);
+  background-color: var(--bg-text-light);
+  border: 1px outset var(--border-dark);
   padding: 1px 0px 1px 0px;
-  border-inline-start: 1px solid rgb(150, 150, 150);
+  border-inline-start: 1px solid var(--border-dark);
   border-top-right-radius: 8px;
   border-bottom-right-radius: 8px;
 }
@@ -159,9 +133,8 @@ html[dir='rtl'] .bookgrouplist {
   padding-bottom: 2px;
   padding-inline-start: 10px;
   padding-inline-end: 2px;
-  color: rgb(0, 0, 100);
-  background: rgb(233, 233, 233);
-  border: 1px outset rgb(150, 150, 150);
+  background: var(--bg-interface-light);
+  border: 1px outset var(--border-dark);
   border-radius: 6px;
 }
 .bookgroupitem:last-child {
@@ -177,7 +150,8 @@ html[dir='rtl'] .bookgrouplist {
   padding-inline-end: 20px;
 }
 .bookgroupitem.selected {
-  background: rgb(230, 200, 255);
+  background: var(--color-primary);
+  color: white;
 }
 .other .bookgroupitem.selected {
   background-image: repeating-linear-gradient(
@@ -186,11 +160,11 @@ html[dir='rtl'] .bookgrouplist {
     transparent 1px 4px
   );
 }
-.bookgroupitem:hover {
+.bookgroupitem:not(.selected):hover {
   background: yellow;
 }
 .bookgroupitem.disabled {
-  background: rgb(225, 225, 225);
+  background: var(--bg-disabled);
   color: rgb(160, 160, 160);
   border: 1px inset black;
   cursor: default;
@@ -257,14 +231,13 @@ html[dir='rtl'] .chaptermenu {
   width: 26px;
   font-size: inherit;
   text-align: center;
-  background: rgb(233, 233, 233);
-  border: 1px outset rgb(255, 243, 255);
-  color: blue;
+  background: var(--bg-interface-dark);
+  border: 1px outset var(--bg-interface-light);
+  color: var(--color-primary);
   padding: 2px;
 }
 .chaptermenu .chaptermenucell:hover {
   background: yellow;
-  border: 1px inset rgb(255, 243, 255);
 }
 .chaptermenu .chaptermenucell.hasAudio:after {
   margin-inline-start: 2px;
@@ -290,8 +263,8 @@ html[dir='rtl'] .chaptermenu {
   padding-bottom: 10px;
   border: 1px outset black;
   background: rgb(233, 233, 233);
-  color: blue;
-  box-shadow: 2px 2px 3px 2px #bbb;
+  color: var(--color-primary);
+  box-shadow: var(--shadow);
   border-radius: 6px;
   z-index: 9;
 }
@@ -299,10 +272,9 @@ html[dir='rtl'] .chaptermenu {
   visibility: visible;
 }
 .chaptermenu .heading-link {
-  color: blue;
+  color: var(--color-primary);
 }
 .chaptermenu .heading-link:hover {
   text-decoration: underline;
-  color: blue;
   cursor: pointer;
 }

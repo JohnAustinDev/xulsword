@@ -504,6 +504,16 @@ span.foreign {
   float: inline-end;
   margin-inline-start: 3em;
 }
+.x-navmenu span:hover {
+  cursor: pointer;
+}
+.x-prevnext-link {
+  font-size: unset !important; /* undo some old module custom CSS */
+}
+.x-prevnext-link span {
+  font-size: 2em;
+  text-decoration: none;
+}
 
 .versenum:before,
 .versenum:after {
@@ -512,9 +522,8 @@ span.foreign {
 .sb .hl .wordsOfJesus {
   color: unset;
 }
-.sb .hl,
 .sb .hl {
-  color: blue !important;
+  color: var(--color-primary);
 }
 .cr,
 .fn,
@@ -529,35 +538,38 @@ span.foreign {
 .fn:after,
 .un:after,
 .gfn {
-  vertical-align: top;
+  vertical-align: super;
   font-family: 'arial' !important;
   line-height: 100% !important;
 }
 .cr:after {
-  content: '\00D7 ';
-  color: rgb(255, 0, 0);
+  content: '† ';
+  color: var(--color-primary);
 }
 .x-parallel-passage:after {
   content: '\2022 ';
-  color: rgb(255, 0, 0);
+  font-size: x-large;
+  color: var(--color-primary);
 }
-.x-style1:after {
-  content: '+ ';
-  color: rgb(255, 0, 0);
+.x-style1:after { /* used anywhere?? */
+  content: '† ';
+  color: var(--color-primary);
 }
 .fn:after {
-  content: '\00D7 ';
-  color: rgb(0, 200, 250);
+  content: '* ';
+  font-size: large;
+  vertical-align: top;
+  color: var(--color-primary);
 }
 .un:after {
-  content: '\00D7 ';
-  color: rgb(0, 0, 200);
+  content: '‡ ';
+  color: var(--color-primary);
 }
 .no-symbol .un:after {
   content: '';
 }
 .sr {
-  color: blue;
+  color: var(--color-primary);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -572,7 +584,7 @@ span.foreign {
   cursor: pointer;
 }
 .dtl.x-target_self {
-  color: blue;
+  color: var(--color-primary);
 }
 /* Words with Strong's number attached */
 .sn {

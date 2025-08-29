@@ -28,6 +28,10 @@
   margin-left: 0;
   margin-right: 0;
 }
+#navigator-tool #choosermenu {
+  width: unset;
+  margin-inline-end: 10px;
+}
 #navigator-tool #historymenu {
   margin-left: 10px;
   margin-right: 10px;

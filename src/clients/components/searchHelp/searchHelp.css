@@ -2,8 +2,8 @@
   height: 100%;
   overflow: auto;
   padding: 10px;
-  background: white;
-  border: 2px solid rgb(200, 170, 205);
+  background: var(--bg-interface-light);
+  border: 2px solid var(--border-light);
   border-radius: 4px;
 }
 .helpPane > div {
@@ -34,7 +34,7 @@
 }
 .helpTable table {
   border-collapse: collapse;
-  border: 2px solid rgb(200, 170, 205);
+  border: 2px solid var(--border-light);
   border-radius: 4px;
 }
 .odd-row {

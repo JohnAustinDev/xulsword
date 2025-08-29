@@ -284,7 +284,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
         {...addClass(`chooser verse-chooser`, props)}
         onMouseOut={handler}
       >
-        <Hbox className="fadetop skin" />
+        <Hbox className="fadetop" />
 
         <Hbox className="chooser-container" flex="20">
           <div className="close-chooser" onClick={onCloseChooserClick} />
@@ -359,7 +359,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
           </Vbox>
         </Hbox>
 
-        <Hbox flex="1" className="fadebot skin" />
+        <Hbox flex="1" className="fadebot" />
       </Vbox>
     );
   }

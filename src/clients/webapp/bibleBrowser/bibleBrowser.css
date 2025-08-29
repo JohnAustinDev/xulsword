@@ -1,13 +1,7 @@
 :root {
   --input-height: 32px;
-  --min-height: 800px;
 }
 
-html .skin,
-html.skin > #root {
-  background-image: unset;
-  background-color: var(--light);
-}
 /* body height is the iframe's height and is scrollable */
 body {
   height: 100%;
@@ -80,9 +74,8 @@ body {
   width: 100%;
 }
 
+html:not(.is-vagrant) .popup-fail.reason,
 #genbknav,
-.open-chooser,
-.close-chooser,
 /* don't show text pin without multiple texts */
 .textrow:not(:has(.atext:nth-child(2))) .text-pin,
 /* genbknav shouldn't show single-option selects */

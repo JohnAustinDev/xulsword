@@ -22,14 +22,14 @@
   cursor: default;
   font-size: 0.86em;
   height: 25px;
+  color: grey;
   /* Following value is used in tabs.tsx */
   margin: 0px 3px 0px 3px;
-  color: grey;
-  background: rgb(255, 250, 255);
+  background-color: white;
+  border-left: 2px solid var(--border-light);
+  border-right: 2px solid var(--border-light);
+  border-bottom: 2px solid var(--border-light);
   border-top: 1px solid transparent;
-  border-left: 2px solid rgb(200, 170, 205);
-  border-right: 2px solid rgb(200, 170, 205);
-  border-bottom: 2px solid rgb(200, 170, 205);
   border-top-right-radius: 4px;
   border-top-left-radius: 4px;
   cursor: pointer;
@@ -40,7 +40,7 @@
 }
 .tabs .tabPlus > .border {
   cursor: default;
-  border-top-color: rgb(200, 170, 205);
+  border-top-color: var(--border-light);
 }
 .tabs .tabPlus .xsinput {
   margin: 0;
@@ -85,6 +85,14 @@ html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
 }
 .tabs .mts-tab .anchorbutton .menupopup .tab {
   max-width: calc(50vw - 10px);
+  border-bottom: none;
+}
+a.anchorbutton .tab {
+  color: #1c2127; /* BluePrintJS default color */
+}
+a.anchorbutton .tab:hover {
+  color: white;
+  background-color: #1e90ff;
 }
 .tabs .mto-tab {
   display: block;
@@ -97,40 +105,41 @@ html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
   display: none;
 }
 .tabs .tab.active {
-  color: rgb(40, 40, 255);
-  border-bottom-color: rgb(255, 243, 255);
-  background: rgb(255, 243, 255);
+  background-color:var(--bg-text-light);
+  border-bottom-color: var(--bg-text-light);
+  color: var(--color-primary);
 }
 .tabs .ilt-tab.disabled {
   color: lightgray;
 }
 .tabs.pinned .tab.active {
-  background: white;
-  border-bottom-color: white;
+  /* same as atext.css .atext.pinned */
+  background: var(--bg-text-dark);
+  border-bottom-color: var(--bg-text-dark);
 }
 .tabs .tabTexts {
-  border-top-color: rgba(235, 50, 80, 0.2);
+  border-top-color: var(--color-primary);
 }
 .tabs .tabComms {
-  border-top-color: rgba(100, 100, 255, 0.2);
+   border-top-color: var(--color-secondary2);
 }
 .tabs .tabDicts {
-  border-top-color: rgba(255, 255, 0, 0.2);
+  border-top-color: var(--color-secondary)
 }
 .tabs .tabGenbks {
-  border-top-color: rgba(100, 245, 245, 0.2);
+  border-top-color: var(--color-secondary3);
 }
 .tabs .tabTexts > .border {
-  border-top-color: rgba(170, 40, 60, 0.8);
+  border-top-color: var(--color-primary);
 }
 .tabs .tabComms > .border {
-  border-top-color: rgba(100, 100, 255, 0.8);
+   border-top-color: var(--color-secondary2);
 }
 .tabs .tabDicts > .border {
-  border-top-color: rgba(204, 204, 0, 0.8);
+  border-top-color: var(--color-secondary);
 }
 .tabs .tabGenbks > .border {
-  border-top-color: rgba(100, 245, 245, 0.8);
+  border-top-color: var(--color-secondary3);
 }
 
 .tabs .tab-label {

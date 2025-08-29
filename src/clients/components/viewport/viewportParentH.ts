@@ -211,8 +211,6 @@ export default function handler(
           'heading-link',
           'bookgroupitem',
           'bookgroup',
-          'open-chooser',
-          'close-chooser',
           'notebox-maximizer',
           'reg-tab', // a regular tab
           'mts-tab', // the multi-tab main tab
@@ -286,7 +284,6 @@ export default function handler(
             >;
             G.Window.open({
               type: 'viewportWin',
-              className: 'skin',
               allowMultiple: true,
               saveIfAppClosed: true,
               openWithBounds: {
@@ -402,14 +399,6 @@ export default function handler(
                 });
             }
           });
-          break;
-        }
-        case 'open-chooser': {
-          this.setState({ showChooser: true });
-          break;
-        }
-        case 'close-chooser': {
-          this.setState({ showChooser: false });
           break;
         }
         case 'notebox-maximizer': {

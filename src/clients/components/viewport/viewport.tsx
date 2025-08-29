@@ -118,6 +118,8 @@ class Viewport extends React.Component implements PopupParent {
 
   loadingRef: React.RefObject<HTMLDivElement>;
 
+  popupRef: React.RefObject<Popup>;
+
   constructor(props: ViewportProps) {
     super(props);
 
@@ -134,6 +136,7 @@ class Viewport extends React.Component implements PopupParent {
     this.popupUpClickClose = popupUpClickCloseH.bind(this);
 
     this.loadingRef = React.createRef();
+    this.popupRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
@@ -187,7 +190,7 @@ class Viewport extends React.Component implements PopupParent {
   }
 
   render() {
-    const { renderPromise, loadingRef, popupHandler, audioHandler } = this;
+    const { renderPromise, loadingRef, popupRef, popupHandler, audioHandler } = this;
     const props = this.props as ViewportProps;
     const state = this.state as ViewportState;
     const {
@@ -497,14 +500,10 @@ class Viewport extends React.Component implements PopupParent {
     return (
       <Hbox
         domref={loadingRef}
-        {...addClass(`viewport skin ${cls} bp6-focus-disabled`, props)}
+        {...addClass(`viewport ${cls} bp6-focus-disabled`, props)}
         {...style}
         {...topHandle('onClick', eHandler)}
       >
-        {!ownWindow && !showChooser && chooser !== 'genbook' && (
-          <button type="button" className="open-chooser" />
-        )}
-
         {chooser === 'bible' && showingChooser && (
           <Chooser
             key={[reset, location?.book].join('.')}
@@ -553,6 +552,7 @@ class Viewport extends React.Component implements PopupParent {
                   onSelectChange={popupHandler}
                   onMouseLeftPopup={popupHandler}
                   onPopupContextMenu={popupHandler}
+                  ref={popupRef}
                 />,
                 popupParent,
               )}

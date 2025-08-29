@@ -1,28 +1,10 @@
 .viewport {
-  padding: 10px 15px 15px 15px;
-  margin: 0px;
+  margin: 10px 15px 15px 15px;
+  padding: 0px;
   overflow: hidden;
   background-position: 0px 40px;
   width: 100%;
   position: relative;
-}
-
-.viewport .open-chooser {
-  position: absolute;
-  background: url(../images/open0.png);
-  width: 16px;
-  height: 16px;
-  top: 2px;
-  left: 6px;
-  z-index: 7;
-  border: none;
-}
-html[dir='rtl'] .viewport .open-chooser {
-  left: auto;
-  right: 6px;
-}
-.viewport .open-chooser:hover {
-  background: url(../images/open1.png);
 }
 
 .viewport .genbook-chooser {

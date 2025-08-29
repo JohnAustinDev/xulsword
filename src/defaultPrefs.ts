@@ -105,6 +105,7 @@ const S = {
         },
       },
       noAutoSearchIndex: [] as string[],
+      skin: '' as string,
     },
 
     xulsword: {

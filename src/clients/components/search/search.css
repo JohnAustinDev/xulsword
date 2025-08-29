@@ -81,10 +81,10 @@
   left: -0;
   width: 100%;
   height: 100%;
-  background: rgb(220, 220, 220);
-  border: 2px solid grey;
+  background: var(--bg-interface-dark);
+  border: var(--border-light);
+  box-shadow: var(--shadow);
   border-radius: 8px;
-  box-shadow: 6px 7px 5px 0px #6c5172;
   opacity: 0.8;
 }
 .search-type > div:nth-child(3) {
@@ -107,7 +107,7 @@
 }
 .resultBox {
   flex-basis: 0;
-  border: 2px solid rgb(200, 170, 205);
+  border: 2px solid var(--border-light);
   border-radius: 4px;
   background: white;
   width: calc(100% - 50px);
@@ -132,9 +132,6 @@ html[dir='rtl'] .resultBox #displayModule {
   padding-inline-start: 50px;
   padding-inline-end: 100px;
 }
-.resultBox .npopupTX {
-  background: rgb(248, 232, 255);
-}
 .resultBox > div:first-child {
   padding-inline-start: calc(5em + 5px);
 }
@@ -153,14 +150,13 @@ html[dir='rtl'] .resultBox #displayModule {
   margin: 2px 2px 5px 2px;
 }
 #lexiconResults .lexlist a {
-  color: blue;
   font-size: inherit;
   position: relative;
   text-decoration: underline;
   cursor: pointer;
 }
 #lexiconResults .sn {
-  color: blue;
+  color: var(--color-primary);
   text-decoration: underline;
 }
 #searchResults {
@@ -183,7 +179,7 @@ html[dir='rtl'] .resultBox #displayModule {
   margin: 2px;
 }
 .resultBox .slist > a {
-  color: blue;
+  color: var(--color-primary);
   font-size: inherit;
   position: relative;
   text-decoration: underline;
@@ -240,12 +236,10 @@ html[dir='rtl'] .resultBox #displayModule {
   .search-grid {
     width: 100vw;
     grid-template-columns: unset !important;
-  }
-  .search-grid {
-    height: 472px;
+    max-height: 500px; /* animated */
   }
   .search-grid.less {
-    height: 132px;
+    max-height: 124px; /* animated */
   }
   .search-grid > div {
     grid-area: auto / 1 / auto / 3 !important;

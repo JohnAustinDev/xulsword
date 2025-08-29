@@ -17,6 +17,8 @@ import type { PlaceType, SearchType, ShowType } from '../../../type.ts';
 import type { RenderPromiseComponent } from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
 import type Atext from '../atext/atext.tsx';
+import type Popup from './popup.tsx';
+import type { PopupState } from './popup.tsx';
 
 let WheelScrolling = false;
 
@@ -28,7 +30,8 @@ export type PopupParent = RenderPromiseComponent & {
   popupUnblockTO?: NodeJS.Timeout | undefined;
   popupHandler: typeof popupHandler;
   popupParentHandler?: typeof popupParentHandler;
-  popupUpClickClose?: typeof popupUpClickClose; // Far WebApp only
+  popupUpClickClose?: typeof popupUpClickClose; // For WebApp only
+  popupRef?: React.RefObject<Popup>;
 };
 
 export const PopupParentInitState = {
@@ -456,9 +459,14 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
     }
 
     case 'mouseleave': {
+      const { popupRef } = this;
       const { popupParent, popupHold } = this.state as PopupParentState;
       const parent = popupParent || document.getElementById('root');
-      if (parent && !popupHold) {
+      if (
+        parent &&
+        !popupHold &&
+        !(popupRef?.current?.state as PopupState).drag?.dragging
+      ) {
         const s: Partial<PopupParentState> = { popupParent: null };
         this.setState(s);
       }

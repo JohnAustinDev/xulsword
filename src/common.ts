@@ -1229,8 +1229,8 @@ export function bookmarkItemIconPath(
   const { note } = item;
   let fname = 'folder.png';
   if (item.type === 'bookmark') {
-    if (note) fname = `${item.tabType}_note.png`;
-    else fname = `${item.tabType}.png`;
+    if (note) fname = `Texts_note.png`;
+    else fname = `Texts.png`;
   }
   return [G.Dirs.path.xsAsset, 'icons', '16x16', fname].join(C.FSSEP);
 }

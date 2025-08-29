@@ -317,15 +317,14 @@ export default function handler(this: Popup, e: React.MouseEvent) {
       break;
     }
 
+    case 'mouseleave':
     case 'mouseup': {
       const { drag } = this.state as PopupState;
       if (!drag || !drag.dragging) return;
       this.setState((prevState: PopupState) => {
-        let { drag: ndrag } = prevState;
-        ndrag = clone(ndrag);
-        if (!ndrag || !ndrag.dragging) return null;
-        ndrag.dragging = false;
-        return { drag: ndrag };
+        const { drag } = prevState;
+        if (!drag || !drag.dragging) return null;
+        return { drag: { ...drag, dragging: false } } as PopupState;
       });
       break;
     }

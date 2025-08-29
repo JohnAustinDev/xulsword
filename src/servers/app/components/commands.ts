@@ -74,7 +74,6 @@ const Commands = {
   openModuleManager(): void {
     Window.open({
       type: 'moduleManagerWin',
-      className: 'skin',
       typePersistBounds: true,
       saveIfAppClosed: true,
       options: {
@@ -169,7 +168,6 @@ const Commands = {
   removeModule() {
     Window.open({
       type: 'removeModuleWin',
-      className: 'skin',
       typePersistBounds: true,
       saveIfAppClosed: true,
       options: {
@@ -689,7 +687,6 @@ const Commands = {
     };
     Window.open({
       type: 'printPassageWin',
-      className: 'skin',
       typePersistBounds: true,
       additionalArguments: { passageWinState },
       options: {
@@ -738,7 +735,6 @@ const Commands = {
   search(search: SearchType): void {
     Window.open({
       type: 'searchWin',
-      className: 'skin',
       allowMultiple: true,
       saveIfAppClosed: true,
       additionalArguments: { search },
@@ -753,7 +749,6 @@ const Commands = {
   searchHelp() {
     Window.open({
       type: 'searchHelpWin',
-      className: 'skin',
       fitToContent: true,
       typePersistBounds: true,
       options: {
@@ -920,7 +915,6 @@ const Commands = {
   openBookmarksManager() {
     Window.open({
       type: 'bmManagerWin',
-      className: 'skin',
       typePersistBounds: true,
       saveIfAppClosed: true,
       options: {

@@ -99,6 +99,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
     this.setTitle = this.setTitle.bind(this);
     this.selector = this.selector.bind(this);
     this.positionPopup = this.positionPopup.bind(this);
+    this.onMouseLeftPopup = this.onMouseLeftPopup.bind(this);
 
     this.loadingRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef, '.npopupTX');
@@ -278,10 +279,17 @@ class Popup extends React.Component implements RenderPromiseComponent {
     );
   }
 
+  onMouseLeftPopup(e: React.MouseEvent) {
+    const { handler } = this;
+    const { onMouseLeftPopup } = this.props as PopupProps;
+    handler(e);
+    if (typeof onMouseLeftPopup === 'function') onMouseLeftPopup(e);
+  }
+
   render() {
     const props = this.props as PopupProps;
     const state = this.state as PopupState;
-    const { handler, loadingRef } = this;
+    const { handler, onMouseLeftPopup, loadingRef } = this;
     const { drag } = state;
     const { elemdata, gap, isWindow } = props;
     const data = elemdata?.[elemdata.length - 1] || null;
@@ -334,7 +342,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
           onMouseMove={handler}
           onMouseUp={handler}
           onMouseOver={handler}
-          onMouseLeave={props.onMouseLeftPopup}
+          onMouseLeave={onMouseLeftPopup}
           style={boxlocation}
           data-data={JSON_attrib_stringify(data)}
         >

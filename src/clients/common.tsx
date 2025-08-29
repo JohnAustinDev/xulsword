@@ -47,8 +47,6 @@ import type {
   VerseKeyAudio,
   AudioPlayerSelectionVK,
   WindowDescriptorPrefType,
-  AudioPrefType,
-  ConfigType,
 } from '../type.ts';
 import type { XulswordState } from './components/xulsword/xulsword.tsx';
 import parseExtendedVKRef from '../extrefParser.ts';
@@ -156,6 +154,27 @@ export function windowArguments(
   return prop ? undefined : defval;
 }
 
+// Add <style id="skin"> and write any user pref skin CSS to it.
+export function setGlobalSkin(skin: string) {
+  if (Build.isElectronApp) {
+    let css = '';
+    if (skin) {
+      css = G.inlineFile(
+        [G.Dirs.path.xsAsset, `skin-${skin}.css`].join(C.FSSEP),
+        'utf8',
+        true,
+      );
+    }
+    let style = document.getElementById('style');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'skin';
+      document.head.appendChild(style);
+    }
+    style.textContent = css;
+  }
+}
+
 export const printRefs: {
   pageViewRef: React.RefObject<HTMLDivElement>;
   printContainerRef: React.RefObject<HTMLDivElement>;
@@ -179,7 +198,7 @@ export function libswordImgSrc(container: HTMLElement) {
         if (img.dataset.src.startsWith('/')) {
           ({ src } = img.dataset);
         }
-      } else {
+      } else if (Build.isElectronApp) {
         const m = img.dataset.src.match(/^file:\/\/(.*)$/i);
         if (m) {
           if (m[1].match(/^(\w:[/\\]|\/)/)) src = G.inlineFile(m[1], 'base64');

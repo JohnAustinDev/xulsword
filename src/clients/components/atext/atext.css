@@ -1,9 +1,8 @@
 .atext {
   position: relative;
   vertical-align: top;
-  background: rgb(255, 243, 255);
-  border: 2px solid rgb(200, 170, 205);
-  border-radius: 8px;
+  background-color: var(--bg-text-light);
+  border: 2px solid var(--border-light);
   height: 100%;
   flex-basis: 100%;
 }
@@ -11,7 +10,7 @@
   margin-inline-end: 10px;
 }
 .atext.pinned {
-  background: white; /*rgb(248,248,241);*/
+  background: var(--bg-text-pinned)
 }
 
 .atext .hd,
@@ -92,7 +91,7 @@ html[dir='rtl'] .atext .origselect {
 .atext:not(.columns1) .sb {
   overflow: hidden;
   column-gap: 80px;
-  column-rule: 14px solid rgb(240, 215, 240);
+  column-rule: 14px solid var(--border-light);
   column-fill: auto;
 }
 @media (max-width: 767px) {
@@ -166,8 +165,8 @@ html[dir='rtl'] .notebox-maximizer {
 .atext .nb {
   height: 100%;
   overflow: auto;
-  background: rgb(240, 235, 240);
-  border: 2px solid rgb(150, 150, 150);
+  background: var(--bg-interface-light);
+  border: 2px solid var(--border-dark);
   border-radius: 8px;
   padding: 0px 5px 0px 5px;
 }
@@ -185,7 +184,7 @@ html[dir='rtl'] .notebox-maximizer {
 
 /* Header Links */
 .navlink {
-  color: blue;
+  color: var(--color-primary);
   margin: 10px;
   cursor: default;
 }
@@ -259,9 +258,8 @@ html[dir='rtl'] .notebox-maximizer {
   float: left;
 }
 .introlink {
-  font-size: 1.1rem;
   text-decoration: underline;
-  color: blue;
+  color: var(--color-primary);
   cursor: pointer;
 }
 .introlink.empty {
@@ -282,8 +280,9 @@ html[dir='rtl'] .notebox-maximizer {
   margin-bottom: 16px;
 }
 .interS {
+  color: var(--color-primary);
   width: 50px;
-  border-top: 1px solid blue;
+  border-top: 1px var(--color-primary);
   margin-top: 4px;
   margin-bottom: 4px;
 }
@@ -298,7 +297,8 @@ html[dir='rtl'] .notebox-maximizer {
 }
 
 .atext.Texts .bmnote {
-  background: yellow;
+  background: #ffff0044;
+  border-radius: 4px;
 }
 
 /* Verse-per-line button */
@@ -373,15 +373,15 @@ html[dir='rtl'] .notebox-maximizer {
 .fndash {
   width: 6px;
   height: 0.3rem;
-  border-top: 1px solid rgb(150, 150, 150);
+  border-top: 1px solid var(--border-dark);
 }
 .fncol3 {
   display: table-cell;
   visibility: hidden;
   width: 6px;
-  border-top: 1px solid rgb(150, 150, 150);
-  border-left: 1px solid rgb(150, 150, 150);
-  border-bottom: 1px solid rgb(150, 150, 150);
+  border-top: 1px solid var(--border-dark);
+  border-left: 1px solid var(--border-dark);
+  border-bottom: 1px solid var(--border-dark);
 }
 .cropened .fncol2,
 .cropened .fncol3 {
@@ -389,7 +389,7 @@ html[dir='rtl'] .notebox-maximizer {
 }
 html[dir='rtl'] .fncol3 {
   border-left: none;
-  border-right: 1px solid rgb(150, 150, 150);
+  border-right: 1px solid var(--border-dark);
 }
 .fncol4 {
   display: table-cell;
@@ -400,7 +400,7 @@ html[dir='rtl'] .fncol3 {
 .fnlink {
   text-decoration: underline;
   cursor: pointer;
-  color: blue;
+  color: var(--color-primary);
 }
 .fncol5 {
   display: table-cell;
@@ -410,22 +410,22 @@ html[dir='rtl'] .fncol3 {
 }
 .fnselected .fncol5 {
   border: 1px outset yellow;
-  background: rgb(255, 243, 255);
+  background-color: var(--bg-text-light);
 }
 .pinned .fnselected .fncol5 {
-  background: white;
+  background: var(--bg-text-light);
 }
 .crref {
   text-decoration: underline;
   cursor: pointer;
-  color: blue;
+  color: var(--color-primary);
 }
 .cropened span.possibleV11nMismatch {
   font-size: xx-small;
   vertical-align: super;
 }
 .crref-miss {
-  color: blue;
+  color: var(--color-primary);
 }
 .crtext .alternate {
   font-style: italic;
@@ -496,7 +496,6 @@ html[dir='rtl'] .fncol3 {
   position: sticky;
   top: 0px;
   padding: 16px 0px 5px 0px;
-  background-color: rgb(240, 235, 240);
 }
 .dictlist input {
   width: calc(100% - 8px);

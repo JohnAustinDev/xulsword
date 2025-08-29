@@ -470,7 +470,7 @@ export default class Xulsword
         <Button
           id="dictlinks"
           checked={show.dictlinks}
-          icon={<Icon icon="search-template" />}
+          icon={<Icon icon="link" />}
           onClick={handler}
           title={GI.i18n.t('', renderPromise, 'dictButton.tooltip')}
           disabled={
@@ -482,7 +482,7 @@ export default class Xulsword
         <Button
           id="footnotes"
           checked={show.footnotes}
-          icon={<Icon icon="manually-entered-data" />}
+          icon={<Icon icon="asterisk" />}
           onClick={handler}
           title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
           disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
@@ -491,7 +491,7 @@ export default class Xulsword
           <Button
             id="crossrefs"
             checked={show.crossrefs}
-            icon={<Icon icon="link" />}
+            icon={<Icon icon="symbol-cross" />}
             onClick={handler}
             title={GI.i18n.t('', renderPromise, 'crossrefsButton.tooltip')}
             disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
@@ -564,6 +564,7 @@ export default class Xulsword
         {historyComponent}
 
         <Hbox id="textnav" align="center">
+          {chooserMenuButton}
           <Bookselect
             id="book"
             sizetopopup="none"
@@ -659,7 +660,7 @@ export default class Xulsword
         )}
       >
         {Build.isWebApp && (
-          <Hbox id="controls" pack="center" className="skin">
+          <Hbox id="controls" pack="center">
             <Spacer flex="1" />
             <Vbox id="control-rows">
               <Hbox pack="center">
@@ -667,7 +668,11 @@ export default class Xulsword
                 <Spacer flex="1" className="narrow-screen-hide" />
               </Hbox>
 
-              <Hbox id="main-controlbar" pack="center" align="start">
+              <Hbox
+                id="main-controlbar"
+                pack="center"
+                align="start"
+              >
                 {chooserMenuButton}
 
                 {vkMod && webappVKSelectorComponent}
@@ -699,7 +704,7 @@ export default class Xulsword
             id="main-controlbar"
             pack="start"
             align="center"
-            className="controlbar skin"
+            className="controlbar"
           >
             <Spacer className="start-spacer" />
 

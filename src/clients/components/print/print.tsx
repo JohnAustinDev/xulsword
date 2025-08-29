@@ -57,18 +57,22 @@ export default function Print(props: PrintProps) {
           <Hbox flex="1">
             <iframe
               key={iframeFilePath}
-              src={URL.createObjectURL(
-                b64toBlob(
-                  GI.inlineFile(
-                    '',
-                    renderPromise,
-                    iframeFilePath,
-                    'base64',
-                    true,
-                  ),
-                  'application/pdf',
-                ),
-              )}
+              src={
+                Build.isElectronApp
+                  ? URL.createObjectURL(
+                      b64toBlob(
+                        GI.inlineFile(
+                          '',
+                          renderPromise,
+                          iframeFilePath,
+                          'base64',
+                          true,
+                        ),
+                        'application/pdf',
+                      ),
+                    )
+                  : ''
+              }
             />
           </Hbox>
           <Hbox className="dialog-buttons" pack="end" align="end">

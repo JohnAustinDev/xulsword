@@ -4,11 +4,8 @@
 
 .genbook-chooser .chooser-container {
   width: 200px;
-  border-inline-start: unset;
-  border-top: unset;
-  border-inline-end: unset;
-  border-bottom: unset;
-  border-radius: unset;
+  border: none;
+  background: unset;
 }
 
 .genbook-chooser .scroll-parent {
@@ -20,12 +17,8 @@
   max-width: calc(100% - 3px);
   overflow: auto;
   z-index: 7;
-  border-inline-start: 2px solid rgb(175, 145, 180);
-  border-top: 2px solid rgb(175, 145, 180);
-  border-inline-end: 2px solid rgb(225, 195, 230);
-  border-bottom: 2px solid rgb(225, 195, 230);
-  border-radius: 8px;
-  background: white;
+  border: 2px solid var(--border-light);
+  background: var(--bg-text-light);
   transition: 0.25s;
 }
 

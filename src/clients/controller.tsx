@@ -13,7 +13,7 @@ import Cache from '../cache.ts';
 import C from '../constant.ts';
 import DynamicStyleSheet from './style.ts';
 import ContextData from './contextData.ts';
-import { windowArguments } from './common.tsx';
+import { setGlobalSkin, windowArguments } from './common.tsx';
 import log from './log.ts';
 import {
   delayHandler,
@@ -548,6 +548,8 @@ export default async function renderToRoot(
     ? (G.Data.read('stylesheetData') as StyleType)
     : undefined;
   dynamicStyleSheet.update(st);
+
+  setGlobalSkin(G.Prefs.getCharPref('global.skin') as string);
 
   // Set window type and language classes on the root html element.
   const classes: string[] = htmlCssClass ? [htmlCssClass] : [];

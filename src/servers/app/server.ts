@@ -209,7 +209,6 @@ const openXulswordWindow = () => {
   const xulswordWindow = BrowserWindow.fromId(
     Window.open({
       type: 'xulswordWin',
-      className: 'skin',
       typePersistBounds: true,
       saveIfAppClosed: false, // main win doesn't use OpenOnStartup pref when starting
       options: {

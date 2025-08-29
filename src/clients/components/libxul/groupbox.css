@@ -1,9 +1,9 @@
 .groupbox {
   margin: 10px 5px 5px 5px;
   padding: 5px;
-  border: 2px solid rgb(200, 200, 200);
+  border: 2px solid var(--border-dark);
   border-radius: 4px;
-  background: hsl(0 0% 94% / 1);
+  background: var(--bg-interface-dark);
 }
 
 .groupbox .groupbox-title {

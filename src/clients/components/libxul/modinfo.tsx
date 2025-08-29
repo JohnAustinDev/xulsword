@@ -159,7 +159,7 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
     (showConf && configs.find((c) => c.confID === showConf)) || null;
 
   const conftext: string[] =
-    (showConfET?.confPath &&
+    (Build.isElectronApp && showConfET?.confPath &&
       G.inlineFile(showConfET.confPath, 'utf8', true).split('\n')) ||
     [];
 

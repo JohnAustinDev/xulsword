@@ -68,7 +68,7 @@
 }
 
 .module-toast {
-  border-right: 1px solid var(--light);
+  border-right: 1px solid var(--bg-interface-light);
   padding-right: 10px;
   margin-right: -8px;
 }

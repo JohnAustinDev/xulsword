@@ -123,7 +123,6 @@ function updateModuleMenus(menux?: Menu) {
                 label:
                   t.label + (description ? ` --- ${description.locale}` : ''),
                 type: 'checkbox',
-                // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
                 click: d(() => {
                   G.Viewport.setXulswordTabs({
                     panelIndex,
@@ -641,7 +640,6 @@ export default class MainMenuBuilder {
       return {
         id: `parent_${typekey}`,
         label: ts(`menu.view.${typekey}`),
-        icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${type}.png`),
         submenu: [
           ...panelLabels().map((pl: string) => {
             const panelIndex =

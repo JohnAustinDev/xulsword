@@ -1,0 +1,40 @@
+
+/* This custom skin called 'pattern' may be added using setGlobalSkin('pattern') */
+:root {
+  --color-primary: #2e5cd1e6;
+  --color-secondary: rgba(204, 204, 0, 0.8);
+  --color-secondary2: rgba(100, 100, 255, 0.8);
+  --color-secondary3: rgba(100, 245, 245, 0.8);
+
+  --bg-interface-light: rgb(242, 242, 242);
+
+  --bg-text-light: rgb(255, 243, 255);
+  --bg-text-dark: rgb(245, 220, 255);
+  --bg-text-pinned: white;
+
+  --border-light: rgb(200, 170, 205);
+}
+
+#root {
+  background-image: url(../../assets/b2.png);
+}
+
+.chooser .fadetop,
+.chooser .fadebot {
+  background-image: url(../../assets/b2.png);
+  opacity: 0.8;
+}
+.chooser .fadetop {
+  background-position: -15px 40px;
+  margin-top: -10px;
+}
+.chooser .fadebot {
+  background-position: -15px 0;
+  margin-bottom: -25px;
+}
+
+.chooser .chooser-container,
+.genbook-chooser .scroll-parent,
+.atext {
+  border-radius: 8px;
+}
