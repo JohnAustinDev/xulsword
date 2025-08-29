@@ -668,11 +668,7 @@ export default class Xulsword
                 <Spacer flex="1" className="narrow-screen-hide" />
               </Hbox>
 
-              <Hbox
-                id="main-controlbar"
-                pack="center"
-                align="start"
-              >
+              <Hbox id="main-controlbar" pack="center" align="start">
                 {chooserMenuButton}
 
                 {vkMod && webappVKSelectorComponent}

@@ -105,7 +105,7 @@ a.anchorbutton .tab:hover {
   display: none;
 }
 .tabs .tab.active {
-  background-color:var(--bg-text-light);
+  background-color: var(--bg-text-light);
   border-bottom-color: var(--bg-text-light);
   color: var(--color-primary);
 }
@@ -121,10 +121,10 @@ a.anchorbutton .tab:hover {
   border-top-color: var(--color-primary);
 }
 .tabs .tabComms {
-   border-top-color: var(--color-secondary2);
+  border-top-color: var(--color-secondary2);
 }
 .tabs .tabDicts {
-  border-top-color: var(--color-secondary)
+  border-top-color: var(--color-secondary);
 }
 .tabs .tabGenbks {
   border-top-color: var(--color-secondary3);
@@ -133,7 +133,7 @@ a.anchorbutton .tab:hover {
   border-top-color: var(--color-primary);
 }
 .tabs .tabComms > .border {
-   border-top-color: var(--color-secondary2);
+  border-top-color: var(--color-secondary2);
 }
 .tabs .tabDicts > .border {
   border-top-color: var(--color-secondary);

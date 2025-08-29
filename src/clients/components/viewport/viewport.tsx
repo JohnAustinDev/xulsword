@@ -190,7 +190,8 @@ class Viewport extends React.Component implements PopupParent {
   }
 
   render() {
-    const { renderPromise, loadingRef, popupRef, popupHandler, audioHandler } = this;
+    const { renderPromise, loadingRef, popupRef, popupHandler, audioHandler } =
+      this;
     const props = this.props as ViewportProps;
     const state = this.state as ViewportState;
     const {

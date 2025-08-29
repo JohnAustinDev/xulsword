@@ -10,7 +10,7 @@
   margin-inline-end: 10px;
 }
 .atext.pinned {
-  background: var(--bg-text-pinned)
+  background: var(--bg-text-pinned);
 }
 
 .atext .hd,

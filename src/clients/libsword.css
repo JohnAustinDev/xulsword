@@ -551,7 +551,8 @@ span.foreign {
   font-size: x-large;
   color: var(--color-primary);
 }
-.x-style1:after { /* used anywhere?? */
+.x-style1:after {
+  /* used anywhere?? */
   content: '† ';
   color: var(--color-primary);
 }
