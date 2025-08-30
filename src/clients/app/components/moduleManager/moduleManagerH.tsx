@@ -1570,14 +1570,14 @@ export async function download(
         return promptAudioChapters(state, conf);
       }
     }
-    return null;
+    return undefined;
   });
-  if (!audioPrompts.every((p) => p === null)) {
+  if (!audioPrompts.every((p) => typeof p === 'undefined')) {
     try {
       const promptResults = await Promise.all(audioPrompts);
       promptResults.forEach((promptResult, i) => {
-        if (!promptResult) dlobjs[i] = null;
-        else if (dlobjs[i] && 'http' in dlobjs[i])
+        if (promptResult === null) dlobjs[i] = null;
+        else if (promptResult && dlobjs[i] && 'http' in dlobjs[i])
           dlobjs[i].data = promptResult;
       });
     } catch (er) {

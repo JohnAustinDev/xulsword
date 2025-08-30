@@ -153,6 +153,9 @@ html[dir='rtl'] .bookgrouplist {
   background-color: var(--color-primary);
   color: white;
 }
+.bookgroupitem.selected .bp6-icon {
+  color: var(--bg-interface-dark);
+}
 .other .bookgroupitem.selected {
   background-image: repeating-linear-gradient(
     45deg,

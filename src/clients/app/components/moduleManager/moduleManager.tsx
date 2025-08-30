@@ -7,6 +7,7 @@ import {
   repositoryKey,
   repositoryModuleKey,
   localizeString,
+  stringHash,
 } from '../../../../common.ts';
 import S from '../../../../defaultPrefs.ts';
 import C from '../../../../constant.ts';
@@ -712,11 +713,11 @@ export default class ModuleManager
         selection,
       } as H.VersekeyDialog | H.GenBookDialog;
       if (showAudioDialog[0].type === 'versekey') {
-        const [dvk] = showAudioDialog;
-        const { options } = dvk;
-        const sel = selection as SelectVKType;
-        if (sel.book && options) {
-          const af = dvk.chapters[sel.book];
+        const [vkdialog] = showAudioDialog;
+        const { options, chapters } = vkdialog;
+        const { book } = selection as SelectVKType;
+        if (book && options) {
+          const af = chapters[book];
           let ch: number[] | undefined;
           if (af) {
             ch = af
@@ -849,6 +850,7 @@ export default class ModuleManager
                       <Label value={vkAudioDialog.conf.module} />
                       <SelectVK
                         height="2em"
+                        key={stringHash(vkAudioDialog.initial)}
                         initialVK={vkAudioDialog.initial}
                         options={vkAudioDialog.options}
                         allowNotInstalled
