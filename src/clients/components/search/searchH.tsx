@@ -12,7 +12,7 @@ import { G, GI } from '../../G.ts';
 import { dString, rootRenderPromise } from '../../common.tsx';
 import Commands from '../../commands.ts';
 import log from '../../log.ts';
-import RenderPromise from '../../renderPromise.ts';
+import RenderPromise, { setLoadingClass } from '../../renderPromise.ts';
 import { getElementData } from '../../htmlData.ts';
 import verseKey from '../../verseKey.ts';
 import SearchHelp from '../searchHelp/searchHelp.tsx';
@@ -265,7 +265,11 @@ export async function search(xthis: Search): Promise<boolean> {
   // this should always be a new search set.
   s.progress = 0;
 
+  setLoadingClass(renderPromise, true);
+
   await updateStateResults(xthis, s);
+
+  setLoadingClass(renderPromise, false);
 
   log.debug(`FINISHED SEARCHING!`);
   return true;

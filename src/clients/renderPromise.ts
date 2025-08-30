@@ -484,11 +484,11 @@ function flatPrune(calls: GCallType[]): GCallType[] {
   return flat;
 }
 
-function setLoadingClass(
+export function setLoadingClass(
   renderPromise: RenderPromise,
   setUnset: boolean,
 ): void {
-  const { callback, loadingRef, loadingSelector, type } = renderPromise;
+  const { loadingRef, loadingSelector, type } = renderPromise;
   if (loadingRef) {
     let targelem: HTMLElement | null = null;
     const { current } = loadingRef;
@@ -500,7 +500,6 @@ function setLoadingClass(
     if (targelem) {
       if (setUnset) {
         targelem.classList.add('rp-loading');
-        (callback as any).debug = targelem.classList;
       } else targelem.classList.remove('rp-loading');
       log.silly(
         `${setUnset ? 'set' : 'unset'} loading selector: ${targelem.classList}`,
@@ -508,11 +507,8 @@ function setLoadingClass(
     } else if (type === 'functionComponent') {
       // classComponents may be replaced with new instances thereby creating false errors
       // here. So only report functionalComponents, which would be real errors.
-      const debug =
-        (callback && 'debug' in callback && (callback as any).debug) ||
-        'unknown';
       log[setUnset ? 'debug' : 'error'](
-        `FAILED to ${setUnset ? 'set' : 'unset'} a loading selector: ${debug}`,
+        `FAILED to ${setUnset ? 'set' : 'unset'} a loading selector: ${loadingSelector}`,
       );
     }
   }

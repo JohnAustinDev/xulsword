@@ -20,6 +20,8 @@ import {
   iframeAutoHeight,
   moduleIncludesStrongs,
   windowArguments,
+  getStatePref,
+  setStatePref,
 } from '../../common.tsx';
 import Popup from '../../components/popup/popup.tsx';
 import {
@@ -89,7 +91,7 @@ export type SearchProps = {
   onlyLucene?: boolean;
 } & XulProps;
 
-const defaultState = {
+const notStatePref = {
   module: '' as string, // search module
   searchtext: '' as string, // search text
   searchtype: 'SearchExactText' as SearchType['type'], // type of search to do
@@ -98,7 +100,6 @@ const defaultState = {
     | BookGroupType
     | (typeof ScopeSelectOptions)[number]
     | string, // scope select value
-  moreLess: true as boolean, // more / less state
   displayModule: '' as string, // current module for displaying search results
   results: null as SearchResult | null, // count and page-result are returned at different times
   pageindex: 0 as number, // first results index to show
@@ -147,8 +148,9 @@ const noPersist = ['results', 'pageindex', 'progress', 'progressLabel'].concat(
 let reMountState = null as null | SearchState;
 
 export type SearchState = PopupParentState &
-  RenderPromiseState &
-  typeof defaultState;
+  typeof notStatePref &
+  typeof S.prefs.search &
+  RenderPromiseState;
 
 export default class Search
   extends React.Component
@@ -192,7 +194,8 @@ export default class Search
 
     const s: SearchState = {
       ...PopupParentInitState,
-      ...defaultState,
+      ...notStatePref,
+      ...(getStatePref('prefs', 'search') as typeof S.prefs.search),
       module: initialState.module,
       searchtext: initialState.searchtext,
       searchtype: initialState.type,
@@ -275,7 +278,7 @@ export default class Search
       (typeof noPersist)[number]
     >;
     const psx = persistState as any;
-    const isx = defaultState as any;
+    const isx = notStatePref as any;
     if (
       descriptor &&
       diff(
@@ -288,6 +291,8 @@ export default class Search
       });
       G.Window.setComplexValue('pstate', { ...persistState, showHelp: null });
     }
+
+    setStatePref('prefs', 'search', prevState, state);
 
     // Apply popup fade-in effect
     const { popupParent, elemdata } = state;

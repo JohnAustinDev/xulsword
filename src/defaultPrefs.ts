@@ -662,6 +662,10 @@ const S = {
         },
       ] as TableColumnInfo[],
     },
+
+    search: {
+      moreLess: true as boolean,
+    },
   },
 };
 
