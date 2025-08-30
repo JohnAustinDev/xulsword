@@ -104,7 +104,7 @@ let rootRenderPromiseInst: RenderPromise | null = null;
 export function rootRenderPromise() {
   if (!rootRenderPromiseInst) {
     rootRenderPromiseInst = new RenderPromise(() =>
-      Subscription.publish.setControllerState({ reset: randomID() }),
+      Subscription.publish.setControllerState({ reset: randomID() }, false),
     );
     setInterval(() => rootRenderPromiseInst?.dispatch(), 200);
   }

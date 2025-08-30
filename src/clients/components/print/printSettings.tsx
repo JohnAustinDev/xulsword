@@ -267,19 +267,22 @@ export default class PrintSettings extends React.Component {
           }
           case 'printToPDF': {
             analytics.record(getAnalyticInfo());
-            Subscription.publish.setControllerState(dark);
+            Subscription.publish.setControllerState(dark, false);
             G.Window.printToPDF({
               destination: 'prompt-for-file',
               ...electronOptions,
             })
               .then(() => {
-                return Subscription.publish.setControllerState({
-                  reset: randomID(),
-                  ...normal,
-                  print: {
-                    iframeFilePath: '',
-                  } as PrintOptionsType,
-                });
+                return Subscription.publish.setControllerState(
+                  {
+                    reset: randomID(),
+                    ...normal,
+                    print: {
+                      iframeFilePath: '',
+                    } as PrintOptionsType,
+                  },
+                  false,
+                );
               })
               .catch((er) => {
                 this.addToast({
@@ -294,21 +297,24 @@ export default class PrintSettings extends React.Component {
           }
           case 'printPreview': {
             analytics.record(getAnalyticInfo());
-            Subscription.publish.setControllerState(dark);
+            Subscription.publish.setControllerState(dark, false);
             G.Window.printToPDF({
               destination: 'iframe',
               ...electronOptions,
             })
               .then((iframeFilePath: string) => {
-                return Subscription.publish.setControllerState({
-                  reset: randomID(),
-                  print: {
-                    iframeFilePath,
-                    printDisabled: false,
-                  } as PrintOptionsType,
-                  modal: 'off',
-                  progress: -1,
-                });
+                return Subscription.publish.setControllerState(
+                  {
+                    reset: randomID(),
+                    print: {
+                      iframeFilePath,
+                      printDisabled: false,
+                    } as PrintOptionsType,
+                    modal: 'off',
+                    progress: -1,
+                  },
+                  false,
+                );
               })
               .catch((er) => {
                 this.addToast({
@@ -327,13 +333,7 @@ export default class PrintSettings extends React.Component {
             if (Build.isElectronApp && id === 'close') {
               G.Window.close();
             } else {
-              Subscription.publish.setControllerState({
-                reset: randomID(),
-                card: null,
-                print: null,
-                modal: 'off',
-                progress: -1,
-              });
+              history.back();
               if (Build.isElectronApp) {
                 G.publishSubscription('asyncTaskComplete', {
                   renderers: { type: 'all' },
@@ -557,7 +557,7 @@ export default class PrintSettings extends React.Component {
   setPages2() {
     const { print } = this.props as PrintSettingsProps;
     if (print.pageable) setTimeout(() => this.setPages(), 1);
-    else Subscription.publish.setControllerState({ reset: randomID() });
+    else Subscription.publish.setControllerState({ reset: randomID() }, false);
   }
 
   async addToast(message: ToastProps) {

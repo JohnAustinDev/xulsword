@@ -142,13 +142,16 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             };
             if (Build.isElectronApp) G.Commands.search(search);
             else
-              Subscription.publish.setControllerState({
-                reset: randomID(),
-                card: {
-                  name: 'search',
-                  props: { initialState: search, onlyLucene: true },
+              Subscription.publish.setControllerState(
+                {
+                  reset: randomID(),
+                  card: {
+                    name: 'search',
+                    props: { initialState: search, onlyLucene: true },
+                  },
                 },
-              });
+                true,
+              );
           }
           break;
         }
@@ -203,12 +206,12 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               G.Prefs.setComplexValue('xulsword.panels', panels);
             }
           }
-          Subscription.publish.setControllerState({ reset: randomID() });
+          Subscription.publish.setControllerState({ reset: randomID() }, false);
           break;
         }
         case 'removecolumn': {
           setGlobalPanels(G.Prefs, 0, -1);
-          Subscription.publish.setControllerState({ reset: randomID() });
+          Subscription.publish.setControllerState({ reset: randomID() }, false);
           break;
         }
         default:

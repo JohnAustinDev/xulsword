@@ -869,10 +869,13 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
                 verse: Number(p.shift()),
               };
               if (Build.isWebApp)
-                Subscription.publish.setControllerState({
-                  reset: randomID(),
-                  card: null,
-                });
+                Subscription.publish.setControllerState(
+                  {
+                    reset: randomID(),
+                    card: null,
+                  },
+                  true,
+                );
               Commands.goToLocationVK(l, l, undefined, rootRenderPromise());
               break;
             }
@@ -880,10 +883,13 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
               const module = p.shift();
               if (module && module in G.Tab) {
                 if (Build.isWebApp)
-                  Subscription.publish.setControllerState({
-                    reset: randomID(),
-                    card: null,
-                  });
+                  Subscription.publish.setControllerState(
+                    {
+                      reset: randomID(),
+                      card: null,
+                    },
+                    true,
+                  );
                 Commands.goToLocationGB(
                   {
                     otherMod: module,

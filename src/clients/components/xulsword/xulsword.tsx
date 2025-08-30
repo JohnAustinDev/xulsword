@@ -16,7 +16,6 @@ import {
   doUntilDone,
   isIBTChildrensBible,
   chooserGenbks,
-  audioSelections,
 } from '../../common.tsx';
 import {
   addClass,
@@ -31,7 +30,6 @@ import Spacer from '../libxul/spacer.tsx';
 import Textbox from '../libxul/textbox.tsx';
 import SelectOR from '../libxul/selectOR.tsx';
 import SelectVK from '../libxul/selectVK.tsx';
-import Menulist from '../libxul/menulist.tsx';
 import AudioPlayer from '../audioPlayer/audioPlayer.tsx';
 import Viewport from '../viewport/viewport.tsx';
 import viewportParentH, {
@@ -47,12 +45,7 @@ import {
 import './xulsword.css';
 
 import type { BibleBrowserControllerGlobal } from '../../webapp/bibleBrowser/bibleBrowser.tsx';
-import type {
-  AudioPlayerSelectionGB,
-  AudioPlayerSelectionVK,
-  OSISBookType,
-  XulswordStateArgType,
-} from '../../../type.ts';
+import type { OSISBookType, XulswordStateArgType } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
   RenderPromiseState,
@@ -427,9 +420,12 @@ export default class Xulsword
               setStatePref('prefs', 'printPassage', null, {
                 chapters: { ...location, vkMod },
               });
-              Subscription.publish.setControllerState({
-                card: { name: 'printPassage', props: {} },
-              });
+              Subscription.publish.setControllerState(
+                {
+                  card: { name: 'printPassage', props: {} },
+                },
+                true,
+              );
             }}
             title={GI.i18n.t('', renderPromise, 'menu.printPassage')}
           />

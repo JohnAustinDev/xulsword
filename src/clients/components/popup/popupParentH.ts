@@ -306,13 +306,16 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               };
               if (Build.isElectronApp) G.Commands.search(search);
               else
-                Subscription.publish.setControllerState({
-                  reset: randomID(),
-                  card: {
-                    name: 'search',
-                    props: { initialState: search, onlyLucene: true },
+                Subscription.publish.setControllerState(
+                  {
+                    reset: randomID(),
+                    card: {
+                      name: 'search',
+                      props: { initialState: search, onlyLucene: true },
+                    },
                   },
-                });
+                  true,
+                );
             }
           }
           break;

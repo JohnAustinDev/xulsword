@@ -181,9 +181,12 @@ class Viewport extends React.Component implements PopupParent {
       Commands.playAudio(
         { open, file, defaults },
         new RenderPromise(() =>
-          Subscription.publish.setControllerState({
-            reset: randomID(),
-          }),
+          Subscription.publish.setControllerState(
+            {
+              reset: randomID(),
+            },
+            false,
+          ),
         ),
       );
     }

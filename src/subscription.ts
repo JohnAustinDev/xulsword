@@ -26,7 +26,10 @@ type SubscriptionTypes = {
   modulesInstalled: (newmods: NewModulesType, callingWinID?: number) => void;
   asyncTaskComplete: () => unknown;
   resetMain: () => void;
-  setControllerState: (state: Partial<ControllerState>) => void;
+  setControllerState: (
+    state: Partial<ControllerState>,
+    addToHistory: boolean,
+  ) => void;
   // result is undefined when publish happens before subscribe!
   getControllerState: () => ControllerState | undefined;
 };
