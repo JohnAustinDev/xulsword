@@ -279,10 +279,13 @@ html[dir='rtl'] .notebox-maximizer {
   margin-top: 16px;
   margin-bottom: 16px;
 }
+.interB + .interB {
+  border-top: 1px solid var(--border-dark);
+  padding-top: 1em;
+}
 .interS {
   color: var(--color-primary);
   width: 50px;
-  border-top: 1px var(--color-primary);
   margin-top: 4px;
   margin-bottom: 4px;
 }
