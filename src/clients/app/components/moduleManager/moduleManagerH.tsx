@@ -584,6 +584,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                 renderers: { type: 'xulswordWin' },
               },
               { progress: 'indefinite' },
+              false,
             );
 
             (['remove', 'copy', 'move', 'install'] as const).forEach((type) => {
@@ -624,6 +625,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                 renderers: { type: 'xulswordWin' },
               },
               { progress: -1 },
+              false,
             );
 
             if (errors.length) {

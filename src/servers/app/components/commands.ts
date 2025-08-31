@@ -672,6 +672,7 @@ const Commands = {
             reset: randomID(),
             print,
           },
+          true,
         );
         const destroy = Subscription.subscribe.asyncTaskComplete(() => {
           destroy();
