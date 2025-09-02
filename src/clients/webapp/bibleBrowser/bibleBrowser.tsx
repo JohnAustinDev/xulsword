@@ -55,6 +55,15 @@ socket.on('connect', () => {
         defaultSettings,
       ) as BibleBrowserData;
 
+      // Since servers do not receive URL fragments from browsers, URL
+      // fragments cannot be handled by the server, so handle now.
+      if (
+        window.location.href.endsWith('#sv') ||
+        frameElement?.ownerDocument?.defaultView?.location.href.endsWith('#sv')
+      ) {
+        settings.prefs.xulsword.scroll = { verseAt: 'center' };
+      }
+
       // Add CSS
       const { css } = settings;
       if (css) {
@@ -68,17 +77,34 @@ socket.on('connect', () => {
         }
       }
 
-      // If storageId is 'none', then user settings are not persistent between
-      // page reloads. If the id is un-prefixed or prefixed with 'before:' then
-      // user prefs will defer to any pref values in settings. Or if prefixed
-      // with 'after:' then even settings will be overwritten by any previously
-      // set user pref values (ie. settings will have no effect).
+      // DETERMINATION OF INITIAL BIBLE BROWSER STATE:
+      // Initial xulsword state is set by xulsword's getStatePref()
+      // system. So initial user prefs must be saved before renderToRoot() is
+      // run. The writeSettingsToPrefsStores() function does this by combining
+      // xulsword default prefs, user prefs for the storage ID, and server
+      // settings. These are combined in the order specified by the ID as
+      // follows:
+      //
+      //  storage ID
+      //   none        -User prefs are not persistent between page reloads, so
+      //                xulsword default prefs and data settings alone will
+      //                determine the initial state.
+      //   <ID>        -Same as 'before:<ID>'
+      //   before:<ID> -Order is xulsword default prefs, followed by user prefs
+      //                for this storage ID (if they exist) then server
+      //                settings. Therefore server settings will override user
+      //                prefs when determining the initial state.
+      //   after:<ID>  -Order is xulsword default prefs, followed by server
+      //                settings, then user prefs for this storage ID (if they
+      //                exist). Therefore once a user pref has been set (upon
+      //                first load) it will be used to determine initial state
+      //                when this storage ID is used. But see EXCEPTIONS below.
       let { storageId } = settings;
       let applyUserPrefs: 'before' | 'after' | 'none' =
         storageId === 'none' ? 'none' : 'before';
-      const match = storageId.match(/^(before|after|none):/);
-      if (match) {
-        applyUserPrefs = match[1] as 'before' | 'after' | 'none';
+      const keywords = storageId.match(/^(before|after|none):/);
+      if (keywords) {
+        applyUserPrefs = keywords[1] as 'before' | 'after' | 'none';
         storageId = storageId.substring(applyUserPrefs.length + 1);
         if (applyUserPrefs === 'none') storageId = 'none';
       }
@@ -86,53 +112,20 @@ socket.on('connect', () => {
         Prefs.setStorageId(storageId);
         if (!Prefs.storeExists('prefs', storageId)) applyUserPrefs = 'before';
       }
-
-      let maxPanels = Math.ceil(window.innerWidth / 300);
-      if (maxPanels < 2) maxPanels = 2;
-      else if (maxPanels > 6) maxPanels = 6;
-      (window as BibleBrowserControllerGlobal).browserMaxPanels = maxPanels;
-
-      let numPanels: number =
-        (settings.prefs?.xulsword as any)?.panels?.length || maxPanels;
-      const { panels: settingsPanels } = settings.prefs?.xulsword || {};
-      if (
-        settingsPanels &&
-        window.innerWidth <= C.UI.WebApp.mobileW &&
-        [...new Set(settingsPanels)].filter(Boolean).length === 1
-      ) {
-        numPanels = 1;
-      }
-
-      // Always have numPanels of user pref xulsword.panels overwrite settings.
-      // This allows users to permanently select the number of panels wanted.
-      if (applyUserPrefs === 'after')
-        numPanels = (
-          Prefs.getComplexValue(
-            'xulsword.panels',
-          ) as typeof S.prefs.xulsword.panels
-        ).length;
-      if (numPanels > maxPanels) numPanels = maxPanels;
-
-      // These prefs cannot be set by the user so server settings should always
-      // override regardless of applyUserPrefs. When applyUserPrefs is 'after'
-      // the override must be done explicitly here.
+      // EXCEPTIONS to storage ID rules:
+      // These user prefs cannot be changed by the user (ie. there is no UI to
+      // do so) but they will nevertheless take on default values upon first
+      // use, so server settings must always override them regardless of
+      // storage ID specifying 'after'. This insures unchangeable xulsword
+      // default prefs will not permanently override these server settings.
       if (applyUserPrefs === 'after') {
         Prefs.setComplexValue('xulsword.place', settings.prefs.xulsword.place);
         Prefs.setCharPref('global.locale', settings.prefs.global.locale);
         Prefs.setIntPref('global.fontSize', settings.prefs.global.fontSize);
       }
-
-      // Since servers may not receive URL fragments from browsers, any URL
-      // fragment must be handled here.
-      if (
-        window.location.href.endsWith('#sv') ||
-        frameElement?.ownerDocument?.defaultView?.location.href.endsWith('#sv')
-      ) {
-        settings.prefs.xulsword.scroll = { verseAt: 'center' };
-      }
-
-      // Must set global.locale before callBatchThenCache.
       writeSettingsToPrefsStores(settings, applyUserPrefs);
+
+      // Must check and set final global.locale before callBatchThenCache.
       let locale = Prefs.getCharPref('global.locale');
       if (!locale || !C.Locales.some((x) => x[0] === locale)) {
         locale =
@@ -141,6 +134,23 @@ socket.on('connect', () => {
             : 'en';
         Prefs.setCharPref('global.locale', locale);
       }
+
+      // Determine the number of panels to show initially. If runtime is narrow
+      // screen and server settings show a single text, reduce the initial
+      // number of panels to 1.
+      let maxPanels = Math.ceil(window.innerWidth / 300);
+      if (maxPanels < 2) maxPanels = 2;
+      else if (maxPanels > 6) maxPanels = 6;
+      (window as BibleBrowserControllerGlobal).browserMaxPanels = maxPanels;
+      const panels = Prefs.getComplexValue(
+        'xulsword.panels',
+      ) as typeof S.prefs.xulsword.panels;
+      const forceSinglePanel =
+        window.innerWidth <= C.UI.WebApp.mobileW &&
+        panels.length > 1 &&
+        [...new Set(panels)].filter(Boolean).length === 1;
+      let numPanels = forceSinglePanel ? 1 : panels.length;
+      if (numPanels > maxPanels) numPanels = maxPanels;
 
       await callBatchThenCache([
         ['getLocalizedBooks', null, [[locale]]],
@@ -172,7 +182,7 @@ socket.on('connect', () => {
         return false;
       };
 
-      // Cancel Tarapro page loader overlay.
+      // Now cancel the Tarapro page loader overlay.
       setTimeout(() => {
         const win = frameElement?.ownerDocument.defaultView;
         if (win && 'jQuery' in win) {
