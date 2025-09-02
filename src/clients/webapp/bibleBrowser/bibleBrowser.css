@@ -73,6 +73,9 @@ body {
 #genbknav .menulist select {
   width: 100%;
 }
+.chooser .fadetop {
+  height: 25px;
+}
 
 html:not(.is-vagrant) .popup-fail.reason,
 #genbknav,
