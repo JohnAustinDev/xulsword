@@ -775,6 +775,17 @@ export default class MainMenuBuilder {
           label: ts('menu.options.font'),
           submenu: [
             {
+              label: ts('fontsAndColors.label'),
+              click: d(() => {
+                const ps = G.Prefs.getComplexValue(
+                  'xulsword.panels',
+                ) as typeof S.prefs.xulsword.panels;
+                const module = ps.find((m) => m) || G.Tabs[0]?.module || '';
+                Commands.openFontsColors(module);
+              }),
+            },
+            { type: 'separator' },
+            {
               label: ts('menu.options.font1'),
               id: `global.fontSize_val_0`,
               type: 'radio',
@@ -827,17 +838,6 @@ export default class MainMenuBuilder {
                   'global.fontSize',
                   4 satisfies typeof S.prefs.global.fontSize,
                 );
-              }),
-            },
-            { type: 'separator' },
-            {
-              label: ts('fontsAndColors.label'),
-              click: d(() => {
-                const ps = G.Prefs.getComplexValue(
-                  'xulsword.panels',
-                ) as typeof S.prefs.xulsword.panels;
-                const module = ps.find((m) => m) || G.Tabs[0]?.module || '';
-                Commands.openFontsColors(module);
               }),
             },
           ],
