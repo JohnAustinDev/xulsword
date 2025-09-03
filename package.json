@@ -53,7 +53,7 @@
     },
     "linux": {
       "target": [
-        "snap"
+        "AppImage"
       ],
       "category": "Education",
       "extraFiles": [

@@ -268,6 +268,7 @@ const openXulswordWindow = () => {
             'setControllerState',
             { renderers: { id: callingWinID } },
             { progress: 'indefinite' },
+            false,
           );
         }
         const newErrors = newmods.reports.map((r) => r.error).filter(Boolean);
@@ -513,11 +514,7 @@ const init = async () => {
 
   ProgramTitle = localizeString(i18n, 'i18n:program.title');
 
-  // autoUpdater currently (8/19/25) only supports macOS and Windows.
-  if (
-    ['darwin', 'win32'].includes(process.platform ?? '') &&
-    Prefs.getBoolPref('global.InternetPermission')
-  ) {
+  if (Prefs.getBoolPref('global.InternetPermission')) {
     autoUpdater.logger = log;
     autoUpdater
       .checkForUpdatesAndNotify({
