@@ -602,7 +602,7 @@ const init = async () => {
     (['repository', 'module'] as const).forEach((tableName) => {
       const k = `${id}.${tableName}.selection`;
       const v = Prefs.getComplexValue(k) as string[] | RowSelection;
-      if (typeof v[0] !== 'string') {
+      if (v.length && typeof v[0] !== 'string') {
         log.info(`Applying pref update to: ${k}`);
         Prefs.setComplexValue(k, [] as string[]);
       }

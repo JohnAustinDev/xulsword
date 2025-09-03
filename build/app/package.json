@@ -2,7 +2,7 @@
   "name": "xulsword",
   "productName": "MK",
   "description": "Электронная Библия",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "type": "module",
   "main": "./dist/appSrv/server.cjs",
   "author": {
