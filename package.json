@@ -11,7 +11,7 @@
     "start:webappSrv": "webpack --env development --env webappSrv && cross-env LD_LIBRARY_PATH='./Cpp/lib' node ./build/webapp",
     "build:app": "yarn build:clean && webpack --env packaged --env production --env preload --env appSrv --env appClients",
     "build:webapp": "webpack --env production --env webappSrv --env webappClients",
-    "build:clean": "node ./scripts/clean.mjs dist release",
+    "build:clean": "node ./scripts/clean.mjs dist",
     "lint": "eslint . --cache",
     "install-libxulsword": "node ./build/app/node_modules/libxulsword/install.mjs",
     "postinstall": "electron-builder install-app-deps && yarn ./build/app && yarn ./build/webapp",
@@ -20,7 +20,7 @@
     "package-linux": "cross-env PKLIB=linux yarn install-libxulsword && yarn package --linux",
     "package-32win": "cross-env PKLIB=32win yarn install-libxulsword && yarn package --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
     "package-64win": "cross-env PKLIB=64win yarn install-libxulsword && yarn package --win --x64 && cross-env PKLIB=linux yarn install-libxulsword",
-    "release": "yarn release-linux && yarn release-32win",
+    "release": "node ./scripts/clean.mjs release && yarn release-linux && yarn release-32win",
     "release-linux": "yarn && cross-env PKLIB=linux yarn install-libxulsword && yarn package-publish --linux",
     "release-32win": "yarn && cross-env PKLIB=32win yarn install-libxulsword && yarn package-publish --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
     "release-64win": "yarn && cross-env PKLIB=64win yarn install-libxulsword && yarn package-publish --win --x64 && cross-env PKLIB=linux yarn install-libxulsword"
