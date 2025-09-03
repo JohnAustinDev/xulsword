@@ -47,10 +47,6 @@
     "extraResources": [
       "./assets/**"
     ],
-    "snap": {
-      "base": "core22",
-      "allowNativeWayland": true
-    },
     "linux": {
       "target": [
         "AppImage"
@@ -58,7 +54,7 @@
       "category": "Education",
       "extraFiles": [
         {
-          "from": "./Cpp/lib-core22"
+          "from": "./Cpp/lib"
         }
       ]
     },
@@ -261,5 +257,5 @@
     "webpack-cli": "^4.6.0",
     "webpack-dev-server": "^3.11.2"
   },
-  "packageManager": "yarn@4.9.2"
+  "packageManager": "yarn@4.9.4"
 }
