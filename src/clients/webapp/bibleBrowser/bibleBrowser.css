@@ -126,9 +126,6 @@ html:not(.is-vagrant) .popup-fail.reason,
   #genbknav {
     display: flex;
   }
-  .npopup .popupCloseLink.backable {
-    display: block;
-  }
   .chooser,
   #choosermenu,
   .npopup .draghandle,

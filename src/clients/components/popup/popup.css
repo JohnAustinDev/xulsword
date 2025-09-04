@@ -66,10 +66,8 @@ html:not(.popupWin) .npopupTX {
   margin: 0px 0px 20px 0px;
 }
 .popupheader > div {
-  margin-inline-end: 5px;
-}
-.popupCloseLink.backable {
-  display: none;
+  margin-inline-start: 0;
+  margin-inline-end: 10px;
 }
 .popupBackLink,
 .popupCloseLink {
@@ -81,16 +79,16 @@ html:not(.popupWin) .npopupTX {
   text-decoration: underline;
   cursor: pointer;
 }
-.draghandle {
-  cursor: move;
-  background-image: url(../../images/draghandle.png);
-  height: 12px;
-  width: 40px;
+.draghandle,
+.draghandle * {
+  cursor: grab !important;
+}
+.draghandle.dragging,
+.draghandle.dragging * {
+  cursor: grabbing !important;
 }
 .popup-mod-select {
   text-align: center;
-  padding-top: 3px;
-  margin-bottom: 15px;
 }
 
 /* footnote styles */

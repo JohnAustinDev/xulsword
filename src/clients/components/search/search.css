@@ -104,9 +104,6 @@
 .result-container > div {
   overflow: hidden;
 }
-.result-container button {
-  margin: 5px;
-}
 .resultBox {
   flex-basis: 0;
   border: 2px solid var(--border-light);

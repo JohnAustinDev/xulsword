@@ -350,19 +350,21 @@ class Popup extends React.Component implements RenderPromiseComponent {
             {!isWindow && Build.isElectronApp && (
               <Button className="towindow" icon="open-application" />
             )}
-            <div>
-              <div
-                className={`popupCloseLink${elemdata && elemdata.length > 1 ? ' backable' : ''}`}
-              >
-                <Button icon="cross" />
-              </div>
-            </div>
-            {elemdata && elemdata.length > 1 && (
-              <div className="popupBackLink">
-                <Button icon="arrow-left" />
-              </div>
+            {!(elemdata && elemdata.length > 1) && (
+              <Button className="popupCloseLink" icon="cross" />
             )}
-            {!isWindow && <div className="draghandle" />}
+            {elemdata && elemdata.length > 1 && (
+              <Button className="popupBackLink" icon="arrow-left" />
+            )}
+            {!isWindow && (
+              <Button
+                className={[
+                  'draghandle',
+                  drag?.dragging ? 'dragging' : '',
+                ].join(' ')}
+                icon="drag-handle-horizontal"
+              />
+            )}
             <Box flex="1" />
             {bibleMod &&
               (type === 'cr' || type === 'sr') &&
