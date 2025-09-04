@@ -358,10 +358,8 @@ class Popup extends React.Component implements RenderPromiseComponent {
               </div>
             </div>
             {elemdata && elemdata.length > 1 && (
-              <div>
-                <a className="popupBackLink">
-                  {GI.i18n.t('', this.renderPromise, 'back.label')}
-                </a>
+              <div className="popupBackLink">
+                <Button icon="arrow-left" />
               </div>
             )}
             {!isWindow && <div className="draghandle" />}

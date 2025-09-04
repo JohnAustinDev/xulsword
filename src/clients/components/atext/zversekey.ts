@@ -12,7 +12,7 @@ import {
   getLocalizedChapterTerm,
   doWhenRenderPromisesDone,
   getExtRefHTML,
-  scrollIntoView,
+  safeScrollIntoView,
 } from '../../common.tsx';
 import { G, GI } from '../../G.ts';
 import { delayHandler } from '../libxul/xul.tsx';
@@ -704,7 +704,7 @@ export function highlight(
             doWhenRenderPromisesDone(() => {
               const elem = document.getElementById('sv');
               if (elem)
-                scrollIntoView(elem, sbe, {
+                safeScrollIntoView(elem, sbe, {
                   block: 'center',
                 });
             });

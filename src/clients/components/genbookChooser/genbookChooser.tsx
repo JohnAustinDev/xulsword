@@ -7,7 +7,7 @@ import RenderPromise from '../../renderPromise.ts';
 import {
   audioGenBookNode,
   chooserGenbks,
-  scrollIntoView,
+  safeScrollIntoView,
 } from '../../common.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import { xulPropTypes, addClass } from '../libxul/xul.tsx';
@@ -143,7 +143,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
         if (treekey) {
           const elem = treeRef[treekey]?.current?.getNodeContentElement(k);
           if (elem && loadingRef.current) {
-            scrollIntoView(
+            safeScrollIntoView(
               elem,
               loadingRef.current,
               options || { block: 'center' },

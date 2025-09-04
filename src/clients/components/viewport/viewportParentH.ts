@@ -10,7 +10,7 @@ import Commands from '../../commands.ts';
 import {
   doUntilDone,
   rootRenderPromise,
-  scrollIntoView,
+  safeScrollIntoView,
   windowArguments,
 } from '../../common.tsx';
 import { delayHandler } from '../libxul/xul.tsx';
@@ -470,6 +470,11 @@ export default function handler(
                   prevState,
                 );
               });
+              if (Build.isWebApp)
+                setTimeout(
+                  () => document.querySelector('.tabrow')?.scrollIntoView(),
+                  100,
+                );
             }
           });
           break;
@@ -505,7 +510,7 @@ export default function handler(
               ) as HTMLCollectionOf<HTMLElement>;
               Array.from(gfns).forEach((gfn) => {
                 if (gfn !== elem && gfn.dataset.title === p.title)
-                  scrollIntoView(gfn, parent.element, undefined, 30);
+                  safeScrollIntoView(gfn, parent.element, undefined, 30);
               });
             }
           }

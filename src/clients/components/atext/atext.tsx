@@ -18,7 +18,7 @@ import {
   getMaxChapter,
   iframeAutoHeight,
   libswordImgSrc,
-  scrollIntoView,
+  safeScrollIntoView,
 } from '../../common.tsx';
 import RenderPromise from '../../renderPromise.ts';
 import {
@@ -481,13 +481,11 @@ class Atext extends React.Component implements RenderPromiseComponent {
           const { modkey } = libswordProps;
           const id = `${stringHash(modkey)}.${panelIndex}`;
           const keyelem = document.getElementById(id);
-          if (keyelem) {
-            if (Build.isElectronApp) {
-              scrollIntoView(keyelem, nbe, undefined, 40);
-            }
+          if (Build.isElectronApp && keyelem) {
+            safeScrollIntoView(keyelem, nbe, undefined, 40);
             const dictlist = keyelem.parentNode
               ?.parentNode as HTMLElement | null;
-            if (Build.isElectronApp && dictlist) {
+            if (dictlist) {
               const dki = dictlist.getElementsByClassName(
                 'dictkeyinput',
               ) as unknown as HTMLInputElement[] | null;

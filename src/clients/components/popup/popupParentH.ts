@@ -8,7 +8,7 @@ import Commands from '../../commands.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import {
   rootRenderPromise,
-  scrollIntoView,
+  safeScrollIntoView,
   windowArguments,
 } from '../../common.tsx';
 import { delayHandler } from '../libxul/xul.tsx';
@@ -239,6 +239,10 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
       const elem = targ.element;
       const data = findElementData(elem);
       const popupY = parent.getBoundingClientRect().y;
+      const doscroll =
+        Build.isWebApp &&
+        (es.nativeEvent as any).pointerType &&
+        (es.nativeEvent as any).pointerType !== 'mouse';
       switch (targ.type) {
         case 'fn':
         case 'sn':
@@ -264,6 +268,11 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               };
               return s;
             });
+            if (doscroll)
+              setTimeout(
+                () => document.querySelector('.popupheader')?.scrollIntoView(),
+                100,
+              );
           }
           break;
         }
@@ -273,7 +282,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
             Array.from(gfns).forEach((gfn) => {
               const gfne = gfn as HTMLElement;
               if (gfn !== elem && gfne.dataset.title === data.title)
-                scrollIntoView(gfne, parent, undefined, 30);
+                safeScrollIntoView(gfne, parent, undefined, 30);
             });
           }
           break;
@@ -347,6 +356,11 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
             }
             return null;
           });
+          if (doscroll)
+            setTimeout(
+              () => document.querySelector('.popupheader')?.scrollIntoView(),
+              100,
+            );
           break;
         }
         case 'towindow': {

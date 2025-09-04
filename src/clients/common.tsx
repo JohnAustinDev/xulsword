@@ -167,7 +167,7 @@ export function setGlobalSkin(skin: typeof S.prefs.global.skin) {
     let css = '';
     if (skin) {
       css = G.inlineFile(
-        [G.Dirs.path.xsAsset, skin, 'skin.css'].join(C.FSSEP),
+        [G.Dirs.path.xsAsset, 'skins', `${skin}.css`].join(C.FSSEP),
         'utf8',
         true,
       );
@@ -255,11 +255,11 @@ export function clearPending(
   });
 }
 
-// Javascript's scrollIntoView() also scrolls ancestors in ugly
-// ways. So this util sets scrollTop of all ancestors greater than
-// ancestor away, to zero. If percent is provided, the element will be
-// scrolled to that percent of the client height.
-export function scrollIntoView(
+// Javascript's scrollIntoView() also scrolls ancestors in ways that can break
+// Electron window layout. So this util sets scrollTop of all ancestors
+// greater than ancestor away, to zero. If percent is provided, the element
+// will be scrolled to that percent of the client height.
+export function safeScrollIntoView(
   elem: HTMLElement,
   ancestor: HTMLElement,
   arg?: ScrollIntoViewOptions,

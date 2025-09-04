@@ -692,7 +692,12 @@ export default class Search
             </Grid>
           </Hbox>
 
-          <Hbox className="searchStatus" pack="start" align="center">
+          <Hbox
+            className="searchStatus"
+            width="100%"
+            pack="start"
+            align="center"
+          >
             <Box>
               <span>{searchStatus}</span>
             </Box>
@@ -704,6 +709,7 @@ export default class Search
               </Hbox>
             )}
           </Hbox>
+
           <Vbox className="result-container" flex="1">
             <Hbox className="result-parent" flex="1">
               <Vbox
