@@ -6,31 +6,27 @@
 
   --bg-interface-dark: hsl(0 0% 92% / 1);
   --bg-interface-light: #f5f5f5;
+  --bg-bp6-light: #f6f7f9; /* mimic BluePrintJS button background color */
   --bg-interface-selection: #1e90ff;
-
   --bg-disabled: rgb(211, 216, 222);
-
   --bg-text-light: #ffffff;
   --bg-text-dark: #f2ede9; /*hsl(from var(--bg-text-light) h calc(s - 75) calc(l + 5));*/
-
   --bg-text-pinned: #ededed;
 
   --border-light: #dbdbd3;
   --border-dark: #bbbbbb;
-  --shadow: 8px 8px 2px 1px rgb(0 0 0 / 22%);
 
-  --font-text: 'Open Sans', sans-serif;
   --font-heading-color: rgb(110, 85, 110);
   --font-heading: 'Roboto', sans-serif;
+  --font-text: 'Open Sans', sans-serif;
+
+  --shadow: 8px 8px 2px 1px rgb(0 0 0 / 22%);
+  /* mimic BluePrintJS input shadow */
+  --bp6-box-shadow:
+    inset 0 0 0 1px rgba(17, 20, 24, 0.2), 0 1px 2px rgba(17, 20, 24, 0.1);
 
   --min-height: 800px;
   --input-height: 28px;
-
-  /* These variables mimic BluePrintJS 6 */
-  --bp6-box-shadow:
-    inset 0 0 0 1px rgba(17, 20, 24, 0.2), 0 1px 2px rgba(17, 20, 24, 0.1);
-  --bp6-button-color: #f6f7f9;
-  --bp6-text-color: #1c2127;
 }
 
 /* By default layouts should fill their windows without scrollbars */
@@ -153,26 +149,14 @@ html a:hover {
 .xsinput {
   margin: 5px;
   border-radius: 4px;
-  /* colors and shadow of bp6 button */
-  -webkit-box-shadow:
-    inset 0 0 0 1px rgba(17, 20, 24, 0.2),
-    0 1px 2px rgba(17, 20, 24, 0.1);
-  box-shadow:
-    inset 0 0 0 1px rgba(17, 20, 24, 0.2),
-    0 1px 2px rgba(17, 20, 24, 0.1);
+  box-shadow: var(--bp6-box-shadow);
   padding: 2px 2px 3px;
   padding-inline-start: 4px;
-  background-color: white;
+  background-color: var(--bg-bp6-light);
 }
 .bp6-button:not([class*='bp6-intent-']):disabled,
 .bp6-button:not([class*='bp6-intent-']).bp6-disabled {
-  /* colors and shadow of bp6 button */
-  -webkit-box-shadow:
-    inset 0 0 0 1px rgba(17, 20, 24, 0.2),
-    0 1px 2px rgba(17, 20, 24, 0.1);
-  box-shadow:
-    inset 0 0 0 1px rgba(17, 20, 24, 0.2),
-    0 1px 2px rgba(17, 20, 24, 0.1);
+  box-shadow: var(--bp6-box-shadow);
 }
 .button-box,
 .textbox,

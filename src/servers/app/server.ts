@@ -1,7 +1,14 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
-import { app, crashReporter, dialog, BrowserWindow, ipcMain } from 'electron';
+import {
+  app,
+  crashReporter,
+  dialog,
+  BrowserWindow,
+  ipcMain,
+  nativeTheme,
+} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';
@@ -149,6 +156,11 @@ function showApp() {
     }, 1000);
   }
 }
+
+const skin = G.Prefs.getCharPref('global.skin') as typeof S.prefs.global.skin;
+const { shouldUseDarkColors } = nativeTheme;
+nativeTheme.themeSource =
+  skin === 'dark' || shouldUseDarkColors ? 'dark' : 'light';
 
 ipcMain.on('global', (event: IpcMainEvent, acall: GCallType) => {
   const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1;
@@ -463,7 +475,7 @@ const init = async () => {
       supportedLngs: AvailableLanguages,
       preload: AvailableLanguages,
 
-      ns: ['xulsword', 'branding', 'config', 'books', 'numbers'],
+      ns: ['xulsword', 'xulsword4', 'branding', 'config', 'books', 'numbers'],
       defaultNS: 'xulsword',
 
       debug: false,

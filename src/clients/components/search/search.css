@@ -111,7 +111,7 @@
   flex-basis: 0;
   border: 2px solid var(--border-light);
   border-radius: 4px;
-  background-color: white;
+  background-color: var(--bg-bp6-light);
   width: calc(100% - 50px);
 }
 .resultBox > div {

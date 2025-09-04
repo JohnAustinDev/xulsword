@@ -8,7 +8,7 @@
 }
 
 .linklist .listbox {
-  background-color: white;
+  background-color: var(--bg-bp6-light);
   border-radius: 8px;
   border: 2px solid var(--border-light);
   margin: 10px 10px 20px 10px;
@@ -22,13 +22,13 @@
 .modlist {
   margin: 20px 10px;
   padding: 5px;
-  background-color: white;
+  background-color: var(--bg-bp6-light);
   border-radius: 8px;
   border: 2px solid var(--border-light);
 }
 .modlist > div:nth-child(3),
 .modlist > div:nth-child(4) {
-  background-color: whitesmoke;
+  background-color: var(--bg-interface-dark);
 }
 .modlist > div:nth-child(4) > * {
   margin: 0 10px;
@@ -48,12 +48,13 @@
   margin-inline-start: 1em;
 }
 .modlist textarea {
-  background-color: #80808030;
+  opacity: 0.7;
   width: calc(100% - 20px);
   font-family: courier;
   font-size: 13px;
   line-height: 100%;
 }
 .modlist textarea.editable {
-  background-color: white;
+  opacity: 1;
+  background-color: var(--bg-bp6-light);
 }

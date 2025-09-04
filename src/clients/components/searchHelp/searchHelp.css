@@ -2,7 +2,7 @@
   height: 100%;
   overflow: auto;
   padding: 10px;
-  background-color: white;
+  background-color: var(--bg-bp6-light);
   border: 2px solid var(--border-light);
   border-radius: 4px;
 }

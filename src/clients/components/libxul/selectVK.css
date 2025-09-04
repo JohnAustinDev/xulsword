@@ -8,7 +8,7 @@
 
 .selectvk select {
   border: none;
-  background-color: white;
+  background-color: var(--bg-bp6-light);
 }
 
 .selectvk .vk-chapter select,

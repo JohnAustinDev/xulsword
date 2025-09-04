@@ -155,8 +155,15 @@ export function windowArguments(
 }
 
 // Add <style id="skin"> and write any user pref skin CSS to it.
-export function setGlobalSkin(skin: string) {
+export function setGlobalSkin(skin: typeof S.prefs.global.skin) {
   if (Build.isElectronApp) {
+    // Set BluePrint Dark theme class.
+    const html = document?.getElementsByTagName('html')[0];
+    if (html) {
+      if (skin === 'dark') html.classList.add('bp6-dark');
+      else html.classList.remove('bp6-dark');
+    }
+    // Update skin CSS
     let css = '';
     if (skin) {
       css = G.inlineFile(
@@ -165,7 +172,7 @@ export function setGlobalSkin(skin: string) {
         true,
       );
     }
-    let style = document.getElementById('style');
+    let style = document.getElementById('skin');
     if (!style) {
       style = document.createElement('style');
       style.id = 'skin';

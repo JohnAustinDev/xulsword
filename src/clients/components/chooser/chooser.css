@@ -9,7 +9,7 @@
   z-index: 1;
 }
 .chooser .fadetop {
-  height: 35px;
+  height: 25px;
 }
 .chooser {
   font-size: 15px;
@@ -24,7 +24,7 @@
   padding-bottom: 6px;
   padding-inline-start: 3px;
   border: 2px solid var(--border-light);
-  background-color: white;
+  background-color: var(--bg-bp6-light);
   cursor: pointer;
   flex-shrink: 1;
   max-height: 760px; /* NT height */
@@ -33,7 +33,6 @@
   position: relative;
   flex-basis: 0;
   overflow: hidden;
-  color: rgb(0, 0, 100);
   background-color: var(--bg-interface-light);
   border: 1px outset rgb(200, 200, 200);
   font-size: inherit;
@@ -49,7 +48,7 @@
 }
 .chooser .bookgroup.selected {
   background-color: var(--color-primary);
-  color: white;
+  color: var(--bg-bp6-light);
 }
 .chooser .bookgroup:first-child {
   border-top-left-radius: 8px;
@@ -151,7 +150,7 @@ html[dir='rtl'] .bookgrouplist {
 }
 .bookgroupitem.selected {
   background-color: var(--color-primary);
-  color: white;
+  color: var(--bg-bp6-light);
 }
 .bookgroupitem.selected .bp6-icon {
   color: var(--bg-interface-dark);
@@ -165,7 +164,7 @@ html[dir='rtl'] .bookgrouplist {
 }
 .bookgroupitem:not(.selected):not(.disabled):hover {
   background-color: var(--bg-interface-selection);
-  color: white;
+  color: var(--bg-bp6-light);
 }
 .bookgroupitem.disabled {
   background-color: var(--bg-disabled);
@@ -235,14 +234,14 @@ html[dir='rtl'] .chaptermenu {
   width: 26px;
   font-size: inherit;
   text-align: center;
-  background-color: var(--bg-interface-dark);
-  border: 1px outset var(--bg-interface-light);
+  background-color: var(--bg-interface-light);
   color: var(--color-primary);
+  border: 1px outset var(--bg-interface-light);
   padding: 2px;
 }
 .chaptermenu .chaptermenucell:hover {
   background-color: var(--bg-interface-selection);
-  color: white;
+  color: var(--bg-bp6-light);
 }
 .chaptermenu .chaptermenucell.hasAudio:after {
   margin-inline-start: 2px;
@@ -266,9 +265,9 @@ html[dir='rtl'] .chaptermenu {
   padding-inline-end: 20px;
   padding-top: 10px;
   padding-bottom: 10px;
-  border: 1px outset black;
   background-color: var(--bg-interface-light);
   color: var(--color-primary);
+  border: 1px outset var(--border-dark);
   box-shadow: var(--shadow);
   border-radius: 6px;
   z-index: 9;

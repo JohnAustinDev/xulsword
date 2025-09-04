@@ -1,7 +1,7 @@
 .audioplayer {
   padding: 3px;
   /* colors and shadow of bp6 button */
-  background-color: var(--bp6-button-color);
+  background-color: var(--bg-bp6-light);
   box-shadow: var(--bp6-box-shadow);
 }
 .audioplayer > * {
@@ -22,7 +22,7 @@
   height: var(--input-height);
   vertical-align: middle;
   border: 1px solid rgb(197 197 197);
-  background-color: var(--bp6-button-color);
+  background-color: var(--bg-bp6-light);
 }
 .audioplayer audio:focus {
   outline: none;

@@ -16,7 +16,6 @@ import type {
   PlaceType,
   RepoDisabled,
   Repository,
-  RowSelection,
   ScrollType,
   ShowType,
   WindowPrefsType,
@@ -105,7 +104,7 @@ const S = {
         },
       },
       noAutoSearchIndex: [] as string[],
-      skin: '' as string,
+      skin: '' as '' | 'arabesque' | 'dark',
     },
 
     xulsword: {

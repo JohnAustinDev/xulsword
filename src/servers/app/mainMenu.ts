@@ -191,7 +191,7 @@ function updateCheckboxAndRadiosFromPref(menux?: Menu | null) {
             (m: string | null) => m || m === '',
           ).length;
           if (numPanels === Number(str)) i.checked = true;
-        } else if (str !== '') {
+        } else {
           let val: string | number = str;
           if (Number(str).toString() === str) val = Number(str);
           add(pref);
@@ -771,6 +771,52 @@ export default class MainMenuBuilder {
     const subMenuOptions: MenuItemConstructorOptions = {
       label: ts('menu.options'),
       submenu: [
+        {
+          label: G.i18n.t('Theme', {
+            ns: 'xulsword4',
+          }),
+          submenu: [
+            {
+              label: G.i18n.t('Classic', {
+                ns: 'xulsword4',
+              }),
+              id: `global.skin_val_arabesque`,
+              type: 'radio',
+              click: d(() => {
+                radioSwitch(
+                  'global.skin',
+                  'arabesque' satisfies typeof S.prefs.global.skin,
+                );
+              }),
+            },
+            {
+              label: G.i18n.t('Dark', {
+                ns: 'xulsword4',
+              }),
+              id: `global.skin_val_dark`,
+              type: 'radio',
+              click: d(() => {
+                radioSwitch(
+                  'global.skin',
+                  'dark' satisfies typeof S.prefs.global.skin,
+                );
+              }),
+            },
+            {
+              label: G.i18n.t('Light', {
+                ns: 'xulsword4',
+              }),
+              id: `global.skin_val_`,
+              type: 'radio',
+              click: d(() => {
+                radioSwitch(
+                  'global.skin',
+                  '' satisfies typeof S.prefs.global.skin,
+                );
+              }),
+            },
+          ],
+        },
         {
           label: ts('menu.options.font'),
           submenu: [

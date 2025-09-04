@@ -22,16 +22,13 @@
   background-image: var(--bg-image);
 }
 
-.splash-text .label {
-  color: rgb(77, 37, 143);
-}
-
 .chooser .fadetop,
 .chooser .fadebot {
   background-image: var(--bg-image);
   opacity: 0.8;
 }
 .chooser .fadetop {
+  height: 35px;
   background-position: -15px 35px;
   margin-top: -10px;
 }

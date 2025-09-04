@@ -59,7 +59,7 @@
   padding-inline-end: 18px;
   z-index: 2;
   border: none;
-  background-color: white;
+  background-color: var(--bg-bp6-light);
   padding-inline-start: 10px;
 }
 .bookselect select:focus-visible {

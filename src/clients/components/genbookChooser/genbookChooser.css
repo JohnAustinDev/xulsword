@@ -18,7 +18,7 @@
   overflow: auto;
   z-index: 7;
   border: 2px solid var(--border-light);
-  background-color: white;
+  background-color: var(--bg-bp6-light);
   transition: 0.25s;
 }
 

@@ -25,7 +25,7 @@
   color: grey;
   /* Following value is used in tabs.tsx */
   margin: 0px 3px 0px 3px;
-  background-color: white;
+  background-color: var(--bg-bp6-light);
   border-left: 2px solid var(--border-light);
   border-right: 2px solid var(--border-light);
   border-bottom: 2px solid var(--border-light);
@@ -58,7 +58,7 @@
   background-image: url(../../images/plus.svg);
 }
 .tabs .tabPlus select * {
-  color: var(--bp6-text-color);
+  color: black;
 }
 /* NOTE: builtin select option:hover color and background-color cannot be
 changed */
@@ -89,11 +89,8 @@ html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
   max-width: calc(50vw - 10px);
   border-bottom: none;
 }
-a.anchorbutton .tab {
-  color: var(--bp6-text-color);
-}
 a.anchorbutton .tab:hover {
-  color: white;
+  color: var(--bg-bp6-light);
   background-color: var(--bg-interface-selection);
 }
 .tabs .mto-tab {

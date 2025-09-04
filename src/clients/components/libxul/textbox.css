@@ -19,7 +19,7 @@
 }
 
 .textbox.readonly {
-  background-color: lightgrey;
+  background-color: var(--bg-disabled);
 }
 
 .textbox.disabled {

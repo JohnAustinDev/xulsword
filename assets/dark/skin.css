@@ -1,0 +1,49 @@
+
+/* This custom skin called may be added using setGlobalSkin('dark') */
+:root {
+  --color-primary: #8abbff; /* mimics BluePrintJS dark theme primary color */
+  --color-secondary: rgba(204, 204, 0, 0.8);
+  --color-secondary2: rgba(100, 100, 255, 0.8);
+  --color-secondary3: rgba(100, 245, 245, 0.8);
+
+  --bg-interface-dark: #0d0d0d;
+  --bg-interface-light: #646464;
+  --bg-bp6-light: #2f343c;
+  --bg-disabled: #7d7d7d;
+  --bg-text-light: black;
+  --bg-text-dark: #363636;
+  --bg-text-pinned: #404040;
+
+  --font-heading-color: white;
+
+  --shadow: 8px 8px 2px 1px rgba(8, 8, 8, 0.219);
+  --bp6-box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+#root,
+.cs-locale,
+.npopup,
+select,
+optgroup,
+option {
+  color: white !important;
+}
+select,
+optgroup,
+option {
+  background-color:var(--bg-bp6-light) !important;
+}
+.tabPlus select {
+  background-color: white !important;
+}
+.resultBox {
+  background-color: var(--bg-text-light);
+}
+.odd-row {
+  background-color: var(--bg-interface-dark);
+}
+.even-row {
+  background-color: var(--bg-interface-light);
+}
+

@@ -290,18 +290,21 @@ html[dir='rtl'] .notebox-maximizer {
   margin-bottom: 4px;
 }
 .matchingStrongs2 {
-  background-color: hsla(298, 100%, 50%, 0.562);
+  border-radius: 4px;
+  background-color: hsla(298, 100%, 50%, 0.5);
 }
 .matchingStrongs1 {
-  background-color: hsla(123, 100%, 50%, 0.507);
+  border-radius: 4px;
+  background-color: hsla(123, 100%, 50%, 0.5);
 }
 .matchingStrongs0 {
-  background-color: yellow;
+  border-radius: 4px;
+  background-color: hsla(60, 100%, 50%, 0.5);
 }
 
 .atext.Texts .bmnote {
-  background-color: #ffff007d;
   border-radius: 4px;
+  background-color: hsla(60, 100%, 50%, 0.5);
 }
 
 /* Verse-per-line button */
@@ -510,7 +513,7 @@ html[dir='rtl'] .fncol3 {
 }
 .dictselectkey {
   background-color: var(--bg-interface-selection);
-  color: white;
+  color: var(--bg-bp6-light);
 }
 .dict-description {
   font-weight: bold;

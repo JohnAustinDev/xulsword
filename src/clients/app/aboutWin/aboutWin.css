@@ -42,7 +42,7 @@ html.aboutWin #root {
   width: 298px;
   overflow: hidden;
   margin: 80px 98px 10px 98px;
-  color: white;
+  color: white; /* does not follow theme */
   border-radius: 8px;
   text-align: center;
 }
