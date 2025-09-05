@@ -11,6 +11,7 @@ import {
   doUntilDone,
   rootRenderPromise,
   safeScrollIntoView,
+  notMouse,
   windowArguments,
 } from '../../common.tsx';
 import { delayHandler } from '../libxul/xul.tsx';
@@ -232,6 +233,7 @@ export default function handler(
       e.preventDefault();
       const elem = targ.element;
       const p = getElementData(elem);
+      notMouse(e);
       switch (targ.type) {
         case 'towindow': {
           const cols = atext?.dataset.columns;
@@ -470,11 +472,6 @@ export default function handler(
                   prevState,
                 );
               });
-              if (Build.isWebApp)
-                setTimeout(
-                  () => document.querySelector('.tabrow')?.scrollIntoView(),
-                  100,
-                );
             }
           });
           break;

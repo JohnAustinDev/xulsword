@@ -1,5 +1,7 @@
 .chooser {
   height: 100%;
+  font-size: 15px;
+  overflow-y: clip;
 }
 .chooser .fadetop,
 .chooser .fadebot {
@@ -10,9 +12,6 @@
 }
 .chooser .fadetop {
   height: 25px;
-}
-.chooser {
-  font-size: 15px;
 }
 .chooser .bookgroup-selector {
   width: 26px;

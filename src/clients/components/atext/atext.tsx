@@ -18,6 +18,7 @@ import {
   getMaxChapter,
   iframeAutoHeight,
   libswordImgSrc,
+  notMouse,
   safeScrollIntoView,
 } from '../../common.tsx';
 import RenderPromise from '../../renderPromise.ts';
@@ -539,6 +540,16 @@ class Atext extends React.Component implements RenderPromiseComponent {
             C.UI.Atext.prevNextDelay,
             'prevNextLinkUpdate',
           );
+          // WebApp atext loads should always scroll to the top, except for the
+          // very first load, when notMouse() will be null.
+          if (Build.isWebApp && update && notMouse() !== null)
+            setTimeout(
+              () =>
+                document
+                  .querySelector('#controls')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+              100,
+            );
         }
       }
       // ADJUST WEB-APP PARENT IFRAME HEIGHT

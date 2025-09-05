@@ -256,9 +256,10 @@ export function clearPending(
 }
 
 // Javascript's scrollIntoView() also scrolls ancestors in ways that can break
-// Electron window layout. So this util sets scrollTop of all ancestors
-// greater than ancestor away, to zero. If percent is provided, the element
-// will be scrolled to that percent of the client height.
+// Electron window layout (although this may have been alleviated by changing
+// container overflow from hidden to visible). So this util sets scrollTop of
+// all ancestors greater than ancestor away, to zero. If percent is provided,
+// the element will be scrolled to that percent of the client height.
 export function safeScrollIntoView(
   elem: HTMLElement,
   ancestor: HTMLElement,
@@ -322,6 +323,20 @@ export function iframeAutoHeight(
       window.parent.postMessage({ type: 'iframeHeight', height: -1 }, '*');
     }
   }
+}
+
+// Click events may come from mouse or touch (or even pen) so this checks the
+// event and remembers if the event initiator was a mouse or not.
+export function notMouse(e?: React.SyntheticEvent): boolean | null {
+  const ckey = 'notMouse';
+  if (e) {
+    const { nativeEvent } = e;
+    if ('pointerType' in nativeEvent) {
+      Cache.clear(ckey);
+      Cache.write(nativeEvent.pointerType !== 'mouse', ckey);
+    }
+  }
+  return Cache.has(ckey) ? Cache.read(ckey) : null;
 }
 
 export function isIBTChildrensBible(

@@ -8,7 +8,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { libswordImgSrc, windowArguments } from '../../common.tsx';
+import { libswordImgSrc, notMouse, windowArguments } from '../../common.tsx';
 import RenderPromise from '../../renderPromise.ts';
 import { topHandle, htmlAttribs, xulPropTypes } from '../libxul/xul.tsx';
 import { Box, Hbox } from '../libxul/boxes.tsx';
@@ -241,6 +241,15 @@ class Popup extends React.Component implements RenderPromiseComponent {
           if (!renderPromise.waiting()) {
             this.positionPopup();
             pt.dataset.infokey = infokey;
+            // Scroll to the top of the newly written popup.
+            if (Build.isWebApp && notMouse())
+              setTimeout(
+                () =>
+                  document
+                    .querySelector('.popupheader')
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+                100,
+              );
           }
         }
       }
@@ -350,13 +359,11 @@ class Popup extends React.Component implements RenderPromiseComponent {
             {!isWindow && Build.isElectronApp && (
               <Button className="towindow" icon="open-application" />
             )}
-            {!(elemdata && elemdata.length > 1) && (
-              <Button className="popupCloseLink" icon="cross" />
-            )}
+            <Button className="popupCloseLink" icon="cross" />
             {elemdata && elemdata.length > 1 && (
               <Button className="popupBackLink" icon="arrow-left" />
             )}
-            {!isWindow && (
+            {!isWindow && !notMouse() && (
               <Button
                 className={[
                   'draghandle',

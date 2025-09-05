@@ -9,6 +9,7 @@ import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import {
   rootRenderPromise,
   safeScrollIntoView,
+  notMouse,
   windowArguments,
 } from '../../common.tsx';
 import { delayHandler } from '../libxul/xul.tsx';
@@ -239,10 +240,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
       const elem = targ.element;
       const data = findElementData(elem);
       const popupY = parent.getBoundingClientRect().y;
-      const doscroll =
-        Build.isWebApp &&
-        (es.nativeEvent as any).pointerType &&
-        (es.nativeEvent as any).pointerType !== 'mouse';
+      notMouse(e);
       switch (targ.type) {
         case 'fn':
         case 'sn':
@@ -252,7 +250,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         case 'dtl': {
           if (data && !targ.element.classList.contains('empty')) {
             this.setState((prevState: PopupParentState) => {
-              let { elemdata } = prevState;
+              let { elemdata, gap } = prevState;
               if (elemdata === null) elemdata = [];
               else elemdata = clone(elemdata);
               // sn links within sn popups should keep their original context
@@ -261,18 +259,13 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               }
               elemdata.push(data);
               // set the gap so as to position popup under the mouse
-              const gap = Math.round(e.clientY - popupY - 40);
+              if (!notMouse(e)) gap = Math.round(e.clientY - popupY - 40);
               const s: Partial<PopupParentState> = {
                 elemdata,
                 gap,
               };
               return s;
             });
-            if (doscroll)
-              setTimeout(
-                () => document.querySelector('.popupheader')?.scrollIntoView(),
-                100,
-              );
           }
           break;
         }
@@ -342,12 +335,12 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         }
         case 'popupBackLink': {
           this.setState((prevState: PopupParentState) => {
-            let { elemdata } = prevState;
+            let { elemdata, gap } = prevState;
             if (elemdata) {
               elemdata = clone(elemdata);
               elemdata.pop();
               // set the gap so as to position popup under the mouse
-              const gap = Math.round(e.clientY - popupY - 40);
+              if (!notMouse(e)) gap = Math.round(e.clientY - popupY - 40);
               const s: Partial<PopupParentState> = {
                 elemdata,
                 gap,
@@ -356,11 +349,6 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
             }
             return null;
           });
-          if (doscroll)
-            setTimeout(
-              () => document.querySelector('.popupheader')?.scrollIntoView(),
-              100,
-            );
           break;
         }
         case 'towindow': {

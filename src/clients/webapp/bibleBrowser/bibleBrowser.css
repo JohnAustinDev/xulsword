@@ -128,7 +128,6 @@ html:not(.is-vagrant) .popup-fail.reason,
   }
   .chooser,
   #choosermenu,
-  .npopup .draghandle,
   .narrow-screen-hide {
     display: none;
   }
