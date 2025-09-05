@@ -144,8 +144,8 @@ export function libswordText(
           options,
         );
         if (!renderPromise?.waiting()) {
+          // Genbook notes are included at the end of textHTML.
           r.textHTML += text;
-          r.noteHTML += notes;
         }
       }
       break;

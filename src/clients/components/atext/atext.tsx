@@ -251,11 +251,12 @@ class Atext extends React.Component implements RenderPromiseComponent {
         },
         keepme,
       );
-      const highlightkey = stringHash(libswordProps.location);
+      const { scroll } = scrollProps;
+      const { location, modkey } = libswordProps;
+      const highlightkey = stringHash(location);
       const libswordKey = this.libswordKey(libswordProps, panelIndex);
       const skipUpdate =
-        scrollProps.scroll?.verseAt === 'bottom' &&
-        (columns === 1 || type !== C.BIBLE);
+        scroll?.verseAt === 'bottom' && (columns === 1 || type !== C.BIBLE);
       if (libswordProps && !skipUpdate) {
         const update = libswordKey !== sbe.dataset.libsword;
         if (update) {
@@ -270,22 +271,18 @@ class Atext extends React.Component implements RenderPromiseComponent {
         // SCROLL
         const doScrollVerseKey =
           isVerseKey &&
-          scrollProps.scroll &&
+          scroll &&
           (update || scrollPropsKey !== sbe.dataset.scroll);
         if (doScrollVerseKey) {
           // Multi-column Bibles...
           if (!renderPromise.waiting()) {
-            if (columns > 1 && type === C.BIBLE && libswordProps.location) {
+            if (columns > 1 && type === C.BIBLE && location) {
               const rtl = G.Config[module].direction === 'rtl';
-              const verse = libswordProps.location.verse || 1;
-              let v = findVerseElement(
-                sbe,
-                libswordProps.location.chapter,
-                verse,
-              );
+              const verse = location.verse || 1;
+              let v = findVerseElement(sbe, location.chapter, verse);
               if (v) {
                 let sib: HTMLElement | null;
-                if (scrollProps.scroll?.verseAt === 'bottom') {
+                if (scroll?.verseAt === 'bottom') {
                   // MULTI-COLUMN SCROLL TO END, THEN UPDATE
                   // Insure all verses are visible
                   if (!update) {
@@ -319,7 +316,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
                   ) {
                     const pre = {
                       ...libswordProps,
-                      location: { ...libswordProps.location, chapter: prepend },
+                      location: { ...location, chapter: prepend },
                     };
                     this.writeLibSword2DOM(
                       pre,
@@ -328,11 +325,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
                       xulswordState,
                       renderPromise,
                     );
-                    v = findVerseElement(
-                      sbe,
-                      libswordProps.location.chapter,
-                      verse,
-                    );
+                    v = findVerseElement(sbe, location.chapter, verse);
                     prepend -= 1;
                   }
                   // Hide starting verses until the selected verse is visible above the notebox.
@@ -372,10 +365,10 @@ class Atext extends React.Component implements RenderPromiseComponent {
                     const info = (sib && getElementData(sib)) || null;
                     if (info?.location) {
                       const { book, chapter, verse: vs } = info.location;
-                      const location = verseKey(
+                      const locationVK = verseKey(
                         {
                           parse: [book, chapter, vs].join('.'),
-                          v11n: libswordProps.location.v11n ?? 'KJV',
+                          v11n: location.v11n ?? 'KJV',
                         },
                         renderPromise,
                       ).location();
@@ -384,13 +377,13 @@ class Atext extends React.Component implements RenderPromiseComponent {
                           ...newState,
                           pin: {
                             ...pinProps,
-                            location,
+                            location: locationVK,
                             scroll: { verseAt: 'top' },
                           },
                         };
                       } else {
                         xulswordState({
-                          location,
+                          location: locationVK,
                           scroll: { verseAt: 'top' },
                         });
                       }
@@ -399,7 +392,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
                 } else {
                   // MULTI-COLUMN SCROLL TO VERSE
                   // verseAt determines which sibling is placed at the top.
-                  if (verse === 1 && scrollProps.scroll?.verseAt === 'top') {
+                  if (verse === 1 && scroll?.verseAt === 'top') {
                     for (;;) {
                       const prevSib = (v?.previousElementSibling ||
                         null) as HTMLElement | null;
@@ -409,14 +402,13 @@ class Atext extends React.Component implements RenderPromiseComponent {
                         0;
                       if (
                         prevSib &&
-                        (prevChap === 0 ||
-                          prevChap === libswordProps.location.chapter)
+                        (prevChap === 0 || prevChap === location.chapter)
                       ) {
                         v = prevSib;
                       } else break;
                     }
                     v = sbe.firstChild as HTMLElement | null;
-                  } else if (scrollProps.scroll?.verseAt === 'center') {
+                  } else if (scroll?.verseAt === 'center') {
                     let d = 4;
                     while (d && v) {
                       v = v.previousSibling as HTMLElement | null;
@@ -445,11 +437,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
                   }
                   const v11n = G.Tab[module].v11n || null;
                   const max = v11n
-                    ? getMaxChapter(
-                        v11n,
-                        libswordProps.location.book,
-                        renderPromise,
-                      )
+                    ? getMaxChapter(v11n, location.book, renderPromise)
                     : 0;
                   while (
                     !renderPromise.waiting() &&
@@ -458,7 +446,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
                   ) {
                     const app = {
                       ...libswordProps,
-                      location: { ...libswordProps.location, chapter: append },
+                      location: { ...location, chapter: append },
                     };
                     this.writeLibSword2DOM(
                       app,
@@ -479,7 +467,6 @@ class Atext extends React.Component implements RenderPromiseComponent {
         } else if (update && type === C.GENBOOK && columns > 1 && sbe) {
           sbe.scrollLeft = 0;
         } else if (update && type === C.DICTIONARY) {
-          const { modkey } = libswordProps;
           const id = `${stringHash(modkey)}.${panelIndex}`;
           const keyelem = document.getElementById(id);
           if (Build.isElectronApp && keyelem) {
@@ -540,16 +527,20 @@ class Atext extends React.Component implements RenderPromiseComponent {
             C.UI.Atext.prevNextDelay,
             'prevNextLinkUpdate',
           );
-          // WebApp atext loads should always scroll to the top, except for the
-          // very first load, when notMouse() will be null.
-          if (Build.isWebApp && update && notMouse() !== null)
-            setTimeout(
-              () =>
-                document
-                  .querySelector('#controls')
-                  ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
-              100,
-            );
+          // WebApp atext loads should usually scroll to the top. An exception
+          // is the very first load, when notMouse() is null.
+          if (Build.isWebApp && update && notMouse() !== null) {
+            const isVerseKeyTop =
+              isVerseKey && scroll?.verseAt === 'top' && location?.verse === 1;
+            if (isVerseKeyTop || !isVerseKey)
+              setTimeout(
+                () =>
+                  document
+                    .querySelector('#controls')
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+                100,
+              );
+          }
         }
       }
       // ADJUST WEB-APP PARENT IFRAME HEIGHT
@@ -632,7 +623,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
               pes as HTMLElement,
               `${navlinks(module, renderPromise, true)}`,
             );
-          if (module && libswordProps.columns === 1)
+          const { columns } = libswordProps;
+          if (module && (typeof columns === 'undefined' || columns === 1))
             sb += `<div class="ft">${navlinks(module, renderPromise)}</div>`;
           sanitizeHTML(sbe, sb);
           libswordImgSrc(sbe);
