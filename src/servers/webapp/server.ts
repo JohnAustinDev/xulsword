@@ -238,11 +238,11 @@ io.on('connection', (socket) => {
         `${socket.handshake.address} › Ignoring 'global' call ${clog} made with improper arguments: ${invalid}`,
       );
     } else if (typeof callback === 'function') {
-      log.warn(`${socket.handshake.address} › Requesting wait: ${clog}`);
+      log.warn(`${socket.handshake.address} › Requesting wait (${limited}): ${clog}`);
       callback({ pleaseWait: limited });
     } else {
       log.warn(
-        `${socket.handshake.address} › Ignoring 'global' with improper arguments and rate limiting: ${clog}`,
+        `${socket.handshake.address} › Ignoring 'global' with improper arguments (${limited}): ${clog}`,
       );
     }
   });
