@@ -87,28 +87,17 @@ export function doUntilDone(
   renderPromise.dispatch();
 }
 
-// Run a function after all render promises globally have been fullfilled,
-// and none are left pending.
-export function doWhenRenderPromisesDone(func: () => void) {
-  const myTO = setInterval(() => {
-    if (!RenderPromise.getGlobalRenderPromises().length) {
-      clearInterval(myTO);
-      func();
-    }
-  }, 250);
-}
-
 // Return the renderPromise that resets the root controller whenever it is
 // fulfilled.
-let rootRenderPromiseInst: RenderPromise | null = null;
+let rootRPInstance: RenderPromise | null = null;
 export function rootRenderPromise() {
-  if (!rootRenderPromiseInst) {
-    rootRenderPromiseInst = new RenderPromise(() =>
+  if (!rootRPInstance) {
+    rootRPInstance = new RenderPromise(() =>
       Subscription.publish.setControllerState({ reset: randomID() }, false),
     );
-    setInterval(() => rootRenderPromiseInst?.dispatch(), 200);
+    setInterval(() => rootRPInstance?.dispatch(), 200);
   }
-  return rootRenderPromiseInst;
+  return rootRPInstance;
 }
 
 export function component(
@@ -229,12 +218,6 @@ export function libswordImgSrc(container: HTMLElement) {
       img.removeAttribute('data-src');
     }
   });
-}
-
-export function getWaitRetry(result: any): number {
-  return typeof result === 'object' && 'limitedDoWait' in result
-    ? result.limitedDoWait
-    : 0;
 }
 
 export function clearPending(

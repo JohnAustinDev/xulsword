@@ -836,7 +836,7 @@ export type GIType = {
     | 'ModuleFonts'
     | 'FeatureModules'
     | 'BooksInVKModules'
-  >]: (a: GType[name], b: RenderPromise) => GType[name];
+  >]: (a: GType[name], b: RenderPromise | null) => GType[name];
 } & {
   [name in keyof Pick<
     GType,

@@ -1,7 +1,6 @@
 import type React from 'react';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
-import Cache from '../../../cache.ts';
 import { clone, escapeRE, ofClass } from '../../../common.ts';
 import verseKey from '../../verseKey.ts';
 import { getElementData } from '../../htmlData.ts';
@@ -9,7 +8,6 @@ import { G, GI } from '../../G.ts';
 import Commands from '../../commands.ts';
 import {
   doUntilDone,
-  rootRenderPromise,
   safeScrollIntoView,
   notMouse,
   windowArguments,
@@ -526,7 +524,7 @@ export default function handler(
                 lastverse: lastverse || 1,
                 v11n,
               };
-              Commands.goToLocationVK(loc, loc, undefined, rootRenderPromise());
+              void Commands.goToLocationVK(loc, loc);
             }
           }
           break;

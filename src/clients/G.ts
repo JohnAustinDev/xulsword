@@ -11,8 +11,8 @@ import {
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
 import { GBuilder } from '../type.ts';
-import { callResultDecompress, getWaitRetry } from './common.tsx';
-import { GCallsOrPromise } from './renderPromise.ts';
+import { callResultDecompress } from './common.tsx';
+import RenderPromise, { GCallsOrPromise } from './renderPromise.ts';
 import log from './log.ts';
 import CookiePrefs from './webapp/prefs.ts';
 
@@ -25,7 +25,6 @@ import type {
   LocationVKType,
   PrefValue,
 } from '../type.ts';
-import type RenderPromise from './renderPromise.ts';
 
 // G and GI objects are used to seamlessly share complex data and functionality
 // between servers and clients. Methods and properties of these objects send
@@ -97,7 +96,7 @@ Object.entries(GBuilder).forEach((entry) => {
         get() {
           let req;
           try {
-            req = request(acall);
+            req = syncRequest(acall);
           } catch (er: any) {
             log.error(er);
           }
@@ -120,7 +119,7 @@ Object.entries(GBuilder).forEach((entry) => {
         let req;
         try {
           if (isAsync) req = asyncRequest(acall);
-          else req = request(acall);
+          else req = syncRequest(acall);
         } catch (er: any) {
           log.error(er);
         }
@@ -154,7 +153,7 @@ Object.entries(GBuilder).forEach((entry) => {
                 if (name === 'i18n' && m === 'language' && Build.isWebApp) {
                   req = G.Prefs.getCharPref('global.locale');
                 } else {
-                  req = request(acall);
+                  req = syncRequest(acall);
                 }
               } catch (er: any) {
                 log.error(er);
@@ -221,7 +220,7 @@ Object.entries(GBuilder).forEach((entry) => {
               let req;
               try {
                 if (isAsync) req = asyncRequest(acall);
-                else req = request(acall);
+                else req = syncRequest(acall);
               } catch (er: any) {
                 log.error(er);
               }
@@ -280,18 +279,16 @@ async function asyncRequest(call: GCallType) {
     }
     if (Build.isWebApp)
       result = gcallResultCompression(call, result, callResultDecompress);
-    if (cacheable && !getWaitRetry(result) && !Cache.has(ckey)) {
+    if (cacheable && !RenderPromise.mustRetry(result) && !Cache.has(ckey)) {
       Cache.write(result, ckey);
     }
   } catch (er: any) {
-    throw new Error(
-      `Promise rejection in ${JSON_stringify(call)}:\n${er.toString()}`,
-    );
+    throw new Error(`${er.message}: ${JSON_stringify(call)}`);
   }
   return result;
 }
 
-function request(call: GCallType) {
+function syncRequest(call: GCallType) {
   if (!allowed(call)) {
     throw new Error(
       `Sync G call unsupported in browser environment: ${JSON_stringify(call)}`,
@@ -322,7 +319,8 @@ function request(call: GCallType) {
   }
   if (Build.isWebApp)
     result = gcallResultCompression(call, result, callResultDecompress);
-  if (cacheable) Cache.write(result, ckey);
+  if (cacheable && !RenderPromise.mustRetry(result) && !Cache.has(ckey))
+    Cache.write(result, ckey);
 
   return result;
 }

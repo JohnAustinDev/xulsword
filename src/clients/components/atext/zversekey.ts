@@ -10,7 +10,6 @@ import {
   getMaxChapter,
   getMaxVerse,
   getLocalizedChapterTerm,
-  doWhenRenderPromisesDone,
   getExtRefHTML,
   safeScrollIntoView,
 } from '../../common.tsx';
@@ -666,54 +665,60 @@ export function getScrollVerse(
 export function highlight(
   sbe: HTMLElement,
   selection: LocationVKType,
-  renderPromise: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ) {
   // First unhilight everything
   Array.from(sbe.getElementsByClassName('hl')).forEach((v) => {
     v.classList.remove('hl');
   });
 
-  if (!selection) return;
-  const { book, chapter, verse, lastverse } = verseKey(
-    selection,
-    renderPromise,
-  ).location();
-  let sv = '';
-  if (Build.isWebApp) {
-    sv = 'sv';
-    const oldsv = document.getElementById('sv');
-    if (oldsv) oldsv.id = '';
-  }
-  if (verse) {
-    const lv = lastverse || verse;
-    // Then find the verse element(s) to highlight
-    let av = sbe.firstElementChild;
-    while (av) {
-      const vi = getElementData(av);
-      const { type, location } = vi;
-      const v = location || null;
-      if (v && type === 'vs') {
-        let hi = v.book === book && v.chapter === chapter;
-        if (!v.lastverse || !v.verse || v.lastverse < verse || v.verse > lv) {
-          hi = false;
-        }
-        if (hi) {
-          av.classList.add('hl');
-          if (sv && !av.id) {
-            av.id = sv;
-            doWhenRenderPromisesDone(() => {
-              const elem = document.getElementById('sv');
-              if (elem)
-                safeScrollIntoView(elem, sbe, {
-                  block: 'center',
-                });
-            });
-            sv = '';
+  if (selection) {
+    const { book, chapter, verse, lastverse } = verseKey(
+      selection,
+      renderPromise,
+    ).location();
+    if (!renderPromise?.waiting()) {
+      let sv = '';
+      if (Build.isWebApp) {
+        sv = 'sv';
+        const oldsv = document.getElementById('sv');
+        if (oldsv) oldsv.id = '';
+      }
+      if (verse) {
+        const lv = lastverse || verse;
+        // Then find the verse element(s) to highlight
+        let av = sbe.firstElementChild;
+        while (av) {
+          const vi = getElementData(av);
+          const { type, location } = vi;
+          const v = location || null;
+          if (v && type === 'vs') {
+            let hi = v.book === book && v.chapter === chapter;
+            if (
+              !v.lastverse ||
+              !v.verse ||
+              v.lastverse < verse ||
+              v.verse > lv
+            ) {
+              hi = false;
+            }
+            if (hi) {
+              av.classList.add('hl');
+              if (sv && !av.id) {
+                av.id = sv;
+                const elem = document.getElementById('sv');
+                if (elem)
+                  safeScrollIntoView(elem, sbe, {
+                    block: 'center',
+                  });
+                sv = '';
+              }
+            }
           }
+
+          av = av.nextElementSibling;
         }
       }
-
-      av = av.nextElementSibling;
     }
   }
 }

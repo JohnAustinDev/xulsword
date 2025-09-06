@@ -61,16 +61,13 @@ const C = {
     maxDataRecursion: 20, // Some Genbk TOC nodes have at least > 11
     maxDataArrayLength: 1300, // SHRDICT has 1209 entries (next IBT is KKDLDICT at 526 but StrongsHebrew has 8675)
     maxDataObjectKeys: 512,
-    ipLimit: Build.isDevelopment
-      ? {
-          points: 10, // x ip hits
-          duration: 2, // per y second
-        }
-      : {
-          points: 25, // x ip hits
-          duration: 5, // per y second
-        },
-    limitedMustWait: Build.isDevelopment ? 1000 : 5000, // ms
+    // Set the maximum number of points that can be consumed over some duration
+    // in seconds. The WebApp server is configured to allocate points for each
+    // IP address.
+    ipLimit: {
+      points: 25,
+      duration: 5,
+    },
     networkRequestMinCache: 60000, // ms
     networkRequestBatchDelay: 1, // ms
   },

@@ -12,7 +12,6 @@ import {
   randomID,
   versionCompare,
   pad,
-  mergeNewModules,
   unknown2String,
   resolveTemplateURL,
   encodeWindowsNTFSPath,
@@ -812,6 +811,17 @@ export async function modalInstall(
   }
   if (!result) Subscription.publish.modulesInstalled(r, callingWinID);
   return r;
+}
+
+// Append entries of 'b' to 'a'. So 'a' is modified in place, while 'b'
+// is untouched.
+function mergeNewModules(a: NewModulesType, b: NewModulesType) {
+  Object.entries(b).forEach((entry) => {
+    const [kx, vx] = entry;
+    const k = kx as keyof typeof C.NEWMODS;
+    const v = vx as any;
+    a[k].push(...v);
+  });
 }
 
 type DownloadRepoConfsType = {

@@ -7,8 +7,10 @@ import {
   getReactComponents,
 } from '../common.ts';
 import C from '../../../constant.ts';
+import { GI } from '../../G.ts';
+import { doUntilDone } from '../../common.tsx';
 import log from '../../log.ts';
-import { callBatchThenCache } from '../../renderPromise.ts';
+import RenderPromise from '../../renderPromise.ts';
 import Prefs from '../prefs.ts';
 import WidgetVK from './widgetVK.tsx';
 import WidgetOR from './widgetOR.tsx';
@@ -41,18 +43,25 @@ if (widgets.length) {
       if (!locale || !C.Locales.some((x) => x[0] === locale)) locale = 'en';
       Prefs.setCharPref('global.locale', locale);
 
-      callBatchThenCache([
-        ['getLocalizedBooks', null, [[locale]]],
-        ['Tabs', null, undefined],
-        ['Books', null, [locale]],
-        ['getLocaleDigits', null, [locale]],
-        ['i18n', 't', ['locale_direction', { lng: locale }]],
-        ['i18n', 't', ['Full publication', { lng: locale, ns: 'widgets' }]],
-        ...Object.values(C.SupportedTabTypes).map(
-          (type) => ['i18n', 't', [type, { lng: locale }]] as any,
-        ),
-      ])
-        .then(() => {
+      RenderPromise.retryDelay = 1; // Make preload calls without delay.
+      doUntilDone((renderPromise) => {
+        // Widget code expects this data to be preloaded into the cache, so
+        // do that before createRoot.
+        GI.getLocalizedBooks({}, renderPromise, [locale]);
+        GI.Tabs([], renderPromise);
+        GI.Books([], renderPromise, locale);
+        GI.getLocaleDigits([], renderPromise, locale);
+        GI.i18n.t('', renderPromise, 'locale_direction', { lng: locale });
+        GI.i18n.t('', renderPromise, 'publication', {
+          lng: locale,
+          ns: 'widgets',
+        });
+        Object.values(C.SupportedTabTypes).forEach((type) => {
+          GI.i18n.t('', renderPromise, type, { lng: locale });
+        });
+        RenderPromise.retryDelay = undefined;
+
+        if (!renderPromise?.waiting()) {
           widgets.forEach((widget) => {
             const { id: compid } = widget;
             const settings = getComponentSettings(
@@ -89,10 +98,8 @@ if (widgets.length) {
                 log.error(`Unknown widget type '${component}'`);
             }
           });
-        })
-        .catch((er) => {
-          log.error(er);
-        });
+        }
+      });
     }
   });
 }

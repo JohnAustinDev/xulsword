@@ -105,7 +105,7 @@ class Textbox extends React.Component {
           (evt, currentTarget) => {
             // currentTarget becomes null during the delay, so it must be reset
             evt.currentTarget = currentTarget;
-            void onChange(evt);
+            onChange(evt);
           },
           [e, e.currentTarget],
           timeout || 0,

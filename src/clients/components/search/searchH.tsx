@@ -9,7 +9,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { dString, rootRenderPromise } from '../../common.tsx';
+import { dString } from '../../common.tsx';
 import Commands from '../../commands.ts';
 import log from '../../log.ts';
 import RenderPromise, { setLoadingClass } from '../../renderPromise.ts';
@@ -332,7 +332,7 @@ export async function libSwordSearch(
     let result: SearchResult | null = null;
     for (const func of funcs) {
       result = await func();
-      if (result && 'limitedDoWait' in result) result = null;
+      if (result && (result as any).pleaseWait) result = null;
       if (result === null) break;
     }
     finalResult = result;
@@ -880,7 +880,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
                   },
                   true,
                 );
-              Commands.goToLocationVK(l, l, undefined, rootRenderPromise());
+              void Commands.goToLocationVK(l, l);
               break;
             }
             case 'keylink': {
@@ -894,14 +894,10 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
                     },
                     true,
                   );
-                Commands.goToLocationGB(
-                  {
-                    otherMod: module,
-                    key: decodeURIComponent(p.shift() || ''),
-                  },
-                  undefined,
-                  rootRenderPromise(),
-                );
+                void Commands.goToLocationGB({
+                  otherMod: module,
+                  key: decodeURIComponent(p.shift() || ''),
+                });
               }
               break;
             }

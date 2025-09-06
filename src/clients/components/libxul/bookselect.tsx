@@ -141,7 +141,7 @@ class Bookselect extends React.Component {
       case 'Enter': {
         if (typeof onChange === 'function') {
           e.type = 'change';
-          void onChange(e);
+          onChange(e);
           e.stopPropagation();
         }
         break;

@@ -266,7 +266,7 @@ export class Viewport {
   getPanelChange<T extends PanelChangeState>(
     options: Partial<PanelChangeOptions>,
     state: T,
-    renderPromise?: RenderPromise,
+    renderPromise?: RenderPromise | null,
   ): T {
     const { ilModules, isPinned, keys } = state;
     let { panels, tabs, location } = state;

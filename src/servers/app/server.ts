@@ -172,10 +172,6 @@ ipcMain.handle('global', (event: IpcMainInvokeEvent, acall: GCallType) => {
   return handleGlobal(G, win, acall, true);
 });
 
-ipcMain.on('error-report', (_e: IpcMainEvent, message: string) => {
-  throw Error(message);
-});
-
 ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   let callingWin = BrowserWindow.fromWebContents(event.sender);
   if (!callingWin) return;

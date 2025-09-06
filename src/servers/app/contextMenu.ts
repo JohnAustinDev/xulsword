@@ -146,9 +146,9 @@ export default function contextMenu(
               if (bookmarkItem?.type === 'bookmark') {
                 const { location } = bookmarkItem;
                 if ('v11n' in location) {
-                  ComCommands.goToLocationVK(location, location, undefined);
+                  void ComCommands.goToLocationVK(location, location);
                 } else {
-                  ComCommands.goToLocationGB(location, undefined);
+                  void ComCommands.goToLocationGB(location);
                 }
               }
             },
@@ -185,7 +185,7 @@ export default function contextMenu(
             click: () => {
               const loc = d.selectionParsedVK;
               if (typeof loc === 'object') {
-                ComCommands.goToLocationVK(loc, loc, undefined);
+                void ComCommands.goToLocationVK(loc, loc);
               }
             },
           },
@@ -196,7 +196,7 @@ export default function contextMenu(
             click: () => {
               const { location: locationVK } = d;
               if (locationVK && typeof locationVK === 'object') {
-                ComCommands.goToLocationVK(locationVK, locationVK, undefined);
+                void ComCommands.goToLocationVK(locationVK, locationVK);
               }
             },
           },

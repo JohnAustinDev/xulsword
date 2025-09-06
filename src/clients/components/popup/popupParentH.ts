@@ -7,7 +7,6 @@ import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import {
-  rootRenderPromise,
   safeScrollIntoView,
   notMouse,
   windowArguments,
@@ -292,7 +291,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
                 lastverse: lastverse || 1,
                 v11n,
               };
-              Commands.goToLocationVK(loc, loc, undefined, rootRenderPromise());
+              void Commands.goToLocationVK(loc, loc);
             }
           }
           break;

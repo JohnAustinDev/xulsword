@@ -9,7 +9,7 @@ import { GBuilder } from '../type.ts';
 import C from '../constant.ts';
 import { G } from './G.ts';
 import log from './log.ts';
-import { callResultDecompress, getWaitRetry } from './common.tsx';
+import { callResultDecompress } from './common.tsx';
 
 import type {
   BookType,
@@ -73,7 +73,7 @@ export function GCallsOrPromise(
 // A RenderPromise promises to re-render the component, or call the callback,
 // each time the RenderPromise's calls are resolved. When data is required that
 // is not available in the cache, a call for that data is then added to the
-// RenderPromise, which must be, at some point, dispatched. At scheduled times,
+// RenderPromise, which must at some point be dispatched. At scheduled times,
 // all dispatched RenderPromises are periodically processed at the same time.
 // A batch of required data is requested from the server and each component is
 // guaranteed to be re-rendered, or each callback called, at least once, after
@@ -85,39 +85,43 @@ export default class RenderPromise {
 
   loadingRef: React.RefObject<HTMLElement>;
 
-  dispatchedUnresolvedCalls: GCallType[];
+  pendingCalls: GCallType[];
 
   loadingSelector: string;
 
   type: 'classComponent' | 'functionComponent' | 'callback';
 
-  static globalRenderPromisesTO: NodeJS.Timeout | null;
+  static renderPromises: RenderPromise[] = [];
+
+  static dispatchTO: NodeJS.Timeout | undefined;
+
+  static retryDelay: number | undefined;
 
   static batchDispatch() {
-    if (RenderPromise.globalRenderPromisesTO) {
-      clearTimeout(RenderPromise.globalRenderPromisesTO);
+    if (RenderPromise.dispatchTO) {
+      clearTimeout(RenderPromise.dispatchTO);
     }
-    RenderPromise.globalRenderPromisesTO = setTimeout(
+    RenderPromise.dispatchTO = setTimeout(
       () => RenderPromise.doBatchDispatch(),
-      C.Server.networkRequestBatchDelay,
+      RenderPromise.retryDelay || C.Server.networkRequestBatchDelay,
     );
   }
 
   static doBatchDispatch() {
-    RenderPromise.globalRenderPromisesTO = null;
-    const renderPromises = RenderPromise.getGlobalRenderPromises();
+    RenderPromise.dispatchTO = undefined;
+    const { renderPromises } = RenderPromise;
     if (renderPromises.length) {
-      const rpdispatch = renderPromises.map((rp) => {
+      const pendingRPs = renderPromises.map((rp) => {
         const { callback, loadingRef, loadingSelector } = rp;
         const nrp = new RenderPromise(callback, loadingRef, loadingSelector);
-        rp.dispatchedUnresolvedCalls.push(...rp.calls);
         nrp.calls = rp.calls;
+        rp.pendingCalls.push(...rp.calls);
         rp.calls = [];
         return nrp;
       });
-      RenderPromise.setGlobalRenderPromises([]);
+      RenderPromise.renderPromises = [];
 
-      const nextBatch = rpdispatch.reduce<GCallType[]>((p, c) => {
+      const nextBatch = pendingRPs.reduce<GCallType[]>((p, c) => {
         const calls = c.calls.filter((call) => {
           return (
             !isCallCacheable(GBuilder, call) ||
@@ -129,41 +133,35 @@ export default class RenderPromise {
       }, []);
 
       callBatchThenCache(flatPrune(nextBatch))
-        .then((doWait) => {
-          if (!doWait) {
-            const resolveRP = (
-              originalRP: RenderPromise,
-              resolvedRP: RenderPromise,
-            ) => {
-              resolvedRP.calls.forEach((call: GCallType) => {
-                const { dispatchedUnresolvedCalls } = originalRP;
-                const index = dispatchedUnresolvedCalls.indexOf(call);
-                if (index !== -1) dispatchedUnresolvedCalls.splice(index, 1);
-                else
-                  log.error(
-                    `Failed to remove dispatched call: ${JSON_stringify(call)}`,
-                  );
-              });
-            };
-            const done: Array<React.Component | (() => void)> = [];
-            rpdispatch.forEach((rp, i) => {
-              const { callback } = rp;
-              if (callback && !done.includes(callback)) {
-                // Resolve dispatchedUnresolvedCalls before callback so that
-                // the callback can read correct renderPromise.waiting() value.
-                resolveRP(renderPromises[i], rp);
+        .then((dataReady) => {
+          if (dataReady) {
+            RenderPromise.retryDelay = undefined;
+            const callbackDone: Array<React.Component | (() => void)> = [];
+            pendingRPs.forEach((prp, i) => {
+              const { callback } = prp;
+              if (callback && !callbackDone.includes(callback)) {
+                // Resolve pendingCalls before callback so that the callback
+                // can read correct renderPromise.waiting() value.
+                resolveRP(renderPromises[i], prp);
                 callback();
-                done.push(callback);
-                setLoadingClass(rp, false);
+                callbackDone.push(callback);
+                setLoadingClass(prp, false);
               }
             });
           } else {
-            // The server has asked us to wait and try again! So undo what
-            // we did and reschedule everything after the requested delay.
-            RenderPromise.setGlobalRenderPromises([
-              ...RenderPromise.getGlobalRenderPromises(),
-              ...rpdispatch,
-            ]);
+            // The server has asked us to wait and try again!
+            renderPromises.forEach((rp) => {
+              rp.calls.push(...rp.pendingCalls);
+              rp.pendingCalls = [];
+            });
+            RenderPromise.renderPromises.push(...renderPromises);
+            const { retryDelay } = RenderPromise;
+            if (!retryDelay) RenderPromise.retryDelay = 2500;
+            else if (retryDelay < 24 * 60 * 60 * 1000)
+              RenderPromise.retryDelay = 2 * retryDelay;
+            log.debug(
+              `Retrying dispatch after ${RenderPromise.retryDelay} ms.`,
+            );
             RenderPromise.batchDispatch();
           }
         })
@@ -173,15 +171,13 @@ export default class RenderPromise {
     }
   }
 
-  static getGlobalRenderPromises(): RenderPromise[] {
-    if (Cache.has('renderPromises')) {
-      return Cache.read('renderPromises') as RenderPromise[];
-    } else return [];
-  }
+  static mustRetry(result: any): boolean {
+    if (result && typeof result === 'object') {
+      const { pleaseWait } = result;
+      if (pleaseWait) return true;
+    }
 
-  static setGlobalRenderPromises(rps: RenderPromise[]): void {
-    if (Cache.has('renderPromises')) Cache.clear('renderPromises');
-    Cache.write(rps, 'renderPromises');
+    return false;
   }
 
   // If componentOrCallback is null, then an error will be thrown if the
@@ -196,9 +192,8 @@ export default class RenderPromise {
   ) {
     this.loadingRef = loadingRef || { current: null };
     this.calls = [];
-    this.dispatchedUnresolvedCalls = [];
+    this.pendingCalls = [];
     this.loadingSelector = loadingSelector || '';
-
     if (componentOrCallback && 'setState' in componentOrCallback) {
       this.type = 'classComponent';
       this.callback = () => {
@@ -216,13 +211,13 @@ export default class RenderPromise {
   }
 
   waiting(): number {
-    return this.calls.length + this.dispatchedUnresolvedCalls.length;
+    return this.calls.length + this.pendingCalls.length;
   }
 
   dispatch() {
     // Add calls to the global list, then wait a bit, request list results
     // from the server, cache the results, then re-render the requesting
-    // components.
+    // components, or call the callbacks.
     const { calls, callback } = this;
     if (calls.length) {
       if (callback === null) {
@@ -231,53 +226,56 @@ export default class RenderPromise {
         );
       }
       setLoadingClass(this, true);
-      const rps = RenderPromise.getGlobalRenderPromises();
-      rps.push(this);
-      RenderPromise.setGlobalRenderPromises(rps);
+      const { renderPromises } = RenderPromise;
+      renderPromises.push(this);
       RenderPromise.batchDispatch();
     }
   }
 }
 
-export function callBatchThenCacheSync(calls: GCallType[]) {
+// Remove resolveRP's calls from originalRP's pendingCalls.
+function resolveRP(originalRP: RenderPromise, resolvedRP: RenderPromise) {
+  resolvedRP.calls.forEach((call: GCallType) => {
+    const { pendingCalls } = originalRP;
+    const index = pendingCalls.indexOf(call);
+    if (index !== -1) pendingCalls.splice(index, 1);
+    else log.error(`Failed to remove dispatched call: ${JSON_stringify(call)}`);
+  });
+}
+
+function callBatchThenCacheSync(calls: GCallType[]) {
   if (calls.length) {
     const disallowed = disallowedAsCallBatch(calls);
-    if (!disallowed) {
-      const results = G.callBatchSync(calls);
-      if (!results || results.length !== calls.length) {
-        throw new Error(`callBatch sync did not return the correct data.`);
-      }
-      calls.forEach((call, i) => {
-        writeCallToCache(call, results[i]);
-      });
-    } else if (typeof disallowed === 'string') {
-      throw new Error(disallowed);
+    if (disallowed) throw new Error(disallowed);
+    const results = G.callBatchSync(calls);
+    if (!results || results.length !== calls.length) {
+      throw new Error(`callBatch sync did not return the correct data.`);
     }
+    calls.forEach((call, i) => {
+      writeCallToCache(call, results[i]);
+    });
   }
 }
 
-export async function callBatchThenCache(calls: GCallType[]): Promise<number> {
+// Return true on success or false if server requested we wait.
+async function callBatchThenCache(calls: GCallType[]): Promise<boolean> {
   if (calls.length) {
     const disallowed = disallowedAsCallBatch(calls);
-    if (!disallowed) {
-      const results = await G.callBatch(calls);
-      const doWait = getWaitRetry(results);
-      if (doWait) return doWait;
-      if (!results || results.length !== calls.length) {
-        throw new Error(`callBatch async did not return the correct data.`);
-      }
-      calls.forEach((call, i) => {
-        writeCallToCache(call, results[i]);
-      });
-    } else if (typeof disallowed === 'string') {
-      throw new Error(disallowed);
+    if (disallowed) throw new Error(disallowed);
+    const results = await G.callBatch(calls);
+    if (RenderPromise.mustRetry(results)) return false;
+    if (!results || results.length !== calls.length) {
+      throw new Error(`callBatch async did not return the correct data.`);
     }
+    calls.forEach((call, i) => {
+      writeCallToCache(call, results[i]);
+    });
   }
 
-  return 0;
+  return true;
 }
 
-function disallowedAsCallBatch(calls: GCallType[]): string | boolean {
+function disallowedAsCallBatch(calls: GCallType[]): string {
   // All callBatch calls must be synchronous capable, so check.
   const { asyncFuncs } = GBuilder;
   const asyncCall = calls.find((c) =>
@@ -293,7 +291,7 @@ function disallowedAsCallBatch(calls: GCallType[]): string | boolean {
     return `Calling a batch of batches is not allowed.`;
   }
 
-  return false;
+  return '';
 }
 
 // Even 'uncacheable' G data is cached for a time. Then if all

@@ -493,9 +493,10 @@ class Atext extends React.Component implements RenderPromiseComponent {
             selection &&
             type === C.BIBLE
           ) {
-            highlight(sbe, selection, renderPromise);
-            if (!renderPromise.waiting())
-              sbe.dataset.highlightkey = highlightkey;
+            doUntilDone((rp) => {
+              highlight(sbe, selection, rp);
+              if (!rp?.waiting()) sbe.dataset.highlightkey = highlightkey;
+            });
           }
           // TRIM NOTES
           if (columns > 1 && (update || doScrollVerseKey)) {

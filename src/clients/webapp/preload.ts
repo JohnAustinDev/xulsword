@@ -5,7 +5,7 @@ import type Electron from 'electron';
 import type { Socket } from 'socket.io-client';
 
 // To run the xulsword app as a webapp using a browser and NodeJS server,
-// Electron's ipcRenderer module must be replaced by s custom Inter Process
+// Electron's ipcRenderer module must be replaced by a custom Inter Process
 // Communication object, which uses socket.io instead.
 window.IPC = getIPC({
   send: (channel: string, ...args: unknown[]) => {
@@ -15,8 +15,9 @@ window.IPC = getIPC({
   invoke: async (channel: string, ...args: unknown[]) => {
     return await new Promise((resolve, reject) => {
       if (socket)
-        socket.emit(channel, args, (resp: any) => {
-          resolve(resp);
+        socket.timeout(10000).emit(channel, args, (er: any, resp: any) => {
+          if (er) reject(er);
+          else resolve(resp);
         });
       else reject(new Error('No socket connection.'));
     });
@@ -48,7 +49,7 @@ window.IPC = getIPC({
   },
   removeListener: (
     channel: string,
-    strippedfunc: (...args: unknown[]) => unknown,
+    strippedfunc: (...args: any[]) => unknown,
   ) => {
     if (socket) {
       socket.listeners(channel).forEach((lf) => {

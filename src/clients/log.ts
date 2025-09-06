@@ -10,14 +10,18 @@ const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
 function rlog(level: LogLevel, ...args: unknown[]) {
   if (levels.indexOf(level) <= levels.indexOf(C.LogLevel)) {
     const windowID = Cache.has('windowID') ? Cache.read('windowID') : '?:?';
-    // Browser can only log error or warn to server.
+    const haveIPC =
+      typeof window.IPC === 'object' && typeof window.IPC.send === 'function';
+    // Production browser can only log error or warn to server.
     if (
-      Build.isElectronApp ||
-      levels.indexOf(level) <= levels.indexOf('warn')
+      haveIPC &&
+      (Build.isElectronApp ||
+        Build.isDevelopment ||
+        levels.indexOf(level) <= levels.indexOf('warn'))
     ) {
       window.IPC.send('log', level, `[${windowID}]`, JSON_stringify(args));
     }
-    if (Build.isDevelopment) {
+    if (!haveIPC || Build.isDevelopment) {
       console.log(`[${windowID}]`, ...args);
     }
   }

@@ -3,8 +3,12 @@ import PropTypes from 'prop-types';
 import Subscription from '../../../subscription.ts';
 import { b64toBlob } from '../../../common.ts';
 import C from '../../../constant.ts';
-import { GI } from '../../G.ts';
-import { printRefs, rootRenderPromise } from '../../common.tsx';
+import { G, GI } from '../../G.ts';
+import {
+  functionalComponentRenderPromise,
+  printRefs,
+  rootRenderPromise,
+} from '../../common.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button.tsx';
 import Spacer from '../libxul/spacer.tsx';
@@ -38,6 +42,7 @@ export default function Print(props: PrintProps) {
   const { children, print } = props;
   const { pageViewRef } = printRefs;
   const { pageable, direction, iframeFilePath } = print;
+  const { renderPromise, loadingRef } = functionalComponentRenderPromise();
 
   const backHandler = () => {
     Subscription.publish.setControllerState(
@@ -51,8 +56,6 @@ export default function Print(props: PrintProps) {
     );
   };
 
-  const renderPromise = rootRenderPromise();
-
   return (
     <>
       {iframeFilePath && (
@@ -64,13 +67,7 @@ export default function Print(props: PrintProps) {
                 Build.isElectronApp
                   ? URL.createObjectURL(
                       b64toBlob(
-                        GI.inlineFile(
-                          '',
-                          renderPromise,
-                          iframeFilePath,
-                          'base64',
-                          true,
-                        ),
+                        G.inlineFile(iframeFilePath, 'base64', true),
                         'application/pdf',
                       ),
                     )
@@ -80,7 +77,13 @@ export default function Print(props: PrintProps) {
           </Hbox>
           <Hbox className="dialog-buttons" pack="end" align="end">
             <Spacer flex="10" />
-            <Button id="back" flex="1" fill="x" onClick={backHandler}>
+            <Button
+              id="back"
+              flex="1"
+              fill="x"
+              onClick={backHandler}
+              domref={loadingRef}
+            >
               {GI.i18n.t('', renderPromise, 'back.label')}
             </Button>
           </Hbox>

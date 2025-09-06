@@ -6,7 +6,6 @@ const validChannels = [
   'global', // to+from main for use by the G object
   'did-finish-render', // to main when window has finished rendering
   'log', // to main for logging
-  'error-report', // to main to report an error
   'resize', // from main when renderer window is being resized
   'progress', // from main for progress meter
   'modal', // from main to make windows temporarily modal

@@ -178,17 +178,7 @@ class Viewport extends React.Component implements PopupParent {
       // because at that time all available audio file options are again
       // collected and a single option will be selected according to current
       // defaults.
-      Commands.playAudio(
-        { open, file, defaults },
-        new RenderPromise(() =>
-          Subscription.publish.setControllerState(
-            {
-              reset: randomID(),
-            },
-            false,
-          ),
-        ),
-      );
+      void Commands.playAudio({ open, file, defaults });
     }
   }
 

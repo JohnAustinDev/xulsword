@@ -5,11 +5,7 @@ import analytics from '../../analytics.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
-import {
-  doUntilDone,
-  rootRenderPromise,
-  audioSelections,
-} from '../../common.tsx';
+import { doUntilDone, audioSelections } from '../../common.tsx';
 import verseKey from '../../verseKey.ts';
 import log from '../../log.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
@@ -458,10 +454,12 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 sels.sort((a) =>
                   a.conf.module === defaults[swordModule] ? -1 : 0,
                 );
-              Commands.playAudio(
-                { open, file: sels[0]?.selection ?? null, defaults },
-                rootRenderPromise(),
-              ); // null closes the player
+              void Commands.playAudio({
+                open,
+                // null closes the player
+                file: sels[0]?.selection ?? null,
+                defaults,
+              });
             }
           }
         }

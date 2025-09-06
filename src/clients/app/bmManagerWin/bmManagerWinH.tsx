@@ -114,9 +114,9 @@ export function onDoubleClick(this: BMManagerWin, ex: React.SyntheticEvent) {
       const { location } = clone(bookmarkItem);
       if ('v11n' in location) {
         delete location.vkMod;
-        Commands.goToLocationVK(location, location);
+        void Commands.goToLocationVK(location, location);
       } else {
-        Commands.goToLocationGB(location);
+        void Commands.goToLocationGB(location);
       }
     }
   }

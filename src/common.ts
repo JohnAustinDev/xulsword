@@ -96,6 +96,15 @@ export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+export function callLog(acall: GCallType): string {
+  if (C.LogLevel === 'silly') return JSON_stringify(acall);
+  let arginfo = `${acall[2]?.length} args`;
+  if (acall[0].startsWith('callBatch')) {
+    arginfo = `${(acall[2] as any)[0].length} calls`;
+  }
+  return `[${acall[0]}, ${acall[1]}, [${arginfo}]]`;
+}
+
 // JSON does not encode Javascript undefined, functions or symbols. So
 // what is specially encoded here can be recovered using JSON_parse(string).
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -2255,17 +2264,6 @@ export function updateSelectedIndexes(
     return newSelectedRowIndexes;
   }
   return toggleSelected ? [] : [toggleRowIndex];
-}
-
-// Append entries of 'b' to 'a'. So 'a' is modified in place, while 'b'
-// is untouched.
-export function mergeNewModules(a: NewModulesType, b: NewModulesType) {
-  Object.entries(b).forEach((entry) => {
-    const [kx, vx] = entry;
-    const k = kx as keyof typeof C.NEWMODS;
-    const v = vx as any;
-    a[k].push(...v);
-  });
 }
 
 export function gcallResultCompression<R extends any[] | Record<string, any>>(

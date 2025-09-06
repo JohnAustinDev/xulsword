@@ -260,8 +260,8 @@ function bookmarkProgramMenu(
             if ('v11n' in bm.location) {
               // Don't change panels, just the location, by removing vkMod.
               if (bm.tabType === 'Texts') delete bm.location.vkMod;
-              ComCommands.goToLocationVK(bm.location, bm.location);
-            } else ComCommands.goToLocationGB(bm.location);
+              void ComCommands.goToLocationVK(bm.location, bm.location);
+            } else void ComCommands.goToLocationGB(bm.location);
           }
         }
       }),

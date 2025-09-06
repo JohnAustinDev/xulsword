@@ -3,7 +3,7 @@ import i18n from 'i18next';
 import helmet from 'helmet';
 import session from 'express-session';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-// import toobusy from 'toobusy-js';
+import toobusy from 'toobusy-js';
 import memorystore from 'memorystore';
 import log from 'electron-log';
 import i18nBackendMain from 'i18next-fs-backend';
@@ -14,6 +14,7 @@ import { GI } from './G.ts';
 import {
   JSON_parse,
   JSON_stringify,
+  callLog,
   isInvalidWebAppData,
 } from '../../common.ts';
 import Subscription from '../../subscription.ts';
@@ -141,7 +142,7 @@ io.engine.use(
 );
 
 const rateLimiter = new RateLimiterMemory(C.Server.ipLimit);
-// toobusy.maxLag(300); // in ms: default is 70
+toobusy.maxLag(140); // in ms: default is 70
 
 io.on('connection', (socket) => {
   // Check Node.JS RAM usage and clear LibSword cache as needed.
@@ -157,138 +158,99 @@ io.on('connection', (socket) => {
   }
   log.info(`${socket.handshake.address} › Connected (${ramMB} MB RAM usage).`);
 
-  socket.on(
-    'error-report',
-    async (args: any[], _callback: (r: any) => void) => {
-      log.silly(`on error-report: ${JSON_stringify(args)}`);
-      const limited = await isLimited(socket);
-      if (!limited) {
-        const invalid = invalidArgs(args);
-        if (!invalid && args.length === 1) {
-          const [message] = args;
-          if (typeof message === 'string') {
-            log.error(
-              `${socket.handshake.address} › client error-report: ${message}`,
-            );
-            return;
-          }
-        }
-        log.error(
-          `${socket.handshake.address} › Client 'error-report' made with improper arguments: ${JSON_stringify(args)}. (${invalid})`,
-        );
-      } else {
-        // eslint-disable-next-line no-console
-        console.log(
-          `${socket.handshake.address} › rate limited! dropping error-report.`,
-        );
-      }
-    },
-  );
-
   socket.on('log', async (args: any[], _callback: (r: any) => void) => {
-    log.silly(`${socket.handshake.address} › on log: ${JSON_stringify(args)}`);
-    const limited = await isLimited(socket);
-    if (!limited) {
-      const invalid = invalidArgs(args);
-      if (!invalid && args.length === 3) {
-        const [type, windowID, json] = args as [string, string, string];
-        const logargs =
-          json.length > C.Server.maxLogJson
-            ? [`log too long. [${json.length}]`]
-            : JSON_parse(json);
-        if (
-          type in log &&
-          ['string', 'number'].includes(typeof windowID) &&
-          Array.isArray(logargs)
-        ) {
-          try {
-            log[type as LogLevel](
-              windowID,
-              `${socket.handshake.address} › `,
-              ...(logargs as unknown[]),
-            );
-          } catch (er: any) {
-            log.error(
-              `${socket.handshake.address} › in log of ${JSON_stringify(args)}: ${er.toString()}`,
-            );
-          }
-          return;
+    const clog = argLog(args);
+    log.silly(`${socket.handshake.address} › on log: ${clog}`);
+    const invalid = invalidArgs(args);
+    if (!invalid && args.length === 3) {
+      const [type, windowID, json] = args as [string, string, string];
+      const logargs =
+        json.length > C.Server.maxLogJson
+          ? [`log too long. [${json.length}]`]
+          : JSON_parse(json);
+      if (
+        type in log &&
+        ['string', 'number'].includes(typeof windowID) &&
+        Array.isArray(logargs)
+      ) {
+        const limited = await isLimited(socket);
+        if (limited) logargs.push(`(${limited})`);
+        try {
+          log[type as LogLevel](
+            windowID,
+            `${socket.handshake.address} › `,
+            ...(logargs as unknown[]),
+          );
+        } catch (er: any) {
+          log.error(
+            `${socket.handshake.address} › While logging ${clog}: ${er.toString()}`,
+          );
         }
+        return;
       }
-      log.error(
-        `${socket.handshake.address} › 'log' call made with improper arguments. (${invalid})`,
-      );
-    } else {
-      log.warn(
-        `${socket.handshake.address} › rate limited! dropping log request.`,
-      );
     }
+    log.error(
+      `${socket.handshake.address} › A 'log' call was made with improper arguments. (${invalid})`,
+    );
   });
 
   socket.on('global', async (args: any[], callback: (r: any) => void) => {
-    log.silly(`on global: ${JSON_stringify(args)}`);
-    const limited = await isLimited(socket, true);
+    let clog = argLog(args);
+    log.silly(`on global: ${clog}`);
+    const limited = await isLimited(socket);
     if (!limited) {
       const invalid = invalidArgs(args);
       if (!invalid && args.length === 1 && typeof callback === 'function') {
         const acall = args.shift() as GCallType;
-        let arginfo = `${acall[2]?.length} args`;
-        if (acall[0].startsWith('callBatch')) {
-          arginfo = `${(acall[2] as any)[0].length} calls`;
-        }
-        log.info(
-          `${socket.handshake.address} › Global [${acall[0]}, ${acall[1]}, [${arginfo}]]`,
-        );
+        clog = callLog(acall);
+        log.info(`${socket.handshake.address} › Global ${clog}`);
         if (Array.isArray(acall) && acall.length && acall.length <= 3) {
-          let r;
-          try {
-            r = handleGlobal(GI, -1, acall, false);
-          } catch (er: any) {
-            log.error(
-              `${socket.handshake.address} › in handleGlobal(GIm -1, ${JSON_stringify(acall)}, false): ${er}`,
-            );
-          }
+          const r = handleGlobal(GI, -1, acall, false);
           if (r instanceof Promise) {
             r.then((result) => {
               const invalid = isInvalidWebAppDataLogged(result);
               if (!invalid) {
                 callback(result);
-                log.silly(`FINISHED async on global: ${JSON_stringify(args)}`);
+                log.silly(`FINISHED async on global.`);
               } else
                 log.error(
-                  `${socket.handshake.address} › invalid promise request: ${invalid}`,
+                  `${socket.handshake.address} › Invalid promise result ${clog}: ${invalid}`,
                 );
             }).catch((er) => {
               log.error(
-                `${socket.handshake.address} › in isInvalidWebAppDataLogged(): ${er}`,
+                `${socket.handshake.address} › Result promise rejected ${clog}: ${er}`,
               );
             });
           } else {
             const invalid = isInvalidWebAppDataLogged(r);
             if (!invalid) {
               callback(r);
-              log.silly(`FINISHED on global: ${JSON_stringify(args)}`);
+              log.silly(`FINISHED sync on global.`);
             } else
               log.error(
-                `${socket.handshake.address} › invalid sync request: ${invalid}`,
+                `${socket.handshake.address} › Invalid sync result ${clog}: ${invalid}`,
               );
           }
           return;
         }
       }
       log.error(
-        `${socket.handshake.address} › Ignoring 'global' call made with improper arguments. (${invalid})`,
+        `${socket.handshake.address} › Ignoring 'global' call ${clog} made with improper arguments: ${invalid}`,
       );
     } else if (typeof callback === 'function') {
-      const msg = Build.isDevelopment ? JSON_stringify(args) : args.length;
-      log.warn(
-        `${socket.handshake.address} › rate limiting callback. [${msg}]`,
-      );
-      callback({ limitedDoWait: C.Server.limitedMustWait });
+      log.warn(`${socket.handshake.address} › Requesting wait: ${clog}`);
+      callback({ pleaseWait: limited });
     } else {
-      const msg = Build.isDevelopment ? JSON_stringify(args) : args.length;
-      log.warn(`${socket.handshake.address} › rate limiting. [${msg}]`);
+      log.warn(
+        `${socket.handshake.address} › Ignoring 'global' with improper arguments and rate limiting: ${clog}`,
+      );
     }
+  });
+
+  socket.on('error', (er) => {
+    log.error(
+      `${socket.handshake.address} › Socket EventEmitter error: ${er.message}`,
+    );
   });
 });
 
@@ -301,19 +263,25 @@ function invalidArgs<T>(args: T[]): string | null {
     : `Arguments must be an array. (was ${typeof args})`;
 }
 
-async function isLimited(socket: Socket, _checkbusy = false): Promise<boolean> {
-  // Check-busy is disabled for now...
-  /*
-  if (checkbusy && toobusy()) {
-    log.warn(`${socket.handshake.address} › server too busy.`);
-    return true;
+function argLog(args: any): string {
+  let msg = '';
+  if (C.LogLevel === 'silly') msg = JSON_stringify(args);
+  else {
+    const s = typeof args.toString === 'function' ? args.toString() : 'unknown';
+    msg = s.substring(0, 128) + (s.length > 128 ? '...' : '');
   }
-  */
+  return msg;
+}
+
+async function isLimited(socket: Socket): Promise<string> {
+  if (typeof toobusy !== 'undefined' && toobusy()) {
+    return 'TOO BUSY';
+  }
   try {
     await rateLimiter.consume(socket.handshake.address);
-    return false;
+    return '';
   } catch (er) {
-    return true;
+    return 'RATE LIMITED';
   }
 }
 
