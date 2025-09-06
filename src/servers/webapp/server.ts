@@ -27,7 +27,7 @@ import LibSword from '../components/libsword.ts';
 
 import type { Socket } from 'socket.io';
 import type { LogLevel } from 'electron-log';
-import type { GCallType } from '../../type.ts';
+import type { GCallType, ServerWait } from '../../type.ts';
 
 // A NodeJS server that provides responses for xulsword web apps.
 
@@ -142,7 +142,7 @@ io.engine.use(
 );
 
 const rateLimiter = new RateLimiterMemory(C.Server.ipLimit);
-toobusy.maxLag(140); // in ms: default is 70
+toobusy.maxLag(C.Server.tooBusyMaxLag);
 
 io.on('connection', (socket) => {
   // Check Node.JS RAM usage and clear LibSword cache as needed.
@@ -238,8 +238,10 @@ io.on('connection', (socket) => {
         `${socket.handshake.address} › Ignoring 'global' call ${clog} made with improper arguments: ${invalid}`,
       );
     } else if (typeof callback === 'function') {
-      log.warn(`${socket.handshake.address} › Requesting wait (${limited}): ${clog}`);
-      callback({ pleaseWait: limited });
+      log.warn(
+        `${socket.handshake.address} › Requesting wait (${limited}): ${clog}`,
+      );
+      callback({ pleaseWait: limited } as ServerWait);
     } else {
       log.warn(
         `${socket.handshake.address} › Ignoring 'global' with improper arguments (${limited}): ${clog}`,
@@ -273,16 +275,18 @@ function argLog(args: any): string {
   return msg;
 }
 
-async function isLimited(socket: Socket): Promise<string> {
-  if (typeof toobusy !== 'undefined' && toobusy()) {
-    return 'TOO BUSY';
-  }
+async function isLimited(
+  socket: Socket,
+): Promise<ServerWait['pleaseWait']> {
   try {
     await rateLimiter.consume(socket.handshake.address);
-    return '';
   } catch (er) {
     return 'RATE LIMITED';
   }
+  if (typeof toobusy !== 'undefined' && toobusy()) {
+    return 'TOO BUSY';
+  }
+  return '';
 }
 
 async function i18nInit(lng: string) {

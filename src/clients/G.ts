@@ -279,7 +279,7 @@ async function asyncRequest(call: GCallType) {
     }
     if (Build.isWebApp)
       result = gcallResultCompression(call, result, callResultDecompress);
-    if (cacheable && !RenderPromise.mustRetry(result) && !Cache.has(ckey)) {
+    if (cacheable && !RenderPromise.pleaseWait(result) && !Cache.has(ckey)) {
       Cache.write(result, ckey);
     }
   } catch (er: any) {
@@ -319,7 +319,7 @@ function syncRequest(call: GCallType) {
   }
   if (Build.isWebApp)
     result = gcallResultCompression(call, result, callResultDecompress);
-  if (cacheable && !RenderPromise.mustRetry(result) && !Cache.has(ckey))
+  if (cacheable && !RenderPromise.pleaseWait(result) && !Cache.has(ckey))
     Cache.write(result, ckey);
 
   return result;

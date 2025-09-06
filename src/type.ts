@@ -728,6 +728,10 @@ export type TransactionType = {
   store?: PrefStoreType;
 };
 
+export type ServerWait = {
+  pleaseWait: 'TOO BUSY' | 'RATE LIMITED' | '';
+}
+
 export type ParamShift<T extends unknown[]> = T extends [any, ...infer U]
   ? U
   : never;

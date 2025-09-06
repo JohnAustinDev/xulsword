@@ -175,9 +175,9 @@ socket.on('connect', () => {
       GI.getLocaleDigits([], renderPromise, locale);
       GI.ModuleConfigDefault({} as ConfigType, renderPromise);
       GI.ProgramConfig({} as ConfigType, renderPromise);
-      GI.i18n.t('', renderPromise, 'locale_direction', { lng: locale });
+      GI.i18n.t('', renderPromise, 'locale_direction');
       Object.values(C.SupportedTabTypes).forEach((type) => {
-        GI.i18n.t('', renderPromise, type, { lng: locale });
+        GI.i18n.t('', renderPromise, type);
       });
       RenderPromise.retryDelay = undefined;
 

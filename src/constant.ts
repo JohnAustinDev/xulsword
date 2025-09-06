@@ -68,6 +68,7 @@ const C = {
       points: 25,
       duration: 5,
     },
+    tooBusyMaxLag: 70, // default is 70ms
     networkRequestMinCache: 60000, // ms
     networkRequestBatchDelay: 1, // ms
   },

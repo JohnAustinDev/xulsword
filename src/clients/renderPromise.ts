@@ -16,6 +16,7 @@ import type {
   GCallType,
   GType,
   PrefValue,
+  ServerWait,
   TabType,
 } from '../type.ts';
 import type { getBooksInVKModules } from '../servers/common.ts';
@@ -133,8 +134,8 @@ export default class RenderPromise {
       }, []);
 
       callBatchThenCache(flatPrune(nextBatch))
-        .then((dataReady) => {
-          if (dataReady) {
+        .then((pleaseWait) => {
+          if (!pleaseWait) {
             RenderPromise.retryDelay = undefined;
             const callbackDone: Array<React.Component | (() => void)> = [];
             pendingRPs.forEach((prp, i) => {
@@ -157,7 +158,10 @@ export default class RenderPromise {
             RenderPromise.renderPromises.push(...renderPromises);
             const { retryDelay } = RenderPromise;
             if (!retryDelay) RenderPromise.retryDelay = 2500;
-            else if (retryDelay < 24 * 60 * 60 * 1000)
+            else if (
+              pleaseWait === 'RATE LIMITED' &&
+              retryDelay < 24 * 60 * 60 * 1000
+            )
               RenderPromise.retryDelay = 2 * retryDelay;
             log.debug(
               `Retrying dispatch after ${RenderPromise.retryDelay} ms.`,
@@ -171,13 +175,11 @@ export default class RenderPromise {
     }
   }
 
-  static mustRetry(result: any): boolean {
-    if (result && typeof result === 'object') {
-      const { pleaseWait } = result;
-      if (pleaseWait) return true;
-    }
-
-    return false;
+  static pleaseWait(result: unknown) {
+    let pleaseWait: ServerWait['pleaseWait'] | '' = '';
+    if (result && typeof result === 'object' && 'pleaseWait' in result)
+      ({ pleaseWait } = result as ServerWait);
+    return pleaseWait;
   }
 
   // If componentOrCallback is null, then an error will be thrown if the
@@ -258,12 +260,15 @@ function callBatchThenCacheSync(calls: GCallType[]) {
 }
 
 // Return true on success or false if server requested we wait.
-async function callBatchThenCache(calls: GCallType[]): Promise<boolean> {
+async function callBatchThenCache(
+  calls: GCallType[],
+): Promise<ServerWait['pleaseWait']> {
   if (calls.length) {
     const disallowed = disallowedAsCallBatch(calls);
     if (disallowed) throw new Error(disallowed);
     const results = await G.callBatch(calls);
-    if (RenderPromise.mustRetry(results)) return false;
+    const pleaseWait = RenderPromise.pleaseWait(results);
+    if (pleaseWait) return pleaseWait;
     if (!results || results.length !== calls.length) {
       throw new Error(`callBatch async did not return the correct data.`);
     }
@@ -272,7 +277,7 @@ async function callBatchThenCache(calls: GCallType[]): Promise<boolean> {
     });
   }
 
-  return true;
+  return '';
 }
 
 function disallowedAsCallBatch(calls: GCallType[]): string {

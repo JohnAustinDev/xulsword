@@ -51,13 +51,10 @@ if (widgets.length) {
         GI.Tabs([], renderPromise);
         GI.Books([], renderPromise, locale);
         GI.getLocaleDigits([], renderPromise, locale);
-        GI.i18n.t('', renderPromise, 'locale_direction', { lng: locale });
-        GI.i18n.t('', renderPromise, 'publication', {
-          lng: locale,
-          ns: 'widgets',
-        });
+        GI.i18n.t('', renderPromise, 'locale_direction');
+        GI.i18n.t('', renderPromise, 'Full publication', { ns: 'widgets' });
         Object.values(C.SupportedTabTypes).forEach((type) => {
-          GI.i18n.t('', renderPromise, type, { lng: locale });
+          GI.i18n.t('', renderPromise, type);
         });
         RenderPromise.retryDelay = undefined;
 
