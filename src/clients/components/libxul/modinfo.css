@@ -1,5 +1,5 @@
 .modinfo {
-  overflow: hidden;
+  overflow: auto;
 }
 .modinfo > div {
   width: 100%;

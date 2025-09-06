@@ -1,7 +1,7 @@
 .viewport {
   margin: 10px 15px 15px 15px;
   padding: 0px;
-  overflow: visible;
+  overflow: clip;
   background-position: 0px 40px;
   width: 100%;
   position: relative;

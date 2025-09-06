@@ -1,7 +1,6 @@
 .bmmanager {
   height: 100%;
   padding: 8px;
-  overflow: hidden;
 }
 .bmmanager .items {
   padding: 1px;

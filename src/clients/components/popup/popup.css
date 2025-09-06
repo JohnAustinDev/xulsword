@@ -117,7 +117,7 @@ html:not(.popupWin) .npopupTX {
   content: url(../../images/search.png);
   width: 30px;
   height: 18px;
-  overflow: hidden;
+  overflow: clip;
   margin-inline-start: 16px;
 }
 .lemma-header {
