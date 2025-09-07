@@ -7,7 +7,7 @@ import {
   drop,
   validateViewportModulePrefs,
 } from '../../../common.ts';
-import { G } from '../../G.ts';
+import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
@@ -95,7 +95,7 @@ export default class ViewportWin
       ...(G.Window.getComplexValue('xulswordState') as VPWindowState),
       renderPromiseID: 0,
     };
-    validateViewportModulePrefs(G.Tabs, s);
+    validateViewportModulePrefs(s);
     this.state = s;
 
     this.viewportParentHandler = viewportParentH.bind(this);

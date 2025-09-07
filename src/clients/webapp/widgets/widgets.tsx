@@ -7,10 +7,8 @@ import {
   getReactComponents,
 } from '../common.ts';
 import C from '../../../constant.ts';
-import { GI } from '../../G.ts';
-import { doUntilDone } from '../../common.tsx';
+import { cachePreload } from '../../common.tsx';
 import log from '../../log.ts';
-import RenderPromise from '../../renderPromise.ts';
 import Prefs from '../prefs.ts';
 import WidgetVK from './widgetVK.tsx';
 import WidgetOR from './widgetOR.tsx';
@@ -18,6 +16,8 @@ import WidgetMenulist from './widgetMenulist.tsx';
 import defaultSettings from './defaultSettings.ts';
 
 import type { ComponentData } from '../common.ts';
+
+window.WebAppClient = 'Widgets';
 
 const socket = socketConnect(
   Number(process.env.WEBAPP_PORT),
@@ -43,22 +43,8 @@ if (widgets.length) {
       if (!locale || !C.Locales.some((x) => x[0] === locale)) locale = 'en';
       Prefs.setCharPref('global.locale', locale);
 
-      RenderPromise.retryDelay = 1; // Make preload calls without delay.
-      doUntilDone((renderPromise) => {
-        // Widget code expects this data to be preloaded into the cache, so
-        // do that before createRoot.
-        GI.getLocalizedBooks({}, renderPromise, [locale]);
-        GI.Tabs([], renderPromise);
-        GI.Books([], renderPromise, locale);
-        GI.getLocaleDigits([], renderPromise, locale);
-        GI.i18n.t('', renderPromise, 'locale_direction');
-        GI.i18n.t('', renderPromise, 'Full publication', { ns: 'widgets' });
-        Object.values(C.SupportedTabTypes).forEach((type) => {
-          GI.i18n.t('', renderPromise, type);
-        });
-        RenderPromise.retryDelay = undefined;
-
-        if (!renderPromise?.waiting()) {
+      cachePreload(locale)
+        .then(() => {
           widgets.forEach((widget) => {
             const { id: compid } = widget;
             const settings = getComponentSettings(
@@ -95,8 +81,8 @@ if (widgets.length) {
                 log.error(`Unknown widget type '${component}'`);
             }
           });
-        }
-      });
+        })
+        .catch((er) => log.error(er));
     }
   });
 }

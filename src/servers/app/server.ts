@@ -51,7 +51,7 @@ import {
   pushPrefsToWindows,
   publishSubscription,
 } from './components/window.ts';
-import { addBookmarkTransaction } from '../components/bookmarks.ts';
+import { addBookmarkTransaction } from '../components/bookmarks.tsx';
 
 import type { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import type { LogLevel } from 'electron-log';
@@ -236,7 +236,7 @@ const openXulswordWindow = () => {
   const menuBuilder = new MainMenuBuilder(xulswordWindow);
   menuBuilder.buildMenu();
 
-  validateModulePrefs(getTabs(), Prefs, getFeatureModules(), Window);
+  validateModulePrefs(Window);
 
   const BuildInfo = `${app.getName()} ${app.getVersion()} (${
     i18n.language
@@ -264,7 +264,7 @@ const openXulswordWindow = () => {
           'moduleManager.repositories',
         ) as ManagerStatePref['repositories'],
       );
-      validateModulePrefs(getTabs(), Prefs, getFeatureModules(), Window);
+      validateModulePrefs(Window);
       menuBuilder.buildMenu(true);
     }),
   );
@@ -520,7 +520,7 @@ const init = async () => {
     }
   }
 
-  ProgramTitle = localizeString(i18n, 'i18n:program.title');
+  ProgramTitle = localizeString('i18n:program.title');
 
   if (Prefs.getBoolPref('global.InternetPermission')) {
     autoUpdater.logger = log;

@@ -25,12 +25,9 @@ import type {
   OSISBookType,
   PrefValue,
   BookmarkFolderType,
-  NewModulesType,
   BookmarkTreeNode,
-  PrefStoreType,
   LocationORType,
   BookmarkItemType,
-  TabType,
   TabTypes,
   GenBookAudio,
   LocationVKType,
@@ -47,36 +44,51 @@ import type {
   GTypeMain,
   GIType,
   GITypeMain,
+  Gsafe,
 } from './type.ts';
-import type { PrefsGType } from './prefs.ts';
 import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
 import type { SelectORMType } from './clients/components/libxul/selectOR.tsx';
-import type { getSampleText } from './clients/bookmarks.ts';
+import type { getSampleText } from './clients/bookmarks.tsx';
 import type verseKey from './clients/verseKey.ts';
+import type RenderPromise from './clients/renderPromise.ts';
 import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
 import type { BibleBrowserControllerGlobal } from './clients/webapp/bibleBrowser/bibleBrowser.tsx';
 import type Window from './servers/app/components/window.ts';
 
 // This file contains functions that are used in common with both xulsword
-// clients and servers.
+// clients and servers. However functions here which call G() or GI() have
+// context restrictions (see G() and GI()).
 
-// This function may only be called in Electron and cannot be called before G
-// has been created and cached, so G should be imported as early as possible.
-function G(): GType | GTypeMain {
-  if (Build.isElectronApp) {
-    if (Cache.has('GType')) return Cache.read('GType') as GType;
-    if (Cache.has('GTypeMain')) return Cache.read('GTypeMain') as GTypeMain;
-    throw new Error(`G was requested before it was cached.`);
+// G() may be used by Electron server and clients, and some methods are also
+// available for WebApp server and clients (those methods of GITypeMain, as
+// well as Prefs). A further WebApp client restriction is that data must be
+// carefully cache-preloaded. So when used in WebApp context, any synchronous
+// calls for uncached data, or use of methods that aren't allowed by WebApp
+// clients, will throw). It cannot be called before G has been created and
+// cached, so G should be imported as early as possible.
+function G(): Gsafe {
+  let gkey = '';
+  if (Build.isClient) gkey = 'GType';
+  if (Build.isServer) {
+    if (Build.isElectronApp) gkey = 'GTypeMain';
+    else gkey = 'GITypeMain';
   }
-  throw new Error(`Cache G may only be used by Electron.`);
+  if (!gkey) throw new Error(`G() cannot be called in this context.`);
+  if (!Cache.has(gkey))
+    throw new Error(`G was requested before it was cached.`);
+  return Cache.read(gkey);
 }
 
-// This function cannot be called before GI has been created and cached, so GI
-// should be imported as early as possible.
-function GI(): GIType | GITypeMain {
-  if (Cache.has('GIType')) return Cache.read('GIType') as GIType;
-  if (Cache.has('GITypeMain')) return Cache.read('GITypeMain') as GITypeMain;
-  throw new Error(`GI was requested before it was cached.`);
+// GI() may be used by clients (both Electron and WebApp) but not by servers.
+// It cannot be called before GI has been created and cached, so GI should be
+// imported as early as possible.
+function GI(): GIType {
+  let gkey = '';
+  if (Build.isClient) gkey = 'GIType';
+  if (!gkey) throw new Error(`GI() cannot be called in this context.`);
+  if (!Cache.has(gkey))
+    throw new Error(`GI was requested before it was cached.`);
+  return Cache.read(gkey);
 }
 
 export function isCallCacheable(
@@ -471,34 +483,25 @@ export function normalizeFontFamily(fontFamily: string): string {
 // branding namespace is checked first, followed by xulsword. If there is no
 // localization, the key is returned with 'i18n:' prefix removed.
 export function localizeString(
-  GorI: GType | GType['i18n'],
   str: string,
+  renderPromise?: RenderPromise | null,
 ): string {
-  const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
   if (str.startsWith('i18n:')) {
-    const ans = ['branding', 'xulsword'].find((ns) =>
-      i18n.exists(str.substring(5), { ns }),
-    );
-    if (ans) return i18n.t(str.substring(5), { ns: ans });
+    if (Build.isClient) {
+      const ans = ['branding', 'xulsword'].find((ns) =>
+        GI().i18n.exists(false, renderPromise, str.substring(5), { ns }),
+      );
+      if (!renderPromise?.waiting() && ans)
+        return GI().i18n.t('', renderPromise, str.substring(5), { ns: ans });
+    } else {
+      const ans = ['branding', 'xulsword'].find((ns) =>
+        G().i18n.exists(str.substring(5), { ns }),
+      );
+      if (ans) return G().i18n.t(str.substring(5), { ns: ans });
+    }
     return str.substring(5);
   }
   return str;
-}
-
-// Resolve a xulsword:// file path into an absolute local file path.
-export function resolveXulswordPath(
-  DirsPath: GType['Dirs']['path'],
-  path: string,
-): string {
-  if (path.startsWith('xulsword://')) {
-    const dirs = path.substring('xulsword://'.length).split(/[/\\]/);
-    if (dirs[0] && dirs[0] in DirsPath) {
-      dirs[0] = DirsPath[dirs[0] as keyof typeof DirsPath];
-      return dirs.join(C.FSSEP);
-    }
-    throw new Error(`Unrecognized xulsword path: ${dirs[0]}`);
-  }
-  return path;
 }
 
 export function prefType(
@@ -509,45 +512,6 @@ export function prefType(
   return ['string', 'number', 'boolean'].includes(t)
     ? (t as 'string' | 'number' | 'boolean')
     : 'complex';
-}
-
-// Return values of key/value pairs of component state Prefs. Component
-// state Prefs are permanently persisted component state values recorded in
-// a json preference file.
-export function getStatePref(
-  prefs: GType['Prefs'],
-  store: PrefStoreType,
-  id: string | null,
-  defaultPrefs?: PrefObject, // default is all
-): PrefObject {
-  const state: PrefObject = {};
-  const sdef = store in S ? (S as any)[store] : null;
-  const p1 = defaultPrefs || (sdef as Record<string, unknown>);
-  if (p1) {
-    const p2 = defaultPrefs || ((id && sdef[id]) as Record<string, unknown>);
-    if (id && p2) {
-      Object.entries(p2).forEach((entry) => {
-        const [key, value] = entry;
-        state[key] = prefs.getPrefOrCreate(
-          `${id}.${String(key)}`,
-          prefType(value as PrefValue),
-          value as PrefValue,
-          store,
-        );
-      });
-    } else {
-      Object.entries(p1).forEach((entry) => {
-        const [sid, value] = entry;
-        state[sid] = prefs.getPrefOrCreate(
-          sid,
-          prefType(value as PrefValue),
-          value as PrefValue,
-          store,
-        );
-      });
-    }
-  }
-  return state;
 }
 
 // An inline data URL is limited to about 2MB. The solution is convert the data to
@@ -904,12 +868,7 @@ export function pad(
 // Xulsword state prefs and certain global prefs should only reference
 // installed modules or be empty string. This function insures that is
 // the case.
-export function validateModulePrefs(
-  Tabs: GType['Tabs'],
-  Prefs: GType['Prefs'],
-  featureModules: GType['FeatureModules'],
-  windowComp?: typeof Window,
-) {
+export function validateModulePrefs(windowComp?: typeof Window) {
   const xsprops: Array<keyof typeof S.prefs.xulsword> = [
     'panels',
     'ilModules',
@@ -917,28 +876,22 @@ export function validateModulePrefs(
     'tabs',
   ];
   const xulsword = keep(
-    Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword,
+    G().Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword,
     xsprops,
   );
 
-  validateViewportModulePrefs(Tabs, xulsword);
+  validateViewportModulePrefs(xulsword);
 
   const globalPopup = {} as typeof S.prefs.global.popup;
 
-  validateGlobalModulePrefs(
-    Tabs,
-    Prefs,
-    Prefs.getCharPref('global.locale'),
-    featureModules,
-    globalPopup,
-  );
+  validateGlobalModulePrefs(globalPopup);
 
   // IMPORTANT: Use the skipCallbacks and clearRendererCaches arguments of
   // Prefs.mergeValue() to force renderer processes to update once, after
   // module prefs are valid. Otherwise renderer exceptions may be thrown as they
   // they would re-render with invalid module prefs.
-  Prefs.mergeValue('global.popup', globalPopup, 'prefs', true, false);
-  Prefs.mergeValue('xulsword', xulsword, 'prefs', false, true);
+  G().Prefs.mergeValue('global.popup', globalPopup, 'prefs', true, false);
+  G().Prefs.mergeValue('xulsword', xulsword, 'prefs', false, true);
 
   // Any viewportWin windows also need modules to be checked,
   // which happens in viewportWin component contsructor.
@@ -950,7 +903,6 @@ export function validateModulePrefs(
 // Modify the given state in place removing any references to viewport
 // modules that are not currently installed.
 export function validateViewportModulePrefs(
-  tabs: TabType[],
   state: Pick<
     typeof S.prefs.xulsword,
     'panels' | 'ilModules' | 'mtModules' | 'tabs'
@@ -960,7 +912,7 @@ export function validateViewportModulePrefs(
     const prop = state[p] as any[];
     state[p] = prop.map((m) => {
       const n = p === 'panels' ? '' : null;
-      if (m && !tabs.find((t) => t.module === m)) return n;
+      if (m && !G().Tabs.find((t) => t.module === m)) return n;
       return m;
     });
   });
@@ -968,48 +920,47 @@ export function validateViewportModulePrefs(
   const { tabs: tbs } = state;
   tbs.forEach((p, i) => {
     if (p) {
-      tbs[i] = p.filter((m) => tabs.find((t) => t.module === m));
+      tbs[i] = p.filter((m) => G().Tabs.find((t) => t.module === m));
     }
   });
 }
 
 export function validateGlobalModulePrefs(
-  tabs: TabType[],
-  prefs: PrefsGType,
-  locale: string,
-  featureModules: GType['FeatureModules'],
   globalPopup: typeof S.prefs.global.popup,
 ) {
-  const vklookup = prefs.getComplexValue(
+  const vklookup = G().Prefs.getComplexValue(
     'global.popup.vklookup',
   ) as typeof S.prefs.global.popup.vklookup;
   Object.entries(vklookup).forEach((entry) => {
     const m = entry[0] as keyof typeof S.prefs.global.popup.feature;
     const [, lumod] = entry;
-    if (!lumod || !tabs.find((t) => t.module === lumod)) {
+    if (!lumod || !G().Tabs.find((t) => t.module === lumod)) {
       delete vklookup[m];
     }
   });
   globalPopup.vklookup = vklookup;
 
-  const feature = prefs.getComplexValue(
+  const feature = G().Prefs.getComplexValue(
     'global.popup.feature',
   ) as typeof S.prefs.global.popup.feature;
   Object.entries(feature).forEach((entry) => {
     const [f, m] = entry as [keyof typeof S.prefs.global.popup.feature, string];
-    if (!m || !tabs.find((t) => t.module === m)) {
+    if (!m || !G().Tabs.find((t) => t.module === m)) {
       delete feature[f];
     }
   });
   // If no pref has been set for popup.selection[feature] then choose a
   // module from the available modules, if there are any.
-  Object.entries(featureModules).forEach((entry) => {
+  Object.entries(G().FeatureModules).forEach((entry) => {
     const [f, fmods] = entry as [
       keyof typeof S.prefs.global.popup.feature,
       string[],
     ];
     if (!(f in feature) && Array.isArray(fmods) && fmods.length) {
-      const pref = C.LocalePreferredFeature[locale === 'en' ? 'en' : 'ru'][f];
+      const pref =
+        C.LocalePreferredFeature[
+          G().Prefs.getCharPref('global.locale') === 'en' ? 'en' : 'ru'
+        ][f];
       feature[f] = pref?.find((m) => fmods.includes(m)) || fmods[0];
     }
   });
@@ -1029,7 +980,7 @@ export function noAutoSearchIndex(Prefs: GType['Prefs'], module: string) {
 // Return requested valid SWORD render options:
 // If show is G, then values of Prefs 'xulsword.show' will be used.
 export function getSwordOptions(
-  show: typeof S.prefs.xulsword.show | boolean | GType,
+  show: typeof S.prefs.xulsword.show | boolean | Gsafe,
   modType: ModTypes,
 ): { [key in SwordFilterType]: SwordFilterValueType } {
   // Set SWORD filter options
@@ -1140,74 +1091,67 @@ export function getPanelWidths(
 // of location from all panels, or both (returning null if conditions are
 // not satisfied).
 export function xulswordLocation(
-  Tab: GType['Tab'],
-  Prefs: GType['Prefs'],
   tabType: 'Texts',
   panelIndex?: number,
 ): LocationVKType | undefined;
 export function xulswordLocation(
-  Tab: GType['Tab'],
-  Prefs: GType['Prefs'],
   tabType: 'Comms',
   panelIndex?: number,
 ): LocationVKCommType | undefined;
 export function xulswordLocation(
-  Tab: GType['Tab'],
-  Prefs: GType['Prefs'],
   tabType: 'Genbks' | 'Dicts',
   panelIndex?: number,
 ): LocationORType | undefined;
 export function xulswordLocation(
-  Tab: GType['Tab'],
-  Prefs: GType['Prefs'],
   tabType?: undefined,
   panelIndex?: number,
 ): LocationVKType | LocationVKCommType | LocationORType | undefined;
 export function xulswordLocation(
-  Tab: GType['Tab'],
-  Prefs: GType['Prefs'],
   tabType?: TabTypes,
   panelIndex?: number,
 ): LocationVKType | LocationVKCommType | LocationORType | undefined {
-  const panels = Prefs.getComplexValue(
+  const panels = G().Prefs.getComplexValue(
     'xulsword.panels',
   ) as typeof S.prefs.xulsword.panels;
   let r: LocationVKType | LocationVKCommType | LocationORType | undefined;
-  for (let i = 0; i < panels.length; i += 1) {
-    const m = panels[i];
-    if (
-      m &&
-      (panelIndex === undefined || panelIndex === i) &&
-      (!tabType || Tab[m].tabType === tabType)
-    ) {
-      switch (Tab[m].tabType) {
-        case 'Texts':
-        case 'Comms': {
-          const location = Prefs.getComplexValue(
-            'xulsword.location',
-          ) as typeof S.prefs.xulsword.location;
-          if (location && Tab[m].tabType === 'Comms') {
-            r = { ...location, commMod: m };
-          } else if (location) {
-            r = { ...location, vkMod: m };
+  if (Build.isElectronApp) {
+    for (let i = 0; i < panels.length; i += 1) {
+      const m = panels[i];
+      if (
+        m &&
+        (panelIndex === undefined || panelIndex === i) &&
+        (!tabType || G().Tab[m].tabType === tabType)
+      ) {
+        switch (G().Tab[m].tabType) {
+          case 'Texts':
+          case 'Comms': {
+            const location = G().Prefs.getComplexValue(
+              'xulsword.location',
+            ) as typeof S.prefs.xulsword.location;
+            if (location && G().Tab[m].tabType === 'Comms') {
+              r = { ...location, commMod: m };
+            } else if (location) {
+              r = { ...location, vkMod: m };
+            }
+            return r;
           }
-          return r;
-        }
-        case 'Genbks':
-        case 'Dicts': {
-          const keys = Prefs.getComplexValue(
-            'xulsword.keys',
-          ) as typeof S.prefs.xulsword.keys;
-          const key = keys[i];
-          if (key) {
-            r = { otherMod: m, key };
+          case 'Genbks':
+          case 'Dicts': {
+            const keys = G().Prefs.getComplexValue(
+              'xulsword.keys',
+            ) as typeof S.prefs.xulsword.keys;
+            const key = keys[i];
+            if (key) {
+              r = { otherMod: m, key };
+            }
+            return r;
           }
-          return r;
+          default:
         }
-        default:
       }
     }
   }
+
   return r;
 }
 
@@ -1232,7 +1176,6 @@ export function getModuleOfObject(
 }
 
 export function bookmarkItemIconPath(
-  G: GType,
   item: BookmarkTreeNode | BookmarkItemType,
 ): string {
   const { note } = item;
@@ -1241,7 +1184,7 @@ export function bookmarkItemIconPath(
     if (note) fname = `Texts_note.png`;
     else fname = `Texts.png`;
   }
-  return [G.Dirs.path.xsAsset, 'icons', '16x16', fname].join(C.FSSEP);
+  return ['xulsword://xsAsset', 'icons', '16x16', fname].join(C.FSSEP);
 }
 
 export function findParentOfBookmarkItem(
@@ -1446,23 +1389,24 @@ export function pasteBookmarkItems(
 }
 
 export function bookmarkLabel(
-  G: GType,
   verseKeyFunc: typeof verseKey,
   l: LocationVKType | LocationVKCommType | LocationORType,
+  renderPromise?: RenderPromise | null,
 ): string {
   if ('commMod' in l) {
     const { commMod } = l;
-    const vk = verseKeyFunc(l, null);
-    const readable = vk.readable(G.i18n.language, null, true);
-    const t = (commMod in G.Tab && G.Tab[commMod]) || null;
-    return `${t ? t.label : G.i18n.t('Comms')}: ${readable}`;
+    const vk = verseKeyFunc(l, renderPromise);
+    const readable = vk.readable(G().i18n.language, null, true);
+    const t = (commMod in G().Tab && G().Tab[commMod]) || null;
+    return `${t ? t.label : G().i18n.t('Comms')}: ${readable}`;
   }
   if ('v11n' in l) {
-    const vk = verseKeyFunc(l, null);
-    return vk.readable(G.i18n.language, null, true);
+    const vk = verseKeyFunc(l, renderPromise);
+    return vk.readable(G().i18n.language, null, true);
   }
   const ks = l.key.split(C.GBKSEP);
-  const tab = (l.otherMod && l.otherMod in G.Tab && G.Tab[l.otherMod]) || null;
+  const tab =
+    (l.otherMod && l.otherMod in G().Tab && G().Tab[l.otherMod]) || null;
   ks.unshift(tab?.description.locale || l.otherMod);
   while (ks[2] && ks[0] === ks[1]) {
     ks.shift();
@@ -1487,25 +1431,25 @@ export function forEachBookmarkItem(
 // Apply localization to a bookmark (NOT recursive and does NOT add
 // sampleText).
 export function localizeBookmark(
-  G: GType,
   verseKeyFunc: typeof verseKey,
   item: BookmarkItemType,
+  renderPromise?: RenderPromise | null,
 ): BookmarkItemType {
   const { label, note } = item;
-  const nlabel = localizeString(G, label);
-  const lang = G.i18n.language as 'en';
+  const nlabel = localizeString(label, renderPromise);
+  const lang = G().i18n.language as 'en';
   if (nlabel !== label) {
     if (nlabel === 'label' && item.type === 'bookmark') {
       const { location } = item;
       item.label = location
-        ? bookmarkLabel(G, verseKeyFunc, location)
+        ? bookmarkLabel(verseKeyFunc, location, renderPromise)
         : 'label';
     } else {
       item.label = nlabel;
     }
     item.labelLocale = lang;
   }
-  const lnote = localizeString(G, note);
+  const lnote = localizeString(note, renderPromise);
   if (lnote !== note) {
     item.note = lnote;
     item.noteLocale = lang;
@@ -1515,14 +1459,13 @@ export function localizeBookmark(
 
 // Recursively apply localization, and optionally add sampleText, to a folder.
 export function localizeBookmarks(
-  g: GType,
   verseKeyFunc: typeof verseKey,
   folder: BookmarkFolderType,
   getSampleTextFunc?: typeof getSampleText,
 ) {
-  localizeBookmark(g, verseKeyFunc, folder);
+  localizeBookmark(verseKeyFunc, folder);
   forEachBookmarkItem(folder.childNodes, (item) => {
-    localizeBookmark(g, verseKeyFunc, item);
+    localizeBookmark(verseKeyFunc, item);
     if (
       getSampleTextFunc &&
       item.type === 'bookmark' &&

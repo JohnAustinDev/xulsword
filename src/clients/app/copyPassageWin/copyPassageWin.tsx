@@ -1,7 +1,7 @@
 import React from 'react';
 import { Intent } from '@blueprintjs/core';
 import { sanitizeHTML } from '../../../common.ts';
-import { G, GI } from '../../G.ts';
+import { GE as G, GI } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import verseKey from '../../verseKey.ts';
 import {

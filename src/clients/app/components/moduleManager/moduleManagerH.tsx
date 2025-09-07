@@ -22,7 +22,7 @@ import {
   findFirstLeafNode,
 } from '../../../../common.ts';
 import C from '../../../../constant.ts';
-import { G } from '../../../G.ts';
+import { GE as G } from '../../../G.ts';
 import log from '../../../log.ts';
 import { forEachNode } from '../../../components/libxul/treeview.tsx';
 import { isRepoBuiltIn } from '../../common.ts';
@@ -1245,7 +1245,7 @@ function promptAndInstall(
   updates.forEach((mud) => {
     const { module, Version, Abbreviation } = mud.conf;
     const { remove } = mud;
-    const toRepoName = localizeString(G, mud.conf.sourceRepository.name);
+    const toRepoName = localizeString(mud.conf.sourceRepository.name);
     const msgs = remove
       ? [mud.conf.History?.at(-1)].map((h) => h && h[1].locale)
       : [mud.conf.Description?.locale];
@@ -2053,7 +2053,7 @@ export function repositoryToRow(
     const repoIsDisabled =
       state.repositories?.disabled?.includes(repokey) || false;
     r = findTableRow(repokey, 'repository', [
-      localizeString(G, repo.name),
+      localizeString(repo.name),
       repo.domain,
       repo.path,
       repoIsDisabled ? OFF : isRepoBuiltIn(repo) ? ALWAYSON : ON,

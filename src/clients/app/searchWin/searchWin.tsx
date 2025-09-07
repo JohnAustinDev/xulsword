@@ -1,7 +1,7 @@
 import React from 'react';
 import { noAutoSearchIndex } from '../../../common.ts';
+import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
-import { G } from '../../G.ts';
 import log from '../../log.ts';
 import Search from '../../components/search/search.tsx';
 import { Indexing } from '../../components/search/searchH.tsx';

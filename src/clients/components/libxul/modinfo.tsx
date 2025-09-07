@@ -15,7 +15,12 @@ import Label from './label.tsx';
 import '../../libsword.css'; // modinfo uses .head1
 import './modinfo.css';
 
-import type { ModTypes, SwordConfType, TabTypes } from '../../../type.ts';
+import type {
+  GType,
+  ModTypes,
+  SwordConfType,
+  TabTypes,
+} from '../../../type.ts';
 
 // Parent component should have this included in its state and state-type.
 export const modinfoParentInitialState = {
@@ -74,7 +79,11 @@ export function modinfoParentHandler(
               const { dataset } = textarea?.current ?? {};
               const { confPath } = dataset;
               if (confPath) {
-                G.Module.writeConf(confPath, textarea.current.value);
+                if (Build.isElectronApp)
+                  (G as GType).Module.writeConf(
+                    confPath,
+                    textarea.current.value,
+                  );
                 const s: Partial<typeof modinfoParentInitialState> = {
                   editConf: false,
                 };
@@ -161,7 +170,7 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
   const conftext: string[] =
     (Build.isElectronApp &&
       showConfET?.confPath &&
-      G.inlineFile(showConfET.confPath, 'utf8', true).split('\n')) ||
+      (G as GType).inlineFile(showConfET.confPath, 'utf8', true).split('\n')) ||
     [];
 
   const showLinkList = configs.length > 4;

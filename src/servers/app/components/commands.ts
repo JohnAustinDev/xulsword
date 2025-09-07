@@ -28,7 +28,7 @@ import importBookmarkObject, {
   canUndo,
   importDeprecatedBookmarks,
   Transaction,
-} from '../../components/bookmarks.ts';
+} from '../../components/bookmarks.tsx';
 import { getTab, getAudioConfs, genBookTreeNodes } from '../../common.ts';
 import verseKey from '../../verseKey.ts';
 import Prefs from '../prefs.ts';

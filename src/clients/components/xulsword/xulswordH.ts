@@ -19,6 +19,7 @@ import type {
   ShowType,
   AudioPlayerSelectionVK,
   AudioPrefType,
+  GType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type { AnalyticsInfo } from '../../analytics.ts';
@@ -136,7 +137,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               searchtext,
               type: 'SearchAnyWord',
             };
-            if (Build.isElectronApp) G.Commands.search(search);
+            if (Build.isElectronApp) (G as GType).Commands.search(search);
             else
               Subscription.publish.setControllerState(
                 {

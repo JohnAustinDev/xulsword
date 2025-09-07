@@ -49,6 +49,7 @@ import type {
   PinPropsType,
   AudioPlayerSelectionVK,
   XulswordStateArgType,
+  GType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type {
@@ -171,7 +172,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
   }
 
   shouldComponentUpdate(nextProps: AtextProps): boolean {
-    return window.webAppTextScroll !== nextProps.panelIndex;
+    return window.WebAppTextScroll !== nextProps.panelIndex;
   }
 
   componentDidUpdate(_prevProps: AtextProps, prevState: AtextStateType) {
@@ -184,7 +185,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
     );
     const changedState = diff(prevState, windowState[panelIndex]);
     if (Build.isElectronApp && changedState) {
-      G.Window.mergeValue(`atext${panelIndex}State`, changedState);
+      (G as GType).Window.mergeValue(`atext${panelIndex}State`, changedState);
     }
     if (!renderPromise.waiting()) this.onUpdate();
     renderPromise.dispatch();

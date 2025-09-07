@@ -4,7 +4,7 @@ import RefParser from '../refParser.ts';
 import C from '../constant.ts';
 import { G } from './G.ts';
 import { findElementData, mergeElementData } from './htmlData.ts';
-import { findBookmarks } from './bookmarks.ts';
+import { findBookmarks } from './bookmarks.tsx';
 import { windowArguments } from './common.tsx';
 
 import type {

@@ -2,7 +2,6 @@ import type { ContextMenuType } from './servers/app/contextMenu.ts';
 import type { PrefCallbackType } from './prefs.ts';
 import type { NewModulesType } from './type.ts';
 import type { ControllerState } from './clients/controller.tsx';
-import type { Socket } from 'socket.io-client';
 
 // Publish callback opportunities to subscribers. To publish for subscribers
 // in other processes, use G.publishSubscription in conjunctions with Subscribe.

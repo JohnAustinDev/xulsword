@@ -6,18 +6,17 @@ import { xulPropTypes, htmlAttribs } from '../libxul/xul.tsx';
 import { AnchorButton } from '../libxul/button.tsx';
 import Menupopup from '../libxul/menupopup.tsx';
 import ModuleMenu from '../libxul/modulemenu.tsx';
+import { doUntilDone } from '../../common.tsx';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import './tabs.css';
 
-import type { XulswordStateArgType } from '../../../type.ts';
+import type { GType, XulswordStateArgType } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
   RenderPromiseState,
 } from '../../renderPromise.ts';
 import type { XulProps } from '../libxul/xul.tsx';
-import type { TonCellClick } from '../libxul/table.tsx';
-import { doUntilDone } from '../../common.tsx';
 
 const propTypes = {
   ...xulPropTypes,
@@ -109,7 +108,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     if (target) {
       const { value } = target as HTMLSelectElement;
       const { panelIndex, xulswordState } = this.props as TabsProps;
-      const vp = Build.isWebApp ? WebAppViewport : G.Viewport;
+      const vp = Build.isElectronApp ? (G as GType).Viewport : WebAppViewport;
       doUntilDone((renderPromise2) => {
         const xs = vp.setXulswordTabs(
           {
@@ -245,7 +244,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     }
   }
 
-  multiTabButtonClick(e: React.SyntheticEvent<TonCellClick>) {
+  multiTabButtonClick(e: React.SyntheticEvent) {
     const { renderPromise } = this;
     const { multiTabMenupopup } = this.state as TabsState;
     if (

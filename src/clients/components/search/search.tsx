@@ -63,6 +63,7 @@ import './search.css';
 
 import type {
   BookGroupType,
+  GType,
   SearchType,
   WindowDescriptorType,
 } from '../../../type.ts';
@@ -272,24 +273,29 @@ export default class Search
         showHelp: null,
       });
     }
-    // Save changed window prefs (plus initials to obtain complete state).
-    const persistState = drop(state, noPersist) as Omit<
-      SearchState,
-      (typeof noPersist)[number]
-    >;
-    const psx = persistState as any;
-    const isx = notStatePref as any;
-    if (
-      descriptor &&
-      diff(
-        { ...prevState, popupParent: null },
-        { ...persistState, popupParent: null },
-      )
-    ) {
-      noPersist.forEach((p) => {
-        psx[p] = isx[p];
-      });
-      G.Window.setComplexValue('pstate', { ...persistState, showHelp: null });
+    if (Build.isElectronApp) {
+      // Save changed window prefs (plus initials to obtain complete state).
+      const persistState = drop(state, noPersist) as Omit<
+        SearchState,
+        (typeof noPersist)[number]
+      >;
+      const psx = persistState as any;
+      const isx = notStatePref as any;
+      if (
+        descriptor &&
+        diff(
+          { ...prevState, popupParent: null },
+          { ...persistState, popupParent: null },
+        )
+      ) {
+        noPersist.forEach((p) => {
+          psx[p] = isx[p];
+        });
+        (G as GType).Window.setComplexValue('pstate', {
+          ...persistState,
+          showHelp: null,
+        });
+      }
     }
 
     setStatePref('prefs', 'search', prevState, state);

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 /* eslint-disable @typescript-eslint/naming-convention */
-/* eslint-disable no-var */
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
   BrowserWindowConstructorOptions,
@@ -54,7 +53,7 @@ import type {
   DirsRendererType,
 } from './servers/components/dirs.ts';
 import type LibSword from './servers/components/libsword.ts';
-import type { canRedo, canUndo } from './servers/components/bookmarks.ts';
+import type { canRedo, canUndo } from './servers/components/bookmarks.tsx';
 import type { CallBatch } from './servers/handleG.ts';
 import type Viewport from './viewport.ts';
 import type { AtextPropsType } from './clients/components/atext/atext.tsx';
@@ -67,10 +66,10 @@ import type { SelectORMType } from './clients/components/libxul/selectOR.tsx';
 declare global {
   // These are available anywhere 'window' is defined (ie. browser, renderers):
   export interface Window {
-    renderPromises: RenderPromise[];
     IPC: ReturnType<typeof getIPC>;
     ProcessInfo: ReturnType<typeof getProcessInfo>;
-    webAppTextScroll: number;
+    WebAppClient: 'BibleBrowser' | 'Widgets';
+    WebAppTextScroll: number;
   }
 
   // These are available everywhere:
@@ -730,7 +729,7 @@ export type TransactionType = {
 
 export type ServerWait = {
   pleaseWait: 'TOO BUSY' | 'RATE LIMITED' | '';
-}
+};
 
 export type ParamShift<T extends unknown[]> = T extends [any, ...infer U]
   ? U
@@ -822,9 +821,6 @@ type RenderPromiseArgs<FUNC extends (...args: any[]) => any> = [
   ...Parameters<FUNC>,
 ];
 
-// Internet safe GI on server...
-export type GITypeMain = { [name in keyof GIType]: GType[name] };
-
 // Internet safe GI on clients require render-promise arguments:
 export type GIType = {
   [name in keyof Pick<
@@ -876,6 +872,35 @@ export type GIType = {
   };
 };
 
+// Internet safe GI on WebApp server...
+export type GITypeMain = { [name in keyof GIType]: GType[name] };
+
+// Internet safe G that is available in absolutely any context, assuming
+// cachePreload() has been called on WebApp clients. Note: Not all these
+// methods need to be explicitly called within cachePreload.
+export type Gsafe = Pick<
+  GITypeMain,
+  // Includes cache preloaded synchronous functions:
+  | 'i18n' // IMPORTANT: individual i18n calls must each be cache preloaded!
+  | 'getLocalizedBooks' // only getLocalizedBooks(global.locale) is safe!
+  | 'getLocaleDigits' // only getLocaleDigits(global.locale) is safe!
+  | 'Tabs'
+  | 'Tab'
+  | 'Books'
+  | 'Book'
+  | 'Config'
+  | 'ModuleFonts'
+  | 'FeatureModules'
+  | 'LocaleConfigs'
+  | 'ModuleConfigDefault'
+  | 'ProgramConfig'
+  // Also includes asynchronous Internet G functions:
+  | 'getSystemFonts'
+  | 'callBatch'
+> & {
+  Prefs: GType['Prefs']; // Gsafe uses browser prefs
+} & { LibSword: Pick<GITypeMain['LibSword'], 'search'> }; // Also includes these asynchronous Internet G method functions:
+
 // This GBuilder object will be used to create the server and client G objects.
 // Each is created at runtime resulting in different types of G objects sharing
 // the same interface: The server process G object accesses data directly. But
@@ -887,7 +912,6 @@ export type GIType = {
 // functions must be listed in asyncFuncs or runtime errors will result!
 const func = () => false;
 const CACHEfunc = () => true;
-if (typeof window !== 'undefined') window.renderPromises = [];
 export const GBuilder: GType & {
   // IMPORTANT: Methods of includeCallingWindow classes must not use rest
   // parameters or default values in their function definition's argument

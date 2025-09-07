@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  bookmarkItemIconPath,
   clone,
   findBookmarkItem,
   findParentOfBookmarkItem,
@@ -14,10 +15,9 @@ import {
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
-import { G } from '../../G.ts';
+import { GE as G } from '../../G.ts';
 import Commands from '../../commands.ts';
 import verseKey from '../../verseKey.ts';
-import bookmarkItemIcon from './bookmarkItemIcon.tsx';
 import log from '../../log.ts';
 import Label from '../../components/libxul/label.tsx';
 
@@ -184,7 +184,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
           treeSelection: selectedFolder,
           anyChildSelectable: false,
         };
-        newitem = { location: xulswordLocation(G.Tab, G.Prefs) };
+        newitem = { location: xulswordLocation() };
         break;
       }
       case 'properties': {
@@ -375,7 +375,12 @@ export function itemRenderer(
       ref={ref}
       onClick={handleClick}
     >
-      {bookmarkItemIcon(item)}
+      {
+        <img
+          className="bmicon"
+          src={G.inlineFile(bookmarkItemIconPath(item))}
+        />
+      }
       <Label className={`cs-${labelLocale}`} value={label} />
       {(notesh || samplesh) && `: `}
       {notesh && (
@@ -439,7 +444,12 @@ export function getTableData(
         {[...Array(level).keys()].map((a) => (
           <div key={`ind${a}`} className="indent" />
         ))}
-        {bookmarkItemIcon(item)}
+        {
+          <img
+            className="bmicon"
+            src={G.inlineFile(bookmarkItemIconPath(item))}
+          />
+        }
         <Label className={labelLocale} value={label} />
       </span>,
 

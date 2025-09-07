@@ -3,7 +3,7 @@ import React from 'react';
 import { ChromePicker as ColorPicker } from 'react-color';
 import { Slider } from '@blueprintjs/core';
 import { diff, normalizeFontFamily } from '../../../common.ts';
-import { G } from '../../G.ts';
+import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import log from '../../log.ts';
 import { windowArguments } from '../../common.tsx';

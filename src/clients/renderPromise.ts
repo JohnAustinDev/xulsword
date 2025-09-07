@@ -246,10 +246,10 @@ function resolveRP(originalRP: RenderPromise, resolvedRP: RenderPromise) {
 }
 
 function callBatchThenCacheSync(calls: GCallType[]) {
-  if (calls.length) {
+  if (Build.isElectronApp && calls.length) {
     const disallowed = disallowedAsCallBatch(calls);
     if (disallowed) throw new Error(disallowed);
-    const results = G.callBatchSync(calls);
+    const results = (G as GType).callBatchSync(calls);
     if (!results || results.length !== calls.length) {
       throw new Error(`callBatch sync did not return the correct data.`);
     }
@@ -358,11 +358,11 @@ function writeCallToCache(call: GCallType | null, result: any) {
         call[1] === 'getFirstDictionaryEntry'
       ) {
         const args = call[2] as Parameters<
-          typeof G.LibSword.getFirstDictionaryEntry
+          GType['LibSword']['getFirstDictionaryEntry']
         >;
         const [, , options] = args;
         const { mod, key } = result as ReturnType<
-          typeof G.LibSword.getFirstDictionaryEntry
+          GType['LibSword']['getFirstDictionaryEntry']
         >;
         const nckey = GCacheKey([
           'LibSword',

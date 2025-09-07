@@ -31,6 +31,7 @@ import type { ToastProps } from '@blueprintjs/core';
 import type S from '../../../defaultPrefs.ts';
 import type { ControllerState, PrintOptionsType } from '../../controller.tsx';
 import type { XulProps } from '../libxul/xul.tsx';
+import { GType } from '../../../type.ts';
 
 // This PrintSettings component is composed of the following parts:
 // - Optional CUSTOM SETTINGS may be rendered elsewhere and provided via the
@@ -266,76 +267,80 @@ export default class PrintSettings extends React.Component {
             break;
           }
           case 'printToPDF': {
-            analytics.record(getAnalyticInfo());
-            Subscription.publish.setControllerState(dark, false);
-            G.Window.printToPDF({
-              destination: 'prompt-for-file',
-              ...electronOptions,
-            })
-              .then(() => {
-                return Subscription.publish.setControllerState(
-                  {
-                    reset: randomID(),
-                    ...normal,
-                    print: {
-                      iframeFilePath: '',
-                    } as PrintOptionsType,
-                  },
-                  false,
-                );
+            if (Build.isElectronApp) {
+              analytics.record(getAnalyticInfo());
+              Subscription.publish.setControllerState(dark, false);
+              (G as GType).Window.printToPDF({
+                destination: 'prompt-for-file',
+                ...electronOptions,
               })
-              .catch((er) => {
-                this.addToast({
-                  message: er
-                    .toString()
-                    .replace(/^error: promise rejection.*?:([^:]+)$/is, '$1'),
-                  intent: Intent.DANGER,
-                  timeout: -1,
-                }).catch((er) => log.error(er));
-              });
+                .then(() => {
+                  return Subscription.publish.setControllerState(
+                    {
+                      reset: randomID(),
+                      ...normal,
+                      print: {
+                        iframeFilePath: '',
+                      } as PrintOptionsType,
+                    },
+                    false,
+                  );
+                })
+                .catch((er) => {
+                  this.addToast({
+                    message: er
+                      .toString()
+                      .replace(/^error: promise rejection.*?:([^:]+)$/is, '$1'),
+                    intent: Intent.DANGER,
+                    timeout: -1,
+                  }).catch((er) => log.error(er));
+                });
+            }
             break;
           }
           case 'printPreview': {
-            analytics.record(getAnalyticInfo());
-            Subscription.publish.setControllerState(dark, false);
-            G.Window.printToPDF({
-              destination: 'iframe',
-              ...electronOptions,
-            })
-              .then((iframeFilePath: string) => {
-                return Subscription.publish.setControllerState(
-                  {
-                    reset: randomID(),
-                    print: {
-                      iframeFilePath,
-                      printDisabled: false,
-                    } as PrintOptionsType,
-                    modal: 'off',
-                    progress: -1,
-                  },
-                  false,
-                );
+            if (Build.isElectronApp) {
+              analytics.record(getAnalyticInfo());
+              Subscription.publish.setControllerState(dark, false);
+              (G as GType).Window.printToPDF({
+                destination: 'iframe',
+                ...electronOptions,
               })
-              .catch((er) => {
-                this.addToast({
-                  message: er
-                    .toString()
-                    .replace(/^error: promise rejection.*?:([^:]+)$/is, '$1'),
-                  intent: Intent.DANGER,
-                  timeout: -1,
-                }).catch((er) => log.error(er));
-              });
+                .then((iframeFilePath: string) => {
+                  return Subscription.publish.setControllerState(
+                    {
+                      reset: randomID(),
+                      print: {
+                        iframeFilePath,
+                        printDisabled: false,
+                      } as PrintOptionsType,
+                      modal: 'off',
+                      progress: -1,
+                    },
+                    false,
+                  );
+                })
+                .catch((er) => {
+                  this.addToast({
+                    message: er
+                      .toString()
+                      .replace(/^error: promise rejection.*?:([^:]+)$/is, '$1'),
+                    intent: Intent.DANGER,
+                    timeout: -1,
+                  }).catch((er) => log.error(er));
+                });
+            }
             break;
           }
           case 'close':
           case 'ok':
           case 'cancel': {
             if (Build.isElectronApp && id === 'close') {
-              G.Window.close();
+              (G as GType).Window.close();
             } else {
               history.back();
               if (Build.isElectronApp) {
-                G.publishSubscription('asyncTaskComplete', {
+                (G as GType).publishSubscription('asyncTaskComplete', {
                   renderers: { type: 'all' },
                   main: true,
                 });

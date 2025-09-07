@@ -1,5 +1,5 @@
 import React from 'react';
-import { G } from '../../G.ts';
+import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import log from '../../log.ts';
 import Xulsword from '../../components/xulsword/xulsword.tsx';

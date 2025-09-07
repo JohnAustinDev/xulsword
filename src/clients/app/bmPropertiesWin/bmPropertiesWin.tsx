@@ -13,12 +13,12 @@ import {
   keep,
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
-import { G } from '../../G.ts';
+import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import verseKey from '../../verseKey.ts';
 import log from '../../log.ts';
 import { windowArguments } from '../../common.tsx';
-import { bookmarkTreeNode, getSampleText } from '../../bookmarks.ts';
+import { bookmarkTreeNode, getSampleText } from '../../bookmarks.tsx';
 import Grid, {
   Column,
   Columns,
@@ -52,12 +52,13 @@ import type {
 } from '../../../type.ts';
 import type { XulProps } from '../../components/libxul/xul.tsx';
 import type { SelectVKType } from '../../components/libxul/selectVK.tsx';
+import RenderPromise, { RenderPromiseComponent } from '../../renderPromise.ts';
 
 const Bookmarks = G.Prefs.getComplexValue(
   'rootfolder',
   'bookmarks',
 ) as typeof S.bookmarks.rootfolder;
-localizeBookmarks(G, verseKey, Bookmarks);
+localizeBookmarks(verseKey, Bookmarks);
 
 let HasRequiredModule = false;
 
@@ -122,11 +123,21 @@ const propTypes = xulPropTypes;
 
 type BMPropertiesProps = XulProps;
 
-export default class BMPropertiesWin extends React.Component {
+export default class BMPropertiesWin
+  extends React.Component
+  implements RenderPromiseComponent
+{
   static propTypes: typeof propTypes;
+
+  renderPromise: RenderPromise;
+
+  loadingRef: React.RefObject<HTMLElement>;
 
   constructor(props: BMPropertiesProps) {
     super(props);
+
+    this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
 
     const state: BMPropertiesState = {
       ...defaultState,
@@ -181,7 +192,6 @@ export default class BMPropertiesWin extends React.Component {
         bookmark.label =
           'location' in bookmark
             ? bookmarkLabel(
-                G,
                 verseKey,
                 bookmark.location as LocationORType | SelectVKType,
               )
@@ -279,7 +289,7 @@ export default class BMPropertiesWin extends React.Component {
               : bmdefault;
         } else {
           const { bookmark: prevbm } = prevState;
-          const label = bookmarkLabel(G, verseKey, selection);
+          const label = bookmarkLabel(verseKey, selection);
           const sampleText = getSampleText(selection);
           if ('commMod' in selection) {
             bookmark = {
@@ -302,7 +312,7 @@ export default class BMPropertiesWin extends React.Component {
               ...(prevbm as BookmarkOther),
               location: selection,
               tabType: G.Tab[module].tabType as 'Genbks' | 'Dicts',
-              label: bookmarkLabel(G, verseKey, selection),
+              label: bookmarkLabel(verseKey, selection),
               sampleText: getSampleText(selection),
             };
           }
@@ -314,10 +324,9 @@ export default class BMPropertiesWin extends React.Component {
 
   render() {
     const state = this.state as BMPropertiesState;
-    const { treeHandler, eventHandler, locationHandler } = this;
+    const { loadingRef, treeHandler, eventHandler, locationHandler } = this;
     const { bookmark, hide, treeSelection, anyChildSelectable } = state;
     const { label, labelLocale, note, noteLocale } = localizeBookmark(
-      G,
       verseKey,
       bookmark,
     );
@@ -344,7 +353,7 @@ export default class BMPropertiesWin extends React.Component {
     if (module && !modules.includes(module)) modules.unshift(module);
 
     return (
-      <Vbox className="bmproperties">
+      <Vbox className="bmproperties" domref={loadingRef}>
         <Grid flex="1">
           <Columns>
             <Column width="min-content" />

@@ -1,6 +1,6 @@
 import Cache from '../../cache.ts';
 import { repositoryKey } from '../../common.ts';
-import { G } from '../G.ts';
+import { GE as G } from '../G.ts';
 
 import type { Repository } from '../../type.ts';
 

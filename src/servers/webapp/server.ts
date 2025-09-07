@@ -275,9 +275,7 @@ function argLog(args: any): string {
   return msg;
 }
 
-async function isLimited(
-  socket: Socket,
-): Promise<ServerWait['pleaseWait']> {
+async function isLimited(socket: Socket): Promise<ServerWait['pleaseWait']> {
   try {
     await rateLimiter.consume(socket.handshake.address);
   } catch (er) {

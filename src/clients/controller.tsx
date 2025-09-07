@@ -39,6 +39,7 @@ import './global-htm.css';
 import type { ReactElement, SyntheticEvent } from 'react';
 import type {
   CipherKey,
+  GType,
   ModalType,
   NewModulesType,
   WindowDescriptorPrefType,
@@ -138,7 +139,7 @@ function Controller(props: ControllerProps) {
           `Renderer reset (stylesheet, cache, component): ${descriptor?.id || 'unknown'}`,
         );
         const st = Build.isElectronApp
-          ? (G.Data.read('stylesheetData') as StyleType)
+          ? ((G as GType).Data.read('stylesheetData') as StyleType)
           : undefined;
         dynamicStyleSheet.update(st);
         Cache.clear();
@@ -300,117 +301,119 @@ function Controller(props: ControllerProps) {
     return Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType) => {
         Subscription.publish.setControllerState({ progress: -1 }, false);
-        if (!Build.isElectronApp) return;
-        log.debug(
-          `Renderer reset (cache, stylesheet, component): ${descriptor?.id || 'unknown'}`,
-        );
-        const st = Build.isElectronApp
-          ? (G.Data.read('stylesheetData') as StyleType)
-          : undefined;
-        dynamicStyleSheet?.update(st);
-        Cache.clear();
-        s.reset[1](randomID());
-        const dialog: ReactElement[] = [];
-        const cipherKeys: CipherKey[] = [];
-        const setCipherKey = () => {
-          const k = cipherKeys.filter((ck) => ck.conf.module && ck.cipherKey);
-          if (k.length && !s.dialogs[0].length) {
-            G.Module.setCipherKeys(k, descriptor?.id);
-            s.modal[1]('darkened'); // so there's no flash
-          }
-        };
-        const haserror = newmods.reports.some((r) => r.error);
-        const haswarning = newmods.reports.some((r) => r.warning);
-        if (haserror) G.Shell.beep();
-        if (haserror || (Build.isDevelopment && haswarning)) {
-          dialog.push(
-            <Dialog
-              className="modulesInstalled"
-              body={
-                <>
-                  {newmods.reports.map((r) =>
-                    Object.entries(r).map((entry) => {
-                      const [type, msg] = entry;
-                      return (
-                        <Tag
-                          key={[type, stringHash(msg)].join('.')}
-                          icon={type === 'error' ? 'error' : 'warning-sign'}
-                          intent={
-                            type === 'error' ? Intent.DANGER : Intent.WARNING
-                          }
-                          multiline
-                        >
-                          {msg}
-                        </Tag>
-                      );
-                    }),
-                  )}
-                </>
-              }
-              buttons={
-                <>
-                  <Spacer flex="10" />
-                  <Button
-                    flex="1"
-                    fill="x"
-                    onClick={() => {
-                      s.dialogs[1](s.dialogs[0].splice(0, 1));
-                    }}
-                  >
-                    {G.i18n.t('ok.label')}
-                  </Button>
-                </>
-              }
-            />,
+        if (Build.isElectronApp) {
+          const GT = G as GType;
+          log.debug(
+            `Renderer reset (cache, stylesheet, component): ${descriptor?.id || 'unknown'}`,
           );
-        }
-        newmods.nokeymods.forEach((conf) => {
-          dialog.push(
-            <Dialog
-              className="cipher-prompt"
-              body={
-                <>
-                  <div className={`head1 cs-${conf.module}`}>
-                    {`${conf.module} ${conf.Version}`}
-                  </div>
-                  <div>{conf.Description?.locale}</div>
-                  {!!conf.UnlockInfo?.locale && (
-                    <div
-                      className="publisher-msg"
-                      dangerouslySetInnerHTML={{
-                        // eslint-disable-next-line @typescript-eslint/naming-convention
-                        __html: sanitizeHTML(conf.UnlockInfo?.locale),
+          const st = Build.isElectronApp
+            ? (GT.Data.read('stylesheetData') as StyleType)
+            : undefined;
+          dynamicStyleSheet?.update(st);
+          Cache.clear();
+          s.reset[1](randomID());
+          const dialog: ReactElement[] = [];
+          const cipherKeys: CipherKey[] = [];
+          const setCipherKey = () => {
+            const k = cipherKeys.filter((ck) => ck.conf.module && ck.cipherKey);
+            if (k.length && !s.dialogs[0].length) {
+              GT.Module.setCipherKeys(k, descriptor?.id);
+              s.modal[1]('darkened'); // so there's no flash
+            }
+          };
+          const haserror = newmods.reports.some((r) => r.error);
+          const haswarning = newmods.reports.some((r) => r.warning);
+          if (haserror) GT.Shell.beep();
+          if (haserror || (Build.isDevelopment && haswarning)) {
+            dialog.push(
+              <Dialog
+                className="modulesInstalled"
+                body={
+                  <>
+                    {newmods.reports.map((r) =>
+                      Object.entries(r).map((entry) => {
+                        const [type, msg] = entry;
+                        return (
+                          <Tag
+                            key={[type, stringHash(msg)].join('.')}
+                            icon={type === 'error' ? 'error' : 'warning-sign'}
+                            intent={
+                              type === 'error' ? Intent.DANGER : Intent.WARNING
+                            }
+                            multiline
+                          >
+                            {msg}
+                          </Tag>
+                        );
+                      }),
+                    )}
+                  </>
+                }
+                buttons={
+                  <>
+                    <Spacer flex="10" />
+                    <Button
+                      flex="1"
+                      fill="x"
+                      onClick={() => {
+                        s.dialogs[1](s.dialogs[0].splice(0, 1));
                       }}
-                    />
-                  )}
-                  <Label value={G.i18n.t('cipherKey.prompt')} />
-                  <Textbox maxLength="32" inputRef={textbox} />
-                </>
-              }
-              buttons={
-                <>
-                  <Spacer flex="10" />
-                  <Button
-                    flex="1"
-                    fill="x"
-                    onClick={() => {
-                      cipherKeys.push({
-                        conf,
-                        cipherKey: textbox.current?.value ?? '',
-                      });
-                      s.dialogs[1](s.dialogs[0].splice(0, 1));
-                      setCipherKey();
-                    }}
-                  >
-                    {G.i18n.t('ok.label')}
-                  </Button>
-                </>
-              }
-            />,
-          );
-        });
-        if (dialog.length) {
-          s.dialogs[1](dialog);
+                    >
+                      {GT.i18n.t('ok.label')}
+                    </Button>
+                  </>
+                }
+              />,
+            );
+          }
+          newmods.nokeymods.forEach((conf) => {
+            dialog.push(
+              <Dialog
+                className="cipher-prompt"
+                body={
+                  <>
+                    <div className={`head1 cs-${conf.module}`}>
+                      {`${conf.module} ${conf.Version}`}
+                    </div>
+                    <div>{conf.Description?.locale}</div>
+                    {!!conf.UnlockInfo?.locale && (
+                      <div
+                        className="publisher-msg"
+                        dangerouslySetInnerHTML={{
+                          // eslint-disable-next-line @typescript-eslint/naming-convention
+                          __html: sanitizeHTML(conf.UnlockInfo?.locale),
+                        }}
+                      />
+                    )}
+                    <Label value={GT.i18n.t('cipherKey.prompt')} />
+                    <Textbox maxLength="32" inputRef={textbox} />
+                  </>
+                }
+                buttons={
+                  <>
+                    <Spacer flex="10" />
+                    <Button
+                      flex="1"
+                      fill="x"
+                      onClick={() => {
+                        cipherKeys.push({
+                          conf,
+                          cipherKey: textbox.current?.value ?? '',
+                        });
+                        s.dialogs[1](s.dialogs[0].splice(0, 1));
+                        setCipherKey();
+                      }}
+                    >
+                      {GT.i18n.t('ok.label')}
+                    </Button>
+                  </>
+                }
+              />,
+            );
+          });
+          if (dialog.length) {
+            s.dialogs[1](dialog);
+          }
         }
       },
     );
@@ -487,8 +490,11 @@ function Controller(props: ControllerProps) {
         id="reset"
         onContextMenu={(e: React.SyntheticEvent) => {
           if (Build.isElectronApp) {
-            if (!G.Data.has('contextData')) {
-              G.Data.write(ContextData(e.target as HTMLElement), 'contextData');
+            if (!(G as GType).Data.has('contextData')) {
+              (G as GType).Data.write(
+                ContextData(e.target as HTMLElement),
+                'contextData',
+              );
             }
           }
         }}
@@ -544,7 +550,7 @@ export default async function renderToRoot(
   });
   window.IPC.on('dynamic-stylesheet-reset', () => {
     const st = Build.isElectronApp
-      ? (G.Data.read('stylesheetData') as StyleType)
+      ? ((G as GType).Data.read('stylesheetData') as StyleType)
       : undefined;
     dynamicStyleSheet?.update(st);
   });
@@ -554,7 +560,7 @@ export default async function renderToRoot(
 
   dynamicStyleSheet = new DynamicStyleSheet(document);
   const st = Build.isElectronApp
-    ? (G.Data.read('stylesheetData') as StyleType)
+    ? ((G as GType).Data.read('stylesheetData') as StyleType)
     : undefined;
   dynamicStyleSheet.update(st);
 
@@ -624,7 +630,7 @@ export default async function renderToRoot(
         const b = bodyElem.getBoundingClientRect();
         if (b && Build.isElectronApp) {
           // Add 20 px, otherwise unnecessary scrollbars may appear.
-          G.Window.setContentSize(b.width + 10, b.height + 10);
+          (G as GType).Window.setContentSize(b.width + 10, b.height + 10);
         }
         // Now that the window has been resized, remove the fitToContent
         // class so content will fill the window even if it shrinks.

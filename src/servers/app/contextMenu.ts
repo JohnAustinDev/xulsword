@@ -382,7 +382,7 @@ export default function contextMenu(
                 Commands.openBookmarkProperties(
                   i18n.t('menu.bookmark.add'),
                   { treeSelection: d.bookmark, anyChildSelectable: true },
-                  { location: xulswordLocation(G.Tab, G.Prefs) },
+                  { location: xulswordLocation() },
                   window.id,
                 );
               }

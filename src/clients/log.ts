@@ -9,20 +9,23 @@ const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
 
 function rlog(level: LogLevel, ...args: unknown[]) {
   if (levels.indexOf(level) <= levels.indexOf(C.LogLevel)) {
-    const windowID = Cache.has('windowID') ? Cache.read('windowID') : '?:?';
     const haveIPC =
       typeof window.IPC === 'object' && typeof window.IPC.send === 'function';
-    // Production browser can only log error or warn to server.
+    const windowID = Cache.has('windowID') ? Cache.read('windowID') : '?:?';
+    const largs: any[] = [level, `[${windowID}]`, JSON_stringify(args)];
+    if (Build.isWebApp) largs.splice(2, 0, window.WebAppClient);
     if (
       haveIPC &&
       (Build.isElectronApp ||
         Build.isDevelopment ||
+        // Production browser can only log error or warn to server.
         levels.indexOf(level) <= levels.indexOf('warn'))
     ) {
-      window.IPC.send('log', level, `[${windowID}]`, JSON_stringify(args));
+      window.IPC.send('log', ...largs);
     }
-    if (!haveIPC || Build.isDevelopment) {
-      console.log(`[${windowID}]`, ...args);
+    if (Build.isDevelopment) {
+      largs.splice(-1, 1, ...args);
+      console.log(largs);
     }
   }
 }

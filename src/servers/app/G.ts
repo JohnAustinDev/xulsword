@@ -34,7 +34,7 @@ import Cache from '../../cache.ts';
 import { callBatch } from '../handleG.ts';
 import { locationVKText } from '../versetext.ts';
 import Prefs from './prefs.ts';
-import { canRedo, canUndo } from '../components/bookmarks.ts';
+import { canRedo, canUndo } from '../components/bookmarks.tsx';
 import Dirs from '../components/dirs.ts';
 import DiskCache from '../components/diskcache.ts';
 import LibSword from '../components/libsword.ts';

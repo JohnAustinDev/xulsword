@@ -1,5 +1,5 @@
 import React from 'react';
-import { G } from '../../G.ts';
+import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import log from '../../log.ts';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
@@ -8,7 +8,7 @@ import Stack from '../../components/libxul/stack.tsx';
 import './splashWin.css';
 
 const overlay = G.inlineFile(
-  `${G.Dirs.path.xsAsset}/splash-overlay-${G.i18n.language}.png`,
+  `xulsword://xsAsset/splash-overlay-${G.i18n.language}.png`,
 );
 const style = overlay ? (
   <style>

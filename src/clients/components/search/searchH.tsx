@@ -20,6 +20,7 @@ import { getStrongsModAndKey } from '../atext/zdictionary.ts';
 
 import type {
   BookGroupType,
+  GType,
   LocationVKType,
   OSISBookType,
   V11nType,
@@ -144,6 +145,7 @@ function getScopes(
 
 export async function search(xthis: Search): Promise<boolean> {
   log.debug(`SEARCHING...`);
+  (G as GType).LibSword.stopBackgroundSearchIndexer();
   const state = xthis.state as SearchState;
   const { renderPromise } = xthis;
   const { descriptor } = xthis.props as SearchProps;
@@ -168,8 +170,8 @@ export async function search(xthis: Search): Promise<boolean> {
     progressLabel: '',
   };
 
-  if (descriptor)
-    G.Window.setTitle(
+  if (Build.isElectronApp && descriptor)
+    (G as GType).Window.setTitle(
       `${GI.i18n.t('', renderPromise, 'menu.search')} "${searchtext}"`,
     );
 
@@ -291,7 +293,7 @@ export async function libSwordSearch(
     // Only one active search is allowed at a time, so make other windows
     // modal if scopes.length > 1.
     if (Build.isElectronApp && scopes.length > 1)
-      G.Window.modal([{ modal: 'transparent', window: 'not-self' }]);
+      (G as GType).Window.modal([{ modal: 'transparent', window: 'not-self' }]);
 
     const { progress } = state;
 
@@ -340,7 +342,7 @@ export async function libSwordSearch(
     // Now reset modal off (progress must be reset along with the results).
     if (scopes.length > 1) {
       if (Build.isElectronApp)
-        G.Window.modal([{ modal: 'off', window: 'not-self' }]);
+        (G as GType).Window.modal([{ modal: 'off', window: 'not-self' }]);
     }
   }
 
@@ -385,6 +387,7 @@ export async function createSearchIndex(
   renderPromise: RenderPromise,
 ): Promise<boolean> {
   if (Build.isElectronApp && module && module in G.Tab) {
+    const GT = G as GType;
     return await new Promise((resolve) => {
       const s: Partial<SearchState> = {
         results: { html: '', count: 0, lexhtml: '' },
@@ -399,12 +402,12 @@ export async function createSearchIndex(
       // Add a delay before and after index creation to insure UI is responsive.
       setTimeout(() => {
         log.debug(`BUILDING createSearchIndex...`);
-        G.LibSword.searchIndexBuild(module, winid)
+        GT.LibSword.searchIndexBuild(module, winid)
           .then((result) => {
             // For some reason, indexing sometimes seems to corrupt the order of
             // booksInModule, so try reset all caches as a work-around.
-            G.resetMain();
-            G.Window.reset('cache-reset', 'all');
+            GT.resetMain();
+            GT.Window.reset('cache-reset', 'all');
             if (!result) noAutoSearchIndex(G.Prefs, module);
             setTimeout(() => {
               resolve(result);
@@ -803,7 +806,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
           break;
         }
         case 'helpButton': {
-          if (Build.isElectronApp) G.Commands.searchHelp();
+          if (Build.isElectronApp) (G as GType).Commands.searchHelp();
           else {
             this.setState((prevState: SearchState) => {
               const { onlyLucene } = this.props as SearchProps;

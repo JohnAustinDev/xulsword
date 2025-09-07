@@ -13,7 +13,7 @@ import {
 } from '../../common.tsx';
 import { delayHandler } from '../libxul/xul.tsx';
 
-import type { PlaceType, SearchType, ShowType } from '../../../type.ts';
+import type { GType, PlaceType, SearchType, ShowType } from '../../../type.ts';
 import type { RenderPromiseComponent } from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
 import type Atext from '../atext/atext.tsx';
@@ -305,7 +305,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
                 searchtext: `lemma: ${reflist[0]}`,
                 type: 'SearchAdvanced',
               };
-              if (Build.isElectronApp) G.Commands.search(search);
+              if (Build.isElectronApp) (G as GType).Commands.search(search);
               else
                 Subscription.publish.setControllerState(
                   {
@@ -324,7 +324,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         case 'popupCloseLink': {
           if (parent !== popupParent) {
             if (Build.isElectronApp) {
-              G.Window.close();
+              (G as GType).Window.close();
             }
           } else {
             const s: Partial<PopupParentState> = { popupParent: null };
@@ -357,7 +357,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           if (Build.isElectronApp && box) {
             const b = box.getBoundingClientRect();
             const popupState: Pick<PopupParentState, 'elemdata'> = { elemdata };
-            G.Window.open({
+            (G as GType).Window.open({
               type: 'popupWin',
               allowMultiple: true,
               saveIfAppClosed: true,
@@ -379,7 +379,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         case 'requiremod': {
           // Add required modules to module manager suggestion list
           const { reflist } = data || {};
-          if (reflist?.length) {
+          if (Build.isElectronApp && reflist?.length) {
             const suggested = G.Prefs.getComplexValue(
               'moduleManager.suggested',
             ) as typeof S.prefs.moduleManager.suggested;
@@ -395,7 +395,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
             );
             // Open the module manager window, which should then auto-
             // download the suggestions.
-            G.Commands.openModuleManager();
+            (G as GType).Commands.openModuleManager();
           }
           break;
         }

@@ -11,7 +11,6 @@ import {
   SelectionModes,
 } from '@blueprintjs/table';
 import { clone, localizeString, ofClass } from '../../../common.ts';
-import { G } from '../../G.ts';
 import { addClass, xulPropTypes, topHandle } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import '@blueprintjs/table/lib/css/table.css';
@@ -20,6 +19,8 @@ import './table.css';
 import type { IconName } from '@blueprintjs/core';
 import type { Region, CellRenderer } from '@blueprintjs/table';
 import type { XulProps } from './xul.tsx';
+import RenderPromise, { RenderPromiseComponent } from '../../renderPromise.ts';
+import { functionalComponentRenderPromise } from '../../common.tsx';
 
 // This table is a controlled React component with no state of its own.
 // Handlers are required for updating external state when table events occur.
@@ -134,9 +135,10 @@ function bpColumn(
   cellRenderer: CellRenderer,
   menuRenderer?: ((index?: number) => React.JSX.Element) | undefined,
 ) {
+  const { renderPromise, loadingRef } = functionalComponentRenderPromise();
   let showHeading = heading;
   if (showHeading.startsWith('icon:')) showHeading = '';
-  else showHeading = localizeString(G, showHeading);
+  else showHeading = localizeString(showHeading, renderPromise);
   const columnHeaderCellRenderer = () => (
     <ColumnHeaderCell
       className={[
@@ -149,9 +151,11 @@ function bpColumn(
       name={showHeading}
       menuRenderer={menuRenderer}
     >
-      {heading.startsWith('icon:') && (
-        <Icon icon={heading.substring(5) as any} size={20} intent="none" />
-      )}
+      <Box domref={loadingRef}>
+        {heading.startsWith('icon:') && (
+          <Icon icon={heading.substring(5) as any} size={20} intent="none" />
+        )}
+      </Box>
     </ColumnHeaderCell>
   );
 
@@ -165,12 +169,16 @@ function bpColumn(
   );
 }
 
-class Table extends React.Component {
+class Table extends React.Component implements RenderPromiseComponent {
   static propTypes: typeof propTypes;
 
   static scrollTop: Record<string, number>;
 
   tableDomRef: React.RefObject<HTMLDivElement>;
+
+  renderPromise: RenderPromise;
+
+  loadingRef: React.RefObject<HTMLElement>;
 
   constructor(props: TableProps) {
     super(props);
@@ -188,6 +196,9 @@ class Table extends React.Component {
     this.onCellClick = this.onCellClick.bind(this);
     this.onColumnsReordered = this.onColumnsReordered.bind(this);
     this.onColumnWidthChanged = this.onColumnWidthChanged.bind(this);
+
+    this.loadingRef = this.tableDomRef;
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
   componentDidMount() {
@@ -246,7 +257,7 @@ class Table extends React.Component {
     if (typeof internalColIndex !== 'undefined') {
       const props = this.props as TableProps;
       const { tableColumns, onRowsReordered, onColumnHide } = props;
-      const { columnHide } = this;
+      const { renderPromise, columnHide } = this;
       const tableColumn = tableColumns.filter((tc) => tc.visible)[
         internalColIndex
       ];
@@ -283,7 +294,7 @@ class Table extends React.Component {
         ) {
           let { heading } = tableColumn;
           if (heading.startsWith('icon:')) heading = '';
-          else heading = localizeString(G, heading);
+          else heading = localizeString(heading, renderPromise);
           items.push([
             <MenuItem
               key={['delete', dataColIndex].join('.')}
@@ -307,7 +318,7 @@ class Table extends React.Component {
             ) as IconName;
             let text = heading;
             if (heading.startsWith('icon:')) text = '';
-            else text = localizeString(G, heading);
+            else text = localizeString(heading, renderPromise);
             hideableItems.push(
               <MenuItem
                 key={['add', heading].join('.')}

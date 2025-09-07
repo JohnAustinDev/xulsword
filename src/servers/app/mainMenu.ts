@@ -18,6 +18,7 @@ import type S from '../../defaultPrefs.ts';
 import type { BrowserWindow, MenuItemConstructorOptions } from 'electron';
 import type { BookmarkFolderType, SearchType, TabTypes } from '../../type.ts';
 import type { PrefCallbackType } from '../../prefs.ts';
+import { resolveXulswordPath } from '../common.ts';
 
 type Modifiers =
   | 'CommandOrControl' // 'accel' in XUL
@@ -247,12 +248,12 @@ function bookmarkProgramMenu(
   bookmarks: BookmarkFolderType,
 ): MenuItemConstructorOptions[] {
   return bookmarks.childNodes
-    .map((bm) => localizeBookmark(G, verseKeyCommon, bm))
+    .map((bm) => localizeBookmark(verseKeyCommon, bm))
     .map((bm) => ({
       label: bm.label,
       type: bm.type === 'folder' ? 'submenu' : 'normal',
       submenu: bm.type === 'folder' ? bookmarkProgramMenu(bm) : undefined,
-      icon: bookmarkItemIconPath(G, bm),
+      icon: resolveXulswordPath(bookmarkItemIconPath(bm)),
       id: bm.id,
       click: d(() => {
         if ('location' in bm) {
@@ -494,7 +495,7 @@ export default class MainMenuBuilder {
           label: ts('menu.printPassage'),
           accelerator: tx('menu.print.ac', ['CommandOrControl']),
           click: d(() => {
-            let location = xulswordLocation(G.Tab, G.Prefs, 'Texts');
+            let location = xulswordLocation('Texts');
             if (!location) {
               location =
                 (G.Prefs.getComplexValue(
@@ -948,7 +949,7 @@ export default class MainMenuBuilder {
               G.i18n.t('menu.bookmark.add'),
               {},
               {
-                location: xulswordLocation(G.Tab, G.Prefs),
+                location: xulswordLocation(),
               },
             );
           }),
@@ -961,7 +962,7 @@ export default class MainMenuBuilder {
               G.i18n.t('menu.usernote.add'),
               {},
               {
-                location: xulswordLocation(G.Tab, G.Prefs),
+                location: xulswordLocation(),
               },
             );
           }),

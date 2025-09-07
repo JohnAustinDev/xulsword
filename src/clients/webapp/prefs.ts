@@ -1,5 +1,7 @@
-import Rprefs, { type PrefsGType } from '../../prefs.ts';
+import Rprefs from '../../prefs.ts';
 import log from '../log.ts';
+
+import { type PrefsGType } from '../../prefs.ts';
 
 let UsingStorage: 'none' | 'localStorage' | 'sessionStorage';
 function storageAvailable(type: 'localStorage' | 'sessionStorage') {
@@ -76,7 +78,7 @@ function getStore(aStore: string) {
       return getStorage(aStore) || '';
     },
     writeFile: (data: string) => {
-      setStorage(aStore, data);
+      return setStorage(aStore, data);
     },
     supported: () => {
       return localStorageType() !== 'none';

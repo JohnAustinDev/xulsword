@@ -21,6 +21,7 @@ import type Viewport from './webapp/viewport.ts';
 import type {
   GCallType,
   GIType,
+  Gsafe,
   GType,
   LocationVKType,
   PrefValue,
@@ -43,32 +44,29 @@ import type {
 // made in a web app, without it having first been cached, an exception is
 // thrown.
 // - The GI object shares the same interface as G, but only has G's synchronous
-// Internet-allowed G methods available (but calling them anynchronously) and
-// so is always safe to use in any environment; but additionally, two extra
-// initial arguments are required for each GI call (and even G getters require
-// these two arguments) plus a renderPromise must be supplied.
-// Extra argumentsare:
+// Internet-allowed G methods available and it calls them anynchronously so
+// is always safe to use in any environment. When using GI, two extra initial
+// arguments are required as compared to G (and even G getters require
+// these two arguments). They are:
 //   1) A default value to use when the requested value cannot be obtained
 //      synchronously via the cache.
 //   2) A RenderPromise to collect all un-cached synchronous calls, to dispatch
-//      them periodically and then to re-render the renderPromise's parent
+//      them periodically and then to re-render the renderPromise's callback or
 //      component once the requested values have been obtained.
 //
 // THE UPSHOT:
-// - Electron App Clients: can use G or GI, but should prefer G, since it is
-// simpler requiring fewer arguments and supporting synchronous calls.
-// - Web app clients can always use GI and may use G for Internet-allowed
-// methods but only after cache preloading them with callBatchThenCache(). For
-// common calls like G.Tabs, cache preloading should be used. When promises can
-// be awaited (such as in event handlers) doUntilDone() may be used.
+// - Electron clients can use G or GI.
+// - Web app clients can use GI and may use G for Internet-allowed
+//   synchronous methods after cachePreload() is called.
 // - Electron App Server must only use G, or an exception is thrown.
-// - Web App Server must only use GI, or an excetion is thrown. The Web App
-// server's GI object is used to respond to clients' G and GI calls.
+// - Web App Server must only use GI, or an excetion is thrown.
 
-export const G = {} as GType;
+export const G = {} as Gsafe; // Can use Gsafe anywhere
+export const GE = G as GType; // Can't use GType in WebApp clients
 Cache.write(G, 'GType');
 Cache.noclear('GType');
 
+// Can use GIType in WebApp or Electron clients, but not servers.
 export const GI = {} as GIType;
 Cache.write(G, 'GIType');
 Cache.noclear('GIType');

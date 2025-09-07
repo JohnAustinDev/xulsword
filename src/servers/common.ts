@@ -14,7 +14,6 @@ import {
   resolveTemplateURL,
   stringHash,
   clone,
-  resolveXulswordPath,
   localizeString,
 } from '../common.ts';
 import Cache from '../cache.ts';
@@ -481,12 +480,25 @@ export function getAudioConf(module: string): SwordConfType | null {
   return module in audioConfs ? audioConfs[module] : null;
 }
 
+// Resolve a xulsword:// file path into an absolute local file path.
+export function resolveXulswordPath(path: string): string {
+  if (path.startsWith('xulsword://')) {
+    const dirs = path.substring('xulsword://'.length).split(/[/\\]/);
+    if (dirs[0] && dirs[0] in Dirs.path) {
+      dirs[0] = Dirs.path[dirs[0] as keyof typeof Dirs.path];
+      return dirs.join(C.FSSEP);
+    }
+    throw new Error(`Unrecognized xulsword path: ${dirs[0]}`);
+  }
+  return path;
+}
+
 // Built-in local repositories cannot be disabled, deleted or changed.
 // Implemented as a function to allow G.i18n to initialize.
 export function getBuiltInRepos() {
   return clone(C.SwordBultinRepositories).map((r) => {
-    r.name = localizeString(i18n, r.name);
-    r.path = resolveXulswordPath(Dirs.path, r.path);
+    r.name = localizeString(r.name);
+    r.path = resolveXulswordPath(r.path);
     return r;
   });
 }
@@ -920,7 +932,7 @@ export function getLocalizedBooks(
 // path. In public server mode, it is a server path and must be public or else
 // empty string will be returned.
 export function inlineFile(
-  filepath: string,
+  filepath: string, // absolute path, xulsword://Dir/path, or /server/path
   encoding = 'base64' as BufferEncoding,
   noHeader = false,
 ): string {
@@ -929,6 +941,8 @@ export function inlineFile(
     const spath = fileFullPath(filepath);
     if (!spath) return '';
     fpath = spath;
+  } else if (Build.isElectronApp) {
+    fpath = resolveXulswordPath(filepath);
   }
   const file = new LocalFile(fpath);
   const mimeTypes = {

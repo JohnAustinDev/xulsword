@@ -1,4 +1,4 @@
-import type { LocationVKType, OSISBookType, V11nType } from './type.ts';
+import type { LocationVKType, OSISBookType } from './type.ts';
 import type RenderPromise from './clients/renderPromise.ts';
 import type { verseKeyCommon } from './servers/verseKey.ts';
 

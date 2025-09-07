@@ -21,7 +21,7 @@ import './popup.css';
 import '../libxul/label.css';
 import '../libxul/button.css';
 
-import type { FeatureMods } from '../../../type.ts';
+import type { FeatureMods, GType } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type { HTMLData } from '../../htmlData.ts';
 import type {
@@ -136,7 +136,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
           }
         }
       }
-      if (title) G.Window.setTitle(title);
+      if (Build.isElectronApp && title) (G as GType).Window.setTitle(title);
     }
   }
 

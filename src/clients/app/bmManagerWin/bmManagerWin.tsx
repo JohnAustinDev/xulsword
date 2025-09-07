@@ -10,7 +10,7 @@ import {
   tableRowIndexesToBPSelection,
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
-import { G } from '../../G.ts';
+import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import {
   registerUpdateStateFromPref,
@@ -18,7 +18,7 @@ import {
   getStatePref,
 } from '../../common.tsx';
 import log from '../../log.ts';
-import { bookmarkTreeNodes, getSampleText } from '../../bookmarks.ts';
+import { bookmarkTreeNodes, getSampleText } from '../../bookmarks.tsx';
 import verseKey from '../../verseKey.ts';
 import Table from '../../components/libxul/table.tsx';
 import DragSizer from '../../components/libxul/dragsizer.tsx';
@@ -189,7 +189,6 @@ export default class BMManagerWin extends React.Component {
       this.localizedRootFolderClone = clone(rootfolder);
       if (this.localizedRootFolderClone) {
         localizeBookmarks(
-          G,
           verseKey,
           this.localizedRootFolderClone,
           getSampleText,

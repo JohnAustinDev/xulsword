@@ -13,6 +13,8 @@
     "build:webapp": "webpack --env production --env webappSrv --env webappClients",
     "build:clean": "node ./scripts/clean.mjs dist",
     "lint": "eslint . --cache",
+    "typescript": "yarn tsc --noEmit",
+    "pretty": "yarn prettier -w ./src",
     "install-libxulsword": "node ./build/app/node_modules/libxulsword/install.mjs",
     "postinstall": "electron-builder install-app-deps && yarn ./build/app && yarn ./build/webapp",
     "package": "yarn build:clean && yarn build:app && electron-builder build --publish never",

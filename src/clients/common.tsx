@@ -7,13 +7,13 @@ import {
   isAudioVerseKey,
   keep,
   versionCompare,
-  getStatePref as getStatePref2,
   audioConfNumbers,
   gbPaths,
   localizeString,
   randomID,
   findTreeNodeOrder,
   JSON_attrib_stringify,
+  prefType,
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
@@ -47,11 +47,44 @@ import type {
   VerseKeyAudio,
   AudioPlayerSelectionVK,
   WindowDescriptorPrefType,
+  FeatureMods,
+  ConfigType,
+  Gsafe,
 } from '../type.ts';
 import type { XulswordState } from './components/xulsword/xulsword.tsx';
 import parseExtendedVKRef from '../extrefParser.ts';
 
-window.webAppTextScroll = -1;
+window.WebAppTextScroll = -1;
+
+// WebApp requires methods of Gsafe to be cache-preloaded. Not all Gsafe
+// methods are explicitly called here because some calls preload multiple
+// individual cache entries (see RenderPromise.writeCallToCache());
+export async function cachePreload(locale: string): Promise<void> {
+  if (Build.isWebApp) {
+    RenderPromise.retryDelay = 1; // Make preload calls without delay.
+    return new Promise((resolve) => {
+      doUntilDone((renderPromise) => {
+        GI.getLocalizedBooks({}, renderPromise, [locale]);
+        GI.Tabs([], renderPromise);
+        GI.Books([], renderPromise, locale);
+        GI.Config({}, renderPromise);
+        GI.ModuleFonts([], renderPromise);
+        GI.FeatureModules({} as FeatureMods, renderPromise);
+        GI.LocaleConfigs({}, renderPromise);
+        GI.getLocaleDigits([], renderPromise, locale);
+        GI.ModuleConfigDefault({} as ConfigType, renderPromise);
+        GI.ProgramConfig({} as ConfigType, renderPromise);
+        GI.i18n.t('', renderPromise, 'locale_direction');
+        GI.i18n.t('', renderPromise, 'Full publication', { ns: 'widgets' });
+        Object.values(C.SupportedTabTypes).forEach((type) => {
+          GI.i18n.t('', renderPromise, type);
+        });
+        RenderPromise.retryDelay = undefined;
+        if (!renderPromise?.waiting()) resolve();
+      });
+    });
+  }
+}
 
 // Return a renderPromise for a React functional component. For React class
 // components, implement RenderPromiseComponent and RenderPromiseState instead.
@@ -127,8 +160,12 @@ export function windowArguments(
   prop: string | undefined,
 ): PrefValue | WindowDescriptorPrefType {
   const dataID = window.ProcessInfo.argv().at(-1);
-  if (typeof dataID === 'string' && G.Data.has(dataID)) {
-    const data = G.Data.read(dataID) as WindowDescriptorPrefType;
+  if (
+    Build.isElectronApp &&
+    typeof dataID === 'string' &&
+    (G as GType).Data.has(dataID)
+  ) {
+    const data = (G as GType).Data.read(dataID) as WindowDescriptorPrefType;
     if (prop) {
       const { additionalArguments } = data;
       if (additionalArguments && prop in additionalArguments) {
@@ -155,8 +192,8 @@ export function setGlobalSkin(skin: typeof S.prefs.global.skin) {
     // Update skin CSS
     let css = '';
     if (skin) {
-      css = G.inlineFile(
-        [G.Dirs.path.xsAsset, 'skins', `${skin}.css`].join(C.FSSEP),
+      css = (G as GType).inlineFile(
+        ['xulsword://xsAsset', 'skins', `${skin}.css`].join(C.FSSEP),
         'utf8',
         true,
       );
@@ -197,7 +234,8 @@ export function libswordImgSrc(container: HTMLElement) {
       } else if (Build.isElectronApp) {
         const m = img.dataset.src.match(/^file:\/\/(.*)$/i);
         if (m) {
-          if (m[1].match(/^(\w:[/\\]|\/)/)) src = G.inlineFile(m[1], 'base64');
+          if (m[1].match(/^(\w:[/\\]|\/)/))
+            src = (G as GType).inlineFile(m[1], 'base64');
           else {
             log.error(`Image source is not absolute: ${m[1]}`);
           }
@@ -208,8 +246,8 @@ export function libswordImgSrc(container: HTMLElement) {
         img.src = src;
       } else {
         if (Build.isElectronApp) {
-          img.src = G.inlineFile(
-            [G.Dirs.path.xsAsset, 'icons', '20x20', 'media.svg'].join(C.FSSEP),
+          img.src = (G as GType).inlineFile(
+            ['xulsword://xsAsset', 'icons', '20x20', 'media.svg'].join(C.FSSEP),
             'base64',
           );
         } else img.removeAttribute('src');
@@ -744,8 +782,46 @@ export function getStatePref<P extends PrefObject>(
   id: string | null,
   defaultPrefs?: P,
 ): P | PrefObject {
-  if (defaultPrefs) return getStatePref2(G.Prefs, store, id, defaultPrefs) as P;
-  return getStatePref2(G.Prefs, store, id);
+  if (defaultPrefs) return getStatePref2(store, id, defaultPrefs) as P;
+  return getStatePref2(store, id);
+}
+
+// Return values of key/value pairs of component state Prefs. Component
+// state Prefs are permanently persisted component state values recorded in
+// a json preference file.
+export function getStatePref2(
+  store: PrefStoreType,
+  id: string | null,
+  defaultPrefs?: PrefObject, // default is all
+): PrefObject {
+  const state: PrefObject = {};
+  const sdef = store in S ? (S as any)[store] : null;
+  const p1 = defaultPrefs || (sdef as Record<string, unknown>);
+  if (p1) {
+    const p2 = defaultPrefs || ((id && sdef[id]) as Record<string, unknown>);
+    if (id && p2) {
+      Object.entries(p2).forEach((entry) => {
+        const [key, value] = entry;
+        state[key] = G.Prefs.getPrefOrCreate(
+          `${id}.${String(key)}`,
+          prefType(value as PrefValue),
+          value as PrefValue,
+          store,
+        );
+      });
+    } else {
+      Object.entries(p1).forEach((entry) => {
+        const [sid, value] = entry;
+        state[sid] = G.Prefs.getPrefOrCreate(
+          sid,
+          prefType(value as PrefValue),
+          value as PrefValue,
+          store,
+        );
+      });
+    }
+  }
+  return state;
 }
 
 // Push state changes of statePrefKeys value to Prefs.
@@ -826,7 +902,7 @@ export function registerUpdateStateFromPref(
 
 export function getLangReadable(
   code: string,
-  renderPromise?: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): string {
   if (/^en(-*|_*)$/.test(code)) return 'English';
   if (!code || code === '?' || /^\s*$/.test(code)) return '?';
@@ -863,7 +939,7 @@ export function i18nApplyOpts(
 // a list of reference links will be returned, without the contents of each
 // reference.
 export function getExtRefHTML(
-  G: GType | GITypeMain,
+  G: Gsafe,
   GI: GIType,
   extref: string,
   targetmod: string,
@@ -967,7 +1043,7 @@ export function getExtRefHTML(
 
 export function moduleInfoHTML(
   configs: SwordConfType[],
-  renderPromise?: RenderPromise,
+  renderPromise?: RenderPromise | null,
 ): string {
   const esc = (s: string): string => {
     if (!s) return '';
@@ -1056,7 +1132,7 @@ export function moduleInfoHTML(
               .join('');
           } else if (sf === 'sourceRepository') {
             const v = c[f] as Repository;
-            value = localizeString(G, v.name) || '';
+            value = localizeString(v.name, renderPromise) || '';
           } else value = c[f]?.toString() || '';
 
           if (![sc.htmllink, 'History'].flat().includes(sf as never)) {

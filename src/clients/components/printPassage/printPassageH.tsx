@@ -2,7 +2,7 @@ import { clone, decodeOSISRef, getSwordOptions } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
-import addBookmarks from '../../bookmarks.ts';
+import addBookmarks from '../../bookmarks.tsx';
 import { isValidVKM, getLocalizedChapterTerm, dString } from '../../common.tsx';
 import { getDictEntryHTML } from '../../components/atext/zdictionary.ts';
 import {

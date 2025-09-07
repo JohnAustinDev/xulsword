@@ -9,7 +9,7 @@ import parseExtendedVKRef from '../../../extrefParser.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G, GI } from '../../G.ts';
 import { moduleInfoHTML } from '../../common.tsx';
-import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.ts';
+import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.tsx';
 import { getElementData } from '../../htmlData.ts';
 import verseKey from '../../verseKey.ts';
 import log from '../../log.ts';
@@ -116,10 +116,12 @@ export function getPopupHTML(
             ) as typeof S.bookmarks.rootfolder,
             bmitem,
           );
-          const bmi = (bm && 'location' in bm && getBookmarkInfo(bm)) || null;
+          const bmi =
+            (bm && 'location' in bm && getBookmarkInfo(bm, renderPromise)) ||
+            null;
           if (bmi) {
             html = getNoteHTML(
-              addBookmarksToNotes([bmi], '', context),
+              addBookmarksToNotes([bmi], '', context, renderPromise),
               null,
               0,
               !testonly,

@@ -6,10 +6,8 @@ import {
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
-import { G, GI } from '../../G.ts';
-import { doUntilDone } from '../../common.tsx';
+import { cachePreload } from '../../common.tsx';
 import log from '../../log.ts';
-import RenderPromise from '../../renderPromise.ts';
 import renderToRoot from '../../controller.tsx';
 import Xulsword from '../../components/xulsword/xulsword.tsx';
 import socketConnect from '../preload.ts';
@@ -25,10 +23,7 @@ import defaultSettings, {
 } from './defaultSettings.ts';
 import './bibleBrowser.css';
 
-import type { ConfigType, FeatureMods } from '../../../type.ts';
-
-// For narrow screens, only one panel is shown and all notes appear in popups,
-// regardless of initial settings.
+window.WebAppClient = 'BibleBrowser';
 
 export type BibleBrowserControllerGlobal = {
   browserMaxPanels?: number;
@@ -161,30 +156,11 @@ socket.on('connect', () => {
     let numPanels = forceSinglePanel ? 1 : panels.length;
     if (numPanels > maxPanels) numPanels = maxPanels;
 
-    RenderPromise.retryDelay = 1; // Make preload calls without delay.
-    doUntilDone((renderPromise) => {
-      // Bible Browser code expects this data to be preloaded into the cache,
-      // so do that before renderToRoot.
-      GI.getLocalizedBooks({}, renderPromise, [locale]);
-      GI.Tabs([], renderPromise);
-      GI.Books([], renderPromise, locale);
-      GI.Config({}, renderPromise);
-      GI.ModuleFonts([], renderPromise);
-      GI.FeatureModules({} as FeatureMods, renderPromise);
-      GI.LocaleConfigs({}, renderPromise);
-      GI.getLocaleDigits([], renderPromise, locale);
-      GI.ModuleConfigDefault({} as ConfigType, renderPromise);
-      GI.ProgramConfig({} as ConfigType, renderPromise);
-      GI.i18n.t('', renderPromise, 'locale_direction');
-      Object.values(C.SupportedTabTypes).forEach((type) => {
-        GI.i18n.t('', renderPromise, type);
-      });
-      RenderPromise.retryDelay = undefined;
-
-      if (!renderPromise?.waiting()) {
+    cachePreload(locale)
+      .then(() => {
         setDefaultBibleBrowserPrefs(Prefs);
         setGlobalPanels(Prefs, numPanels);
-        validateModulePrefs(G.Tabs, Prefs, G.FeatureModules);
+        validateModulePrefs();
 
         // Now cancel the Tarapro page loader overlay.
         setTimeout(() => {
@@ -200,7 +176,7 @@ socket.on('connect', () => {
         }).catch((er) => {
           log.error(er);
         });
-      }
-    });
+      })
+      .catch((er) => log.error(er));
   }
 });

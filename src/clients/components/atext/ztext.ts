@@ -16,7 +16,7 @@ import { getElementData } from '../../htmlData.ts';
 import verseKey from '../../verseKey.ts';
 import { G, GI } from '../../G.ts';
 import { dString } from '../../common.tsx';
-import addBookmarks from '../../bookmarks.ts';
+import addBookmarks from '../../bookmarks.tsx';
 import {
   getNoteHTML,
   getChapterHeader,

@@ -21,6 +21,7 @@ import type {
   PinPropsType,
   V11nType,
   OSISBookType,
+  GType,
 } from '../../../type.ts';
 import type Xulsword from '../xulsword/xulsword.tsx';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
@@ -236,6 +237,7 @@ export default function handler(
         case 'towindow': {
           const cols = atext?.dataset.columns;
           if (Build.isElectronApp && atext && cols !== undefined) {
+            const GT = G as GType;
             // Save new window's XulswordState
             const xulswordState: Partial<XulswordState> = {};
             vpWindowState.forEach((name) => {
@@ -282,7 +284,7 @@ export default function handler(
               typeof xulswordState,
               'historyMenupopup'
             >;
-            G.Window.open({
+            GT.Window.open({
               type: 'viewportWin',
               allowMultiple: true,
               saveIfAppClosed: true,
@@ -608,7 +610,7 @@ function handleDictKeyInput(
                 return { modkey: firstMatch[2] };
               });
             } else if (key !== 'backspace') {
-              G.Shell.beep();
+              if (Build.isElectronApp) (G as GType).Shell.beep();
               select.style.color = 'red';
             }
           }

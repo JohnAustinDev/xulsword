@@ -17,6 +17,7 @@ import PrintSettings from './printSettings.tsx';
 import './print.css';
 
 import type { PrintOptionsType } from '../../controller.tsx';
+import { GType } from '../../../type.ts';
 
 // The Print component is the foundation for all print related features. It
 // must be rendered to the root of a window and its children (the root content)
@@ -67,7 +68,7 @@ export default function Print(props: PrintProps) {
                 Build.isElectronApp
                   ? URL.createObjectURL(
                       b64toBlob(
-                        G.inlineFile(iframeFilePath, 'base64', true),
+                        (G as GType).inlineFile(iframeFilePath, 'base64', true),
                         'application/pdf',
                       ),
                     )

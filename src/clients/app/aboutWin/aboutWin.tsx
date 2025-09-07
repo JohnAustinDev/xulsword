@@ -1,6 +1,6 @@
 import React from 'react';
 import C from '../../../constant.ts';
-import { G } from '../../G.ts';
+import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import { windowArguments } from '../../common.tsx';
 import log from '../../log.ts';
@@ -114,7 +114,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
       (G.Prefs.getComplexValue('global.Contributors') as string[]) || [];
 
     const overlay = G.inlineFile(
-      `${G.Dirs.path.xsAsset}/locales/splash-overlay-${G.i18n.language}.png`,
+      `xulsword://xsAsset/locales/splash-overlay-${G.i18n.language}.png`,
     );
     const style = overlay ? (
       <style>

@@ -11,7 +11,7 @@ import {
 } from '../../../../common.ts';
 import S from '../../../../defaultPrefs.ts';
 import C from '../../../../constant.ts';
-import { G } from '../../../G.ts';
+import { GE as G } from '../../../G.ts';
 import log from '../../../log.ts';
 import {
   getStatePref,
@@ -460,7 +460,7 @@ export default class ModuleManager
           } else if (c.xsmType === 'XSM_audio') {
             mtype = `XSM ${G.i18n.t('audio.label')}`;
           }
-          const reponame = localizeString(G, c.sourceRepository.name);
+          const reponame = localizeString(c.sourceRepository.name);
           const modrepkey = repositoryModuleKey(c);
           // Re-use module table rows across all module table loads, so that
           // user changes are not forgotten!

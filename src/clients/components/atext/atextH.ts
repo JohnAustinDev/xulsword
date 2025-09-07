@@ -18,7 +18,7 @@ import log from '../../log.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { aTextWheelScroll, getScrollVerse } from './zversekey.ts';
 
-import type { SearchType } from '../../../type.ts';
+import type { GType, SearchType } from '../../../type.ts';
 import type Atext from './atext.tsx';
 import type { AtextProps, AtextStateType } from './atext.tsx';
 
@@ -197,7 +197,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
               searchtext,
               type: 'SearchAnyWord',
             };
-            if (Build.isElectronApp) G.Commands.search(search);
+            if (Build.isElectronApp) (G as GType).Commands.search(search);
             else
               Subscription.publish.setControllerState(
                 {
@@ -362,7 +362,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
 
     // Note: scroll events don't bubble!
     case 'scroll': {
-      if (Build.isWebApp && window.webAppTextScroll === -1) {
+      if (Build.isWebApp && window.WebAppTextScroll === -1) {
         const { isPinned, module, location, panelIndex, xulswordState } = this
           .props as AtextProps;
         if (!isPinned && module && location) {
@@ -397,8 +397,8 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
                         newloc &&
                         oldloc.verse !== newloc.verse
                       ) {
-                        window.webAppTextScroll = panelIndex;
-                        setTimeout(() => (window.webAppTextScroll = -1), 1000);
+                        window.WebAppTextScroll = panelIndex;
+                        setTimeout(() => (window.WebAppTextScroll = -1), 1000);
                         xulswordState({
                           location: newloc,
                           scroll: { verseAt: 'top' },
