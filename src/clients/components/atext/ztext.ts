@@ -12,10 +12,10 @@ import {
   prevTreeSibling,
   stringHash,
 } from '../../../common.ts';
+import VerseKey from '../../../verseKey.ts';
 import { getElementData } from '../../htmlData.ts';
-import verseKey from '../../verseKey.ts';
 import { G, GI } from '../../G.ts';
-import { dString } from '../../common.tsx';
+import { dString } from '../../../common.ts';
 import addBookmarks from '../../bookmarks.tsx';
 import {
   getNoteHTML,
@@ -79,9 +79,10 @@ export function libswordText(
   switch (type) {
     case C.BIBLE: {
       if (location?.book && module) {
-        const { book, chapter } = verseKey(location, renderPromise).location(
-          G.Tab[module].v11n || null,
-        );
+        const { book, chapter } = new VerseKey(
+          location,
+          renderPromise,
+        ).location(G.Tab[module].v11n || null);
         if (ilModule) {
           const { text } = GI.LibSword.getChapterTextMulti(
             { text: '', notes: '' },
@@ -117,9 +118,10 @@ export function libswordText(
     }
     case C.COMMENTARY: {
       if (location?.book && module) {
-        const { book, chapter } = verseKey(location, renderPromise).location(
-          G.Tab[module].v11n || null,
-        );
+        const { book, chapter } = new VerseKey(
+          location,
+          renderPromise,
+        ).location(G.Tab[module].v11n || null);
         const { text, notes } = GI.LibSword.getChapterText(
           { text: '', notes: '' },
           renderPromise,
@@ -290,7 +292,7 @@ export function genbookChange(
   module: string,
   modkey: string,
   next: boolean,
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): string | null {
   if (module) {
     const toc = GI.genBookTreeNodes([], renderPromise, module);
@@ -326,7 +328,7 @@ export function genbookChange(
 export function textChange(
   atext: HTMLElement,
   next: boolean,
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise,
   prevState?: PinPropsType,
 ): PinPropsType | Partial<PinPropsType> | null {
   const { columns: cx, module } = atext.dataset;

@@ -1,7 +1,7 @@
 import React from 'react';
 import renderToRoot, { PrintOptionsType } from '../../controller.tsx';
 import log from '../../log.ts';
-import { setStatePref, windowArguments } from '../../common.tsx';
+import { setStatePref, windowArguments } from '../../common.ts';
 import PrintPassage from '../../components/printPassage/printPassage.tsx';
 
 import type { PrintPassageState } from '../../components/printPassage/printPassage.tsx';

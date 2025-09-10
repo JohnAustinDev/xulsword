@@ -4,7 +4,7 @@ import { GE as G } from '../../G.ts';
 import log from '../../log.ts';
 import RenderPromise from '../../renderPromise.ts';
 import renderToRoot from '../../controller.tsx';
-import { windowArguments } from '../../common.tsx';
+import { windowArguments } from '../../common.ts';
 import {
   addClass,
   type XulProps,

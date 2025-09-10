@@ -1,10 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import VerseKey from '../../../verseKey.ts';
 import { clone, diff, getModuleOfObject, ofClass } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import verseKey from '../../verseKey.ts';
-import { getMaxChapter, getMaxVerse } from '../../common.tsx';
+import { getMaxChapter, getMaxVerse } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { addClass, xulPropTypes } from './xul.tsx';
 import { Hbox } from './boxes.tsx';
@@ -283,7 +283,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       G.Tab[vkMod].v11n &&
       selection.v11n !== G.Tab[vkMod].v11n
     ) {
-      selection = verseKey(selection, renderPromise).location(
+      selection = new VerseKey(selection, renderPromise).location(
         G.Tab[vkMod].v11n,
       );
       if (renderPromise.waiting()) return null;
@@ -301,7 +301,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       vkMods,
       showSingleMod,
     } = options || {};
-    const Book = G.Book(G.i18n.language);
+    const { Book } = G;
 
     const tab = (vkMod && G.Tab[vkMod]) || null;
     const v11n = (tab && tab.v11n) || selection.v11n || 'KJV';
@@ -328,7 +328,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     // containing those books will be included in the module selector.
     const rp = GI.getBkChsInV11n([], renderPromise, v11n);
     const bkChsInV11n = renderPromise.waiting()
-      ? G.Books().map((b) => b.code)
+      ? G.Books.map((b) => b.code)
       : rp;
     const bkbgs = (books || bkChsInV11n?.map((r) => r[0])) as OSISBookType[];
     const bookset = new Set<OSISBookType>();
@@ -344,7 +344,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       tab && modules?.length !== 0
         ? Array.from(bookset).filter((b) =>
             GI.getBooksInVKModule(
-              G.Books().map((b) => b.code),
+              G.Books.map((b) => b.code),
               renderPromise,
               tab.module,
             ).includes(b),
@@ -417,7 +417,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     if ((books?.length || 0) > 0) {
       modules = modules.filter((m) =>
         GI.getBooksInVKModule(
-          G.Books().map((b) => b.code),
+          G.Books.map((b) => b.code),
           renderPromise,
           m,
         ).includes(book),

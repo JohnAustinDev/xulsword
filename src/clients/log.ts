@@ -1,19 +1,34 @@
 /* eslint-disable no-console */
-import type ElectronLog from 'electron-log';
-import type { LogLevel } from 'electron-log';
 import C from '../constant.ts';
 import { JSON_stringify } from '../common.ts';
 import Cache from '../cache.ts';
 
+import type ElectronLog from 'electron-log';
+import type { LogLevel } from 'electron-log';
+
 const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
 
 function rlog(level: LogLevel, ...args: unknown[]) {
+  let er: Error | null = null;
+  if (level === 'error') {
+    if (args[0] instanceof Error) {
+      [er] = args;
+      // convert Error object to string, so the object won't be lost during
+      // transport to the server.
+      args[0] = errorString(args[0]);
+    }
+  }
   if (levels.indexOf(level) <= levels.indexOf(C.LogLevel)) {
     const haveIPC =
-      typeof window.IPC === 'object' && typeof window.IPC.send === 'function';
+      window &&
+      typeof window.IPC === 'object' &&
+      typeof window.IPC.send === 'function';
     const windowID = Cache.has('windowID') ? Cache.read('windowID') : '?:?';
-    const largs: any[] = [level, `[${windowID}]`, JSON_stringify(args)];
-    if (Build.isWebApp) largs.splice(2, 0, window.WebAppClient);
+    const largs: any[] = [
+      level,
+      `[${Build.isWebApp ? window.WebAppClient : windowID}]`,
+      JSON_stringify(args),
+    ];
     if (
       haveIPC &&
       (Build.isElectronApp ||
@@ -24,8 +39,9 @@ function rlog(level: LogLevel, ...args: unknown[]) {
       window.IPC.send('log', ...largs);
     }
     if (Build.isDevelopment) {
+      if (er) throw er;
       largs.splice(-1, 1, ...args);
-      console.log(largs);
+      console.log(...largs);
     }
   }
 }
@@ -51,9 +67,6 @@ function errorString(e: Error | ErrorEvent | Event | string) {
 
 const log = {
   error: (...args: [Error | ErrorEvent | Event | string, ...any[]]) => {
-    // convert Error object to string, so the object won't be lost during
-    // transport to the server.
-    if (args[0]) args[0] = errorString(args[0]);
     rlog('error', ...args);
   },
   warn: (...args: unknown[]) => {

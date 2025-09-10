@@ -14,13 +14,14 @@ import {
   findTreeNodeOrder,
   JSON_attrib_stringify,
   prefType,
+  dString,
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import { G, GI } from './G.ts';
+import VerseKey from '../verseKey.ts';
 import RenderPromise from './renderPromise.ts';
 import { getElementData, HTMLData } from './htmlData.ts';
-import verseKey from './verseKey.ts';
 import log from './log.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
@@ -30,7 +31,6 @@ import type {
   GenBookAudioConf,
   AudioPlayerSelectionGB,
   GIType,
-  GITypeMain,
   GType,
   LocationVKType,
   LookupInfo,
@@ -58,27 +58,31 @@ window.WebAppTextScroll = -1;
 
 // WebApp requires methods of Gsafe to be cache-preloaded. Not all Gsafe
 // methods are explicitly called here because some calls preload multiple
-// individual cache entries (see RenderPromise.writeCallToCache());
-export async function cachePreload(locale: string): Promise<void> {
+// individual cache entries (see RenderPromise.writeCallToCache()); Any
+// i18n required by the initial render may be supplied and it will display
+// on first render, before another renderPromise dispatch.
+export async function cachePreload(
+  i18nArgs?: Parameters<GType['i18n']['t']>[],
+): Promise<void> {
   if (Build.isWebApp) {
     RenderPromise.retryDelay = 1; // Make preload calls without delay.
     return new Promise((resolve) => {
       doUntilDone((renderPromise) => {
-        GI.getLocalizedBooks({}, renderPromise, [locale]);
         GI.Tabs([], renderPromise);
-        GI.Books([], renderPromise, locale);
+        GI.BooksLocalized({}, renderPromise);
+        GI.Books([], renderPromise);
         GI.Config({}, renderPromise);
         GI.ModuleFonts([], renderPromise);
         GI.FeatureModules({} as FeatureMods, renderPromise);
         GI.LocaleConfigs({}, renderPromise);
-        GI.getLocaleDigits([], renderPromise, locale);
         GI.ModuleConfigDefault({} as ConfigType, renderPromise);
         GI.ProgramConfig({} as ConfigType, renderPromise);
+        C.Locales.forEach((l) => GI.getLocaleDigits(null, renderPromise, l[0]));
         GI.i18n.t('', renderPromise, 'locale_direction');
-        GI.i18n.t('', renderPromise, 'Full publication', { ns: 'widgets' });
-        Object.values(C.SupportedTabTypes).forEach((type) => {
-          GI.i18n.t('', renderPromise, type);
-        });
+        Object.values(C.SupportedTabTypes).forEach((s) =>
+          GI.i18n.t('', renderPromise, s),
+        );
+        i18nArgs?.forEach((args) => GI.i18n.t('', renderPromise, ...args));
         RenderPromise.retryDelay = undefined;
         if (!renderPromise?.waiting()) resolve();
       });
@@ -106,12 +110,8 @@ export function functionalComponentRenderPromise(loadingSelector?: string) {
 // before any code that should only be run once. In Electron, where GI
 // functions are synchronous, the passed renderPromise will be null.
 export function doUntilDone(
-  func: (renderPromise: RenderPromise | null) => void,
+  func: (renderPromise: RenderPromise) => void,
 ): void {
-  if (Build.isElectronApp) {
-    func(null);
-    return;
-  }
   const renderPromise = new RenderPromise(() => {
     func(renderPromise);
     renderPromise.dispatch();
@@ -119,6 +119,7 @@ export function doUntilDone(
   func(renderPromise);
   renderPromise.dispatch();
 }
+Cache.write(doUntilDone, 'doUntilDone');
 
 // Return the renderPromise that resets the root controller whenever it is
 // fulfilled.
@@ -362,7 +363,7 @@ export function notMouse(e?: React.SyntheticEvent): boolean | null {
 
 export function isIBTChildrensBible(
   tocOrModule: TreeNodeInfo[] | string,
-  renderPromise?: RenderPromise | null,
+  renderPromise?: RenderPromise,
 ): boolean {
   if (tocOrModule) {
     let toc: TreeNodeInfo[] = [];
@@ -393,7 +394,7 @@ export function syncChildrensBibles(
   panels: XulswordState['panels'],
   prevKeys: XulswordState['keys'],
   keys: XulswordState['keys'],
-  renderPromise?: RenderPromise | null,
+  renderPromise?: RenderPromise,
 ): (string | null)[] {
   const cbTocs: Array<TreeNodeInfo[] | null> = panels.map(() => null);
   panels.forEach((m, i) => {
@@ -433,7 +434,7 @@ export function syncChildrensBibles(
 // Return the audio module config objects for a SWORD module's AudioCodes.
 export function audioConfigs(
   module: string,
-  renderPromise?: RenderPromise | null,
+  renderPromise?: RenderPromise,
 ): SwordConfType[] {
   const audioConfs: SwordConfType[] = [];
   if (module && module in G.Tab) {
@@ -457,7 +458,7 @@ export function audioConfigs(
 // chosen and the returned book and chapter will be updated accordingly.
 export function audioSelections(
   selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
-  renderPromise?: RenderPromise | null,
+  renderPromise?: RenderPromise,
 ): Array<{
   selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB;
   conf: SwordConfType;
@@ -585,7 +586,7 @@ export function audioGenBookNode(
 export function getGenBookAudio(
   audio: GenBookAudioConf,
   gbmod: string,
-  renderPromise?: RenderPromise | null,
+  renderPromise?: RenderPromise,
 ): GenBookAudio {
   if (gbmod && gbmod in G.Tab) {
     const treeNodes = GI.genBookTreeNodes([], renderPromise, gbmod);
@@ -625,7 +626,7 @@ export function getLocalizedChapterTerm(
   const k1 = `${book}_Chaptext`;
   const k2 = 'Chaptext';
   const toptions = {
-    v1: dString(chapter, locale, renderPromise),
+    v1: dString(chapter, locale),
     lng: locale,
     ns: 'books',
   };
@@ -634,26 +635,6 @@ export function getLocalizedChapterTerm(
   const r2 = GI.i18n.t(k2, renderPromise, k2, toptions);
   const r1 = tkExists && !/^\s*$/.test(tk) && tk;
   return r1 || r2;
-}
-
-// converts any ASCII digits in a string into localized digits.
-export function dString(
-  string: string | number,
-  locale?: string | null,
-  renderPromise?: RenderPromise,
-) {
-  let s = string.toString();
-  const digits = GI.getLocaleDigits(
-    null,
-    renderPromise,
-    locale ?? G.i18n.language,
-  );
-  if (digits) {
-    for (let i = 0; i <= 9; i += 1) {
-      s = s.replaceAll(i.toString(), digits[i]);
-    }
-  }
-  return s;
 }
 
 // Does location surely exist in the module? It's assumed if a book is included,
@@ -667,7 +648,7 @@ export function isValidVKM(
   if (!module || !(module in G.Tab)) return false;
   if (
     !GI.getBooksInVKModule(
-      G.Books().map((b) => b.code),
+      G.Books.map((b) => b.code),
       renderPromise,
       module,
     ).includes(location.book as never)
@@ -726,7 +707,7 @@ export function moduleIncludesStrongs(
 export function getMaxChapter(
   v11n: V11nType,
   vkeytext: string,
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise,
 ) {
   const [book] = vkeytext.split(/[\s.:]/);
   const bkChsInV11n = GI.getBkChsInV11n([], renderPromise, v11n);
@@ -741,9 +722,9 @@ export function getMaxChapter(
 export function getMaxVerse(
   v11n: V11nType,
   vkeytext: string,
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): number {
-  const { chapter } = verseKey({ parse: vkeytext, v11n }, renderPromise);
+  const { chapter } = new VerseKey({ parse: vkeytext, v11n }, renderPromise);
   const maxch = getMaxChapter(v11n, vkeytext, renderPromise);
   if (chapter <= maxch && chapter > 0) {
     return GI.LibSword.getMaxVerse(0, renderPromise, v11n, vkeytext);
@@ -902,7 +883,7 @@ export function registerUpdateStateFromPref(
 
 export function getLangReadable(
   code: string,
-  renderPromise?: RenderPromise | null,
+  renderPromise?: RenderPromise,
 ): string {
   if (/^en(-*|_*)$/.test(code)) return 'English';
   if (!code || code === '?' || /^\s*$/.test(code)) return '?';
@@ -947,7 +928,7 @@ export function getExtRefHTML(
   context: LocationVKType,
   showText: boolean,
   keepNotes: boolean,
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): string {
   // Find alternate modules associated with the locale and tab settings.
   const am = G.LocaleConfigs[locale].AssociatedModules;
@@ -962,13 +943,7 @@ export function getExtRefHTML(
   }
   const alternates = Array.from(alts);
 
-  const list = parseExtendedVKRef(
-    verseKey,
-    extref,
-    context,
-    [locale],
-    renderPromise,
-  );
+  const list = parseExtendedVKRef(extref, renderPromise, context, [locale]);
 
   const mod = targetmod || alternates[0] || '';
   const html: string[] = [];
@@ -1027,7 +1002,7 @@ export function getExtRefHTML(
         h += `
           <bdi>
             <a class="${crref.join(' ')}" data-data="${crd}">
-              ${verseKey(location, renderPromise).readable(locale)}
+              ${new VerseKey(location, renderPromise).readable(locale)}
             </a>
             ${q}${text ? ': ' : ''}
           </bdi>
@@ -1043,7 +1018,7 @@ export function getExtRefHTML(
 
 export function moduleInfoHTML(
   configs: SwordConfType[],
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): string {
   const esc = (s: string): string => {
     if (!s) return '';

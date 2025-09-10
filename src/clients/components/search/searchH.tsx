@@ -1,5 +1,8 @@
 import React from 'react';
+import { dString } from '../../../common.ts';
+import VerseKey from '../../../verseKey.ts';
 import Subscription from '../../../subscription.ts';
+import { goToLocationGB, goToLocationVK } from '../../../commands.ts';
 import {
   noAutoSearchIndex,
   escapeRE,
@@ -9,12 +12,9 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { dString } from '../../common.tsx';
-import Commands from '../../commands.ts';
 import log from '../../log.ts';
 import RenderPromise, { setLoadingClass } from '../../renderPromise.ts';
 import { getElementData } from '../../htmlData.ts';
-import verseKey from '../../verseKey.ts';
 import SearchHelp from '../searchHelp/searchHelp.tsx';
 import { getStrongsModAndKey } from '../atext/zdictionary.ts';
 
@@ -77,8 +77,7 @@ export function getLuceneSearchText(
 // Return an array of book codes from a KJV book-scope string.
 function kjvScopeBooks(scope: string): string[] {
   const books: string[] = [];
-  const Book = G.Book(G.i18n.language);
-  const Books = G.Books(G.i18n.language);
+  const { Book, Books } = G;
   scope.split(/\s+/).forEach((seg) => {
     const bk = seg.split('-');
     let beg = bk[0] in Book ? (Book as any)[bk[0]].index : -1;
@@ -145,7 +144,7 @@ function getScopes(
 
 export async function search(xthis: Search): Promise<boolean> {
   log.debug(`SEARCHING...`);
-  (G as GType).LibSword.stopBackgroundSearchIndexer();
+  if (Build.isElectronApp) (G as GType).LibSword.stopBackgroundSearchIndexer();
   const state = xthis.state as SearchState;
   const { renderPromise } = xthis;
   const { descriptor } = xthis.props as SearchProps;
@@ -318,7 +317,7 @@ export async function libSwordSearch(
               i === scopes.length - 1,
             );
             if (scopes.length > 1 && xthis) {
-              const Book = G.Book(G.i18n.language);
+              const { Book } = G;
               xthis.setState({
                 progress: (i + 1) / scopes.length,
                 progressLabel:
@@ -459,7 +458,7 @@ export function formatResult(
             if (a && location) {
               // Translate links from module to displayModule
               const vsys = G.Tab[module].v11n || null;
-              const v = verseKey(location, renderPromise);
+              const v = new VerseKey(location, renderPromise);
               sanitizeHTML(
                 a,
                 v.readable(G.i18n.language, G.Tab[displayModule].v11n || null),
@@ -883,7 +882,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
                   },
                   true,
                 );
-              void Commands.goToLocationVK(l, l);
+              void goToLocationVK(l, l);
               break;
             }
             case 'keylink': {
@@ -897,7 +896,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
                     },
                     true,
                   );
-                void Commands.goToLocationGB({
+                void goToLocationGB({
                   otherMod: module,
                   key: decodeURIComponent(p.shift() || ''),
                 });

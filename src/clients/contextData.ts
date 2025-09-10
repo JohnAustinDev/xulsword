@@ -5,7 +5,7 @@ import C from '../constant.ts';
 import { G } from './G.ts';
 import { findElementData, mergeElementData } from './htmlData.ts';
 import { findBookmarks } from './bookmarks.tsx';
-import { windowArguments } from './common.tsx';
+import { windowArguments } from './common.ts';
 
 import type {
   ContextDataType,
@@ -106,22 +106,12 @@ export default function ContextData(elem: HTMLElement): ContextDataType {
     (context && context in G.Tab && G.Tab[context].v11n) || undefined;
   let selectionParsedVK: LocationVKType | undefined;
   if (selection) {
-    const parsed = new RefParser(
-      Build.isElectronApp
-        ? C.Locales.reduce(
-            (p, c) => {
-              p[c[0]] = G.getLocaleDigits(c[0]);
-              return p;
-            },
-            {} as Record<string, string[] | null>,
-          )
-        : { [G.i18n.language]: G.getLocaleDigits() },
-      G.getLocalizedBooks(Build.isElectronApp ? true : [G.i18n.language]),
-      {
-        locales: C.Locales.map((l) => l[0]),
-        uncertain: true,
-      },
-    ).parse(selection, v11n || null);
+    const parsed = new RefParser(null, {
+      uncertain: true,
+      locales: Build.isElectronApp
+        ? C.Locales.map((l) => l[0])
+        : [G.i18n.language],
+    }).parse(selection, v11n || null);
     selectionParsedVK =
       parsed && parsed.location.book ? parsed.location : undefined;
   }

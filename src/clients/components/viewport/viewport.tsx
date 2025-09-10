@@ -1,14 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import Subscription from '../../../subscription.ts';
+import VerseKey from '../../../verseKey.ts';
+import { playAudio } from '../../../commands.ts';
 import C from '../../../constant.ts';
-import {
-  getPanelWidths,
-  ofClass,
-  randomID,
-  stringHash,
-} from '../../../common.ts';
+import { getPanelWidths, ofClass, stringHash } from '../../../common.ts';
 import Popup from '../popup/popup.tsx';
 import {
   popupParentHandler as popupParentHandlerH,
@@ -17,11 +13,9 @@ import {
   PopupParentInitState,
 } from '../popup/popupParentH.ts';
 import { G, GI } from '../../G.ts';
-import Commands from '../../commands.ts';
 import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
-import verseKey from '../../verseKey.ts';
-import { clearPending } from '../../common.tsx';
+import { clearPending } from '../../common.ts';
 import { addClass, xulPropTypes, topHandle } from '../libxul/xul.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Chooser from '../chooser/chooser.tsx';
@@ -178,7 +172,7 @@ class Viewport extends React.Component implements PopupParent {
       // because at that time all available audio file options are again
       // collected and a single option will be selected according to current
       // defaults.
-      void Commands.playAudio({ open, file, defaults });
+      void playAudio({ open, file, defaults });
     }
   }
 
@@ -212,7 +206,7 @@ class Viewport extends React.Component implements PopupParent {
 
     const tabcntl = G.Prefs.getBoolPref('xulsword.tabcntl');
 
-    const Book = G.Book(G.i18n.language);
+    const { Book } = G;
 
     // Only versekey panels can be pinned
     const isVerseKey = panels.map((m) => Boolean(m && G.Tab[m].isVerseKey));
@@ -227,7 +221,7 @@ class Viewport extends React.Component implements PopupParent {
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
         GI.getBooksInVKModule(
-          G.Books().map((b) => b.code),
+          G.Books.map((b) => b.code),
           renderPromise,
           m,
         ).forEach((bk) => availableBooks.add(bk));
@@ -354,7 +348,7 @@ class Viewport extends React.Component implements PopupParent {
         // verse at 1 to prevent unnecessary Atext render cycles.
         const verse = (scroll && vs) || 1;
         locs.push(
-          verseKey({ book, chapter, verse, v11n }, renderPromise).location(
+          new VerseKey({ book, chapter, verse, v11n }, renderPromise).location(
             tov11n || undefined,
           ),
         );

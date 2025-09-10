@@ -7,8 +7,11 @@ import {
   stringHash,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
-import { G } from '../../G.ts';
-import { moduleInfoHTML } from '../../common.tsx';
+import { G, GI } from '../../G.ts';
+import {
+  functionalComponentRenderPromise,
+  moduleInfoHTML,
+} from '../../common.ts';
 import { xulPropTypes, type XulProps, htmlAttribs } from './xul.tsx';
 import Button from './button.tsx';
 import Label from './label.tsx';
@@ -141,6 +144,8 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
   const { configs: configsx, editConf, refs, buttonHandler } = props;
   const { container, textarea } = refs;
 
+  const { renderPromise, loadingRef } = functionalComponentRenderPromise();
+
   // Is not possible to edit or (currently) view a config file unless it
   // is installed locally.
   const configs: SwordConfExtraType[] = configsx
@@ -177,7 +182,7 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
 
   return (
     <div {...htmlAttribs('modinfo', props)} ref={container}>
-      <div>
+      <div ref={loadingRef as React.RefObject<HTMLDivElement>}>
         {showLinkList &&
           [
             'Biblical Texts',
@@ -190,7 +195,9 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
               {configs.some((c) => c.moduleType === g || c.xsmType === g) && (
                 <>
                   <div className="head1">
-                    {G.i18n.t(
+                    {GI.i18n.t(
+                      '',
+                      renderPromise,
                       ((g in C.SupportedTabTypes &&
                         C.SupportedTabTypes[g as ModTypes]) ||
                         'Genbks') as TabTypes,
@@ -238,7 +245,9 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
             <div
               dangerouslySetInnerHTML={{
                 // eslint-disable-next-line @typescript-eslint/naming-convention
-                __html: sanitizeHTML((configs && moduleInfoHTML([c])) || ''),
+                __html: sanitizeHTML(
+                  (configs && moduleInfoHTML([c], renderPromise)) || '',
+                ),
               }}
             />
             <div>
@@ -248,7 +257,7 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
                     id={['more', c.confID].join('.')}
                     onClick={buttonHandler}
                   >
-                    {G.i18n.t('more.label')}
+                    {GI.i18n.t('', renderPromise, 'more.label')}
                   </Button>
                 </>
               )}
@@ -258,7 +267,7 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
                     id={['less', c.confID].join('.')}
                     onClick={buttonHandler}
                   >
-                    {G.i18n.t('less.label')}
+                    {GI.i18n.t('', renderPromise, 'less.label')}
                   </Button>
                   {editConf !== undefined && textarea !== undefined && (
                     <>
@@ -266,14 +275,14 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
                         id={['edit', c.confID].join('.')}
                         onClick={buttonHandler}
                       >
-                        {G.i18n.t('menu.edit')}
+                        {GI.i18n.t('', renderPromise, 'menu.edit')}
                       </Button>
                       <Button
                         id={['save', c.confID].join('.')}
                         disabled={!editConf}
                         onClick={buttonHandler}
                       >
-                        {G.i18n.t('save.label')}
+                        {GI.i18n.t('', renderPromise, 'save.label')}
                       </Button>
                     </>
                   )}

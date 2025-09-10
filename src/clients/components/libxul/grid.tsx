@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { component } from '../../common.tsx';
+import { component } from '../../common.ts';
 import { xulPropTypes, htmlAttribs } from './xul.tsx';
 import './grid.css';
 

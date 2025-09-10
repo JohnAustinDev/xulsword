@@ -2,7 +2,6 @@ import log from 'electron-log';
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
 import { clone, randomID, replaceASCIIcontrolChars } from '../../common.ts';
-import verseKey from '../verseKey.ts';
 
 import type {
   BookmarkFolderType,
@@ -18,6 +17,7 @@ import type {
   LocationVKCommType,
 } from '../../type.ts';
 import type { PrefCallbackType } from '../../prefs.ts';
+import VerseKey from '../../verseKey.ts';
 
 type BMkeys =
   | keyof BookmarkItem
@@ -152,7 +152,7 @@ function isValidItem(
             if ('commMod' in v) {
               const v2 = v as LocationVKCommType;
               const { commMod, v11n } = v2;
-              const vk = verseKey(v2);
+              const vk = new VerseKey(v2, null);
               if (!vk.book || !commMod || !v11n) {
                 isValid = false;
                 newmods.reports.push({
@@ -163,7 +163,7 @@ function isValidItem(
             } else if ('v11n' in v) {
               const v2 = v as LocationVKType;
               const { v11n } = v2;
-              const vk = verseKey(v2);
+              const vk = new VerseKey(v2, null);
               if (!vk.book || !v11n) {
                 isValid = false;
                 newmods.reports.push({

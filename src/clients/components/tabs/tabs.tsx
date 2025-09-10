@@ -1,17 +1,17 @@
 import React, { ChangeEvent } from 'react';
 import PropTypes from 'prop-types';
-import WebAppViewport from '../../webapp/viewport.ts';
+import { setXulswordTabs } from '../../../viewport.ts';
 import { ofClass } from '../../../common.ts';
 import { xulPropTypes, htmlAttribs } from '../libxul/xul.tsx';
 import { AnchorButton } from '../libxul/button.tsx';
 import Menupopup from '../libxul/menupopup.tsx';
 import ModuleMenu from '../libxul/modulemenu.tsx';
-import { doUntilDone } from '../../common.tsx';
+import { doUntilDone } from '../../common.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import './tabs.css';
 
-import type { GType, XulswordStateArgType } from '../../../type.ts';
+import type { XulswordStateArgType } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
   RenderPromiseState,
@@ -108,9 +108,8 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     if (target) {
       const { value } = target as HTMLSelectElement;
       const { panelIndex, xulswordState } = this.props as TabsProps;
-      const vp = Build.isElectronApp ? (G as GType).Viewport : WebAppViewport;
       doUntilDone((renderPromise2) => {
-        const xs = vp.setXulswordTabs(
+        const xs = setXulswordTabs(
           {
             panelIndex,
             whichTab: value,

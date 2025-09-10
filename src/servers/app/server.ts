@@ -29,6 +29,11 @@ import {
 } from '../../common.ts';
 import C from '../../constant.ts';
 import S, { completePanelPrefDefaultArrays } from '../../defaultPrefs.ts';
+import {
+  getModuleChange,
+  getPanelChange,
+  sortTabsByLocale,
+} from '../../viewport.ts';
 import handleGlobal from '../handleG.ts';
 import Dirs from '../components/dirs.ts';
 import Data from '../components/data.ts';
@@ -42,7 +47,6 @@ import {
   CipherKeyModules,
   getTabs,
   getSystemFonts,
-  getFeatureModules,
 } from '../common.ts';
 import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu.ts';
 import contextMenu from './contextMenu.ts';
@@ -51,7 +55,7 @@ import {
   pushPrefsToWindows,
   publishSubscription,
 } from './components/window.ts';
-import { addBookmarkTransaction } from '../components/bookmarks.tsx';
+import { addBookmarkTransaction } from '../components/bookmarks.ts';
 
 import type { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import type { LogLevel } from 'electron-log';
@@ -298,11 +302,11 @@ const openXulswordWindow = () => {
           .join('. ');
         if (newErrors.length) {
           log.error(
-            `Installed with errors: ${modstr}\n${newErrors.join('\n')}`,
+            `Installed with errors: ${modstr}\n${newErrors.slice(0, 10).join('\n')}`,
           );
         } else if (newWarns.length) {
           log.warn(
-            `Installed with warnings: ${modstr}\n${newWarns.join('\n')}`,
+            `Installed with warnings: ${modstr}\n${newWarns.slice(0, 10).join('\n')}`,
           );
         } else if (modstr.length) {
           log.info(`Installed SUCCESSFULLY: ${modstr}`);
@@ -326,9 +330,10 @@ const openXulswordWindow = () => {
             if (G)
               Prefs.mergeValue(
                 'xulsword',
-                G.Viewport.getModuleChange(
+                getModuleChange(
                   newmods.modules.map((c) => c.module),
                   Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword,
+                  null,
                 ),
                 'prefs',
                 false,
@@ -506,21 +511,22 @@ const init = async () => {
   const xulsword = Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword;
   const { tabs } = xulsword;
   if (G && tabs.every((tb) => !tb?.length)) {
-    const modules = G.Viewport.sortTabsByLocale(getTabs().map((t) => t.module));
+    const modules = sortTabsByLocale(getTabs().map((t) => t.module));
     if (modules[0]) {
-      G.Viewport.getPanelChange(
+      getPanelChange(
         {
           whichModuleOrLocGB: modules,
           maintainWidePanels: true,
           maintainPins: false,
         },
         xulsword,
+        null,
       );
       Prefs.mergeValue('xulsword', xulsword);
     }
   }
 
-  ProgramTitle = localizeString('i18n:program.title');
+  ProgramTitle = localizeString('i18n:program.title', null);
 
   if (Prefs.getBoolPref('global.InternetPermission')) {
     autoUpdater.logger = log;

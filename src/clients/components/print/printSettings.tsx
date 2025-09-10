@@ -15,7 +15,7 @@ import {
   windowArguments,
   topToaster,
   iframeAutoHeight,
-} from '../../common.tsx';
+} from '../../common.ts';
 import log from '../../log.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button.tsx';

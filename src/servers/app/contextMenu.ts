@@ -1,10 +1,11 @@
 import contextMenuCreator from 'electron-context-menu';
 import log from 'electron-log';
 import i18n from 'i18next';
+import { setXulswordTabs } from '../../viewport.ts';
 import { findBookmarkItem, xulswordLocation } from '../../common.ts';
+import { goToLocationGB, goToLocationVK } from '../../commands.ts';
 import S from '../../defaultPrefs.ts';
 import { G } from './G.ts';
-import ComCommands from './commands.ts';
 import CommandsX from './components/commands.ts';
 import Data from '../components/data.ts';
 
@@ -120,11 +121,14 @@ export default function contextMenu(
             click: () => {
               const mod = d.tab || d.context;
               if (mod && d.panelIndex !== undefined)
-                G.Viewport.setXulswordTabs({
-                  panelIndex: d.panelIndex,
-                  whichTab: mod,
-                  doWhat: 'hide',
-                });
+                setXulswordTabs(
+                  {
+                    panelIndex: d.panelIndex,
+                    whichTab: mod,
+                    doWhat: 'hide',
+                  },
+                  null,
+                );
             },
           },
         ];
@@ -146,9 +150,9 @@ export default function contextMenu(
               if (bookmarkItem?.type === 'bookmark') {
                 const { location } = bookmarkItem;
                 if ('v11n' in location) {
-                  void ComCommands.goToLocationVK(location, location);
+                  void goToLocationVK(location, location);
                 } else {
-                  void ComCommands.goToLocationGB(location);
+                  void goToLocationGB(location);
                 }
               }
             },
@@ -185,7 +189,7 @@ export default function contextMenu(
             click: () => {
               const loc = d.selectionParsedVK;
               if (typeof loc === 'object') {
-                void ComCommands.goToLocationVK(loc, loc);
+                void goToLocationVK(loc, loc);
               }
             },
           },
@@ -196,7 +200,7 @@ export default function contextMenu(
             click: () => {
               const { location: locationVK } = d;
               if (locationVK && typeof locationVK === 'object') {
-                void ComCommands.goToLocationVK(locationVK, locationVK);
+                void goToLocationVK(locationVK, locationVK);
               }
             },
           },

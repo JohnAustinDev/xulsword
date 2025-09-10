@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import VerseKey from '../../../verseKey.ts';
 import { getElementData } from '../../htmlData.ts';
-import verseKey from '../../verseKey.ts';
 import Cache from '../../../cache.ts';
 import C from '../../../constant.ts';
 import {
@@ -20,7 +20,7 @@ import {
   libswordImgSrc,
   notMouse,
   safeScrollIntoView,
-} from '../../common.tsx';
+} from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
 import {
   xulPropTypes,
@@ -366,7 +366,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
                     const info = (sib && getElementData(sib)) || null;
                     if (info?.location) {
                       const { book, chapter, verse: vs } = info.location;
-                      const locationVK = verseKey(
+                      const locationVK = new VerseKey(
                         {
                           parse: [book, chapter, vs].join('.'),
                           v11n: location.v11n ?? 'KJV',
@@ -495,7 +495,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
             type === C.BIBLE
           ) {
             doUntilDone((rp) => {
-              highlight(sbe, selection, rp);
+              if (rp) highlight(sbe, selection, rp);
               if (!rp?.waiting()) sbe.dataset.highlightkey = highlightkey;
             });
           }
@@ -514,14 +514,16 @@ class Atext extends React.Component implements RenderPromiseComponent {
           delayHandler(
             this,
             () => {
-              doUntilDone((renderPromise2) => {
-                const prev = textChange(atext, false, renderPromise2);
-                const next = textChange(atext, true, renderPromise2);
-                if (!renderPromise2?.waiting()) {
-                  if (prev) atext.classList.remove('prev-disabled');
-                  else atext.classList.add('prev-disabled');
-                  if (next) atext.classList.remove('next-disabled');
-                  else atext.classList.add('next-disabled');
+              doUntilDone((rp) => {
+                if (rp) {
+                  const prev = textChange(atext, false, rp);
+                  const next = textChange(atext, true, rp);
+                  if (!rp.waiting()) {
+                    if (prev) atext.classList.remove('prev-disabled');
+                    else atext.classList.add('prev-disabled');
+                    if (next) atext.classList.remove('next-disabled');
+                    else atext.classList.add('next-disabled');
+                  }
                 }
               });
             },

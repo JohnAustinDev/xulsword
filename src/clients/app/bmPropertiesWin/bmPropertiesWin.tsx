@@ -8,16 +8,14 @@ import {
   replaceBookmarkItem,
   bookmarkLabel,
   localizeBookmark,
-  localizeBookmarks,
   getModuleOfObject,
   keep,
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
 import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
-import verseKey from '../../verseKey.ts';
 import log from '../../log.ts';
-import { windowArguments } from '../../common.tsx';
+import { doUntilDone, windowArguments } from '../../common.ts';
 import { bookmarkTreeNode, getSampleText } from '../../bookmarks.tsx';
 import Grid, {
   Column,
@@ -33,6 +31,7 @@ import Button from '../../components/libxul/button.tsx';
 import Spacer from '../../components/libxul/spacer.tsx';
 import TreeView from '../../components/libxul/treeview.tsx';
 import { xulPropTypes } from '../../components/libxul/xul.tsx';
+import { localizeBookmarks } from '../common.ts';
 import './bmPropertiesWin.css';
 
 import type {
@@ -58,7 +57,9 @@ const Bookmarks = G.Prefs.getComplexValue(
   'rootfolder',
   'bookmarks',
 ) as typeof S.bookmarks.rootfolder;
-localizeBookmarks(verseKey, Bookmarks);
+doUntilDone((renderPromise) => {
+  if (renderPromise) localizeBookmarks(Bookmarks, renderPromise);
+});
 
 let HasRequiredModule = false;
 
@@ -178,6 +179,7 @@ export default class BMPropertiesWin
   componentDidMount() {
     const state = this.state as BMPropertiesState;
     const { bookmark, treeSelection } = clone(state);
+    const { renderPromise } = this;
     const { label } = bookmark;
     if (HasRequiredModule) {
       let updateState = false;
@@ -192,8 +194,8 @@ export default class BMPropertiesWin
         bookmark.label =
           'location' in bookmark
             ? bookmarkLabel(
-                verseKey,
                 bookmark.location as LocationORType | SelectVKType,
+                renderPromise,
               )
             : G.i18n.t('menu.folder.add');
       }
@@ -270,6 +272,7 @@ export default class BMPropertiesWin
   }
 
   locationHandler(selection: LocationTypes[TabTypes] | undefined) {
+    const { renderPromise } = this;
     const module = (selection && getModuleOfObject(selection)) || null;
     if (module && selection && HasRequiredModule) {
       this.setState((prevState: BMPropertiesState) => {
@@ -289,7 +292,7 @@ export default class BMPropertiesWin
               : bmdefault;
         } else {
           const { bookmark: prevbm } = prevState;
-          const label = bookmarkLabel(verseKey, selection);
+          const label = bookmarkLabel(selection, renderPromise);
           const sampleText = getSampleText(selection);
           if ('commMod' in selection) {
             bookmark = {
@@ -312,7 +315,7 @@ export default class BMPropertiesWin
               ...(prevbm as BookmarkOther),
               location: selection,
               tabType: G.Tab[module].tabType as 'Genbks' | 'Dicts',
-              label: bookmarkLabel(verseKey, selection),
+              label: bookmarkLabel(selection, renderPromise),
               sampleText: getSampleText(selection),
             };
           }
@@ -324,11 +327,17 @@ export default class BMPropertiesWin
 
   render() {
     const state = this.state as BMPropertiesState;
-    const { loadingRef, treeHandler, eventHandler, locationHandler } = this;
+    const {
+      loadingRef,
+      renderPromise,
+      treeHandler,
+      eventHandler,
+      locationHandler,
+    } = this;
     const { bookmark, hide, treeSelection, anyChildSelectable } = state;
     const { label, labelLocale, note, noteLocale } = localizeBookmark(
-      verseKey,
       bookmark,
+      renderPromise,
     );
     let location;
     if (bookmark.type === 'bookmark') {
@@ -344,6 +353,7 @@ export default class BMPropertiesWin
 
     const treeNode = bookmarkTreeNode(
       Bookmarks,
+      renderPromise,
       anyChildSelectable ? undefined : 'folder',
       treeSelection || undefined,
     );

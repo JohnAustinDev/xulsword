@@ -1,6 +1,7 @@
 import { app, Menu, shell, MenuItem } from 'electron';
 import log from 'electron-log';
 import path from 'path';
+import i18n from 'i18next';
 import {
   bookmarkItemIconPath,
   clone,
@@ -8,9 +9,10 @@ import {
   xulswordLocation,
 } from '../../common.ts';
 import C from '../../constant.ts';
-import { verseKeyCommon } from '../verseKey.ts';
+import { setXulswordTabs } from '../../viewport.ts';
+import { goToLocationGB, goToLocationVK } from '../../commands.ts';
+import { resolveXulswordPath } from '../common.ts';
 import { G } from './G.ts';
-import ComCommands from './commands.ts';
 import Window, { getBrowserWindows } from './components/window.ts';
 import Commands from './components/commands.ts';
 
@@ -18,7 +20,6 @@ import type S from '../../defaultPrefs.ts';
 import type { BrowserWindow, MenuItemConstructorOptions } from 'electron';
 import type { BookmarkFolderType, SearchType, TabTypes } from '../../type.ts';
 import type { PrefCallbackType } from '../../prefs.ts';
-import { resolveXulswordPath } from '../common.ts';
 
 type Modifiers =
   | 'CommandOrControl' // 'accel' in XUL
@@ -125,11 +126,14 @@ function updateModuleMenus(menux?: Menu) {
                   t.label + (description ? ` --- ${description.locale}` : ''),
                 type: 'checkbox',
                 click: d(() => {
-                  G.Viewport.setXulswordTabs({
-                    panelIndex,
-                    whichTab: t.module,
-                    doWhat: 'toggle',
-                  });
+                  setXulswordTabs(
+                    {
+                      panelIndex,
+                      whichTab: t.module,
+                      doWhat: 'toggle',
+                    },
+                    null,
+                  );
                 }),
               });
               submenu.insert(0, newItem);
@@ -248,7 +252,7 @@ function bookmarkProgramMenu(
   bookmarks: BookmarkFolderType,
 ): MenuItemConstructorOptions[] {
   return bookmarks.childNodes
-    .map((bm) => localizeBookmark(verseKeyCommon, bm))
+    .map((bm) => localizeBookmark(bm, null))
     .map((bm) => ({
       label: bm.label,
       type: bm.type === 'folder' ? 'submenu' : 'normal',
@@ -261,8 +265,8 @@ function bookmarkProgramMenu(
             if ('v11n' in bm.location) {
               // Don't change panels, just the location, by removing vkMod.
               if (bm.tabType === 'Texts') delete bm.location.vkMod;
-              void ComCommands.goToLocationVK(bm.location, bm.location);
-            } else void ComCommands.goToLocationGB(bm.location);
+              void goToLocationVK(bm.location, bm.location);
+            } else void goToLocationGB(bm.location);
           }
         }
       }),
@@ -344,7 +348,7 @@ function ts(key: string, sckey?: string): string {
       if (re.test(key)) {
         const m = key.match(re);
         if (m?.[1] && Number(m[1]) > 3) {
-          fix = G.i18n.t(key.replace(m[1], '3'));
+          fix = i18n.t(key.replace(m[1], '3'));
           fix = fix.replace('3', m[1]);
         }
       }
@@ -352,12 +356,12 @@ function ts(key: string, sckey?: string): string {
   );
   if (fix) return fix;
 
-  let text = G.i18n.t(key);
+  let text = i18n.t(key);
   const sckey2 = sckey || `${key}.sc`;
   if (text) {
     text = text.replace(/(?!<&)&(?!=&)/g, '&&');
-    if (G.i18n.exists(sckey2)) {
-      const l = G.i18n.t(sckey2);
+    if (i18n.exists(sckey2)) {
+      const l = i18n.t(sckey2);
       const re = new RegExp(`(${l})`, 'i');
       text = text.replace(re, '&$1');
     }
@@ -368,7 +372,7 @@ function ts(key: string, sckey?: string): string {
 // Read locale key returning undefined if it doesn't exist.
 // Also prepend with key modifiers if needed.
 function tx(key: string, modifiers?: Modifiers[]): string | undefined {
-  const text = G.i18n.t(key);
+  const text = i18n.t(key);
   if (!text) return undefined;
   if (modifiers?.length) {
     return `${modifiers.join('+')}+${text}`;
@@ -470,7 +474,7 @@ export default class MainMenuBuilder {
         },
         { type: 'separator' },
         {
-          label: `${ts('menu.import').replace(/[.…]+$/, '')} ${G.i18n.t(
+          label: `${ts('menu.import').replace(/[.…]+$/, '')} ${i18n.t(
             'menu.bookmarks',
           )}`,
           click: d(() => {
@@ -480,7 +484,7 @@ export default class MainMenuBuilder {
           }),
         },
         {
-          label: `${ts('menu.export').replace(/[.…]+$/, '')} ${G.i18n.t(
+          label: `${ts('menu.export').replace(/[.…]+$/, '')} ${i18n.t(
             'menu.bookmarks',
           )}`,
           enabled: haveBookmarks,
@@ -656,7 +660,7 @@ export default class MainMenuBuilder {
                   id: `showAll_${typekey}_${pl}`,
                   label: ts('menu.view.showAll'),
                   click: d(() => {
-                    G.Viewport.setXulswordTabs(
+                    setXulswordTabs(
                       {
                         panelIndex,
                         whichTab: type,
@@ -671,7 +675,7 @@ export default class MainMenuBuilder {
                   id: `hideAll_${typekey}_${pl}`,
                   label: ts('menu.view.hideAll'),
                   click: d(() => {
-                    G.Viewport.setXulswordTabs(
+                    setXulswordTabs(
                       {
                         panelIndex,
                         whichTab: type,
@@ -694,7 +698,7 @@ export default class MainMenuBuilder {
       label: ts('menu.view'),
       submenu: [
         {
-          label: G.i18n.t('Toggle Full Screen'),
+          label: i18n.t('Toggle Full Screen'),
           visible: false,
           accelerator: C.UI.AcceleratorKey.toggleFullScreen,
           click: d(() => {
@@ -728,7 +732,7 @@ export default class MainMenuBuilder {
               id: `menu_showAll_${pl}`,
               enabled: panelIndex === -1 || Boolean(panels[panelIndex]),
               click: d(() => {
-                G.Viewport.setXulswordTabs(
+                setXulswordTabs(
                   {
                     panelIndex,
                     whichTab: 'all',
@@ -753,7 +757,7 @@ export default class MainMenuBuilder {
               id: `menu_hideAll_${pl}`,
               enabled: panelIndex === -1 || Boolean(panels[panelIndex]),
               click: d(() => {
-                G.Viewport.setXulswordTabs(
+                setXulswordTabs(
                   {
                     panelIndex,
                     whichTab: 'all',
@@ -773,12 +777,12 @@ export default class MainMenuBuilder {
       label: ts('menu.options'),
       submenu: [
         {
-          label: G.i18n.t('Theme', {
+          label: i18n.t('Theme', {
             ns: 'xulsword4',
           }),
           submenu: [
             {
-              label: G.i18n.t('Classic', {
+              label: i18n.t('Classic', {
                 ns: 'xulsword4',
               }),
               id: `global.skin_val_arabesque`,
@@ -791,7 +795,7 @@ export default class MainMenuBuilder {
               }),
             },
             {
-              label: G.i18n.t('Dark', {
+              label: i18n.t('Dark', {
                 ns: 'xulsword4',
               }),
               id: `global.skin_val_dark`,
@@ -804,7 +808,7 @@ export default class MainMenuBuilder {
               }),
             },
             {
-              label: G.i18n.t('Light', {
+              label: i18n.t('Light', {
                 ns: 'xulsword4',
               }),
               id: `global.skin_val_`,
@@ -946,7 +950,7 @@ export default class MainMenuBuilder {
           accelerator: tx('menu.bmitem.add.ac', ['CommandOrControl']),
           click: d(() => {
             Commands.openBookmarkProperties(
-              G.i18n.t('menu.bookmark.add'),
+              i18n.t('menu.bookmark.add'),
               {},
               {
                 location: xulswordLocation(),
@@ -959,7 +963,7 @@ export default class MainMenuBuilder {
           accelerator: tx('menu.bmitem.add.ac', ['CommandOrControl', 'Shift']),
           click: d(() => {
             Commands.openBookmarkProperties(
-              G.i18n.t('menu.usernote.add'),
+              i18n.t('menu.usernote.add'),
               {},
               {
                 location: xulswordLocation(),
@@ -972,7 +976,7 @@ export default class MainMenuBuilder {
           accelerator: tx('menu.bmitem.add.ac', ['Alt', 'Shift']),
           click: d(() => {
             Commands.openBookmarkProperties(
-              G.i18n.t('menu.folder.add'),
+              i18n.t('menu.folder.add'),
               {},
               {
                 location: undefined,

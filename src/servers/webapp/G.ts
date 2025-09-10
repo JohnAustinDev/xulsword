@@ -18,8 +18,8 @@ import {
   localeConfig,
   getConfig,
   getBooksInVKModules,
-  getLocalizedBooks,
-  getLocaleDigits,
+  getBooksLocalized,
+  getBooksLocalizedAll,
   getAllDictionaryKeyList,
   genBookTreeNodes,
   inlineFile,
@@ -28,6 +28,7 @@ import {
   getAudioConf,
   getModuleConf,
   getModuleConfs,
+  getLocaleDigits,
 } from '../common.ts';
 import { callBatch } from '../handleG.ts';
 
@@ -54,6 +55,22 @@ export const GI: GITypeMain = {
 
   get Tab() {
     return getTab();
+  },
+
+  get Books() {
+    return getBooks();
+  },
+
+  get Book() {
+    return getBook();
+  },
+
+  get BooksLocalized() {
+    return getBooksLocalized();
+  },
+
+  get BooksLocalizedAll() {
+    return getBooksLocalizedAll();
   },
 
   get Config() {
@@ -90,14 +107,6 @@ export const GI: GITypeMain = {
 
   get BooksInVKModules() {
     return getBooksInVKModules();
-  },
-
-  Books(...args: Parameters<GType['Books']>): ReturnType<GType['Books']> {
-    return getBooks(...args);
-  },
-
-  Book(...args: Parameters<GType['Book']>): ReturnType<GType['Book']> {
-    return getBook(...args);
   },
 
   inlineFile(
@@ -140,12 +149,6 @@ export const GI: GITypeMain = {
     ...args: Parameters<GType['getBkChsInV11n']>
   ): ReturnType<GType['getBkChsInV11n']> {
     return getBkChsInV11n(...args);
-  },
-
-  getLocalizedBooks(
-    ...args: Parameters<GType['getLocalizedBooks']>
-  ): ReturnType<GType['getLocalizedBooks']> {
-    return getLocalizedBooks(...args);
   },
 
   getLocaleDigits(

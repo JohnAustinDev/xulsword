@@ -1,17 +1,17 @@
 import type React from 'react';
+import VerseKey from '../../../verseKey.ts';
+import { goToLocationVK } from '../../../commands.ts';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import { clone, escapeRE, ofClass } from '../../../common.ts';
-import verseKey from '../../verseKey.ts';
 import { getElementData } from '../../htmlData.ts';
 import { G, GI } from '../../G.ts';
-import Commands from '../../commands.ts';
 import {
   doUntilDone,
   safeScrollIntoView,
   notMouse,
   windowArguments,
-} from '../../common.tsx';
+} from '../../common.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { textChange } from '../atext/ztext.ts';
 import { aTextWheelScroll, chapterChange } from '../atext/zversekey.ts';
@@ -321,7 +321,7 @@ export default function handler(
         }
         case 'bookgroup': {
           const { bookgroup, v11n } = targ.element.dataset;
-          const Book = G.Book(G.i18n.language);
+          const { Book } = G;
           const bg = bookgroup as BookGroupType;
           const bk = bookgroup ? Book[C.SupportedBooks[bg][0]] : null;
           if (bk) {
@@ -385,7 +385,7 @@ export default function handler(
           const v11n = (m && G.Tab[m].v11n) || null;
           doUntilDone((renderPromise2) => {
             if (location && m && b && v && v11n) {
-              const newloc = verseKey(
+              const newloc = new VerseKey(
                 {
                   book: b as OSISBookType,
                   chapter: Number(c),
@@ -526,7 +526,7 @@ export default function handler(
                 lastverse: lastverse || 1,
                 v11n,
               };
-              void Commands.goToLocationVK(loc, loc);
+              void goToLocationVK(loc, loc);
             }
           }
           break;
@@ -610,7 +610,7 @@ function handleDictKeyInput(
                 return { modkey: firstMatch[2] };
               });
             } else if (key !== 'backspace') {
-              if (Build.isElectronApp) (G as GType).Shell.beep();
+              // if (Build.isElectronApp) (G as GType).Shell.beep();
               select.style.color = 'red';
             }
           }

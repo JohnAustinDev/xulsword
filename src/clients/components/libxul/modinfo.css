@@ -49,6 +49,7 @@
 }
 .modlist textarea {
   opacity: 0.7;
+  background-color: var(--bg-disabled);
   width: calc(100% - 20px);
   font-family: courier;
   font-size: 13px;

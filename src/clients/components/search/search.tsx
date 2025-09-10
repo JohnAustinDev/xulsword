@@ -9,6 +9,7 @@ import {
   drop,
   sanitizeHTML,
   stringHash,
+  dString,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
@@ -16,13 +17,12 @@ import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
 import {
   i18nApplyOpts,
-  dString,
   iframeAutoHeight,
   moduleIncludesStrongs,
   windowArguments,
   getStatePref,
   setStatePref,
-} from '../../common.tsx';
+} from '../../common.ts';
 import Popup from '../../components/popup/popup.tsx';
 import {
   popupParentHandler as popupParentHandlerH,

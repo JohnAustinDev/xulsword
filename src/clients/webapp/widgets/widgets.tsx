@@ -7,7 +7,7 @@ import {
   getReactComponents,
 } from '../common.ts';
 import C from '../../../constant.ts';
-import { cachePreload } from '../../common.tsx';
+import { cachePreload } from '../../common.ts';
 import log from '../../log.ts';
 import Prefs from '../prefs.ts';
 import WidgetVK from './widgetVK.tsx';
@@ -43,7 +43,7 @@ if (widgets.length) {
       if (!locale || !C.Locales.some((x) => x[0] === locale)) locale = 'en';
       Prefs.setCharPref('global.locale', locale);
 
-      cachePreload(locale)
+      cachePreload([['Full publication', { ns: 'widgets' }]])
         .then(() => {
           widgets.forEach((widget) => {
             const { id: compid } = widget;

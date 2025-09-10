@@ -8,10 +8,9 @@ import {
 import parseExtendedVKRef from '../../../extrefParser.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G, GI } from '../../G.ts';
-import { moduleInfoHTML } from '../../common.tsx';
+import { moduleInfoHTML } from '../../common.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.tsx';
 import { getElementData } from '../../htmlData.ts';
-import verseKey from '../../verseKey.ts';
 import log from '../../log.ts';
 import { getDictEntryHTML, getLemmaHTML } from '../atext/zdictionary.ts';
 import { getIntroductions, getNoteHTML } from '../atext/zversekey.ts';
@@ -142,11 +141,10 @@ export function getPopupHTML(
         if (context in G.Tab) {
           const bibleReflist = reflist.join(';');
           const parsed = parseExtendedVKRef(
-            verseKey,
             bibleReflist,
+            renderPromise,
             location,
             [],
-            renderPromise,
           );
           if (parsed.length) {
             let b = 'Gen';

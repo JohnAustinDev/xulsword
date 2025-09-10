@@ -19,6 +19,8 @@ import {
   gbQualifiedPath,
   encodeWindowsNTFSPath,
 } from '../../../common.ts';
+import RefParser from '../../../refParser.ts';
+import VerseKey from '../../../verseKey.ts';
 import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
 import S from '../../../defaultPrefs.ts';
@@ -28,9 +30,8 @@ import importBookmarkObject, {
   canUndo,
   importDeprecatedBookmarks,
   Transaction,
-} from '../../components/bookmarks.tsx';
+} from '../../components/bookmarks.ts';
 import { getTab, getAudioConfs, genBookTreeNodes } from '../../common.ts';
-import verseKey from '../../verseKey.ts';
 import Prefs from '../prefs.ts';
 import LocalFile from '../../components/localFile.ts';
 import { modalInstall, scanAudio } from './module.ts';
@@ -44,26 +45,18 @@ import type {
   AudioPath,
   BookmarkItemType,
   GenBookAudio,
-  AudioPlayerSelectionGB,
   LocationORType,
   LocationVKType,
   NewModulesType,
-  OSISBookType,
   SearchType,
-  AudioPlayerSelectionVK,
   LocationVKCommType,
 } from '../../../type.ts';
-import type {
-  ControllerState,
-  PrintOptionsType,
-} from '../../../clients/controller.tsx';
+import type { PrintOptionsType } from '../../../clients/controller.tsx';
 import type { AboutWinState } from '../../../clients/app/aboutWin/aboutWin.tsx';
 import type { PrintPassageState } from '../../../clients/components/printPassage/printPassage.tsx';
 import type { CopyPassageState } from '../../../clients/app/copyPassageWin/copyPassageWin.tsx';
 import type { SelectVKType } from '../../../clients/components/libxul/selectVK.tsx';
 import type { BMPropertiesStateWinArg } from '../../../clients/app/bmPropertiesWin/bmPropertiesWin.tsx';
-import RefParser from '../../../refParser.ts';
-import { G } from '../G.ts';
 
 // Prefs2 requires the calling window argument so that window -2 may be
 // passed. The value -2 means the Pref changes should be pushed to all
@@ -349,21 +342,9 @@ const Commands = {
       let ctot = 0;
       const tab = getTab();
       const audioExtRE = new RegExp(`^\\.(${C.SupportedAudio.join('|')})$`);
-      const refParse = new RefParser(
-        Build.isElectronApp
-          ? C.Locales.reduce(
-              (p, c) => {
-                p[c[0]] = G.getLocaleDigits(c[0]);
-                return p;
-              },
-              {} as Record<string, string[] | null>,
-            )
-          : { [G.i18n.language]: G.getLocaleDigits() },
-        G.getLocalizedBooks(Build.isElectronApp ? true : [G.i18n.language]),
-        {
-          locales: C.Locales.map((l) => l[0]),
-        },
-      );
+      const refParse = new RefParser(null, {
+        locales: C.Locales.map((l) => l[0]),
+      });
 
       const getImportFiles = (dir: LocalFile): LocalFile[] => {
         const r: LocalFile[] = [];
@@ -437,7 +418,6 @@ const Commands = {
       }
 
       let files: CopyFilesType[] = [];
-      let moduleValid = false;
       let genbkPaths: GenBookAudio | null = null;
       let prependGenbkRedRoot: { ord: boolean; key: boolean } = {
         ord: false,
@@ -446,15 +426,15 @@ const Commands = {
       progress(0);
       try {
         importFiles.forEach((file) => {
+          let fileValid = true;
           const fp = fpath.parse(fpath.relative(fromdir.path, file.path));
           const module = getModule(fp.dir.split(C.FSSEP).shift());
 
           if (!modules.includes(module)) {
             // Copy each module's audio after file validation is complete.
-            if (moduleValid && files.length) copyFiles(files);
+            if (files.length) copyFiles(files);
             else modules.pop();
             files = [];
-            moduleValid = true;
             genbkPaths = null;
             prependGenbkRedRoot = { ord: false, key: false };
             if (module in tab && tab[module].type === C.GENBOOK) {
@@ -464,7 +444,6 @@ const Commands = {
           }
 
           if (
-            moduleValid &&
             module &&
             file &&
             audioExtRE.test(fp.ext.toLowerCase()) &&
@@ -493,7 +472,7 @@ const Commands = {
               let em: [string, AudioPath] | undefined;
               if (ords.length !== keys.length) {
                 newmods.reports.push({ error: `Invalid path. (${file.path})` });
-                moduleValid = false;
+                fileValid = false;
               } else if (keys.every((k) => k)) {
                 // gb key lookup
                 const [kRedRoot] = Object.keys(genbkPaths);
@@ -508,11 +487,8 @@ const Commands = {
                   );
                   if (em) prependGenbkRedRoot.key = true;
                 }
-                if (!em)
-                  newmods.reports.push({
-                    error: `'${k}' not found in general book ${module}. (${file.path})`,
-                  });
-              } else {
+              }
+              if (!em) {
                 // gb ord lookup
                 const oRedRoot = 0;
                 if (prependGenbkRedRoot.ord) ords.unshift(oRedRoot);
@@ -533,12 +509,12 @@ const Commands = {
                 gbQualifiedPath(em[0], genbkPaths)
                   .split(C.GBKSEP)
                   .forEach((p) => dest.push(encodeWindowsNTFSPath(p, false)));
-              } else moduleValid = false;
+              }
             } else {
               // If files is not for an installed genbk, then only OSIS book,
               // chapter and order number are validated.
               let firstSub = true;
-              while (moduleValid && path.length) {
+              while (fileValid && path.length) {
                 let p = path.shift();
                 if (p) {
                   const pnum = Number(p.replace(/^(\d+).*?$/, '$1'));
@@ -551,7 +527,7 @@ const Commands = {
                     newmods.reports.push({
                       error: `Path segment '${p}' must begin with a number. (${file.path})`,
                     });
-                    moduleValid = false;
+                    fileValid = false;
                   } else p = pad(p, 3, 0);
 
                   dest.push(p);
@@ -560,14 +536,14 @@ const Commands = {
                   newmods.reports.push({
                     error: `Empty path segment. (${file.path})`,
                   });
-                  moduleValid = false;
+                  fileValid = false;
                 }
               }
             }
-            if (moduleValid) files.push([module, file, dest]);
+            if (fileValid) files.push([module, file, dest]);
           }
         });
-        if (files.length && moduleValid) copyFiles(files);
+        if (files.length) copyFiles(files);
         else modules.pop();
       } finally {
         progress(-1);
@@ -655,8 +631,6 @@ const Commands = {
         Subscription.publish.modulesInstalled(newmods, callingWinID);
       }
     }
-
-    Subscription.publish.modulesInstalled(newmods, callingWinID);
   },
 
   async print(print: PrintOptionsType): Promise<void> {
@@ -773,7 +747,7 @@ const Commands = {
       const passage: SelectVKType | null =
         location && vkMod
           ? {
-              ...verseKey(location).location(vk11n),
+              ...new VerseKey(location, null).location(vk11n),
               vkMod,
             }
           : null;

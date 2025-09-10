@@ -10,7 +10,7 @@ import {
   setStatePref,
   libswordImgSrc,
   printRefs,
-} from '../../common.tsx';
+} from '../../common.ts';
 import log from '../../log.ts';
 import analytics from '../../analytics.ts';
 import RenderPromise, {

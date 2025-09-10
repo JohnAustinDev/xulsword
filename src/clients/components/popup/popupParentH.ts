@@ -1,16 +1,12 @@
 import type React from 'react';
 import Subscription from '../../../subscription.ts';
 import { clone, ofClass, randomID } from '../../../common.ts';
+import { goToLocationVK } from '../../../commands.ts';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
-import Commands from '../../commands.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
-import {
-  safeScrollIntoView,
-  notMouse,
-  windowArguments,
-} from '../../common.tsx';
+import { safeScrollIntoView, notMouse, windowArguments } from '../../common.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 
 import type { GType, PlaceType, SearchType, ShowType } from '../../../type.ts';
@@ -291,7 +287,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
                 lastverse: lastverse || 1,
                 v11n,
               };
-              void Commands.goToLocationVK(loc, loc);
+              void goToLocationVK(loc, loc);
             }
           }
           break;

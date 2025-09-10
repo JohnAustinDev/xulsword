@@ -8,7 +8,7 @@ import {
   functionalComponentRenderPromise,
   printRefs,
   rootRenderPromise,
-} from '../../common.tsx';
+} from '../../common.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button.tsx';
 import Spacer from '../libxul/spacer.tsx';

@@ -1,15 +1,9 @@
 import C from './constant.ts';
-import { clone } from './common.ts';
+import { clone, G, GICall, dString } from './common.ts';
+import RefParser, { RefParserOptionsType } from './refParser.ts';
 
 import type { GType, LocationVKType, OSISBookType, V11nType } from './type.ts';
-import type RefParser from './refParser.ts';
-
-type VerseKeyGtype = {
-  convertLocation?: GType['LibSword']['convertLocation'];
-  Book: GType['Book']; // These web app G calls must be cache preloaded.
-  Tab: () => GType['Tab']; // These web app G calls must be cache preloaded.
-  getBkChsInV11n: GType['getBkChsInV11n'];
-};
+import type RenderPromise from './clients/renderPromise.ts';
 
 // VerseKey is an object representing a Bible reference of a verse up to a
 // whole chapter. It converts between verse systems as needed. Methods include
@@ -17,23 +11,19 @@ type VerseKeyGtype = {
 export default class VerseKey {
   readonly #parser: RefParser;
 
-  readonly #gfunctions: VerseKeyGtype;
-
-  readonly #dString: (str: string | number, locale?: string) => string;
-
   readonly #loc: LocationVKType;
+
+  readonly #renderPromise: RenderPromise | null; // cannot be null in clients
 
   #v11nCurrent: V11nType | null;
 
   constructor(
-    parser: RefParser,
-    gfunction: VerseKeyGtype,
-    dString: (str: string | number, locale?: string) => string,
     location: LocationVKType | { parse: string; v11n: V11nType },
+    renderPromise: RenderPromise | null,
+    parserOptions?: RefParserOptionsType,
   ) {
-    this.#parser = parser;
-    this.#gfunctions = gfunction;
-    this.#dString = dString;
+    this.#parser = new RefParser(renderPromise, parserOptions);
+    this.#renderPromise = renderPromise;
     if ('parse' in location) {
       const parsed = this.parseLocation(location.parse, location.v11n);
       if (parsed.book) {
@@ -59,7 +49,7 @@ export default class VerseKey {
   // be 0. If any range contains verses beyond the chapter, those verses will not be
   // included in the VerseKey.
   parseLocation(location: string, tov11n?: V11nType | null) {
-    const Tab = this.#gfunctions.Tab();
+    const { Tab } = G();
     let work;
     let loc = location.trim();
     const match = loc.match(/^(\w[\w\d]+):(.*)$/);
@@ -120,8 +110,16 @@ export default class VerseKey {
     if (!C.SupportedV11nMaps.includes(fromv11n)) return false;
     if (!C.SupportedV11nMaps.includes(tov11n)) return false;
     const { book, chapter, verse, lastverse } = this.#loc;
-    const toBks = this.#gfunctions.getBkChsInV11n(tov11n);
-    const fromBks = this.#gfunctions.getBkChsInV11n(fromv11n);
+    const toBks = GICall([], this.#renderPromise, [
+      'getBkChsInV11n',
+      null,
+      [tov11n],
+    ]) as ReturnType<GType['getBkChsInV11n']>;
+    const fromBks = GICall([], this.#renderPromise, [
+      'getBkChsInV11n',
+      null,
+      [fromv11n],
+    ]) as ReturnType<GType['getBkChsInV11n']>;
     if (!toBks || !toBks.some((x) => x[0] === book)) return false;
     const bkfo = fromBks && fromBks.find((x) => x[0] === book);
     const maxch: number = bkfo ? bkfo[1] : 0;
@@ -202,14 +200,11 @@ export default class VerseKey {
     const tov11n = v11n || this.#v11nCurrent;
     if (!tov11n || !this.#loc.v11n) return this.#loc;
     if (this.#loc.v11n === tov11n) return this.#loc;
-    if (
-      !this.#allowConvertLocation(tov11n) ||
-      !this.#gfunctions.convertLocation
-    ) {
-      return this.#loc;
-    }
-    const parsed = this.parseLocation(
-      this.#gfunctions.convertLocation(
+    if (!this.#allowConvertLocation(tov11n)) return this.#loc;
+    const loc = GICall(this.#loc.v11n, this.#renderPromise, [
+      'LibSword',
+      'convertLocation',
+      [
         this.#loc.v11n,
         [
           this.#loc.book,
@@ -220,9 +215,9 @@ export default class VerseKey {
           .filter(Boolean)
           .join('.'),
         tov11n,
-      ),
-      tov11n,
-    );
+      ],
+    ]);
+    const parsed = this.parseLocation(loc, tov11n);
     if (parsed.book) return parsed as LocationVKType;
     return { book: 'Gen', chapter: 1, v11n: 'KJV' };
   }
@@ -237,8 +232,7 @@ export default class VerseKey {
     v11n = null as V11nType | null,
     notHTML = false as boolean,
   ): string {
-    const { localeDigits } = this.#parser;
-    const Book = this.#gfunctions.Book(locale);
+    const { Book } = G();
     const l = this.location(v11n || this.#v11nCurrent);
     const guidir = C.Locales.reduce(
       (p, c) => (c[0] === locale ? c[2] : p),
@@ -266,6 +260,6 @@ export default class VerseKey {
     }
     parts.push('');
     const res = parts.join(d);
-    return this.#dString(res, locale);
+    return dString(res, locale);
   }
 }

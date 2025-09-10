@@ -6,7 +6,7 @@ import {
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
-import { cachePreload } from '../../common.tsx';
+import { cachePreload } from '../../common.ts';
 import log from '../../log.ts';
 import renderToRoot from '../../controller.tsx';
 import Xulsword from '../../components/xulsword/xulsword.tsx';
@@ -156,7 +156,7 @@ socket.on('connect', () => {
     let numPanels = forceSinglePanel ? 1 : panels.length;
     if (numPanels > maxPanels) numPanels = maxPanels;
 
-    cachePreload(locale)
+    cachePreload()
       .then(() => {
         setDefaultBibleBrowserPrefs(Prefs);
         setGlobalPanels(Prefs, numPanels);

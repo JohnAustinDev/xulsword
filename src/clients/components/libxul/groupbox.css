@@ -3,7 +3,7 @@
   padding: 5px;
   border: 2px solid var(--border-dark);
   border-radius: 4px;
-  background-color: var(--bg-interface-dark);
+  background-color: var(--bg-bp6-light);
 }
 
 .groupbox .groupbox-title {

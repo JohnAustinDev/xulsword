@@ -1,6 +1,5 @@
 import { getSwordOptions } from '../common.ts';
 import C from '../constant.ts';
-import verseKey from './verseKey.ts';
 
 import type {
   GITypeMain,
@@ -10,6 +9,7 @@ import type {
   ParamShift,
   TextVKType,
 } from '../type.ts';
+import VerseKey from '../verseKey.ts';
 
 // Given one or more LocationVKType objects and target module, this function
 // attempts to return a TextVKType object using LibSword. Even if the target
@@ -80,7 +80,7 @@ export function locationVKText(
       const tov11n = compOK && tab[compOK].v11n;
       if (tov11n) {
         targetmod = compOK;
-        location = verseKey(location).location(tov11n);
+        location = new VerseKey(location, null).location(tov11n);
         i.companion = true;
       }
     }
@@ -93,7 +93,7 @@ export function locationVKText(
         (type === C.COMMENTARY && commentaries);
       if (isOK && v11n && book && G.getBooksInVKModule(module).includes(book)) {
         let text;
-        const modloc = verseKey(loc);
+        const modloc = new VerseKey(loc, null);
         if (loc.subid) {
           text = getFootnoteText(G, loc, mod);
         } else {

@@ -57,10 +57,9 @@ import type PrefsElectron from './app/prefs.ts';
 // module book order in lieu of locale book order or xulsword default order
 // (see C.SupportedBooks). Doing so provides a common order for book lists
 // etc., simpler data structures, and a better experience for the user.
-export function getBooks(locale?: string): BookType[] {
-  const loc: string =
-    (C.Locales.find((l) => l[0] === locale) && locale) || i18n.language;
-  if (!Cache.has('books', loc)) {
+export function getBooks(): BookType[] {
+  const locale = i18n.language;
+  if (!Cache.has('books', locale)) {
     let books: BookType[] = [];
     let index = 0;
     C.SupportedBookGroups.forEach(
@@ -78,7 +77,12 @@ export function getBooks(locale?: string): BookType[] {
         });
       },
     );
-    const stfile = path.join(Dirs.path.xsAsset, 'locales', loc, 'books.json');
+    const stfile = path.join(
+      Dirs.path.xsAsset,
+      'locales',
+      locale,
+      'books.json',
+    );
     const raw = fs.readFileSync(stfile);
     let data: any;
     if (raw?.length) {
@@ -118,17 +122,15 @@ export function getBooks(locale?: string): BookType[] {
       }
     });
 
-    Cache.write(books, 'books', loc);
+    Cache.write(books, 'books', locale);
   }
 
-  return Cache.read('books', loc);
+  return Cache.read('books', locale);
 }
 
-export function getBook(locale?: string): Record<OSISBookType, BookType> {
-  const loc: string =
-    (C.Locales.find((l) => l[0] === locale) && locale) || i18n.language;
+export function getBook(): Record<OSISBookType, BookType> {
   const book = {} as ReturnType<typeof getBook>;
-  getBooks(loc).forEach((bk: BookType) => {
+  getBooks().forEach((bk: BookType) => {
     book[bk.code] = bk;
   });
   return book;
@@ -494,10 +496,10 @@ export function resolveXulswordPath(path: string): string {
 }
 
 // Built-in local repositories cannot be disabled, deleted or changed.
-// Implemented as a function to allow G.i18n to initialize.
+// Implemented as a function to allow i18n to initialize.
 export function getBuiltInRepos() {
   return clone(C.SwordBultinRepositories).map((r) => {
-    r.name = localizeString(r.name);
+    r.name = localizeString(r.name, null);
     r.path = resolveXulswordPath(r.path);
     return r;
   });
@@ -873,7 +875,7 @@ export function getLocaleConfigs(): Record<string, ConfigType> {
 }
 
 export function getLocaleDigits(locale?: string): string[] | null {
-  const lng = locale || i18n.language;
+  const lng = locale ?? i18n.language;
   let r: string[] | null = null;
   const toptions = { lng, ns: 'numbers' };
   for (let i = 0; i <= 9; i += 1) {
@@ -892,40 +894,46 @@ export function getLocaleDigits(locale?: string): string[] | null {
   return r;
 }
 
-export function getLocalizedBooks(
-  getAll = false as boolean | string[],
-): Record<string, Record<string, [string[], string[], string[]]>> {
-  const ckey = `getLocalizedBooks(${stringHash(getAll)})`;
+type BooksLocalizedType = {
+  [locale: string]: { [code: string]: [string[], string[], string[]] };
+};
+
+export function getBooksLocalized(): BooksLocalizedType {
+  const locale = i18n.language;
+  return getBooksLocalizedLocale(locale);
+}
+export function getBooksLocalizedAll(): BooksLocalizedType {
+  const r: BooksLocalizedType = {};
+  C.Locales.map((l) => l[0]).forEach((locale) => {
+    const bll = getBooksLocalizedLocale(locale);
+    r[locale] = bll[locale];
+  });
+  return r;
+}
+export function getBooksLocalizedLocale(locale: string) {
+  const b: BooksLocalizedType = { [locale]: {} };
+  const ckey = `getBooksLocalizedLocale(${locale})`;
   if (!Cache.has(ckey)) {
-    const locs: string[] = [];
-    if (Array.isArray(getAll)) locs.push(...getAll);
-    else if (getAll) locs.push(...C.Locales.map((l) => l[0]));
-    else locs.push(i18n.language);
+    const toptions = { lng: locale, ns: 'books' };
     // Currently xulsword locales only include ot and nt books.
-    const r: ReturnType<typeof getLocalizedBooks> = {};
-    locs.forEach((locale) => {
-      r[locale] = {};
-      const toptions = { lng: locale, ns: 'books' };
-      ['ot', 'nt'].forEach((bgs) => {
-        const bg = bgs as BookGroupType;
-        C.SupportedBooks[bg].forEach((code) => {
-          const keys = [code, `Long${code}`, `${code}Variations`];
-          r[locale][code] = keys.map((key) => {
-            let str = '';
-            // Must test for key's existence. Using return === key as the
-            // existence check gives false fails: ex. Job === Job.
-            if (i18n && i18n.exists(key, toptions)) {
-              str = i18n.t(key, toptions);
-            }
-            return str ? str.split(/\s*,\s*/) : [];
-          }) as any;
+    ['ot', 'nt'].forEach((bgs) => {
+      const bg = bgs as BookGroupType;
+      C.SupportedBooks[bg].forEach((code) => {
+        const keys = [code, `Long${code}`, `${code}Variations`];
+        (b as any)[locale][code] = keys.map((key) => {
+          let str = '';
+          // Must test for key's existence. Using return === key as the
+          // existence check gives false fails: ex. Job === Job.
+          if (i18n && i18n.exists(key, toptions)) {
+            str = i18n.t(key, toptions);
+          }
+          return str ? str.split(/\s*,\s*/) : [];
         });
       });
     });
-    Cache.write(r, ckey);
+    Cache.write(b, ckey);
   }
-
-  return Cache.read(ckey);
+  return Cache.read(ckey) as typeof b;
 }
 
 // Return the contents of a file. In Electron mode, filepath is an absolute

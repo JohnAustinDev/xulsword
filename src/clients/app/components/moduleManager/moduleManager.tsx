@@ -19,7 +19,7 @@ import {
   setStatePref,
   windowArguments,
   topToaster,
-} from '../../../common.tsx';
+} from '../../../common.ts';
 import { addClass, xulPropTypes } from '../../../components/libxul/xul.tsx';
 import Button from '../../../components/libxul/button.tsx';
 import { Hbox, Vbox, Box } from '../../../components/libxul/boxes.tsx';
@@ -460,7 +460,7 @@ export default class ModuleManager
           } else if (c.xsmType === 'XSM_audio') {
             mtype = `XSM ${G.i18n.t('audio.label')}`;
           }
-          const reponame = localizeString(c.sourceRepository.name);
+          const reponame = localizeString(c.sourceRepository.name, null);
           const modrepkey = repositoryModuleKey(c);
           // Re-use module table rows across all module table loads, so that
           // user changes are not forgotten!

@@ -1,9 +1,9 @@
 import React from 'react';
 import { Intent } from '@blueprintjs/core';
+import VerseKey from '../../../verseKey.ts';
 import { sanitizeHTML } from '../../../common.ts';
 import { GE as G, GI } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
-import verseKey from '../../verseKey.ts';
 import {
   windowArguments,
   computed2inlineStyle,
@@ -12,7 +12,7 @@ import {
   getStatePref,
   setStatePref,
   topToaster,
-} from '../../common.tsx';
+} from '../../common.ts';
 import RenderPromise, {
   RenderPromiseComponent,
   RenderPromiseState,
@@ -32,7 +32,6 @@ import './copyPassageWin.css';
 
 import type { ToastProps } from '@blueprintjs/core';
 import type S from '../../../defaultPrefs.ts';
-import type VerseKey from '../../../verseKey.ts';
 import type { XulProps } from '../../components/libxul/xul.tsx';
 import type { SelectVKType } from '../../components/libxul/selectVK.tsx';
 
@@ -197,10 +196,10 @@ export default class CopyPassageWin
       const refdiv = testdiv.appendChild(document.createElement('div'));
       const vks: VerseKey[] = [];
       if (!passage.lastchapter || passage.chapter === passage.lastchapter) {
-        vks.push(verseKey(passage, renderPromise));
+        vks.push(new VerseKey(passage, renderPromise));
       } else {
         vks.push(
-          verseKey(
+          new VerseKey(
             {
               ...passage,
               lastverse: undefined,
@@ -209,7 +208,7 @@ export default class CopyPassageWin
           ),
         );
         vks.push(
-          verseKey(
+          new VerseKey(
             {
               ...passage,
               chapter: passage.lastchapter || passage.chapter,

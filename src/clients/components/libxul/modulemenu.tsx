@@ -1,11 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import C from '../../../constant.ts';
-import { G } from '../../G.ts';
+import { G, GI } from '../../G.ts';
 import {
   functionalComponentRenderPromise,
   getLangReadable,
-} from '../../common.tsx';
+} from '../../common.ts';
 import { addClass, xulPropTypes, type XulProps } from './xul.tsx';
 import Menulist from './menulist.tsx';
 
@@ -97,7 +97,7 @@ export default function ModuleMenu({
           return (
             <optgroup
               key={[type].join('.')}
-              label={G.i18n.t(C.SupportedTabTypes[type])}
+              label={GI.i18n.t('', renderPromise, C.SupportedTabTypes[type])}
             >
               {mtabs
                 .map((tab) => {

@@ -5,7 +5,7 @@ import renderToRoot from '../../controller.tsx';
 import log from '../../log.ts';
 import Search from '../../components/search/search.tsx';
 import { Indexing } from '../../components/search/searchH.tsx';
-import { windowArguments } from '../../common.tsx';
+import { windowArguments } from '../../common.ts';
 import './searchWin.css';
 
 import type { SearchType } from '../../../type.ts';

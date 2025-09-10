@@ -13,7 +13,7 @@ import Cache from '../cache.ts';
 import C from '../constant.ts';
 import DynamicStyleSheet from './style.ts';
 import ContextData from './contextData.ts';
-import { setGlobalSkin, windowArguments } from './common.tsx';
+import { setGlobalSkin, windowArguments } from './common.ts';
 import log from './log.ts';
 import {
   delayHandler,
@@ -323,14 +323,14 @@ function Controller(props: ControllerProps) {
           };
           const haserror = newmods.reports.some((r) => r.error);
           const haswarning = newmods.reports.some((r) => r.warning);
-          if (haserror) GT.Shell.beep();
+          // if (haserror) GT.Shell.beep();
           if (haserror || (Build.isDevelopment && haswarning)) {
             dialog.push(
               <Dialog
                 className="modulesInstalled"
                 body={
                   <>
-                    {newmods.reports.map((r) =>
+                    {newmods.reports.slice(0, 10).map((r) =>
                       Object.entries(r).map((entry) => {
                         const [type, msg] = entry;
                         return (

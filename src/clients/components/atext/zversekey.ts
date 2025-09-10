@@ -1,27 +1,25 @@
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
-import { getSwordOptions, JSON_attrib_stringify } from '../../../common.ts';
-import parseExtendedVKRef from '../../../extrefParser.ts';
-import { getElementData } from '../../htmlData.ts';
-import verseKey from '../../verseKey.ts';
+import VerseKey from '../../../verseKey.ts';
 import {
   dString,
+  getSwordOptions,
+  JSON_attrib_stringify,
+} from '../../../common.ts';
+import parseExtendedVKRef from '../../../extrefParser.ts';
+import { getElementData } from '../../htmlData.ts';
+import {
   getCompanionModules,
   getMaxChapter,
   getMaxVerse,
   getLocalizedChapterTerm,
   getExtRefHTML,
   safeScrollIntoView,
-} from '../../common.tsx';
+} from '../../common.ts';
 import { G, GI } from '../../G.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 
-import type {
-  LocationVKType,
-  LookupInfo,
-  OSISBookType,
-  ShowType,
-} from '../../../type.ts';
+import type { LocationVKType, LookupInfo, ShowType } from '../../../type.ts';
 import type RenderPromise from '../../renderPromise.ts';
 import type Xulsword from '../xulsword/xulsword.tsx';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
@@ -217,15 +215,15 @@ export function getNoteHTML(
                 // If this is a cross reference, then parse the note body for references and display them
                 if (Build.isWebApp && !openCRs) {
                   const vks = parseExtendedVKRef(
-                    verseKey,
                     innerHtmlValue,
+                    renderPromise,
                     location,
                   );
                   html += vks
                     .map((vk) =>
                       typeof vk === 'string'
                         ? vk
-                        : verseKey(vk, renderPromise).readable(
+                        : new VerseKey(vk, renderPromise).readable(
                             G.i18n.language,
                             location.v11n,
                           ),
@@ -635,7 +633,7 @@ export function aTextWheelScroll(
 
 export function getScrollVerse(
   atext: HTMLElement,
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): LocationVKType | null {
   const { module } = atext.dataset;
   if (module) {
@@ -654,7 +652,7 @@ export function getScrollVerse(
           'xulsword',
         ) as typeof S.prefs.xulsword;
         return location
-          ? verseKey(p.location, renderPromise).location(location.v11n)
+          ? new VerseKey(p.location, renderPromise).location(location.v11n)
           : p.location;
       }
     }
@@ -665,7 +663,7 @@ export function getScrollVerse(
 export function highlight(
   sbe: HTMLElement,
   selection: LocationVKType,
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise,
 ) {
   // First unhilight everything
   Array.from(sbe.getElementsByClassName('hl')).forEach((v) => {
@@ -673,7 +671,7 @@ export function highlight(
   });
 
   if (selection) {
-    const { book, chapter, verse, lastverse } = verseKey(
+    const { book, chapter, verse, lastverse } = new VerseKey(
       selection,
       renderPromise,
     ).location();
@@ -811,7 +809,7 @@ export function findVerseElement(
 export function chapterChange(
   location: LocationVKType | null,
   chDelta: number,
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): LocationVKType | null {
   if (!location?.v11n) return null;
   const { book } = location;
@@ -832,7 +830,7 @@ export function chapterChange(
 export function verseChange(
   location: LocationVKType | null,
   vsDelta: number,
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): LocationVKType | null {
   if (!location) return null;
   let { book, chapter, verse } = location;
@@ -872,7 +870,7 @@ export function verseChange(
 export function pageChange(
   atext: HTMLElement,
   next: boolean,
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): LocationVKType | null {
   if (!next) {
     let firstVerse: HTMLElement | undefined;
@@ -926,14 +924,14 @@ export function pageChange(
         const t = (context in G.Tab && G.Tab[context]) || null;
         const v11n = t?.v11n || null;
         if (v11n && book) {
-          const vk = verseKey(
+          const vk = new VerseKey(
             {
               book,
               chapter,
               verse,
               v11n,
             },
-            renderPromise || null,
+            renderPromise,
           );
           if (vk.chapter <= getMaxChapter(v11n, vk.osisRef(), renderPromise)) {
             return vk.location();

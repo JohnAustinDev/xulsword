@@ -1,14 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { dString } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
-import {
-  dString,
-  audioConfigs,
-  clearPending,
-  getMaxChapter,
-} from '../../common.tsx';
+import { audioConfigs, clearPending, getMaxChapter } from '../../common.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import {
@@ -28,7 +24,6 @@ import type {
   OSISBookType,
   V11nType,
   AudioPlayerSelectionVK,
-  AudioPrefType,
 } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
@@ -94,8 +89,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     const { selection, hideUnavailableBooks } = props;
     let { bookGroups } = props;
     if (!bookGroups) bookGroups = ['ot', 'nt'];
-    const Book = G.Book(G.i18n.language);
-    const Books = G.Books(G.i18n.language);
+    const { Book, Books } = G;
 
     let bookGroup: BookGroupType =
       selection && selection in Book
@@ -237,7 +231,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     const { rowHeight, listAreaHeight } = this;
     const { hideUnavailableBooks } = this.props as ChooserProps;
     if (!hideUnavailableBooks) {
-      const Book = G.Book(G.i18n.language);
+      const { Book } = G;
       const { bookGroup, indexInBookGroup } = Book[book];
       this.setState((prevState: ChooserState) => {
         const { slideIndex } = prevState;
@@ -396,8 +390,7 @@ function BookGroupList(
     chooserRef,
     renderPromise,
   } = props;
-  const Book = G.Book(G.i18n.language);
-  const Books = G.Books(G.i18n.language);
+  const { Book, Books } = G;
   const listOfBookIndexes: number[] = [];
   if (bookGroup) {
     C.SupportedBooks[bookGroup].forEach((code) => {
@@ -458,7 +451,7 @@ function BookGroupItem(
     renderPromise,
   } = props;
   const c = classes || [];
-  const Book = G.Book(G.i18n.language);
+  const { Book } = G;
   return (
     <Hbox
       {...addClass(['bookgroupitem'].concat(c), props)}

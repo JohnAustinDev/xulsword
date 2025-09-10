@@ -8,7 +8,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { libswordImgSrc, notMouse, windowArguments } from '../../common.tsx';
+import { libswordImgSrc, notMouse, windowArguments } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { topHandle, htmlAttribs, xulPropTypes } from '../libxul/xul.tsx';
 import { Box, Hbox } from '../libxul/boxes.tsx';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
-import { audioSelections } from '../../common.tsx';
+import { audioSelections } from '../../common.ts';
 import { G } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import './audioIcon.css';

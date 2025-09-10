@@ -96,7 +96,7 @@ function recurseAudioDirectory(
       } else if (m2) {
         chs.push(Number(m2[1]));
       }
-    } else log.warn(`Skipping non-number audio file: ${subfile.path}`);
+    } else log.warn(`Skipping non-number audio dir/file: ${dir.path}/${sub}`);
   });
   if (chs.length)
     audio[

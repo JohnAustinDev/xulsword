@@ -13,11 +13,12 @@ import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
 import {
   clearPending,
+  doUntilDone,
   getStatePref,
   registerUpdateStateFromPref,
   setStatePref,
   windowArguments,
-} from '../../common.tsx';
+} from '../../common.ts';
 import { topHandle, xulPropTypes } from '../../components/libxul/xul.tsx';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Viewport from '../../components/viewport/viewport.tsx';
@@ -34,6 +35,11 @@ import type {
   RenderPromiseState,
 } from '../../renderPromise.ts';
 import type { XulProps } from '../../components/libxul/xul.tsx';
+import {
+  getModuleChange,
+  setXulswordTabs,
+  sortTabsByLocale,
+} from '../../../viewport.ts';
 
 const propTypes = xulPropTypes;
 
@@ -123,7 +129,7 @@ export default class ViewportWin
     this.destroy.push(
       Subscription.subscribe.modulesInstalled((newmods: NewModulesType) => {
         const state = this.state as ViewportWinState;
-        const whichTab = G.Viewport.sortTabsByLocale(
+        const whichTab = sortTabsByLocale(
           newmods.modules
             .filter(
               (c) =>
@@ -134,17 +140,22 @@ export default class ViewportWin
             )
             .map((c) => c.module),
         );
-        this.persistState(
-          state,
-          G.Viewport.getModuleChange(whichTab, state, {
+        doUntilDone((rp) => {
+          const xs = getModuleChange(whichTab, state, rp, {
             maintainWidePanels: true,
             maintainPins: false,
-          }),
-        );
-        G.Viewport.setXulswordTabs({
-          whichTab,
-          doWhat: 'show',
-          panelIndex: -1,
+          });
+          if (!rp.waiting()) {
+            this.persistState(state, xs);
+            setXulswordTabs(
+              {
+                whichTab,
+                doWhat: 'show',
+                panelIndex: -1,
+              },
+              renderPromise,
+            );
+          }
         });
       }),
     );

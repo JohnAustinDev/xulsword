@@ -1,4 +1,5 @@
 import React from 'react';
+import VerseKey from '../../../verseKey.ts';
 import {
   bookmarkItemIconPath,
   clone,
@@ -15,9 +16,8 @@ import {
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
+import { goToLocationGB, goToLocationVK } from '../../../commands.ts';
 import { GE as G } from '../../G.ts';
-import Commands from '../../commands.ts';
-import verseKey from '../../verseKey.ts';
 import log from '../../log.ts';
 import Label from '../../components/libxul/label.tsx';
 
@@ -34,6 +34,7 @@ import type {
 import type { TCellInfo } from '../../components/libxul/table.tsx';
 import type BMManagerWin from './bmManagerWin.tsx';
 import type { BMManagerState } from './bmManagerWin.tsx';
+import RenderPromise from '../../renderPromise.ts';
 
 type CellInfo = TCellInfo & {
   id: string;
@@ -114,9 +115,9 @@ export function onDoubleClick(this: BMManagerWin, ex: React.SyntheticEvent) {
       const { location } = clone(bookmarkItem);
       if ('v11n' in location) {
         delete location.vkMod;
-        void Commands.goToLocationVK(location, location);
+        void goToLocationVK(location, location);
       } else {
-        void Commands.goToLocationGB(location);
+        void goToLocationGB(location);
       }
     }
   }
@@ -521,6 +522,7 @@ export function bmContextData(
 export function printableItem(
   this: BMManagerWin,
   itemOrID: string | BookmarkItemType,
+  renderPromise: RenderPromise,
   level = 1,
 ): JSX.Element | null {
   const { localizedRootFolderClone } = this;
@@ -538,7 +540,11 @@ export function printableItem(
           module = location.vkMod ?? '';
           ref = (
             <span className="ref versekey cs-locale">
-              {verseKey(location, null).readable(G.i18n.language, null, true)}
+              {new VerseKey(location, renderPromise).readable(
+                G.i18n.language,
+                null,
+                true,
+              )}
             </span>
           );
         } else if (location) {
@@ -573,7 +579,9 @@ export function printableItem(
           )}
           {item.type === 'folder' && (
             <span className="childNodes">
-              {item.childNodes.map((n) => this.printableItem(n, level + 1))}
+              {item.childNodes.map((n) =>
+                this.printableItem(n, renderPromise, level + 1),
+              )}
             </span>
           )}
           {item.type === 'bookmark' && (

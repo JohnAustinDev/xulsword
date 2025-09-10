@@ -30,7 +30,6 @@ import type {
   getBkChsInV11n,
   getBooksInVKModules,
   getLocaleDigits,
-  getLocalizedBooks,
   inlineFile,
   inlineAudioFile,
   getAllDictionaryKeyList,
@@ -40,6 +39,8 @@ import type {
   getModuleConfs,
   getModuleConf,
   getBuiltInRepos,
+  getBooksLocalized,
+  getBooksLocalizedAll,
 } from './servers/common.ts';
 import type { LocationVKTextG } from './servers/versetext.ts';
 import type { publishSubscription } from './servers/app/components/window.ts';
@@ -53,9 +54,8 @@ import type {
   DirsRendererType,
 } from './servers/components/dirs.ts';
 import type LibSword from './servers/components/libsword.ts';
-import type { canRedo, canUndo } from './servers/components/bookmarks.tsx';
+import type { canRedo, canUndo } from './servers/components/bookmarks.ts';
 import type { CallBatch } from './servers/handleG.ts';
-import type Viewport from './viewport.ts';
 import type { AtextPropsType } from './clients/components/atext/atext.tsx';
 import type RenderPromise from './clients/renderPromise.ts';
 import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
@@ -751,14 +751,22 @@ export type GAddWindowId = {
   >;
 };
 
-export type GCallType = [keyof GType, string | null, any[] | undefined];
+type RenderPromiseArgs<FUNC extends (...args: any[]) => any> = [
+  ReturnType<FUNC>,
+  RenderPromise | undefined | null,
+  ...Parameters<FUNC>,
+];
 
-export type GTypeMain = GType & { Dirs: DirsMainType; i18n: typeof i18next };
+export type GCallType = [keyof GType, string | null, any[] | undefined];
 
 export type GType = {
   // Getters
   Tabs: ReturnType<typeof getTabs>;
   Tab: ReturnType<typeof getTab>;
+  Books: ReturnType<typeof getBooks>;
+  Book: ReturnType<typeof getBook>;
+  BooksLocalized: ReturnType<typeof getBooksLocalized>;
+  BooksLocalizedAll: ReturnType<typeof getBooksLocalizedAll>;
   Config: ReturnType<typeof getConfig>;
   ModuleConfs: ReturnType<typeof getModuleConfs>;
   AudioConfs: ReturnType<typeof getAudioConfs>;
@@ -772,8 +780,6 @@ export type GType = {
   BooksInVKModules: ReturnType<typeof getBooksInVKModules>;
 
   // Functions
-  Books: typeof getBooks;
-  Book: typeof getBook;
   inlineFile: typeof inlineFile;
   inlineAudioFile: typeof inlineAudioFile;
   getModuleConf: typeof getModuleConf;
@@ -782,14 +788,13 @@ export type GType = {
   getSystemFonts: typeof getSystemFonts;
   getBooksInVKModule: typeof getBooksInVKModule;
   getBkChsInV11n: typeof getBkChsInV11n;
-  getLocalizedBooks: typeof getLocalizedBooks;
   getLocaleDigits: typeof getLocaleDigits;
   publishSubscription: typeof publishSubscription;
   canUndo: typeof canUndo;
   canRedo: typeof canRedo;
-  // IMPORTANT: callBatch is not cacheable! Always use callBatchThenCache.
+  // IMPORTANT: callBatch is not cacheable! Use RenderPromise instead.
   callBatch: (...args: Parameters<CallBatch>) => Promise<ReturnType<CallBatch>>;
-  // IMPORTANT: callBatchSync is not cacheable! Always use callBatchThenCacheSync.
+  // IMPORTANT: callBatchSync is not cacheable! Use RenderPromise instead.
   callBatchSync: CallBatch;
   getAllDictionaryKeyList: typeof getAllDictionaryKeyList;
   genBookTreeNodes: typeof genBookTreeNodes;
@@ -811,15 +816,10 @@ export type GType = {
   Shell: Pick<Shell, 'beep'>;
   Data: typeof Data;
   Module: typeof Module;
-  Viewport: Omit<Viewport, '#prefs'>;
   Window: typeof Window;
 };
 
-type RenderPromiseArgs<FUNC extends (...args: any[]) => any> = [
-  ReturnType<FUNC>,
-  RenderPromise | undefined | null,
-  ...Parameters<FUNC>,
-];
+export type GTypeMain = GType & { Dirs: DirsMainType; i18n: typeof i18next };
 
 // Internet safe GI on clients require render-promise arguments:
 export type GIType = {
@@ -827,6 +827,10 @@ export type GIType = {
     GType,
     | 'Tabs'
     | 'Tab'
+    | 'Books'
+    | 'Book'
+    | 'BooksLocalized'
+    | 'BooksLocalizedAll'
     | 'Config'
     | 'ModuleConfs'
     | 'AudioConfs'
@@ -840,8 +844,6 @@ export type GIType = {
 } & {
   [name in keyof Pick<
     GType,
-    | 'Books'
-    | 'Book'
     | 'inlineFile'
     | 'inlineAudioFile'
     | 'getModuleConf'
@@ -849,7 +851,6 @@ export type GIType = {
     | 'getSystemFonts'
     | 'getBooksInVKModule'
     | 'getBkChsInV11n'
-    | 'getLocalizedBooks'
     | 'getLocaleDigits'
     | 'callBatch'
     | 'callBatchSync'
@@ -875,31 +876,40 @@ export type GIType = {
 // Internet safe GI on WebApp server...
 export type GITypeMain = { [name in keyof GIType]: GType[name] };
 
-// Internet safe G that is available in absolutely any context, assuming
-// cachePreload() has been called on WebApp clients. Note: Not all these
-// methods need to be explicitly called within cachePreload.
+// Internet safe G that is usable in absolutely any context, assuming
+// cachePreload() has been called on WebApp clients.
 export type Gsafe = Pick<
   GITypeMain,
   // Includes cache preloaded synchronous functions:
-  | 'i18n' // IMPORTANT: individual i18n calls must each be cache preloaded!
-  | 'getLocalizedBooks' // only getLocalizedBooks(global.locale) is safe!
-  | 'getLocaleDigits' // only getLocaleDigits(global.locale) is safe!
   | 'Tabs'
   | 'Tab'
   | 'Books'
   | 'Book'
+  | 'BooksLocalized'
   | 'Config'
   | 'ModuleFonts'
   | 'FeatureModules'
   | 'LocaleConfigs'
   | 'ModuleConfigDefault'
   | 'ProgramConfig'
+  | 'getLocaleDigits' // all locales are cached
   // Also includes asynchronous Internet G functions:
   | 'getSystemFonts'
   | 'callBatch'
 > & {
-  Prefs: GType['Prefs']; // Gsafe uses browser prefs
-} & { LibSword: Pick<GITypeMain['LibSword'], 'search'> }; // Also includes these asynchronous Internet G method functions:
+  // G handles Prefs specially, so this works anywhere.
+  Prefs: GType['Prefs'];
+} & {
+  // G handles i18n.language specially, so language works anywhere and
+  // locale_direction is cache preloaded.
+  i18n: {
+    language: GType['i18n']['language'];
+    t: (s: 'locale_direction' | TabTypes) => string;
+  };
+} & {
+  // And also includes these asynchronous Internet G method functions:
+  LibSword: Pick<GITypeMain['LibSword'], 'search'>;
+};
 
 // This GBuilder object will be used to create the server and client G objects.
 // Each is created at runtime resulting in different types of G objects sharing
@@ -913,16 +923,13 @@ export type Gsafe = Pick<
 const func = () => false;
 const CACHEfunc = () => true;
 export const GBuilder: GType & {
-  // IMPORTANT: Methods of includeCallingWindow classes must not use rest
-  // parameters or default values in their function definition's argument
-  // lists nor may they be getter functions (although optional parameters of
-  // TypeScript are ok) . This is because Function.length is used to append the
-  // calling window in server G, and Function.length does not include rest
-  // parameters or default arguments. Additionally getter functions have zero
-  // arguments or Function.length. Using rest parameters or default arguments
-  // will thus result in overwriting the last argument with the calling window
-  // id!
-  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module', 'Viewport'];
+  // IMPORTANT: Using rest parameters, default values, or getters with methods
+  // of includeCallingWindow classes will thus result in overwriting the last
+  // argument with the calling window id! Optional parameters of TypeScript are
+  // ok. Function.length is used to append the calling window in server G, and
+  // Function.length does not include rest parameters or default arguments, and
+  // getter functions have no Function.length.
+  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'];
 
   // async functions must be listed in asyncFuncs or runtime
   // errors will result!
@@ -939,6 +946,10 @@ export const GBuilder: GType & {
   internetSafe: [
     [keyof GType, Array<keyof GType['Tabs']>],
     [keyof GType, Array<keyof GType['Tab']>],
+    [keyof GType, Array<keyof GType['Books']>],
+    [keyof GType, Array<keyof GType['Book']>],
+    [keyof GType, Array<keyof GType['BooksLocalized']>],
+    [keyof GType, Array<keyof GType['BooksLocalizedAll']>],
     [keyof GType, Array<keyof GType['Config']>],
     [keyof GType, Array<keyof GType['ModuleConfs']>],
     [keyof GType, Array<keyof GType['AudioConfs']>],
@@ -947,15 +958,12 @@ export const GBuilder: GType & {
     [keyof GType, Array<keyof GType['ModuleConfigDefault']>],
     [keyof GType, Array<keyof GType['ModuleFonts']>],
     [keyof GType, Array<keyof GType['FeatureModules']>],
-    [keyof GType, Array<keyof GType['Books']>],
-    [keyof GType, Array<keyof GType['Book']>],
     [keyof GType, Array<keyof GType['inlineFile']>],
     [keyof GType, Array<keyof GType['inlineAudioFile']>],
     [keyof GType, Array<keyof GType['getModuleConf']>],
     [keyof GType, Array<keyof GType['getAudioConf']>],
     [keyof GType, Array<keyof GType['getBooksInVKModule']>],
     [keyof GType, Array<keyof GType['getBkChsInV11n']>],
-    [keyof GType, Array<keyof GType['getLocalizedBooks']>],
     [keyof GType, Array<keyof GType['getLocaleDigits']>],
     [keyof GType, Array<keyof GType['BooksInVKModules']>],
     [keyof GType, Array<keyof GType['callBatch']>],
@@ -967,7 +975,7 @@ export const GBuilder: GType & {
     [keyof GType, Array<keyof GType['LibSword']>],
   ];
 } = {
-  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module', 'Viewport'],
+  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'],
 
   asyncFuncs: [
     ['getSystemFonts', []],
@@ -1005,6 +1013,10 @@ export const GBuilder: GType & {
   internetSafe: [
     ['Tabs', []],
     ['Tab', []],
+    ['Books', []],
+    ['Book', []],
+    ['BooksLocalized', []],
+    ['BooksLocalizedAll', []],
     ['Config', []],
     ['ModuleConfs', []],
     ['AudioConfs', []],
@@ -1013,15 +1025,12 @@ export const GBuilder: GType & {
     ['ModuleConfigDefault', []],
     ['ModuleFonts', []],
     ['FeatureModules', []],
-    ['Books', []],
-    ['Book', []],
     ['inlineFile', []],
     ['inlineAudioFile', []],
     ['getModuleConf', []],
     ['getAudioConf', []],
     ['getBooksInVKModule', []],
     ['getBkChsInV11n', []],
-    ['getLocalizedBooks', []],
     ['getLocaleDigits', []],
     ['BooksInVKModules', []],
     ['callBatch', []],
@@ -1056,6 +1065,10 @@ export const GBuilder: GType & {
   // Getters
   Tabs: 'getter' as any,
   Tab: 'getter' as any,
+  Books: 'getter' as any,
+  Book: 'getter' as any,
+  BooksLocalized: 'getter' as any,
+  BooksLocalizedAll: 'getter' as any,
   Config: 'getter' as any,
   ModuleConfs: 'getter' as any,
   AudioConfs: 'getter' as any,
@@ -1069,8 +1082,6 @@ export const GBuilder: GType & {
   BooksInVKModules: 'getter' as any,
 
   // Functions
-  Books: CACHEfunc as any,
-  Book: CACHEfunc as any,
   inlineFile: CACHEfunc as any,
   inlineAudioFile: CACHEfunc as any,
   getModuleConf: CACHEfunc as any,
@@ -1078,7 +1089,6 @@ export const GBuilder: GType & {
   getSystemFonts: CACHEfunc as any,
   getBooksInVKModule: CACHEfunc as any,
   getBkChsInV11n: CACHEfunc as any,
-  getLocalizedBooks: CACHEfunc as any,
   getLocaleDigits: CACHEfunc as any,
   getAllDictionaryKeyList: CACHEfunc as any,
   genBookTreeNodes: CACHEfunc as any,
@@ -1234,13 +1244,5 @@ export const GBuilder: GType & {
     close: func as any,
     print: func as any,
     printToPDF: func as any,
-  },
-
-  Viewport: {
-    sortTabsByLocale: func as any,
-    getTabChange: func as any,
-    getPanelChange: func as any,
-    getModuleChange: func as any,
-    setXulswordTabs: func as any,
   },
 };

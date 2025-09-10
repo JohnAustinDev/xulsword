@@ -11,13 +11,12 @@ import {
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
 import { GBuilder } from '../type.ts';
-import { callResultDecompress } from './common.tsx';
+import { callResultDecompress } from './common.ts';
 import RenderPromise, { GCallsOrPromise } from './renderPromise.ts';
 import log from './log.ts';
 import CookiePrefs from './webapp/prefs.ts';
 
 import type { AnalyticsInfo, BibleBrowserEventInfo } from './analytics.ts';
-import type Viewport from './webapp/viewport.ts';
 import type {
   GCallType,
   GIType,
@@ -40,9 +39,8 @@ import type {
 // asynchronous, so synchronous G methods can't be used in web apps.
 // - Although IPC via Internet is asynchronous, it is possible to preload
 // data to the cache asynchronously and then retrieve it synchronously using G.
-// This is done using callBatchThenCache(). If a synchronous G method call is
-// made in a web app, without it having first been cached, an exception is
-// thrown.
+// If a synchronous G method call is made in a web app, without it having first
+// been cached, an exception is thrown.
 // - The GI object shares the same interface as G, but only has G's synchronous
 // Internet-allowed G methods available and it calls them anynchronously so
 // is always safe to use in any environment. When using GI, two extra initial
@@ -56,10 +54,11 @@ import type {
 //
 // THE UPSHOT:
 // - Electron clients can use G or GI.
-// - Web app clients can use GI and may use G for Internet-allowed
-//   synchronous methods after cachePreload() is called.
+// - Web app clients can use GI and may use G only for Internet-allowed
+//   synchronous functions whose data has been cache preloaded; see
+//   cachePreload().
 // - Electron App Server must only use G, or an exception is thrown.
-// - Web App Server must only use GI, or an excetion is thrown.
+// - Web App Server must only use GI, or an exception is thrown.
 
 export const G = {} as Gsafe; // Can use Gsafe anywhere
 export const GE = G as GType; // Can't use GType in WebApp clients
@@ -68,7 +67,7 @@ Cache.noclear('GType');
 
 // Can use GIType in WebApp or Electron clients, but not servers.
 export const GI = {} as GIType;
-Cache.write(G, 'GIType');
+Cache.write(GI, 'GIType');
 Cache.noclear('GIType');
 
 const { asyncFuncs } = GBuilder;
@@ -172,46 +171,24 @@ Object.entries(GBuilder).forEach((entry) => {
           const isAsync = (asyncFuncs as Array<[string, string[]]>).some(
             (asf) => name && m && asf[0] === name && asf[1].includes(m),
           );
-          // Special Cases: Prefs and Viewport use same-process replacements in
-          // web apps.
-          if (Build.isWebApp && ['Prefs', 'Viewport'].includes(name)) {
-            if (name === 'Prefs') {
-              // Web apps use Prefs cookie rather than a server file.
-              g.Prefs[m] = (...args: unknown[]) => {
-                let req;
-                if (isAsync) {
-                  log.error(
-                    `G async web app Prefs methods not implemented: ${m}`,
-                  );
-                } else {
-                  try {
-                    req = (CookiePrefs as any)[m](...args);
-                  } catch (er: any) {
-                    log.error(er);
-                  }
+          // Special Case: Prefs uses same-process replacement in web apps.
+          if (Build.isWebApp && name === 'Prefs') {
+            // Web apps use Prefs cookie rather than a server file.
+            g.Prefs[m] = (...args: unknown[]) => {
+              let req;
+              if (isAsync) {
+                log.error(
+                  `G async web app Prefs methods not implemented: ${m}`,
+                );
+              } else {
+                try {
+                  req = (CookiePrefs as any)[m](...args);
+                } catch (er: any) {
+                  log.error(er);
                 }
-                return req;
-              };
-            } else {
-              g.Viewport[m] = (...args: unknown[]) => {
-                let req;
-                if (isAsync) {
-                  log.error(
-                    `G async web app Viewport methods not implemented: ${m}`,
-                  );
-                } else {
-                  try {
-                    const viewport = Cache.read(
-                      'ClientsViewport',
-                    ) as typeof Viewport;
-                    req = (viewport as any)[m](...args);
-                  } catch (er: any) {
-                    log.error(er);
-                  }
-                }
-                return req;
-              };
-            }
+              }
+              return req;
+            };
           } else {
             g[name][m] = (...args: unknown[]) => {
               const acall: GCallType = prepCall([name, m, args]);

@@ -2,7 +2,7 @@ import React from 'react';
 import C from '../../../constant.ts';
 import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
-import { windowArguments } from '../../common.tsx';
+import { windowArguments } from '../../common.ts';
 import log from '../../log.ts';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Label from '../../components/libxul/label.tsx';

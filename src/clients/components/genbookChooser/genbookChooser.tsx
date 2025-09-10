@@ -8,7 +8,7 @@ import {
   audioGenBookNode,
   chooserGenbks,
   safeScrollIntoView,
-} from '../../common.tsx';
+} from '../../common.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import { xulPropTypes, addClass } from '../libxul/xul.tsx';
 import TreeView, { forEachNode } from '../libxul/treeview.tsx';

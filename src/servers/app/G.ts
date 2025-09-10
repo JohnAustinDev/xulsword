@@ -1,6 +1,5 @@
 import { clipboard, shell } from 'electron';
 import i18next from 'i18next';
-import Viewport from '../../viewport.ts';
 import {
   getBooks,
   getBook,
@@ -18,8 +17,6 @@ import {
   localeConfig,
   getConfig,
   getBooksInVKModules,
-  getLocalizedBooks,
-  getLocaleDigits,
   inlineAudioFile,
   inlineFile,
   getAllDictionaryKeyList,
@@ -29,12 +26,15 @@ import {
   getModuleConfs,
   getModuleConf,
   getBuiltInRepos,
+  getBooksLocalizedAll,
+  getBooksLocalized,
+  getLocaleDigits,
 } from '../common.ts';
 import Cache from '../../cache.ts';
 import { callBatch } from '../handleG.ts';
 import { locationVKText } from '../versetext.ts';
 import Prefs from './prefs.ts';
-import { canRedo, canUndo } from '../components/bookmarks.tsx';
+import { canRedo, canUndo } from '../components/bookmarks.ts';
 import Dirs from '../components/dirs.ts';
 import DiskCache from '../components/diskcache.ts';
 import LibSword from '../components/libsword.ts';
@@ -77,15 +77,28 @@ export const G: GTypeMain = {
 
   Module,
 
-  // To avoid a dependency cycle, this is set right after G is set.
-  Viewport: null as unknown as Viewport,
-
   get Tabs() {
     return getTabs();
   },
 
   get Tab() {
     return getTab();
+  },
+
+  get Books() {
+    return getBooks();
+  },
+
+  get Book() {
+    return getBook();
+  },
+
+  get BooksLocalized() {
+    return getBooksLocalized();
+  },
+
+  get BooksLocalizedAll() {
+    return getBooksLocalizedAll();
   },
 
   get Config() {
@@ -130,14 +143,6 @@ export const G: GTypeMain = {
 
   get BooksInVKModules() {
     return getBooksInVKModules();
-  },
-
-  Books(...args: Parameters<GType['Books']>): ReturnType<GType['Books']> {
-    return getBooks(...args);
-  },
-
-  Book(...args: Parameters<GType['Book']>): ReturnType<GType['Book']> {
-    return getBook(...args);
   },
 
   inlineFile(
@@ -186,12 +191,6 @@ export const G: GTypeMain = {
     ...args: Parameters<GType['getBkChsInV11n']>
   ): ReturnType<GType['getBkChsInV11n']> {
     return getBkChsInV11n(...args);
-  },
-
-  getLocalizedBooks(
-    ...args: Parameters<GType['getLocalizedBooks']>
-  ): ReturnType<GType['getLocalizedBooks']> {
-    return getLocalizedBooks(...args);
   },
 
   getLocaleDigits(
@@ -259,14 +258,3 @@ export const G: GTypeMain = {
 };
 Cache.write(G, 'GTypeMain');
 Cache.noclear('GTypeMain');
-
-G.Viewport = new Viewport(
-  G,
-  {
-    getBooksInVKModule: (_default, _renderPromise, module) => {
-      return G.getBooksInVKModule(module);
-    },
-  },
-  Prefs,
-  Window,
-);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { audioSelections } from '../../common.tsx';
+import { audioSelections } from '../../common.ts';
 import { GI } from '../../G.ts';
 import Menulist from '../libxul/menulist.tsx';
 import './audioPlayer.css';
@@ -14,7 +14,7 @@ import { htmlAttribs } from '../libxul/xul.tsx';
 
 export default function AudioPlayer(props: {
   audio: AudioPrefType;
-  renderPromise?: RenderPromise | null;
+  renderPromise: RenderPromise;
   audioHandler: (e: React.SyntheticEvent<any>) => void;
 }): JSX.Element {
   const { audio, renderPromise, audioHandler } = props;

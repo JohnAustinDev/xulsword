@@ -1,9 +1,14 @@
-import { clone, decodeOSISRef, getSwordOptions } from '../../../common.ts';
+import {
+  clone,
+  decodeOSISRef,
+  getSwordOptions,
+  dString,
+} from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import addBookmarks from '../../bookmarks.tsx';
-import { isValidVKM, getLocalizedChapterTerm, dString } from '../../common.tsx';
+import { isValidVKM, getLocalizedChapterTerm } from '../../common.ts';
 import { getDictEntryHTML } from '../../components/atext/zdictionary.ts';
 import {
   getNoteHTML,

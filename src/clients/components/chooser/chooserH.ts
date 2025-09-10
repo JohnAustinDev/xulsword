@@ -2,7 +2,7 @@ import type React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { GI } from '../../G.ts';
-import { doUntilDone } from '../../common.tsx';
+import { doUntilDone } from '../../common.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 
 import type { BookGroupType } from '../../../type.ts';

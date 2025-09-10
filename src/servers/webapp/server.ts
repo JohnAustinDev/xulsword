@@ -163,21 +163,17 @@ io.on('connection', (socket) => {
     log.silly(`${socket.handshake.address} › on log: ${clog}`);
     const invalid = invalidArgs(args);
     if (!invalid && args.length === 3) {
-      const [type, windowID, json] = args as [string, string, string];
+      const [type, client, json] = args as [string, string, string, string];
       const logargs =
         json.length > C.Server.maxLogJson
           ? [`log too long. [${json.length}]`]
           : JSON_parse(json);
-      if (
-        type in log &&
-        ['string', 'number'].includes(typeof windowID) &&
-        Array.isArray(logargs)
-      ) {
+      if (type in log && Array.isArray(logargs)) {
         const limited = await isLimited(socket);
         if (limited) logargs.push(`(${limited})`);
         try {
           log[type as LogLevel](
-            windowID,
+            client,
             `${socket.handshake.address} › `,
             ...(logargs as unknown[]),
           );

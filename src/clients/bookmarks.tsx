@@ -7,12 +7,12 @@ import {
   localizeBookmark,
 } from '../common.ts';
 import C from '../constant.ts';
-import type S from '../defaultPrefs.ts';
+import VerseKey from '../verseKey.ts';
 import { G, GI } from './G.ts';
 import { updateDataAttribute } from './htmlData.ts';
-import verseKey from './verseKey.ts';
-import { getMaxVerse } from './common.tsx';
+import { getMaxVerse } from './common.ts';
 
+import type S from '../defaultPrefs.ts';
 import type {
   BookmarkFolderType,
   BookmarkItemType,
@@ -42,10 +42,16 @@ type BookmarkInfoHTML = {
   classes: Array<'bmitem' | 'bmnote'>;
 };
 
-export function bmOsisRef(location: LocationORType | LocationVKType): string {
+export function bmOsisRef(
+  location: LocationORType | LocationVKType,
+  renderPromise: RenderPromise,
+): string {
   let osisref = 'unavailable';
   if ('v11n' in location) {
-    const { book, chapter, verse } = verseKey(location, null).location('KJV');
+    const { book, chapter, verse } = new VerseKey(
+      location,
+      renderPromise,
+    ).location('KJV');
     osisref = [book, chapter, verse].join('.');
   }
   return osisref;
@@ -55,7 +61,7 @@ function bmInfoToData(
   type: HTMLData['type'],
   bookmarkInfo: BookmarkInfoHTML,
   module: string,
-  renderPromise: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): HTMLData {
   const { location, id, n } = bookmarkInfo;
   return {
@@ -64,7 +70,7 @@ function bmInfoToData(
     reflist: [],
     location:
       'v11n' in location
-        ? verseKey(location, renderPromise).location('KJV')
+        ? new VerseKey(location, renderPromise).location('KJV')
         : undefined,
     locationGB: !('v11n' in location) ? location : undefined,
     bmitem: id,
@@ -76,7 +82,7 @@ function bmInfoToData(
 function marker(
   bookmarkInfo: BookmarkInfoHTML,
   module: string,
-  renderPromise: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): string {
   const { n, location } = bookmarkInfo;
   let osisref = 'unavailable';
@@ -93,10 +99,9 @@ function marker(
 
 export function getBookmarkInfo(
   bookmark: BookmarkType,
-  renderPromise: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): BookmarkInfoHTML | null {
   const { id, note, noteLocale, location } = localizeBookmark(
-    verseKey,
     bookmark,
     renderPromise,
   ) as BookmarkType;
@@ -115,9 +120,7 @@ export function getBookmarkInfo(
   return null;
 }
 
-export function getBookmarkMap(
-  renderPromise: RenderPromise | null,
-): BookmarkMapType {
+export function getBookmarkMap(renderPromise: RenderPromise): BookmarkMapType {
   if (!Cache.has('bookmarkMap')) {
     const keyBmitemIDMap: BookmarkMapType = {};
     const kmap = (f: BookmarkFolderType): void => {
@@ -129,7 +132,7 @@ export function getBookmarkMap(
           let k = '';
           if (location && 'v11n' in location) {
             const { vkMod } = location;
-            const kjvl = verseKey(location, null).location('KJV');
+            const kjvl = new VerseKey(location, renderPromise).location('KJV');
             const { book, chapter, verse } = kjvl;
             k = [book, chapter, verse, 'KJV'].join('.');
             if (tabType === 'Comms') k += `.${vkMod}`;
@@ -161,12 +164,12 @@ export function getBookmarkMap(
 // pair.
 export function findBookmarks(
   location: LocationVKType | LocationORType | SelectVKType,
-  renderPromise: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): BookmarkInfoHTML[] {
   const bookmarkMap = getBookmarkMap(renderPromise);
   if (Object.keys(bookmarkMap).length) {
     if ('v11n' in location) {
-      const kjvl = verseKey(location, renderPromise).location('KJV');
+      const kjvl = new VerseKey(location, renderPromise).location('KJV');
       const { book, chapter } = kjvl;
       const chBookmarks: BookmarkInfoHTML[] = [];
       for (
@@ -199,7 +202,7 @@ export function addBookmarksToNotes(
   bookmarkInfos: BookmarkInfoHTML[],
   notes: string | '',
   module: string,
-  renderPromise: RenderPromise | null,
+  renderPromise: RenderPromise,
   sort?: boolean,
 ): string {
   const notehtml = notes || `<div class="notes"></div>`;
@@ -214,7 +217,7 @@ export function addBookmarksToNotes(
         .reduce((p, un) => {
           const { location: l, n, note, noteLocale } = un;
           const span = `<span class="cs-${noteLocale}">${note}</span>`;
-          const t = `un.${n}.${bmOsisRef(l)}.${module}`;
+          const t = `un.${n}.${bmOsisRef(l, renderPromise)}.${module}`;
           const nlist = updateDataAttribute(
             `<div class="nlist" data-title="${t}">${span}</div>`,
             bmInfoToData('nlist', un, module, renderPromise),
@@ -244,14 +247,14 @@ export function addBookmarksToTextVK(
   bookmarkInfos: BookmarkInfoHTML[],
   textHTML: string,
   module: string,
-  renderPromise: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): string {
   return textHTML.replaceAll(
     // This regex comes from xulsword.cpp:
     /(<span data-title="([^."]*)\.(\d+)\.(\d+)\.(\d+)\.([^."]*)" class="vs )([^"]*?")([^>]*?>)/g,
     (tag, start, bk, ch, vs, lv, m, cls, end) => {
       const v11n: V11nType = (m && m in G.Tab && G.Tab[m].v11n) || 'KJV';
-      const kjvl = verseKey(
+      const kjvl = new VerseKey(
         { parse: [bk, ch, vs, lv, m].join('.'), v11n },
         renderPromise,
       ).location('KJV');
@@ -283,7 +286,7 @@ export function addBookmarksToTextGB(
   bookmarkInfos: BookmarkInfoHTML[],
   textHTML: string,
   module: string,
-  renderPromise: RenderPromise | null,
+  renderPromise: RenderPromise,
 ): string {
   const markerHTML = bookmarkInfos
     .map((info) => marker(info, module, renderPromise))
@@ -307,7 +310,7 @@ export function addBookmarksToTextGB(
 export default function addBookmarks(
   response: Pick<LibSwordResponse, 'textHTML' | 'notes'>,
   props: Pick<AtextProps, 'module' | 'location' | 'modkey'>,
-  renderPromise: RenderPromise | null,
+  renderPromise: RenderPromise,
 ) {
   const { textHTML, notes } = response;
   const { module, location, modkey } = props;
@@ -420,21 +423,21 @@ export function getSampleText(
 // Convert bookmark childNodes of a folder into tree nodes.
 export function bookmarkTreeNodes(
   items: BookmarkItemType[] | BookmarkTreeNode[],
+  renderPromise: RenderPromise,
   only?: 'folder' | 'bookmark', // undefined = all
   selectedIDs?: string | string[], // undefined = none
   expandedIDs?: string | string[], // undefined = all
   cloned = false,
-  renderPromise?: RenderPromise | null,
 ): BookmarkTreeNode[] {
   return items
     .map((item) =>
       bookmarkTreeNode(
         item,
+        renderPromise,
         only,
         selectedIDs,
         expandedIDs,
         cloned,
-        renderPromise,
       ),
     )
     .filter(Boolean) as BookmarkTreeNode[];
@@ -443,11 +446,11 @@ export function bookmarkTreeNodes(
 // Convert a bookmark item into a tree node.
 export function bookmarkTreeNode(
   item: BookmarkItemType | BookmarkTreeNode | null | undefined,
+  renderPromise: RenderPromise,
   only?: 'folder' | 'bookmark', // undefined = all
   selectedIDs?: string | string[], // undefined = none
   expandedIDs?: string | string[], // undefined = all
   cloned = false,
-  renderPromise?: RenderPromise | null,
 ): BookmarkTreeNode | null {
   const selIDs =
     selectedIDs && typeof selectedIDs === 'string'
@@ -480,6 +483,7 @@ export function bookmarkTreeNode(
       if (node.childNodes) {
         node.childNodes = bookmarkTreeNodes(
           node.childNodes as BookmarkTreeNode[],
+          renderPromise,
           only,
           selIDs,
           expIDs,
@@ -489,11 +493,11 @@ export function bookmarkTreeNode(
       node?.childNodes?.forEach((n) =>
         bookmarkTreeNode(
           n as BookmarkTreeNode,
+          renderPromise,
           only,
           selIDs,
           expIDs,
           true,
-          renderPromise,
         ),
       );
       return node;

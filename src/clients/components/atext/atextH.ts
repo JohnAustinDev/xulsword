@@ -12,7 +12,7 @@ import {
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G, GI } from '../../G.ts';
-import { doUntilDone, getExtRefHTML } from '../../common.tsx';
+import { doUntilDone, getExtRefHTML } from '../../common.ts';
 import { getElementData } from '../../htmlData.ts';
 import log from '../../log.ts';
 import { delayHandler } from '../libxul/xul.tsx';
@@ -85,17 +85,19 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
                 const refs = el.dataset.reflist;
                 if (refs) {
                   doUntilDone((renderPromise) => {
-                    const html = getExtRefHTML(
-                      G,
-                      GI,
-                      refs,
-                      module,
-                      G.i18n.language,
-                      location,
-                      row.classList.contains('cropened'),
-                      false,
-                      renderPromise,
-                    );
+                    let html = '';
+                    if (renderPromise)
+                      html = getExtRefHTML(
+                        G,
+                        GI,
+                        refs,
+                        module,
+                        G.i18n.language,
+                        location,
+                        row.classList.contains('cropened'),
+                        false,
+                        renderPromise,
+                      );
                     if (!renderPromise?.waiting()) sanitizeHTML(el, html);
                   });
                 }
@@ -388,7 +390,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
               this,
               () => {
                 doUntilDone((renderPromise2) => {
-                  if (atext) {
+                  if (atext && renderPromise2) {
                     const { location: oldloc } = this.props as AtextProps;
                     if (oldloc) {
                       const newloc = getScrollVerse(atext, renderPromise2);

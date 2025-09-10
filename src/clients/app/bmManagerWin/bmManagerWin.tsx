@@ -4,7 +4,6 @@ import {
   clone,
   diff,
   keep,
-  localizeBookmarks,
   randomID,
   stringHash,
   tableRowIndexesToBPSelection,
@@ -16,10 +15,9 @@ import {
   registerUpdateStateFromPref,
   setStatePref,
   getStatePref,
-} from '../../common.tsx';
+} from '../../common.ts';
 import log from '../../log.ts';
 import { bookmarkTreeNodes, getSampleText } from '../../bookmarks.tsx';
-import verseKey from '../../verseKey.ts';
 import Table from '../../components/libxul/table.tsx';
 import DragSizer from '../../components/libxul/dragsizer.tsx';
 import Groupbox from '../../components/libxul/groupbox.tsx';
@@ -28,6 +26,7 @@ import Label from '../../components/libxul/label.tsx';
 import TreeView from '../../components/libxul/treeview.tsx';
 import Button from '../../components/libxul/button.tsx';
 import { xulPropTypes, addClass } from '../../components/libxul/xul.tsx';
+import { localizeBookmarks } from '../common.ts';
 import * as H from './bmManagerWinH.tsx';
 import './bmManagerWin.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
@@ -40,6 +39,7 @@ import type {
 } from '../../../type.ts';
 import type { DragSizerVal } from '../../components/libxul/dragsizer.tsx';
 import type { XulProps } from '../../components/libxul/xul.tsx';
+import RenderPromise, { RenderPromiseComponent } from '../../renderPromise.ts';
 
 const propTypes = {
   ...xulPropTypes,
@@ -60,7 +60,10 @@ export type BMManagerState = typeof S.prefs.bookmarkManager &
     rootfolder: typeof S.bookmarks.rootfolder;
   };
 
-export default class BMManagerWin extends React.Component {
+export default class BMManagerWin
+  extends React.Component
+  implements RenderPromiseComponent
+{
   static propTypes: typeof propTypes;
 
   localizedRootFolderClone: BookmarkFolderType | null;
@@ -97,6 +100,10 @@ export default class BMManagerWin extends React.Component {
 
   tableCompRef: React.RefObject<BPTable>;
 
+  renderPromise: RenderPromise;
+
+  loadingRef: React.RefObject<HTMLElement>;
+
   destroy: (() => void)[];
 
   constructor(props: BMManagerProps) {
@@ -131,6 +138,8 @@ export default class BMManagerWin extends React.Component {
     this.printableItem = H.printableItem.bind(this);
 
     this.tableCompRef = React.createRef();
+    this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
 
     this.destroy = [];
   }
@@ -173,7 +182,9 @@ export default class BMManagerWin extends React.Component {
       printItems,
     } = state;
     const {
+      renderPromise,
       tableCompRef,
+      loadingRef,
       buttonHandler,
       itemPredicate,
       itemRenderer,
@@ -189,8 +200,8 @@ export default class BMManagerWin extends React.Component {
       this.localizedRootFolderClone = clone(rootfolder);
       if (this.localizedRootFolderClone) {
         localizeBookmarks(
-          verseKey,
           this.localizedRootFolderClone,
+          renderPromise,
           getSampleText,
         );
         this.searchableItems = H.getSearchableItems(
@@ -198,6 +209,7 @@ export default class BMManagerWin extends React.Component {
         );
         this.folderItems = bookmarkTreeNodes(
           this.localizedRootFolderClone.childNodes,
+          renderPromise,
           'folder',
         );
         this.tableData = H.getTableData({
@@ -215,7 +227,9 @@ export default class BMManagerWin extends React.Component {
     );
 
     if (printItems)
-      return printItems.map((itemID) => this.printableItem(itemID));
+      return printItems.map((itemID) =>
+        this.printableItem(itemID, renderPromise),
+      );
 
     return (
       <Vbox
@@ -229,6 +243,7 @@ export default class BMManagerWin extends React.Component {
               reset: randomID(),
             } as BMManagerState);
         }}
+        domref={loadingRef}
       >
         <Hbox
           className="tools"

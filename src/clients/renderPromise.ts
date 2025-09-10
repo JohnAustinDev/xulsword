@@ -9,7 +9,7 @@ import { GBuilder } from '../type.ts';
 import C from '../constant.ts';
 import { G } from './G.ts';
 import log from './log.ts';
-import { callResultDecompress } from './common.tsx';
+import { callResultDecompress } from './common.ts';
 
 import type {
   BookType,
@@ -389,34 +389,18 @@ function writeCallToCache(call: GCallType | null, result: any) {
 
         // Books
       } else if (call[0] === 'Books') {
-        const r = result as ReturnType<typeof G.Books>;
-        const args = call[2] as Parameters<typeof G.Books>;
-        const [locale] = args;
-        if (!locale || locale === G.i18n.language) {
-          const nckey = GCacheKey([
-            'Books',
-            null,
-            !locale ? [G.i18n.language] : [],
-          ]);
-          if (!Cache.has(nckey)) Cache.write(r, nckey);
-        }
-        const book: ReturnType<typeof G.Book> = r.reduce(
+        const r = result as typeof G.Books;
+        const nckey = GCacheKey(call);
+        if (!Cache.has(nckey)) Cache.write(r, nckey);
+        const book: typeof G.Book = r.reduce(
           (p, c) => {
             p[c.code] = c;
             return p;
           },
           {} as Record<string, BookType>,
         );
-        const nckey = GCacheKey(['Book', null, locale ? [locale] : []]);
-        if (!Cache.has(nckey)) Cache.write(book, nckey);
-        if (!locale || locale === G.i18n.language) {
-          const nckey = GCacheKey([
-            'Book',
-            null,
-            !locale ? [G.i18n.language] : [],
-          ]);
-          if (!Cache.has(nckey)) Cache.write(book, nckey);
-        }
+        const nckey2 = GCacheKey(['Book', null, undefined]);
+        if (!Cache.has(nckey2)) Cache.write(book, nckey2);
 
         // ModuleConfs
       } else if (call[0] === 'ModuleConfs') {
@@ -437,12 +421,11 @@ function writeCallToCache(call: GCallType | null, result: any) {
         // getLocaleDigits
       } else if (call[0] === 'getLocaleDigits') {
         const args = call[2] as Parameters<typeof G.getLocaleDigits>;
-        let nckey = '';
-        if (args.length && args[0] === G.i18n.language)
-          nckey = GCacheKey(['getLocaleDigits', null, []]);
-        else if (!args.length)
-          nckey = GCacheKey(['getLocaleDigits', null, [G.i18n.language]]);
-        if (nckey) {
+        if (args.length && args[0] === G.i18n.language) {
+          const nckey = GCacheKey(['getLocaleDigits', null, []]);
+          if (!Cache.has(nckey)) Cache.write(result, nckey);
+        } else if (!args.length) {
+          const nckey = GCacheKey(['getLocaleDigits', null, [G.i18n.language]]);
           if (!Cache.has(nckey)) Cache.write(result, nckey);
         }
       }

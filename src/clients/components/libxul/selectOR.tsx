@@ -12,7 +12,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { doUntilDone } from '../../common.tsx';
+import { doUntilDone } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { addClass, xulPropTypes } from './xul.tsx';
 import { Vbox } from './boxes.tsx';

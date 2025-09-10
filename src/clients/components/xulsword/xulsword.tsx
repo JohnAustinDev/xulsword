@@ -1,13 +1,12 @@
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
-import { clone, stringHash } from '../../../common.ts';
+import { clone, stringHash, dString } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import log from '../../log.ts';
 import RenderPromise from '../../renderPromise.ts';
 import {
-  dString,
   registerUpdateStateFromPref,
   getStatePref,
   clearPending,
@@ -16,7 +15,7 @@ import {
   doUntilDone,
   isIBTChildrensBible,
   chooserGenbks,
-} from '../../common.tsx';
+} from '../../common.ts';
 import {
   addClass,
   delayHandler,
@@ -263,13 +262,13 @@ export default class Xulsword
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
         GI.getBooksInVKModule(
-          G.Books().map((b) => b.code),
+          G.Books.map((b) => b.code),
           renderPromise,
           m,
         ).forEach((bk) => bookset.add(bk));
       }
     });
-    const Book = G.Book(G.i18n.language);
+    const { Book } = G;
     const booklist = [...bookset].sort((a: OSISBookType, b: OSISBookType) => {
       if (Book[a].index < Book[b].index) return -1;
       if (Book[a].index > Book[b].index) return 1;

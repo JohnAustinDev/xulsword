@@ -41,54 +41,87 @@ import type {
   PrefRoot,
   AudioPlayerSelectionVK,
   AudioPlayerSelectionGB,
-  GTypeMain,
   GIType,
   GITypeMain,
   Gsafe,
 } from './type.ts';
+import type { doUntilDone as DoUntilDone } from './clients/common.ts';
 import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
 import type { SelectORMType } from './clients/components/libxul/selectOR.tsx';
-import type { getSampleText } from './clients/bookmarks.tsx';
-import type verseKey from './clients/verseKey.ts';
 import type RenderPromise from './clients/renderPromise.ts';
 import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
 import type { BibleBrowserControllerGlobal } from './clients/webapp/bibleBrowser/bibleBrowser.tsx';
 import type Window from './servers/app/components/window.ts';
+import VerseKey from './verseKey.ts';
 
 // This file contains functions that are used in common with both xulsword
 // clients and servers. However functions here which call G() or GI() have
-// context restrictions (see G() and GI()).
+// context restrictions; see G() and GI().
 
 // G() may be used by Electron server and clients, and some methods are also
-// available for WebApp server and clients (those methods of GITypeMain, as
-// well as Prefs). A further WebApp client restriction is that data must be
-// carefully cache-preloaded. So when used in WebApp context, any synchronous
-// calls for uncached data, or use of methods that aren't allowed by WebApp
-// clients, will throw). It cannot be called before G has been created and
-// cached, so G should be imported as early as possible.
-function G(): Gsafe {
-  let gkey = '';
-  if (Build.isClient) gkey = 'GType';
+// available for WebApp server and/or clients (such as those methods of
+// GITypeMain). A further WebApp client restriction is that data must be
+// carefully cache-preloaded before using G(). When used in WebApp context,
+// any synchronous calls for uncached data, or use of methods that aren't
+// allowed by WebApp clients, will throw). It cannot be called before G has
+// been created and cached, so G should be imported as early as possible.
+export function G(): Gsafe {
+  let ckey = '';
+  if (Build.isClient) ckey = 'GType';
   if (Build.isServer) {
-    if (Build.isElectronApp) gkey = 'GTypeMain';
-    else gkey = 'GITypeMain';
+    if (Build.isElectronApp) ckey = 'GTypeMain';
+    else ckey = 'GITypeMain';
   }
-  if (!gkey) throw new Error(`G() cannot be called in this context.`);
-  if (!Cache.has(gkey))
+  if (!ckey) throw new Error(`G() cannot be called in this context.`);
+  if (!Cache.has(ckey))
     throw new Error(`G was requested before it was cached.`);
-  return Cache.read(gkey);
+  return Cache.read(ckey);
+}
+
+// When a GI call is required, and since GI() cannot be used on a server, this
+// function will run a call on either G() or GI() whichever is appropriate.
+export function GICall(
+  defval: any,
+  renderPromise: RenderPromise | null,
+  call: GCallType,
+): any {
+  const [func, meth, args0] = call;
+  const guse = (Build.isClient ? GI() : G()) as Gsafe;
+  let args: any[] | undefined = args0;
+  if (Build.isClient) {
+    args = typeof args0 === 'undefined' ? [] : args0;
+    args.unshift(defval, renderPromise);
+  }
+  if (typeof args === 'undefined') {
+    if (!meth) return (guse as any)[func];
+    else return (guse as any)[func][meth];
+  } else {
+    if (!meth) return (guse as any)[func](...args);
+    else return (guse as any)[func][meth](...args);
+  }
 }
 
 // GI() may be used by clients (both Electron and WebApp) but not by servers.
 // It cannot be called before GI has been created and cached, so GI should be
 // imported as early as possible.
-function GI(): GIType {
-  let gkey = '';
-  if (Build.isClient) gkey = 'GIType';
-  if (!gkey) throw new Error(`GI() cannot be called in this context.`);
-  if (!Cache.has(gkey))
+export function GI(): GIType {
+  let ckey = '';
+  if (Build.isClient) ckey = 'GIType';
+  if (!ckey) throw new Error(`GI() cannot be called in this context.`);
+  if (!Cache.has(ckey))
     throw new Error(`GI was requested before it was cached.`);
-  return Cache.read(gkey);
+  return Cache.read(ckey);
+}
+
+// WebApp clients require doUntilDone. Although servers never need it, it needs
+// to be callable.
+export function doUntilDone(
+  func: (renderPromise: RenderPromise | null) => void,
+) {
+  const ckey = 'doUntilDone';
+  if (Build.isClient && Cache.has(ckey)) {
+    (Cache.read(ckey) as typeof DoUntilDone)(func);
+  } else func(null);
 }
 
 export function isCallCacheable(
@@ -435,6 +468,19 @@ export function testData(
   return info;
 }
 
+// Converts any ASCII digits in a string into localized digits.
+export function dString(string: string | number, localex?: string | null) {
+  const locale = localex ?? G().i18n.language;
+  let s = string.toString();
+  const digits = G().getLocaleDigits(locale);
+  if (digits) {
+    for (let i = 0; i <= 9; i += 1) {
+      s = s.replaceAll(i.toString(), digits[i]);
+    }
+  }
+  return s;
+}
+
 // Convert PrefValue number-strings to numbers recursively.
 export function strings2Numbers(x: unknown): unknown {
   if (typeof x === 'string' && !Number.isNaN(Number(x))) {
@@ -484,21 +530,22 @@ export function normalizeFontFamily(fontFamily: string): string {
 // localization, the key is returned with 'i18n:' prefix removed.
 export function localizeString(
   str: string,
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise | null,
 ): string {
   if (str.startsWith('i18n:')) {
-    if (Build.isClient) {
-      const ans = ['branding', 'xulsword'].find((ns) =>
-        GI().i18n.exists(false, renderPromise, str.substring(5), { ns }),
-      );
-      if (!renderPromise?.waiting() && ans)
-        return GI().i18n.t('', renderPromise, str.substring(5), { ns: ans });
-    } else {
-      const ans = ['branding', 'xulsword'].find((ns) =>
-        G().i18n.exists(str.substring(5), { ns }),
-      );
-      if (ans) return G().i18n.t(str.substring(5), { ns: ans });
-    }
+    const ans = ['branding', 'xulsword'].find((ns) =>
+      GICall(false, renderPromise, [
+        'i18n',
+        'exists',
+        [str.substring(5), { ns }],
+      ]),
+    );
+    if (!renderPromise?.waiting() && ans)
+      return GICall(str.substring(5), renderPromise, [
+        'i18n',
+        't',
+        [str.substring(5), { ns: ans }],
+      ]);
     return str.substring(5);
   }
   return str;
@@ -1389,19 +1436,18 @@ export function pasteBookmarkItems(
 }
 
 export function bookmarkLabel(
-  verseKeyFunc: typeof verseKey,
   l: LocationVKType | LocationVKCommType | LocationORType,
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise | null,
 ): string {
   if ('commMod' in l) {
     const { commMod } = l;
-    const vk = verseKeyFunc(l, renderPromise);
+    const vk = new VerseKey(l, renderPromise);
     const readable = vk.readable(G().i18n.language, null, true);
     const t = (commMod in G().Tab && G().Tab[commMod]) || null;
     return `${t ? t.label : G().i18n.t('Comms')}: ${readable}`;
   }
   if ('v11n' in l) {
-    const vk = verseKeyFunc(l, renderPromise);
+    const vk = new VerseKey(l, renderPromise);
     return vk.readable(G().i18n.language, null, true);
   }
   const ks = l.key.split(C.GBKSEP);
@@ -1431,9 +1477,8 @@ export function forEachBookmarkItem(
 // Apply localization to a bookmark (NOT recursive and does NOT add
 // sampleText).
 export function localizeBookmark(
-  verseKeyFunc: typeof verseKey,
   item: BookmarkItemType,
-  renderPromise?: RenderPromise | null,
+  renderPromise: RenderPromise | null,
 ): BookmarkItemType {
   const { label, note } = item;
   const nlabel = localizeString(label, renderPromise);
@@ -1441,9 +1486,7 @@ export function localizeBookmark(
   if (nlabel !== label) {
     if (nlabel === 'label' && item.type === 'bookmark') {
       const { location } = item;
-      item.label = location
-        ? bookmarkLabel(verseKeyFunc, location, renderPromise)
-        : 'label';
+      item.label = location ? bookmarkLabel(location, renderPromise) : 'label';
     } else {
       item.label = nlabel;
     }
@@ -1455,26 +1498,6 @@ export function localizeBookmark(
     item.noteLocale = lang;
   }
   return item;
-}
-
-// Recursively apply localization, and optionally add sampleText, to a folder.
-export function localizeBookmarks(
-  verseKeyFunc: typeof verseKey,
-  folder: BookmarkFolderType,
-  getSampleTextFunc?: typeof getSampleText,
-) {
-  localizeBookmark(verseKeyFunc, folder);
-  forEachBookmarkItem(folder.childNodes, (item) => {
-    localizeBookmark(verseKeyFunc, item);
-    if (
-      getSampleTextFunc &&
-      item.type === 'bookmark' &&
-      !item.sampleText &&
-      item.location
-    ) {
-      item.sampleText = getSampleTextFunc(item.location);
-    }
-  });
 }
 
 // Convert a range-form string array into a number array.

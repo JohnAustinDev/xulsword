@@ -1245,7 +1245,7 @@ function promptAndInstall(
   updates.forEach((mud) => {
     const { module, Version, Abbreviation } = mud.conf;
     const { remove } = mud;
-    const toRepoName = localizeString(mud.conf.sourceRepository.name);
+    const toRepoName = localizeString(mud.conf.sourceRepository.name, null);
     const msgs = remove
       ? [mud.conf.History?.at(-1)].map((h) => h && h[1].locale)
       : [mud.conf.Description?.locale];
@@ -2053,7 +2053,7 @@ export function repositoryToRow(
     const repoIsDisabled =
       state.repositories?.disabled?.includes(repokey) || false;
     r = findTableRow(repokey, 'repository', [
-      localizeString(repo.name),
+      localizeString(repo.name, null),
       repo.domain,
       repo.path,
       repoIsDisabled ? OFF : isRepoBuiltIn(repo) ? ALWAYSON : ON,

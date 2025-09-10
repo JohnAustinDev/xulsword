@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { randomID } from '../../../common.ts';
 import log from '../../log.ts';
-import { G } from '../../G.ts';
+import { G, GI } from '../../G.ts';
+import { functionalComponentRenderPromise } from '../../common.ts';
+import RenderPromise from '../../renderPromise.ts';
 import { Analytics } from '../../analytics.ts';
 import Menulist from '../../components/libxul/menulist.tsx';
 import { getProps } from '../common.ts';
@@ -27,6 +29,7 @@ export default function WidgetMenulist(
   const { compid, settings } = wprops;
   const { actions: actions, props, data } = settings;
 
+  const { renderPromise, loadingRef } = functionalComponentRenderPromise();
   const [state, setState] = useState(() => {
     return getProps(props, {
       disabled: false,
@@ -57,7 +60,7 @@ export default function WidgetMenulist(
                   const root = urlroot.replace(/\/$/, '');
                   const rel = relurl.replace(/^\//, '');
                   anchor.setAttribute('href', `${root}/${rel}`);
-                  anchor.textContent = optionText(link, false);
+                  anchor.textContent = optionText(link, false, renderPromise);
                   const info: AnalyticsInfo = {
                     event: 'download',
                     mid,
@@ -100,13 +103,13 @@ export default function WidgetMenulist(
   const options = data
     ? data.items.map((d, i) => (
         <option key={optionKey(d)} value={i.toString()}>
-          {optionText(Array.isArray(d) ? d[0] : d, true)}
+          {optionText(Array.isArray(d) ? d[0] : d, true, renderPromise)}
         </option>
       ))
     : [];
 
   return (
-    <Menulist onChange={onChange} {...(state as any)}>
+    <Menulist onChange={onChange} {...(state as any)} domref={loadingRef}>
       {options}
     </Menulist>
   );
@@ -122,16 +125,26 @@ function optionKey(data: string | FileItem | FileItem[]): string {
   return id || randomID();
 }
 
-function optionText(data: string | FileItem, isMenulistText: boolean): string {
+function optionText(
+  data: string | FileItem,
+  isMenulistText: boolean,
+  renderPromise: RenderPromise,
+): string {
   if (typeof data === 'string') return data;
-  return getEBookTitle(data, isMenulistText);
+  return getEBookTitle(data, isMenulistText, renderPromise);
 }
 
 // Return eBook link text and menulist text.
-function getEBookTitle(data: FileItem, menu: boolean): string {
+function getEBookTitle(
+  data: FileItem,
+  menu: boolean,
+  renderPromise: RenderPromise,
+): string {
   const { ntitle, full, label } = data;
   if (full)
-    return menu ? G.i18n.t('Full publication', { ns: 'widgets' }) : ntitle;
+    return menu
+      ? GI.i18n.t('', renderPromise, 'Full publication', { ns: 'widgets' })
+      : ntitle;
 
   if (label) return menu ? label : `${label}: ${ntitle}`;
 

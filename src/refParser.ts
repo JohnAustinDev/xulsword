@@ -1,13 +1,15 @@
 import Cache from './cache.ts';
+import { G, GICall } from './common.ts';
 import C from './constant.ts';
 
-import type { getLocaleDigits, getLocalizedBooks } from './servers/common.ts';
+import type { getBooksLocalized, getLocaleDigits } from './servers/common.ts';
 import type {
   BookGroupType,
   LocationVKType,
   V11nType,
   OSISBookType,
 } from './type.ts';
+import type RenderPromise from './clients/renderPromise.ts';
 
 // Parse a Bible verse system location from a readable Bible reference written
 // in any of xulsword's installed user interface languages.
@@ -62,15 +64,12 @@ export default class RefParser {
 
   localeDigits: Record<string, ReturnType<typeof getLocaleDigits>>;
 
-  localizedBooks: ReturnType<typeof getLocalizedBooks>;
+  booksLocalized: ReturnType<typeof getBooksLocalized>;
 
   constructor(
-    localeDigits: Record<string, ReturnType<typeof getLocaleDigits>>,
-    localizedBooks: ReturnType<typeof getLocalizedBooks>,
+    renderPromise: RenderPromise | null, // cannot be null in clients.
     options?: RefParserOptionsType,
   ) {
-    this.localeDigits = localeDigits;
-    this.localizedBooks = localizedBooks;
     this.onlyOsisCode = false;
     this.noVariations = false;
     this.exactMatch = false;
@@ -87,19 +86,25 @@ export default class RefParser {
         this[name] = val;
       });
     }
-    if (
-      !this.locales.every(
-        (l) => l in this.localeDigits && l in this.localizedBooks,
-      )
-    ) {
-      throw new Error(
-        `Missing RefParser data: locales=${this.locales.join(
-          ', ',
-        )} localeDigits=${Object.keys(this.localeDigits).join(
-          ', ',
-        )} localizedBooks=${Object.keys(this.localizedBooks).join(', ')}`,
-      );
+    const { locales } = this;
+    const { language } = G().i18n;
+    if (!locales.length) locales.push(language);
+    if (locales.length > 1 || locales[0] !== language) {
+      this.booksLocalized = GICall({}, renderPromise, [
+        'BooksLocalizedAll',
+        null,
+        undefined,
+      ]);
+    } else {
+      this.booksLocalized = G().BooksLocalized;
     }
+    this.localeDigits = locales.reduce(
+      (p, c) => {
+        p[c] = G().getLocaleDigits(c);
+        return p;
+      },
+      {} as { [i: string]: string[] | null },
+    );
   }
 
   // Search through each book name (including short, long and variations) of each
@@ -128,7 +133,7 @@ export default class RefParser {
         C.SupportedBooks[bg].forEach((code) => {
           if (codes.size && exact) return;
           let codeMatches = false;
-          const locbooks = this.localizedBooks[loc];
+          const locbooks = this.booksLocalized[loc];
           if (locbooks) {
             locbooks[code].forEach((lnamea, i) => {
               if (codeMatches || (i === 2 && this.noVariations)) return;

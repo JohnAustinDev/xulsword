@@ -11,7 +11,7 @@ import Menulist from './menulist.tsx';
 import Textbox from './textbox.tsx';
 import './bookselect.css';
 
-import type { OSISBookType } from '../../../type.ts';
+import type { GType, OSISBookType } from '../../../type.ts';
 
 // XUL Bookselect
 // This component contains an overlapping Textbox and Menulist.
@@ -68,19 +68,12 @@ class Bookselect extends React.Component {
 
     // noVariations is important for autocomplete because some
     // variations are short abbreviations.
-    this.parser = new RefParser(
-      Build.isElectronApp
-        ? C.Locales.reduce(
-            (p, c) => {
-              p[c[0]] = G.getLocaleDigits(c[0]);
-              return p;
-            },
-            {} as Record<string, string[] | null>,
-          )
-        : { [G.i18n.language]: G.getLocaleDigits() },
-      G.getLocalizedBooks(Build.isElectronApp ? true : [G.i18n.language]),
-      { noVariations: true },
-    );
+    this.parser = new RefParser(null, {
+      noVariations: true,
+      locales: Build.isElectronApp
+        ? C.Locales.map((l) => l[0])
+        : [G.i18n.language],
+    });
 
     this.getBookOptions = this.getBookOptions.bind(this);
     this.textboxChange = this.textboxChange.bind(this);
@@ -92,7 +85,7 @@ class Bookselect extends React.Component {
   getBookOptions = (): PropTypes.ReactElementLike[] => {
     const { options } = this.props as BookselectProps;
     const { book } = this.state as BookselectState;
-    const Book = G.Book(G.i18n.language);
+    const { Book } = G;
     const books = options.map((bk) => {
       return (
         <option key={bk} value={bk}>
@@ -184,7 +177,7 @@ class Bookselect extends React.Component {
     // option as it is the only way to update Bookselect state without
     // effecting Textbox state.
     const { book } = state;
-    const Books = G.Books(G.i18n.language);
+    const { Books } = G;
     let bookName = book;
     for (let x = 0; x < Books.length; x += 1) {
       if (book && Books[x].code === book) bookName = Books[x].name;

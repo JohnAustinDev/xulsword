@@ -1,12 +1,12 @@
 import C from '../../../constant.ts';
+import { playAudio } from '../../../commands.ts';
+import VerseKey from '../../../verseKey.ts';
 import RefParser from '../../../refParser.ts';
 import Subscription from '../../../subscription.ts';
 import analytics from '../../analytics.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
-import Commands from '../../commands.ts';
-import { doUntilDone, audioSelections } from '../../common.tsx';
-import verseKey from '../../verseKey.ts';
+import { doUntilDone, audioSelections } from '../../common.ts';
 import log from '../../log.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
 import { genbookChange } from '../atext/ztext.ts';
@@ -75,53 +75,57 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         }
         case 'prevchap':
         case 'nextchap': {
-          doUntilDone((renderPromise2) => {
-            this.setState((prevState: XulswordState) => {
-              const { location } = prevState;
-              if (location) {
-                const l = verseKey(location, renderPromise2);
-                l.verse = 1;
-                const newloc = chapterChange(
-                  l.location(),
-                  currentId === 'prevchap' ? -1 : 1,
-                  renderPromise2,
-                );
-                if (newloc) {
-                  const s: Partial<XulswordState> = {
-                    location: newloc,
-                    selection: null,
-                    scroll: { verseAt: 'top' },
-                  };
-                  return renderPromise2?.waiting() ? null : s;
+          doUntilDone((rp) => {
+            if (rp) {
+              this.setState((prevState: XulswordState) => {
+                const { location } = prevState;
+                if (location) {
+                  const l = new VerseKey(location, rp);
+                  l.verse = 1;
+                  const newloc = chapterChange(
+                    l.location(),
+                    currentId === 'prevchap' ? -1 : 1,
+                    rp,
+                  );
+                  if (newloc) {
+                    const s: Partial<XulswordState> = {
+                      location: newloc,
+                      selection: null,
+                      scroll: { verseAt: 'top' },
+                    };
+                    return rp?.waiting() ? null : s;
+                  }
                 }
-              }
-              return null;
-            });
+                return null;
+              });
+            }
           });
           break;
         }
         case 'prevverse':
         case 'nextverse': {
-          doUntilDone((renderPromise2) => {
-            this.setState((prevState: XulswordState) => {
-              const { location } = prevState;
-              if (location) {
-                const newloc = verseChange(
-                  location,
-                  currentId === 'prevverse' ? -1 : 1,
-                  renderPromise2,
-                );
-                if (newloc) {
-                  const s: Partial<XulswordState> = {
-                    location: newloc,
-                    selection: newloc,
-                    scroll: { verseAt: 'center' },
-                  };
-                  return renderPromise2?.waiting() ? null : s;
+          doUntilDone((rp) => {
+            if (rp) {
+              this.setState((prevState: XulswordState) => {
+                const { location } = prevState;
+                if (location) {
+                  const newloc = verseChange(
+                    location,
+                    currentId === 'prevverse' ? -1 : 1,
+                    rp,
+                  );
+                  if (newloc) {
+                    const s: Partial<XulswordState> = {
+                      location: newloc,
+                      selection: newloc,
+                      scroll: { verseAt: 'center' },
+                    };
+                    return rp?.waiting() ? null : s;
+                  }
                 }
-              }
-              return null;
-            });
+                return null;
+              });
+            }
           });
           break;
         }
@@ -225,139 +229,131 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
       if (!('value' in es.target)) return;
       if (!('id' in es.target)) return;
       const { id, value } = es.target as { id: string; value: string };
-      doUntilDone((renderPromise2) => {
-        switch (id) {
-          case 'book__menulist__select': {
-            this.setState((prevState: XulswordState) => {
-              const { location } = prevState;
-              if (location) {
-                const newloc = verseKey(
-                  {
-                    book: value as OSISBookType,
-                    chapter: 1,
-                    verse: 1,
-                    v11n: location.v11n,
-                  },
-                  renderPromise2,
-                );
-                const s: Partial<XulswordState> = {
-                  location: newloc.location(),
-                  selection: newloc.location(),
-                  scroll: { verseAt: 'top' },
-                  bsreset: prevState.bsreset + 1,
-                };
-                return renderPromise2?.waiting() ? null : s;
-              }
-              return null;
-            });
-            break;
-          }
-          case 'book__textbox__input': {
-            this.setState((prevState: XulswordState) => {
-              const { location } = prevState;
-              const newloc = new RefParser(
-                Build.isElectronApp
-                  ? C.Locales.reduce(
-                      (p, c) => {
-                        p[c[0]] = G.getLocaleDigits(c[0]);
-                        return p;
-                      },
-                      {} as Record<string, string[] | null>,
-                    )
-                  : { [G.i18n.language]: G.getLocaleDigits() },
-                G.getLocalizedBooks(
-                  Build.isElectronApp ? true : [G.i18n.language],
-                ),
-                {
-                  locales: C.Locales.map((l) => l[0]),
-                },
-              ).parse(value, location?.v11n || null)?.location;
-              if (newloc && newloc.book) {
-                // Check that the entered location exists.
-                if (newloc && !newloc.chapter) newloc.chapter = 1;
-                if (newloc && !newloc.verse) newloc.verse = 1;
-                if (newloc && verseChange(newloc, 0, renderPromise2)) {
+      doUntilDone((rp) => {
+        if (rp) {
+          switch (id) {
+            case 'book__menulist__select': {
+              this.setState((prevState: XulswordState) => {
+                const { location } = prevState;
+                if (location) {
+                  const newloc = new VerseKey(
+                    {
+                      book: value as OSISBookType,
+                      chapter: 1,
+                      verse: 1,
+                      v11n: location.v11n,
+                    },
+                    rp,
+                  );
                   const s: Partial<XulswordState> = {
-                    location: newloc,
-                    selection: newloc.verse === 1 ? null : newloc,
-                    scroll: { verseAt: 'center' },
+                    location: newloc.location(),
+                    selection: newloc.location(),
+                    scroll: { verseAt: 'top' },
                     bsreset: prevState.bsreset + 1,
                   };
-                  return renderPromise2?.waiting() ? null : s;
+                  return rp?.waiting() ? null : s;
                 }
-              }
-              return renderPromise2?.waiting()
-                ? null
-                : { bsreset: prevState.bsreset + 1 };
-            });
-            break;
-          }
-          case 'chapter__input':
-          case 'verse__input': {
-            this.setState((prevState: XulswordState) => {
-              const { location } = prevState;
-              // reset Bookselect on Enter key even if chapter doesn't change
-              const bsreset = prevState.bsreset + 1;
-              if (location) {
-                const pvk = verseKey(location, renderPromise2);
-                let newloc;
-                if (id === 'chapter__input') {
-                  pvk.chapter = Number(value);
-                  pvk.verse = 1;
-                  newloc = chapterChange(pvk.location(), 0, renderPromise2);
-                } else {
-                  pvk.verse = Number(value);
-                  newloc = verseChange(pvk.location(), 0, renderPromise2);
-                }
-                if (newloc) {
-                  const s: Partial<XulswordState> = {
-                    location: newloc,
-                    selection: newloc,
-                    scroll: { verseAt: 'top' },
-                    bsreset,
-                  };
-                  return renderPromise2?.waiting() ? null : s;
-                }
-              }
-              return renderPromise2?.waiting() ? null : { bsreset };
-            });
-            break;
-          }
-          case 'xsSearchText__input': {
-            const enable = /\S+/.test(value);
-            if (state.searchDisabled === enable)
-              this.setState({ searchDisabled: !enable });
-            break;
-          }
-          case 'audioCodeSelect__select': {
-            const { audio: a } = this.state as XulswordState;
-            const { open, file, defaults: d } = clone(a);
-            if (file) {
-              const { swordModule } = file;
-              if (swordModule) {
-                doUntilDone((renderPromise2) => {
-                  const sels = audioSelections(file, renderPromise2);
-                  if (!renderPromise2?.waiting()) {
-                    const defaults = d ?? {};
-                    defaults[swordModule] = value;
-                    if (sels.length && swordModule in defaults)
-                      sels.sort((a) =>
-                        a.conf.module === defaults[swordModule] ? -1 : 0,
-                      );
-                    const audio: AudioPrefType = {
-                      open,
-                      defaults,
-                      file: sels[0]?.selection ?? null,
-                    };
-                    this.setState({ audio });
-                  }
-                });
-              }
+                return null;
+              });
+              break;
             }
-            break;
+            case 'book__textbox__input': {
+              this.setState((prevState: XulswordState) => {
+                const { location } = prevState;
+                const newloc = new RefParser(null, {
+                  locales: Build.isElectronApp
+                    ? C.Locales.map((l) => l[0])
+                    : [G.i18n.language],
+                }).parse(value, location?.v11n || null)?.location;
+                if (newloc && newloc.book) {
+                  // Check that the entered location exists.
+                  if (newloc && !newloc.chapter) newloc.chapter = 1;
+                  if (newloc && !newloc.verse) newloc.verse = 1;
+                  if (newloc && verseChange(newloc, 0, rp)) {
+                    const s: Partial<XulswordState> = {
+                      location: newloc,
+                      selection: newloc.verse === 1 ? null : newloc,
+                      scroll: { verseAt: 'center' },
+                      bsreset: prevState.bsreset + 1,
+                    };
+                    return rp?.waiting() ? null : s;
+                  }
+                }
+                return rp?.waiting()
+                  ? null
+                  : { bsreset: prevState.bsreset + 1 };
+              });
+              break;
+            }
+            case 'chapter__input':
+            case 'verse__input': {
+              this.setState((prevState: XulswordState) => {
+                const { location } = prevState;
+                // reset Bookselect on Enter key even if chapter doesn't change
+                const bsreset = prevState.bsreset + 1;
+                if (location) {
+                  const pvk = new VerseKey(location, rp);
+                  let newloc;
+                  if (id === 'chapter__input') {
+                    pvk.chapter = Number(value);
+                    pvk.verse = 1;
+                    newloc = chapterChange(pvk.location(), 0, rp);
+                  } else {
+                    pvk.verse = Number(value);
+                    newloc = verseChange(pvk.location(), 0, rp);
+                  }
+                  if (newloc) {
+                    const s: Partial<XulswordState> = {
+                      location: newloc,
+                      selection: newloc,
+                      scroll: { verseAt: 'top' },
+                      bsreset,
+                    };
+                    return rp?.waiting() ? null : s;
+                  }
+                }
+                return rp?.waiting() ? null : { bsreset };
+              });
+              break;
+            }
+            case 'xsSearchText__input': {
+              const enable = /\S+/.test(value);
+              if (state.searchDisabled === enable)
+                this.setState({ searchDisabled: !enable });
+              break;
+            }
+            case 'audioCodeSelect__select': {
+              const { audio: a } = this.state as XulswordState;
+              const { open, file, defaults: d } = clone(a);
+              if (file) {
+                const { swordModule } = file;
+                if (swordModule) {
+                  doUntilDone((rp) => {
+                    const sels = audioSelections(file, rp);
+                    if (!rp?.waiting()) {
+                      const defaults = d ?? {};
+                      defaults[swordModule] = value;
+                      if (sels.length && swordModule in defaults)
+                        sels.sort((a) =>
+                          a.conf.module === defaults[swordModule] ? -1 : 0,
+                        );
+                      const audio: AudioPrefType = {
+                        open,
+                        defaults,
+                        file: sels[0]?.selection ?? null,
+                      };
+                      this.setState({ audio });
+                    }
+                  });
+                }
+              }
+              break;
+            }
+            default:
+              throw Error(
+                `Unhandled xulswordHandler onChange event on '${id}'`,
+              );
           }
-          default:
-            throw Error(`Unhandled xulswordHandler onChange event on '${id}'`);
         }
       });
       break;
@@ -404,8 +400,8 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
     case 'ended': {
       const { audio } = state;
       const { open, file, defaults } = clone(audio);
-      doUntilDone((renderPromise2) => {
-        if (file) {
+      doUntilDone((rp) => {
+        if (rp && file) {
           const { swordModule } = file;
           if (swordModule && swordModule in G.Tab) {
             let selection:
@@ -419,16 +415,16 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 typeof chapter !== 'undefined'
               ) {
                 const nk = chapterChange(
-                  verseKey(
+                  new VerseKey(
                     {
                       book,
                       chapter,
                       v11n: G.Tab[swordModule].v11n || null,
                     },
-                    renderPromise2,
+                    rp,
                   ),
                   1,
-                  renderPromise2,
+                  rp,
                 );
                 if (nk)
                   selection = {
@@ -440,7 +436,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             } else if ('key' in file) {
               const { key: k } = file;
               if (k) {
-                const key = genbookChange(swordModule, k, true, renderPromise2);
+                const key = genbookChange(swordModule, k, true, rp);
                 if (key) {
                   selection = {
                     swordModule,
@@ -449,13 +445,13 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 }
               }
             }
-            const sels = audioSelections(selection, renderPromise2);
-            if (!renderPromise2?.waiting()) {
+            const sels = audioSelections(selection, rp);
+            if (!rp?.waiting()) {
               if (defaults && swordModule in defaults)
                 sels.sort((a) =>
                   a.conf.module === defaults[swordModule] ? -1 : 0,
                 );
-              void Commands.playAudio({
+              void playAudio({
                 open,
                 // null closes the player
                 file: sels[0]?.selection ?? null,

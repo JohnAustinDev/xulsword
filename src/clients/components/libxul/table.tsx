@@ -20,7 +20,6 @@ import type { IconName } from '@blueprintjs/core';
 import type { Region, CellRenderer } from '@blueprintjs/table';
 import type { XulProps } from './xul.tsx';
 import RenderPromise, { RenderPromiseComponent } from '../../renderPromise.ts';
-import { functionalComponentRenderPromise } from '../../common.tsx';
 
 // This table is a controlled React component with no state of its own.
 // Handlers are required for updating external state when table events occur.
@@ -132,10 +131,10 @@ type TCellLookupResult = {
 function bpColumn(
   heading: string,
   dataColIndex: number,
+  renderPromise: RenderPromise,
   cellRenderer: CellRenderer,
   menuRenderer?: ((index?: number) => React.JSX.Element) | undefined,
 ) {
-  const { renderPromise, loadingRef } = functionalComponentRenderPromise();
   let showHeading = heading;
   if (showHeading.startsWith('icon:')) showHeading = '';
   else showHeading = localizeString(showHeading, renderPromise);
@@ -151,11 +150,9 @@ function bpColumn(
       name={showHeading}
       menuRenderer={menuRenderer}
     >
-      <Box domref={loadingRef}>
-        {heading.startsWith('icon:') && (
-          <Icon icon={heading.substring(5) as any} size={20} intent="none" />
-        )}
-      </Box>
+      {heading.startsWith('icon:') && (
+        <Icon icon={heading.substring(5) as any} size={20} intent="none" />
+      )}
     </ColumnHeaderCell>
   );
 
@@ -567,6 +564,7 @@ class Table extends React.Component implements RenderPromiseComponent {
       onColumnWidthChanged: propOnColumnWidthChanged,
     } = props;
     const {
+      renderPromise,
       tableDomRef,
       onCellClick,
       onColumnsReordered,
@@ -578,7 +576,13 @@ class Table extends React.Component implements RenderPromiseComponent {
     const bpColumns = tableColumns
       .filter((tc) => tc.visible)
       .map((tc) =>
-        bpColumn(tc.heading, tc.datacolumn, cellRenderer, menuRenderer),
+        bpColumn(
+          tc.heading,
+          tc.datacolumn,
+          renderPromise,
+          cellRenderer,
+          menuRenderer,
+        ),
       );
 
     const tableColumnWidths = tableColumns

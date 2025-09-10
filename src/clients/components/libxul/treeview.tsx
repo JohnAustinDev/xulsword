@@ -7,7 +7,7 @@ import { xulPropTypes } from './xul.tsx';
 
 import type { TreeEventHandler, TreeNodeInfo } from '@blueprintjs/core';
 import type { XulProps } from './xul.tsx';
-import { safeScrollIntoView } from '../../common.tsx';
+import { safeScrollIntoView } from '../../common.ts';
 
 // The initialState of all nodes in the tree is required. If selectedIDs is defined
 // then onSelection must also be defined and the selection will be controlled by the
