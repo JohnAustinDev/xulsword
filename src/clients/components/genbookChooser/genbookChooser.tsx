@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { clone, gbAncestorIDs, ofClass, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
@@ -10,7 +9,7 @@ import {
   safeScrollIntoView,
 } from '../../common.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
-import { xulPropTypes, addClass } from '../libxul/xul.tsx';
+import { addClass } from '../libxul/xul.tsx';
 import TreeView, { forEachNode } from '../libxul/treeview.tsx';
 import '../chooser/chooser.css';
 import './genbookChooser.css';
@@ -18,7 +17,6 @@ import './genbookChooser.css';
 import type {
   AudioPlayerSelectionGB,
   AudioPlayerSelectionVK,
-  XulswordStateArgType,
 } from '../../../type.ts';
 import type { Tree, TreeNodeInfo } from '@blueprintjs/core';
 import type {
@@ -26,32 +24,26 @@ import type {
   RenderPromiseState,
 } from '../../renderPromise.ts';
 import type { XulProps } from '../libxul/xul.tsx';
-
-const propTypes = {
-  ...xulPropTypes,
-  panels: PropTypes.arrayOf(PropTypes.string).isRequired,
-  keys: PropTypes.arrayOf(PropTypes.string).isRequired,
-  onAudioClick: PropTypes.func.isRequired,
-  xulswordStateHandler: PropTypes.func.isRequired,
-};
+import type { XulswordState } from '../xulsword/xulsword.tsx';
 
 export type GenbookChooserProps = {
   panels: Array<string | null>;
-  keys: Array<string | undefined>;
+  keys?: Array<string | null>;
   onAudioClick: (
     selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
     e: React.SyntheticEvent,
   ) => void;
-  xulswordStateHandler: (s: XulswordStateArgType) => void;
+  xulswordStateHandler: React.Component<any, XulswordState>['setState'];
 } & XulProps;
 
 export type GenbookChooserState = RenderPromiseState & {
   expandedIDs: string[][];
 };
 
-class GenbookChooser extends React.Component implements RenderPromiseComponent {
-  static propTypes: typeof propTypes;
-
+export default class GenbookChooser
+  extends React.Component<GenbookChooserProps, GenbookChooserState>
+  implements RenderPromiseComponent
+{
   treeNodes: Record<string, TreeNodeInfo[]>;
 
   treeRef: Record<string, React.RefObject<Tree>>;
@@ -64,11 +56,10 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     super(props);
     const { panels } = props;
 
-    const s: GenbookChooserState = {
+    this.state = {
       expandedIDs: panels.map(() => []),
       renderPromiseID: 0,
     };
-    this.state = s;
 
     this.treeNodes = {};
     this.treeRef = {};
@@ -83,9 +74,8 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
   }
 
   componentDidMount() {
-    const props = this.props as GenbookChooserProps;
+    const { props, renderPromise, scrollTo } = this;
     const { panels } = props;
-    const { renderPromise, scrollTo } = this;
     const firstGenbookKeyIndex = panels.findIndex(
       (m) => m && m in G.Tab && G.Tab[m].tabType === 'Genbks',
     );
@@ -96,16 +86,17 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
   }
 
   componentDidUpdate(prevProps: GenbookChooserProps) {
-    const { renderPromise } = this;
+    const { props, renderPromise } = this;
     const { keys: prevkeys } = prevProps;
-    const props = this.props as GenbookChooserProps;
     const { keys } = props;
     const { scrollTo } = this;
-    const firstChangedKeyIndex = keys.findIndex(
-      (k, i) => k && k !== prevkeys[i],
-    );
-    if (firstChangedKeyIndex !== -1) {
-      scrollTo(firstChangedKeyIndex, { block: 'center', behavior: 'smooth' });
+    if (keys) {
+      const firstChangedKeyIndex = keys.findIndex(
+        (k, i) => (k && !prevkeys) || (k && prevkeys && k !== prevkeys[i]),
+      );
+      if (firstChangedKeyIndex !== -1) {
+        scrollTo(firstChangedKeyIndex, { block: 'center', behavior: 'smooth' });
+      }
     }
     renderPromise.dispatch();
   }
@@ -115,8 +106,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     _nodePath: number[],
     e: React.MouseEvent<HTMLElement>,
   ) {
-    const props = this.props as GenbookChooserProps;
-    const { onAudioClick } = props;
+    const { onAudioClick } = this.props;
     if (
       'nodeData' in node &&
       node.nodeData &&
@@ -132,11 +122,10 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     options?: ScrollIntoViewOptions,
     timeout?: number,
   ) {
-    const props = this.props as GenbookChooserProps;
+    const { props, expandKeyParents, treeRef, loadingRef } = this;
     const { panels, keys } = props;
-    const { expandKeyParents, treeRef, loadingRef } = this;
     const m = panels[panelIndex];
-    const k = keys[panelIndex];
+    const k = keys && keys[panelIndex];
     if (m && k) {
       const func = () => {
         const treekey = [m, panelIndex].join('.');
@@ -158,8 +147,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
   }
 
   needsTreeParent(panelIndex: number): boolean {
-    const { treeNodes } = this;
-    const props = this.props as GenbookChooserProps;
+    const { props, treeNodes } = this;
     const { panels } = props;
     const treekey = [panels[panelIndex], panelIndex].join('.');
     return chooserGenbks(panels).length > 1 && treeNodes[treekey].length > 1;
@@ -167,14 +155,11 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
 
   // Expand parents of key nodes if they are collapsed.
   expandKeyParents(panelIndex: number) {
-    const { needsTreeParent } = this;
-    const state = this.state as GenbookChooserState;
+    const { props, state, treeNodes, needsTreeParent } = this;
     const { expandedIDs } = clone(state);
-    const props = this.props as GenbookChooserProps;
     const { panels, keys } = props;
-    const { treeNodes } = this;
     const module = panels[panelIndex];
-    const key = keys[panelIndex];
+    const key = keys && keys[panelIndex];
     const treekey = [module, panelIndex].join('.');
     const nodes = treeNodes[treekey];
     if (nodes && key) {
@@ -192,11 +177,9 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
   }
 
   render() {
-    const props = this.props as GenbookChooserProps;
-    const state = this.state as GenbookChooserState;
-    const { panels, keys, xulswordStateHandler } = props;
-    const { expandedIDs } = state;
     const {
+      props,
+      state,
       treeRef,
       treeNodes,
       renderPromise,
@@ -204,6 +187,8 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
       onNodeClick,
       needsTreeParent,
     } = this;
+    const { panels, keys, xulswordStateHandler } = props;
+    const { expandedIDs } = state;
 
     const genbkPanels = chooserGenbks(panels);
     const treekeys = (groupIndex: number): [string | null, number] => {
@@ -264,7 +249,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
                     },
                   ];
                 }
-                const key = keys[panelIndex] || m;
+                const key = (keys && keys[panelIndex]) || m;
                 return (
                   <TreeView
                     key={stringHash(panelIndex, i, childNodes)}
@@ -275,7 +260,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
                       xulswordStateHandler(newState(panelIndex, sel));
                     }}
                     onExpansion={(exids) => {
-                      this.setState((prevState: GenbookChooserState) => {
+                      this.setState((prevState) => {
                         const { expandedIDs: expIDs } = clone(prevState);
                         expIDs[panelIndex] = exids.map((d) => d.toString());
                         return { expandedIDs: expIDs };
@@ -296,17 +281,12 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-GenbookChooser.propTypes = propTypes;
-
-export default GenbookChooser;
 
 // Return a function to update the xulsword keys state according to a given selection.
-function newState(
-  panelIndex: number,
-  selection: Array<string | number>,
-): XulswordStateArgType {
-  return (prevState) => {
-    const { keys } = clone(prevState);
+function newState(panelIndex: number, selection: Array<string | number>) {
+  return (prevState: XulswordState) => {
+    let { keys } = prevState;
+    keys = keys.slice();
     if (selection[0]) keys[panelIndex] = selection[0].toString();
     return { keys };
   };

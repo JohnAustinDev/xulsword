@@ -1,5 +1,4 @@
-import type { ReactElementLike } from 'prop-types';
-import React from 'react';
+import React, { ReactElement } from 'react';
 import { ChromePicker as ColorPicker } from 'react-color';
 import { Slider } from '@blueprintjs/core';
 import { diff, normalizeFontFamily } from '../../../common.ts';
@@ -7,7 +6,6 @@ import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import log from '../../log.ts';
 import { windowArguments } from '../../common.ts';
-import { xulPropTypes } from '../../components/libxul/xul.tsx';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Groupbox from '../../components/libxul/groupbox.tsx';
 import Label from '../../components/libxul/label.tsx';
@@ -37,25 +35,15 @@ import type { XulProps } from '../../components/libxul/xul.tsx';
 
 const nocolor = { r: 128, g: 128, b: 128, a: 128 };
 
-const propTypes = {
-  ...xulPropTypes,
-};
-
 type ChooseFontWinProps = XulProps;
-
-export type ColorType = {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-};
 
 export type ChooseFontWinState = typeof startingState;
 
-export default class ChooseFontWin extends React.Component {
-  static propTypes: typeof propTypes;
-
-  value: { [p in keyof ChooseFontWinState]?: ChooseFontWinState[p] };
+export default class ChooseFontWin extends React.Component<
+  ChooseFontWinProps,
+  ChooseFontWinState
+> {
+  value: ChooseFontWinState;
 
   handler: (e: React.SyntheticEvent) => void;
 
@@ -66,13 +54,12 @@ export default class ChooseFontWin extends React.Component {
 
     const { module } = windowArguments('chooseFontState') as { module: string };
 
-    const s: ChooseFontWinState = {
+    this.state = {
       ...startingState,
       ...styleToState(startingState.style, module),
     };
-    this.state = s;
 
-    this.value = {};
+    this.value = {} as ChooseFontWin['value'];
 
     this.handler = handlerH.bind(this);
     this.setStateValue = setStateValueH.bind(this);
@@ -90,12 +77,12 @@ export default class ChooseFontWin extends React.Component {
   }
 
   componentDidUpdate(_prevProps: any, prevState: ChooseFontWinState) {
-    const state = this.state as ChooseFontWinState;
+    const { state } = this;
     const { module } = state;
     if (module && diff(prevState.style, state.style) !== undefined) {
       G.Data.write(state.style, 'stylesheetData');
       G.Window.reset('dynamic-stylesheet-reset', 'all');
-      log.silly('componentDidUpdate style:', state.style);
+      log.debug('componentDidUpdate style:', state.style);
     }
     const { value } = this;
     const d = diff(state, value);
@@ -103,8 +90,7 @@ export default class ChooseFontWin extends React.Component {
   }
 
   render() {
-    const state = this.state as ChooseFontWinState;
-    const { value, handler, setStateValue } = this;
+    const { state, value, handler, setStateValue } = this;
     const {
       module,
       makeDefault,
@@ -118,7 +104,7 @@ export default class ChooseFontWin extends React.Component {
       ruSureDialog,
     } = state;
 
-    const fontOptions: ReactElementLike[] = [
+    const fontOptions: ReactElement[] = [
       <option key="empty" value="" label={G.i18n.t('choose.label')} />,
     ];
     if (fonts.length) {
@@ -360,7 +346,6 @@ export default class ChooseFontWin extends React.Component {
     );
   }
 }
-ChooseFontWin.propTypes = propTypes;
 
 renderToRoot(<ChooseFontWin height="100%" />, {
   onunload: () => {

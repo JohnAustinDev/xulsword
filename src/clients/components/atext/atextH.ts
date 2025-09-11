@@ -20,7 +20,6 @@ import { aTextWheelScroll, getScrollVerse } from './zversekey.ts';
 
 import type { GType, SearchType } from '../../../type.ts';
 import type Atext from './atext.tsx';
-import type { AtextProps, AtextStateType } from './atext.tsx';
 
 let AddedRules: Array<{ sheet: CSSStyleSheet; index: number }> = [];
 
@@ -53,7 +52,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
         es.target,
       );
       if (targ === null) return;
-      const props = this.props as AtextProps;
+      const { props } = this;
       const { module, panelIndex: index } = props;
       const target = es.target as HTMLElement;
       const atext = es.currentTarget as HTMLElement;
@@ -108,7 +107,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           break;
 
         case 'versePerLineButton':
-          this.setState((prevState: AtextStateType) => {
+          this.setState((prevState) => {
             const { versePerLine } = prevState;
             return { versePerLine: !versePerLine };
           });
@@ -192,7 +191,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
         if (selob) {
           let searchtext = selob.toString();
           searchtext = cleanDoubleClickSelection(searchtext);
-          const { module } = this.props as AtextProps;
+          const { module } = this.props;
           if (module && searchtext && !/^\s*$/.test(searchtext)) {
             const search: SearchType = {
               module,
@@ -223,9 +222,9 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
         es.target,
       );
       if (targ === null) return;
-      const props = this.props as AtextProps;
+      const { props } = this;
       const { isPinned, module, panelIndex: index, place: pl } = props;
-      const { pin } = this.state as AtextStateType;
+      const { pin } = this.state;
       const place = isPinned && pin ? pin.place : pl;
       const target = es.target as HTMLElement;
       const atext = es.currentTarget as HTMLElement;
@@ -351,7 +350,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
 
     case 'wheel': {
       const e = es as React.WheelEvent;
-      const { isPinned, module } = this.props as AtextProps;
+      const { isPinned, module } = this.props;
       if (isPinned && module) {
         const atext = es.currentTarget as HTMLElement;
         const { type } = G.Tab[module];
@@ -365,8 +364,8 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     // Note: scroll events don't bubble!
     case 'scroll': {
       if (Build.isWebApp && window.WebAppTextScroll === -1) {
-        const { isPinned, module, location, panelIndex, xulswordState } = this
-          .props as AtextProps;
+        const { isPinned, module, location, panelIndex, xulswordState } =
+          this.props;
         if (!isPinned && module && location) {
           let atext: HTMLElement | null = null;
           const singleColumnScrollSyncs: number[] = [];
@@ -391,7 +390,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
               () => {
                 doUntilDone((renderPromise2) => {
                   if (atext && renderPromise2) {
-                    const { location: oldloc } = this.props as AtextProps;
+                    const { location: oldloc } = this.props;
                     if (oldloc) {
                       const newloc = getScrollVerse(atext, renderPromise2);
                       if (
@@ -421,7 +420,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     }
 
     case 'change': {
-      const { xulswordState, panelIndex } = this.props as AtextProps;
+      const { xulswordState, panelIndex } = this.props;
       const origselect = ofClass(['origselect'], es.target);
       if (origselect) {
         const s = origselect.element.firstChild as
@@ -429,10 +428,11 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           | undefined;
         const module = s?.value;
         if (module) {
-          xulswordState((prevState: typeof S.prefs.xulsword) => {
-            const { ilModules } = clone(prevState);
+          xulswordState((prevState) => {
+            let { ilModules } = prevState;
+            ilModules = clone(ilModules);
             ilModules[panelIndex] = module;
-            return { ilModules } as Partial<typeof S.prefs.xulsword>;
+            return { ilModules };
           });
         }
       }

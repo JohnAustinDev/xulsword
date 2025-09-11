@@ -1,25 +1,23 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { keep, drop } from '../../../common.ts';
-import { addClass, xulPropTypes, type XulProps } from './xul.tsx';
+import { addClass } from './xul.tsx';
 import Label from './label.tsx';
 import Image from './image.tsx';
 import { Box, Hbox, Vbox } from './boxes.tsx';
 import './groupbox.css';
 
-// XUL deck
-const propTypes = {
-  ...xulPropTypes,
-  caption: PropTypes.string,
-  image: PropTypes.string,
-};
+import type { XulProps } from './xul.tsx';
 
+// XUL deck
 type GroupboxProps = XulProps & {
   caption?: string;
   image?: string;
 };
 
-function Groupbox({ orient = 'vertical', ...props }: GroupboxProps) {
+export default function Groupbox({
+  orient = 'vertical',
+  ...props
+}: GroupboxProps) {
   const { caption, image } = props;
   // These props should be passed to the groupbox body
   const passToBody = ['align', 'orient', 'pack'] as const;
@@ -40,6 +38,3 @@ function Groupbox({ orient = 'vertical', ...props }: GroupboxProps) {
     </Vbox>
   );
 }
-Groupbox.propTypes = propTypes;
-
-export default Groupbox;

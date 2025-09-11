@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import {
   dictTreeNodes,
   findFirstLeafNode,
@@ -14,7 +13,7 @@ import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import { doUntilDone } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { addClass, xulPropTypes } from './xul.tsx';
+import { addClass } from './xul.tsx';
 import { Vbox } from './boxes.tsx';
 import Menulist from './menulist.tsx';
 import ModuleMenu from './modulemenu.tsx';
@@ -78,24 +77,14 @@ export type SelectORProps = {
   onSelection: (selection: SelectORMType | undefined, id?: string) => void;
 } & XulProps;
 
-const propTypes = {
-  ...xulPropTypes,
-  initialORM: PropTypes.object.isRequired,
-  otherMods: PropTypes.arrayOf(PropTypes.string),
-  nodeLists: PropTypes.arrayOf(PropTypes.object),
-  enableMultipleSelection: PropTypes.bool,
-  enableParentSelection: PropTypes.bool,
-  disabled: PropTypes.bool,
-  onSelection: PropTypes.func.isRequired,
-};
-
 type SelectORState = RenderPromiseState & {
   selection: SelectORMType;
 };
 
-class SelectOR extends React.Component implements RenderPromiseComponent {
-  static propTypes: typeof propTypes;
-
+export default class SelectOR
+  extends React.Component<SelectORProps, SelectORState>
+  implements RenderPromiseComponent
+{
   renderPromise: RenderPromise;
 
   loadingRef: React.RefObject<HTMLDivElement>;
@@ -147,7 +136,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
           keys: selectorValue,
         };
         if (onSelection) onSelection(newsel, id);
-        this.setState({ selection: newsel } as Partial<SelectORState>);
+        this.setState({ selection: newsel });
       }
     }
     renderPromise.dispatch();
@@ -165,7 +154,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
       const { value } = e.target;
       const tabType = (value && value in G.Tab && G.Tab[value].tabType) || '';
       doUntilDone((renderPromise2) => {
-        this.setState(async (prevState: SelectORState) => {
+        this.setState((prevState) => {
           let { selection } = prevState;
           if (targ.type === 'select-module') {
             let nodes: TreeNodeInfo[] = [];
@@ -193,7 +182,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
           }
           if (!renderPromise2?.waiting()) {
             onSelection(selection, props.id);
-            return { selection } as Partial<SelectORState>;
+            return { selection };
           }
           return null;
         });
@@ -202,19 +191,19 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
   }
 
   openParent(id: string) {
-    const props = this.props as SelectORProps;
+    const { props } = this;
     const { onSelection } = props;
-    this.setState((prevState: SelectORState) => {
+    this.setState((prevState) => {
       const { selection } = prevState;
       selection.keys = [id];
       onSelection(selection, props.id);
-      return { selection } as Partial<SelectORState>;
+      return { selection };
     });
   }
 
   render() {
-    const props = this.props as SelectORProps;
-    const state = this.state as SelectORState;
+    const { props, state, openParent, onChange, renderPromise, loadingRef } =
+      this;
     const { selection } = state;
     const {
       disabled,
@@ -223,7 +212,6 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
       enableMultipleSelection,
       enableParentSelection,
     } = props;
-    const { openParent, onChange, renderPromise, loadingRef } = this;
     const { otherMod, keys } = selection;
 
     // Get modules to be made available for selection, and their node lists:
@@ -444,9 +432,6 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-SelectOR.propTypes = propTypes;
-
-export default SelectOR;
 
 // A valid node family will be returned from any node that exist in nodes.
 // If the selected node does not exist in nodes, an error is thrown. The

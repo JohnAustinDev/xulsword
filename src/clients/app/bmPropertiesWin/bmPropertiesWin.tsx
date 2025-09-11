@@ -14,6 +14,7 @@ import {
 import S from '../../../defaultPrefs.ts';
 import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
+import RenderPromise, { RenderPromiseComponent } from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { doUntilDone, windowArguments } from '../../common.ts';
 import { bookmarkTreeNode, getSampleText } from '../../bookmarks.tsx';
@@ -30,7 +31,6 @@ import SelectAny from '../../components/libxul/selectAny.tsx';
 import Button from '../../components/libxul/button.tsx';
 import Spacer from '../../components/libxul/spacer.tsx';
 import TreeView from '../../components/libxul/treeview.tsx';
-import { xulPropTypes } from '../../components/libxul/xul.tsx';
 import { localizeBookmarks } from '../common.ts';
 import './bmPropertiesWin.css';
 
@@ -51,7 +51,6 @@ import type {
 } from '../../../type.ts';
 import type { XulProps } from '../../components/libxul/xul.tsx';
 import type { SelectVKType } from '../../components/libxul/selectVK.tsx';
-import RenderPromise, { RenderPromiseComponent } from '../../renderPromise.ts';
 
 const Bookmarks = G.Prefs.getComplexValue(
   'rootfolder',
@@ -120,16 +119,12 @@ type WinArgBmPropState = Parameters<
 >[1];
 type WinArgNewItem = Parameters<GType['Commands']['openBookmarkProperties']>[2];
 
-const propTypes = xulPropTypes;
-
 type BMPropertiesProps = XulProps;
 
 export default class BMPropertiesWin
-  extends React.Component
+  extends React.Component<BMPropertiesProps, BMPropertiesState>
   implements RenderPromiseComponent
 {
-  static propTypes: typeof propTypes;
-
   renderPromise: RenderPromise;
 
   loadingRef: React.RefObject<HTMLElement>;
@@ -177,9 +172,8 @@ export default class BMPropertiesWin
   }
 
   componentDidMount() {
-    const state = this.state as BMPropertiesState;
+    const { state, renderPromise } = this;
     const { bookmark, treeSelection } = clone(state);
-    const { renderPromise } = this;
     const { label } = bookmark;
     if (HasRequiredModule) {
       let updateState = false;
@@ -223,7 +217,7 @@ export default class BMPropertiesWin
       case 'note':
       case 'label': {
         const e = ex as React.ChangeEvent<HTMLTextAreaElement>;
-        this.setState((prevState: BMPropertiesState) => {
+        this.setState((prevState) => {
           let { bookmark } = clone(prevState);
           bookmark = bookmark as BookmarkType;
           bookmark[eid] = e.target.value;
@@ -245,7 +239,7 @@ export default class BMPropertiesWin
           'rootfolder',
           'bookmarks',
         ) as typeof S.bookmarks.rootfolder;
-        const state = this.state as BMPropertiesState;
+        const { state } = this;
         const { treeSelection, bookmark } = state;
         const isNew = !replaceBookmarkItem(rootfolder, bookmark);
         const itemOrID = isNew ? [bookmark] : [bookmark.id];
@@ -275,7 +269,7 @@ export default class BMPropertiesWin
     const { renderPromise } = this;
     const module = (selection && getModuleOfObject(selection)) || null;
     if (module && selection && HasRequiredModule) {
-      this.setState((prevState: BMPropertiesState) => {
+      this.setState((prevState) => {
         let bookmark: BookmarkItemType;
         if (module !== getModuleOfObject(prevState.bookmark)) {
           bookmark =
@@ -326,8 +320,8 @@ export default class BMPropertiesWin
   }
 
   render() {
-    const state = this.state as BMPropertiesState;
     const {
+      state,
       loadingRef,
       renderPromise,
       treeHandler,
@@ -447,7 +441,6 @@ export default class BMPropertiesWin
     );
   }
 }
-BMPropertiesWin.propTypes = propTypes;
 
 renderToRoot(<BMPropertiesWin />, {
   resetOnResize: false,

@@ -1,25 +1,21 @@
-/* eslint-disable prefer-rest-params */
-import { G, getPanelWidths, GICall, keep } from './common.ts';
+import { G, getPanelWidths, GICall } from './common.ts';
 import C from './constant.ts';
 
 import type S from './defaultPrefs.ts';
 import type {
-  GAddWindowId,
   GType,
-  GTypeMain,
   LocationORType,
   SwordFeatures,
   TabType,
   TabTypes,
 } from './type.ts';
 import type RenderPromise from './clients/renderPromise.ts';
-import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
 
 // This file contains functions for manipulating the panels and tab-banks of
 // a viewport. A viewport consists of one or more text panels plus a 'chooser'
 // widget.
 
-type TabChangeOptions = {
+export type TabChangeOptions = {
   panelIndex: number; // which panel(s) (-1 is all)
   whichTab: string | string[] | TabTypes | 'all'; // which tabs in the panel(s)
   doWhat: 'show' | 'hide' | 'toggle';
@@ -47,67 +43,6 @@ type PanelChangeState = Pick<
   | 'isPinned'
   | 'keys'
 >;
-
-// Update xulsword state prefs to modify tabs. The only state props
-// returned are those potentially, but not necessarily, modified.
-export function setXulswordTabs(
-  options: Partial<TabChangeOptions> & {
-    skipCallbacks?: boolean;
-    clearRendererCaches?: boolean;
-  },
-  renderPromise: RenderPromise | null,
-  callback?: (xulsword: typeof S.prefs.xulsword) => void,
-): Pick<typeof S.prefs.xulsword, 'panels' | 'mtModules' | 'tabs' | 'location'> {
-  const id = (arguments[3] as number) ?? -1;
-  const { skipCallbacks, clearRendererCaches } = {
-    skipCallbacks: false,
-    clearRendererCaches: true,
-    ...options,
-  };
-
-  let isViewportWin: GAddWindowId['Window'] | null = null;
-  if (Build.isElectronApp) {
-    const winobj = (G() as GType).Window;
-    if (id !== -1 && winobj) {
-      const [d] = winobj.descriptions({ id });
-      if (d?.type === 'viewportWin') isViewportWin = winobj;
-    }
-  }
-
-  const xulsword = isViewportWin
-    ? (isViewportWin.getComplexValue('xulswordState', id) as XulswordState)
-    : ((G().Prefs as GAddWindowId['Prefs']).getComplexValue(
-        'xulsword',
-        undefined,
-        id,
-      ) as typeof S.prefs.xulsword);
-
-  getTabChange(options, xulsword, renderPromise);
-  const result = keep(xulsword, ['panels', 'mtModules', 'tabs', 'location']);
-
-  if (!isViewportWin) {
-    (G().Prefs as GAddWindowId['Prefs']).mergeValue(
-      'xulsword',
-      result,
-      'prefs',
-      skipCallbacks,
-      clearRendererCaches,
-      id,
-    );
-    // The previous prefs mergeValue will not reset the calling window to
-    // prevent cycling (usually the calling window updates itself). In this
-    // case the calling window needs an explicit reset to apply the new pref
-    // values.
-    if (Build.isElectronApp) (G() as GType).Window.reset('all', { id });
-  } else {
-    isViewportWin.setComplexValue('xulswordState', xulsword, id);
-    isViewportWin.reset('all', 'self', id);
-  }
-
-  if (callback) callback(xulsword);
-
-  return result;
-}
 
 // Sort tabslist in place by type and then by language relevance to a locale.
 export function sortTabsByLocale<T extends TabType[] | string[]>(

@@ -16,12 +16,7 @@ import {
   isIBTChildrensBible,
   chooserGenbks,
 } from '../../common.ts';
-import {
-  addClass,
-  delayHandler,
-  topHandle,
-  xulPropTypes,
-} from '../libxul/xul.tsx';
+import { addClass, delayHandler, topHandle } from '../libxul/xul.tsx';
 import Button, { AnchorButton } from '../libxul/button.tsx';
 import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
 import Bookselect from '../libxul/bookselect.tsx';
@@ -44,7 +39,7 @@ import {
 import './xulsword.css';
 
 import type { BibleBrowserControllerGlobal } from '../../webapp/bibleBrowser/bibleBrowser.tsx';
-import type { OSISBookType, XulswordStateArgType } from '../../../type.ts';
+import type { OSISBookType } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
   RenderPromiseState,
@@ -54,10 +49,6 @@ import type Atext from '../atext/atext.tsx';
 import type { XulProps } from '../libxul/xul.tsx';
 import type { SelectORMType } from '../libxul/selectOR.tsx';
 import type { SelectVKType } from '../libxul/selectVK.tsx';
-
-const propTypes = {
-  ...xulPropTypes,
-};
 
 export type XulswordProps = XulProps;
 
@@ -75,11 +66,9 @@ export type XulswordState = typeof notStatePrefDefault &
   RenderPromiseState;
 
 export default class Xulsword
-  extends React.Component
+  extends React.Component<XulswordProps, XulswordState>
   implements RenderPromiseComponent
 {
-  static propTypes: typeof propTypes;
-
   handler: any;
 
   viewportParentHandler: any;
@@ -109,12 +98,11 @@ export default class Xulsword
   constructor(props: XulswordProps) {
     super(props);
 
-    const s: XulswordState = {
+    this.state = {
       ...notStatePrefDefault,
       ...(getStatePref('prefs', 'xulsword') as typeof S.prefs.xulsword),
       renderPromiseID: 0,
     };
-    this.state = s;
 
     this.handler = handlerH.bind(this);
     this.viewportParentHandler = viewportParentH.bind(this);
@@ -141,14 +129,13 @@ export default class Xulsword
   }
 
   componentDidUpdate(_prevProps: XulswordProps, prevState: XulswordState) {
-    const { renderPromise } = this;
-    const state = this.state as XulswordState;
+    const { state, renderPromise } = this;
     const { scroll } = state;
 
     if (Build.isWebApp) {
       doUntilDone((renderPromise2) => {
         const { keys: prevkeys } = prevState;
-        const { panels, keys } = this.state as XulswordState;
+        const { panels, keys } = this.state;
         const keys2 = syncChildrensBibles(
           panels,
           prevkeys,
@@ -162,7 +149,7 @@ export default class Xulsword
           if (Build.isDevelopment) {
             log.debug(`xulsword componentDidUpdate setState:`, { keys: keys2 });
           }
-          this.setState({ keys: keys2 } as XulswordState);
+          this.setState({ keys: keys2 });
         }
       });
     }
@@ -195,15 +182,15 @@ export default class Xulsword
 
   selectionGenbk(selection: SelectORMType | undefined, _id?: string): void {
     if (selection) {
-      const { panels } = this.state as XulswordState;
+      const { panels } = this.state;
       const { otherMod, keys: newkey } = selection;
       const panelIndex = panels.indexOf(otherMod);
       if (panelIndex !== -1) {
-        this.setState((prevState: XulswordState) => {
+        this.setState((prevState) => {
           let { keys } = prevState;
           keys = [...keys];
           [keys[panelIndex]] = newkey;
-          return { keys } as XulswordState;
+          return { keys };
         });
       }
     }
@@ -213,7 +200,7 @@ export default class Xulsword
     if (selection) this.setState({ location: selection });
   }
 
-  xulswordStateHandler(s: XulswordStateArgType): void {
+  xulswordStateHandler(s: any) {
     if (Build.isDevelopment) {
       log.debug(`xulswordStateHandler setState:`, s);
     }
@@ -221,9 +208,9 @@ export default class Xulsword
   }
 
   render() {
-    const state = this.state as XulswordState;
-    const props = this.props as XulswordProps;
     const {
+      props,
+      state,
       loadingRef,
       handler,
       viewportParentHandler,
@@ -543,9 +530,12 @@ export default class Xulsword
               verses: [],
               lastchapters: [],
               lastverses: [],
-              vkMods: [vkMod],
+              vkMods: vkMod ? [vkMod] : undefined,
             }}
-            initialVK={{ ...location, vkMod }}
+            initialVK={{
+              ...(location || { book: 'Gen', chapter: 1, v11n: 'KJV' }),
+              vkMod,
+            }}
             disabled={location === null}
             onSelection={selectionVK}
             key={[stringHash(location), vkMod, bsreset].join('.')}
@@ -743,4 +733,3 @@ export default class Xulsword
     );
   }
 }
-Xulsword.propTypes = propTypes;

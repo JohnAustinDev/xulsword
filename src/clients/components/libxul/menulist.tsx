@@ -1,8 +1,9 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { addClass, xulPropTypes, type XulProps } from './xul.tsx';
+import { addClass } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import './menulist.css';
+
+import type { XulProps } from './xul.tsx';
 
 // This is a controlled React component so onChange is required.
 //
@@ -16,20 +17,6 @@ import './menulist.css';
 // - Every controlled select box needs an onChange event handler that synchronously updates its backing value.
 
 // XUL menulist
-const propTypes = {
-  ...xulPropTypes,
-  disabled: PropTypes.bool,
-  multiple: PropTypes.bool,
-  options: PropTypes.arrayOf(PropTypes.element),
-  size: PropTypes.number,
-  value: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.arrayOf(PropTypes.string),
-    PropTypes.number,
-    PropTypes.arrayOf(PropTypes.number),
-  ]),
-};
-
 export type MenulistProps = {
   disabled?: boolean;
   multiple?: boolean;
@@ -39,7 +26,7 @@ export type MenulistProps = {
   onChange: (e: any) => void | Promise<void>;
 } & XulProps;
 
-function Menulist({
+export default function Menulist({
   disabled = false,
   multiple = false,
   ...props
@@ -66,6 +53,3 @@ function Menulist({
     </Box>
   );
 }
-Menulist.propTypes = propTypes;
-
-export default Menulist;

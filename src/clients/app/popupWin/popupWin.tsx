@@ -5,36 +5,32 @@ import log from '../../log.ts';
 import RenderPromise from '../../renderPromise.ts';
 import renderToRoot from '../../controller.tsx';
 import { windowArguments } from '../../common.ts';
-import {
-  addClass,
-  type XulProps,
-  xulPropTypes,
-} from '../../components/libxul/xul.tsx';
+import { addClass } from '../../components/libxul/xul.tsx';
 import { Vbox } from '../../components/libxul/boxes.tsx';
 import {
   popupHandler as popupHandlerH,
-  type PopupParent,
-  type PopupParentState,
-  type ViewportPopupProps,
   PopupParentInitState,
 } from '../../components/popup/popupParentH.ts';
 import Popup from '../../components/popup/popup.tsx';
 import '../../components/atext/atext.css';
+
 import type { RenderPromiseState } from '../../renderPromise.ts';
+import type {
+  PopupParent,
+  PopupParentState,
+} from '../../components/popup/popupParentH.ts';
+import type { XulProps } from '../../components/libxul/xul.tsx';
 
-const propTypes = {
-  ...xulPropTypes,
-};
-
-type PopupWinProps = ViewportPopupProps & XulProps;
+type PopupWinProps = XulProps;
 
 type PopupWinState = PopupParentState & RenderPromiseState;
 
 let windowState: Partial<PopupWinState> | undefined;
 
-export default class PopupWin extends React.Component implements PopupParent {
-  static propTypes: typeof propTypes;
-
+export default class PopupWin
+  extends React.Component<PopupWinProps, PopupWinState>
+  implements PopupParent
+{
   popupHandler: typeof popupHandlerH;
 
   renderPromise: RenderPromise;
@@ -52,7 +48,7 @@ export default class PopupWin extends React.Component implements PopupParent {
       ...PopupParentInitState,
       ...(windowArguments('popupState') as Partial<PopupWinState>),
       renderPromiseID: 0,
-    } as PopupWinState;
+    };
 
     this.popupHandler = popupHandlerH.bind(this);
 
@@ -61,8 +57,7 @@ export default class PopupWin extends React.Component implements PopupParent {
   }
 
   componentDidUpdate(_prevProps: PopupWinProps, prevState: PopupWinState) {
-    const { renderPromise } = this;
-    const state = this.state as PopupWinState;
+    const { state, renderPromise } = this;
     windowState = state;
     const changedState = diff(
       { ...prevState, popupParent: null },
@@ -73,8 +68,8 @@ export default class PopupWin extends React.Component implements PopupParent {
   }
 
   render() {
-    const { loadingRef, popupHandler } = this;
-    const { elemdata, popupReset } = this.state as PopupWinState;
+    const { state, loadingRef, popupHandler } = this;
+    const { elemdata, popupReset } = state;
 
     return (
       <Vbox domref={loadingRef} {...addClass('popupWin', this.props)}>
@@ -89,7 +84,6 @@ export default class PopupWin extends React.Component implements PopupParent {
     );
   }
 }
-PopupWin.propTypes = propTypes;
 
 renderToRoot(<PopupWin height="100%" />).catch((er) => {
   log.error(er);

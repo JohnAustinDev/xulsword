@@ -1,12 +1,11 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import VerseKey from '../../../verseKey.ts';
 import { clone, diff, getModuleOfObject, ofClass } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import { getMaxChapter, getMaxVerse } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { addClass, xulPropTypes } from './xul.tsx';
+import { addClass } from './xul.tsx';
 import { Hbox } from './boxes.tsx';
 import ModuleMenu from './modulemenu.tsx';
 import Label from './label.tsx';
@@ -67,35 +66,6 @@ export type SelectVKProps = {
   onSelection: (selection: SelectVKType | undefined, id?: string) => void;
 } & XulProps;
 
-const propTypes = {
-  ...xulPropTypes,
-  initialVK: PropTypes.shape({
-    book: PropTypes.string,
-    chapter: PropTypes.number,
-    verse: PropTypes.number,
-    lastchapter: PropTypes.number,
-    lastverse: PropTypes.number,
-    vkMod: PropTypes.string,
-    v11n: PropTypes.string,
-  }).isRequired,
-  options: PropTypes.shape({
-    books: PropTypes.arrayOf(PropTypes.string),
-    chapters: PropTypes.arrayOf(PropTypes.number),
-    verses: PropTypes.arrayOf(PropTypes.number),
-    lastchapters: PropTypes.arrayOf(PropTypes.number),
-    lastverses: PropTypes.arrayOf(PropTypes.number),
-    vkMods: PropTypes.oneOfType([
-      PropTypes.arrayOf(PropTypes.string),
-      PropTypes.string,
-    ]),
-  }),
-  language: PropTypes.bool,
-  description: PropTypes.bool,
-  disabled: PropTypes.bool,
-  allowNotInstalled: PropTypes.bool,
-  onSelection: PropTypes.func.isRequired,
-};
-
 type SelectVKState = RenderPromiseState & {
   selection: SelectVKType;
 };
@@ -105,9 +75,10 @@ export type SelectVKChangeEvents =
   | React.ChangeEvent<HTMLSelectElement>;
 
 // React VerseKey Select
-class SelectVK extends React.Component implements RenderPromiseComponent {
-  static propTypes: typeof propTypes;
-
+export default class SelectVK
+  extends React.Component<SelectVKProps, SelectVKState>
+  implements RenderPromiseComponent
+{
   selectValues: SelectVKType;
 
   renderPromise: RenderPromise;
@@ -117,11 +88,10 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
   constructor(props: SelectVKProps) {
     super(props);
 
-    const s: SelectVKState = {
+    this.state = {
       selection: props.initialVK,
       renderPromiseID: 0,
     };
-    this.state = s;
 
     this.selectValues = props.initialVK;
     this.loadingRef = React.createRef();
@@ -147,8 +117,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
   // Record the updated selection caused by an input event by updating state and
   // calling onSelection.
   handleChange(es: React.SyntheticEvent) {
-    const state = this.state as SelectVKState;
-    const props = this.props as SelectVKProps;
+    const { props, state } = this;
     const { selection } = state;
     const e = es as SelectVKChangeEvents;
     const cls = ofClass(
@@ -197,12 +166,12 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
           }
         }
       }
-      this.setState((prevState: SelectVKState) => {
+      this.setState((prevState) => {
         if (diff(prevState.selection, s)) {
           if (typeof onSelection === 'function') {
             onSelection(s, props.id);
           }
-          return { selection: s } as SelectVKState;
+          return { selection: s };
         }
         return null;
       });
@@ -215,18 +184,17 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
   // was corrected. In such case, state must be updated and onSelection called,
   // with the resulting valid selection.
   checkSelection(prevState?: SelectVKState) {
-    const props = this.props as SelectVKProps;
+    const { props } = this;
     const { id, onSelection } = props;
     const { selection } = prevState || {};
     const { selectValues } = this;
     if (!prevState || selectValues) {
       const d = diff(selection, selectValues);
       if (d) {
-        const s: Partial<SelectVKState> = {
-          selection: selectValues,
-        };
         if (onSelection) onSelection(selectValues, id?.toString());
-        this.setState(s);
+        this.setState({
+          selection: selectValues,
+        });
       }
     }
   }
@@ -238,7 +206,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     min: number,
     max: number,
   ) {
-    const props = this.props as SelectVKProps;
+    const { props } = this;
     const { initialVK } = props;
     let oc = options;
     if (!oc) {
@@ -270,9 +238,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
   }
 
   render() {
-    const props = this.props as SelectVKProps;
-    const state = this.state as SelectVKState;
-    const { handleChange, renderPromise, loadingRef } = this;
+    const { props, state, handleChange, renderPromise, loadingRef } = this;
     let { selection } = state;
     const vkMod = getModuleOfObject(selection);
     // Selection must share the same v11n as vkMod.
@@ -525,6 +491,3 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-SelectVK.propTypes = propTypes;
-
-export default SelectVK;

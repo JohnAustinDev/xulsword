@@ -1,23 +1,19 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Subscription from '../../../subscription.ts';
 import { b64toBlob } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import {
-  functionalComponentRenderPromise,
-  printRefs,
-  rootRenderPromise,
-} from '../../common.ts';
+import { functionalComponentRenderPromise, printRefs } from '../../common.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button.tsx';
 import Spacer from '../libxul/spacer.tsx';
-import { htmlAttribs, type XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { htmlAttribs } from '../libxul/xul.tsx';
 import PrintSettings from './printSettings.tsx';
 import './print.css';
 
 import type { PrintOptionsType } from '../../controller.tsx';
-import { GType } from '../../../type.ts';
+import type { XulProps } from '../libxul/xul.tsx';
+import type { GType } from '../../../type.ts';
 
 // The Print component is the foundation for all print related features. It
 // must be rendered to the root of a window and its children (the root content)
@@ -29,11 +25,6 @@ import { GType } from '../../../type.ts';
 // the usual Print components, the content of the PDF will be shown in an
 // iframe. This provides a print preview which will be completed when the
 // backHandler is called by a back button click.
-
-const propTypes = {
-  ...xulPropTypes,
-  print: PropTypes.object.isRequired,
-};
 
 type PrintProps = XulProps & {
   print: PrintOptionsType;
@@ -120,7 +111,6 @@ export default function Print(props: PrintProps) {
     </>
   );
 }
-Print.propTypes = propTypes;
 
 export type PrintContainerProps = XulProps;
 

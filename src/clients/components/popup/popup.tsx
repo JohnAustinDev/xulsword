@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import {
   JSON_attrib_stringify,
   ofClass,
@@ -10,7 +9,7 @@ import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import { libswordImgSrc, notMouse, windowArguments } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { topHandle, htmlAttribs, xulPropTypes } from '../libxul/xul.tsx';
+import { topHandle, htmlAttribs } from '../libxul/xul.tsx';
 import { Box, Hbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button.tsx';
 import { getRefBible } from '../atext/zversekey.ts';
@@ -30,28 +29,17 @@ import type {
 } from '../../renderPromise.ts';
 import type { XulProps } from '../libxul/xul.tsx';
 
-const propTypes = {
-  ...xulPropTypes,
-  elemdata: PropTypes.arrayOf(PropTypes.object),
-  gap: PropTypes.number,
-  isWindow: PropTypes.bool,
-  onPopupClick: PropTypes.func.isRequired,
-  onSelectChange: PropTypes.func.isRequired,
-  onMouseLeftPopup: PropTypes.func,
-  onPopupContextMenu: PropTypes.func,
-};
-
 export type PopupProps = {
   // key must be set correctly for popup to update, like:
   // key={[gap, elemdata.length, popupReset].join('.')}
   key: string;
   elemdata: HTMLData[] | null; // data of target elements
-  gap: number | undefined; // Pixel distance between target element and top of popup window
+  gap?: number; // Pixel distance between target element and top of popup window
   isWindow?: boolean; // Set to true to use popup in windowed mode
   onPopupClick: (e: React.SyntheticEvent) => void;
   onSelectChange: (e: React.SyntheticEvent) => void;
-  onMouseLeftPopup: (e: React.SyntheticEvent) => void;
-  onPopupContextMenu: (e: React.SyntheticEvent) => void;
+  onMouseLeftPopup?: (e: React.SyntheticEvent) => void;
+  onPopupContextMenu?: (e: React.SyntheticEvent) => void;
 } & XulProps;
 
 export type PopupState = RenderPromiseState & {
@@ -77,9 +65,10 @@ export type PopupState = RenderPromiseState & {
 // to a target element within which it will appear (usually the
 // same element as elemdata[0] but this is not necessary), and
 // isWindow should be false (the default).
-class Popup extends React.Component implements RenderPromiseComponent {
-  static propTypes: typeof propTypes;
-
+class Popup
+  extends React.Component<PopupProps, PopupState>
+  implements RenderPromiseComponent
+{
   handler: (e: React.MouseEvent) => void;
 
   renderPromise: RenderPromise;
@@ -92,7 +81,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
     this.state = {
       drag: null,
       renderPromiseID: 0,
-    } as PopupState;
+    };
 
     this.handler = popupH.bind(this);
     this.update = this.update.bind(this);
@@ -118,8 +107,8 @@ class Popup extends React.Component implements RenderPromiseComponent {
   }
 
   setTitle() {
-    const { loadingRef } = this;
-    const { isWindow } = this.props as PopupProps;
+    const { props, loadingRef } = this;
+    const { isWindow } = props;
     const popup = loadingRef?.current;
     if (isWindow && popup) {
       const maxlen = Math.floor((popup.clientWidth - 50) / 10);
@@ -143,9 +132,8 @@ class Popup extends React.Component implements RenderPromiseComponent {
   // Set root location of popup, and if it is overflowing the bottom of
   // the text area, then drag it up.
   positionPopup(force = false as boolean) {
-    const { loadingRef } = this;
-    const { isWindow, gap } = this.props as PopupProps;
-    const state = this.state as PopupState;
+    const { props, state, loadingRef } = this;
+    const { isWindow, gap } = props;
     if ((force || !state.drag) && !isWindow) {
       const popup = loadingRef?.current;
       const parent = popup?.parentNode as HTMLElement | null;
@@ -201,8 +189,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
   // Write popup contents from LibSword, and update state if popup
   // was repositioned.
   update() {
-    const { loadingRef, renderPromise } = this;
-    const props = this.props as PopupProps;
+    const { props, loadingRef, renderPromise } = this;
     const { elemdata, isWindow } = props;
     const pts = loadingRef?.current?.getElementsByClassName('popup-text');
     if (!loadingRef.current || !pts)
@@ -262,7 +249,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
     module?: string | undefined,
     feature?: string | undefined,
   ) {
-    const props = this.props as PopupProps;
+    const { props } = this;
     if (!module && !feature) return null;
     return (
       <select
@@ -289,16 +276,14 @@ class Popup extends React.Component implements RenderPromiseComponent {
   }
 
   onMouseLeftPopup(e: React.MouseEvent) {
-    const { handler } = this;
-    const { onMouseLeftPopup } = this.props as PopupProps;
+    const { props, handler } = this;
+    const { onMouseLeftPopup } = props;
     handler(e);
     if (typeof onMouseLeftPopup === 'function') onMouseLeftPopup(e);
   }
 
   render() {
-    const props = this.props as PopupProps;
-    const state = this.state as PopupState;
-    const { handler, onMouseLeftPopup, loadingRef } = this;
+    const { props, state, handler, onMouseLeftPopup, loadingRef } = this;
     const { drag } = state;
     const { elemdata, gap, isWindow } = props;
     const data = elemdata?.[elemdata.length - 1] || null;
@@ -409,6 +394,5 @@ class Popup extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-Popup.propTypes = propTypes;
 
 export default Popup;

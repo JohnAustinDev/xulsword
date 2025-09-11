@@ -297,6 +297,14 @@ function getLocaleOfModule(module: string) {
   return Cache.read(cacheName);
 }
 
+export const CipherKeyModules: Record<
+  string,
+  {
+    confPath: string;
+    cipherKey: string;
+    numBooks: number | null; // null means unknown
+  }
+> = {};
 const ParsedConfigFiles: Record<string, SwordConfType> = {};
 export function getTabs(): TabType[] {
   if (!Cache.has('tabs')) {
@@ -334,12 +342,14 @@ export function getTabs(): TabType[] {
         ParsedConfigFiles[module] = parsedFile;
         const cipherKey = LibSword.getModuleInformation(module, 'CipherKey');
         if (confFile && cipherKey !== C.NOTFOUND) {
+          const numBooks =
+            cipherKey === '' ? 0 : getBooksInVKModule(module).length;
           CipherKeyModules[module] = {
             confPath: confFile.path,
             cipherKey,
-            numBooks: cipherKey === '' ? 0 : getBooksInVKModule(module).length,
+            numBooks,
           };
-          if (cipherKey === '') return;
+          if (!numBooks) return;
         }
 
         const tab: TabType = {
@@ -1169,7 +1179,6 @@ export function genBookTreeNodes(
           const n: TreeNodeInfoPref = {
             id: gbkey,
             label: label[label.length - 1],
-            className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
             hasCaret: gbkey.endsWith(C.GBKSEP),
           };
           return n;
@@ -1185,15 +1194,6 @@ export function genBookTreeNodes(
   });
   return nodeinfos;
 }
-
-export const CipherKeyModules: Record<
-  string,
-  {
-    confPath: string;
-    cipherKey: string;
-    numBooks: number | null; // null means unknown
-  }
-> = {};
 
 // Use in conjunction with callResultDecompress to compress G request results
 // for transmission over the Internet.

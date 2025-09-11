@@ -19,7 +19,6 @@ import RenderPromise, {
 } from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { libswordText } from '../../components/atext/ztext.ts';
-import { xulPropTypes } from '../../components/libxul/xul.tsx';
 import Groupbox from '../../components/libxul/groupbox.tsx';
 import Checkbox from '../../components/libxul/checkbox.tsx';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
@@ -39,8 +38,6 @@ import type { SelectVKType } from '../../components/libxul/selectVK.tsx';
 
 const MaxChaptersToCopy = 10;
 
-const propTypes = xulPropTypes;
-
 type CopyPassageProps = XulProps;
 
 const notStatePrefDefault = {
@@ -52,11 +49,9 @@ export type CopyPassageState = typeof notStatePrefDefault &
   RenderPromiseState;
 
 export default class CopyPassageWin
-  extends React.Component
+  extends React.Component<CopyPassageProps, CopyPassageState>
   implements RenderPromiseComponent
 {
-  static propTypes: typeof propTypes;
-
   renderPromise: RenderPromise;
 
   loadingRef: React.RefObject<HTMLDivElement>;
@@ -122,8 +117,7 @@ export default class CopyPassageWin
   }
 
   passageToClipboard() {
-    const { renderPromise } = this;
-    const state = this.state as CopyPassageState;
+    const { state, renderPromise } = this;
     const { passage, checkboxes } = state;
     const testdiv = document.getElementById('testdiv');
     if (testdiv && passage) {
@@ -234,9 +228,8 @@ export default class CopyPassageWin
   }
 
   render() {
-    const state = this.state as CopyPassageState;
+    const { state, loadingRef, passageToClipboard } = this;
     const { passage, checkboxes } = state;
-    const { loadingRef, passageToClipboard } = this;
     return (
       <Vbox domref={loadingRef}>
         <div id="testdiv" />
@@ -244,8 +237,8 @@ export default class CopyPassageWin
           <SelectVK
             initialVK={passage || { book: 'Gen', chapter: 1, v11n: 'KJV' }}
             options={{ verses: [], lastverses: [] }}
-            onSelection={(selection: SelectVKType) => {
-              this.setState({ passage: selection });
+            onSelection={(selection?: SelectVKType) => {
+              if (selection) this.setState({ passage: selection });
             }}
           />
         </Groupbox>
@@ -262,14 +255,13 @@ export default class CopyPassageWin
                     label={G.i18n.t(`menu.view.${cb}`)}
                     checked={checked}
                     onChange={() => {
-                      this.setState((prevState: CopyPassageState) => {
-                        const s: Partial<CopyPassageState> = {
+                      this.setState((prevState) => {
+                        return {
                           checkboxes: {
                             ...prevState.checkboxes,
                             [cb]: !prevState.checkboxes[cb],
                           },
                         };
-                        return s;
                       });
                     }}
                   />
@@ -296,7 +288,6 @@ export default class CopyPassageWin
     );
   }
 }
-CopyPassageWin.propTypes = propTypes;
 
 renderToRoot(<CopyPassageWin />).catch((er) => {
   log.error(er);

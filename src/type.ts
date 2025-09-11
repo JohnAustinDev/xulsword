@@ -188,10 +188,6 @@ export type AudioPrefType = {
 
 export type PinPropsType = Pick<AtextPropsType, (typeof C.PinProps)[number]>;
 
-export type XulswordStateArgType =
-  | Partial<typeof S.prefs.xulsword>
-  | ((s: typeof S.prefs.xulsword) => Partial<typeof S.prefs.xulsword> | null);
-
 export type SwordFilterType =
   | 'Headings'
   | 'Footnotes'

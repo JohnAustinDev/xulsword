@@ -1,6 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { xulPropTypes } from './xul.tsx';
 import './dragsizer.css';
 
 import type { XulProps } from './xul.tsx';
@@ -13,16 +11,6 @@ export type DragSizerVal = {
 
 // NOTE: onDragStart plus either onDragging or onDragEnd must be
 // implemented in order for the DragSizer to work.
-const propTypes = {
-  ...xulPropTypes,
-  onDragStart: PropTypes.func.isRequired,
-  onDragging: PropTypes.func,
-  onDragEnd: PropTypes.func,
-  min: PropTypes.number,
-  max: PropTypes.number,
-  shrink: PropTypes.bool,
-};
-
 type DragSizerProps = {
   onDragStart: (e: React.MouseEvent) => number;
   onDragging?: (e: React.MouseEvent, value: DragSizerVal) => void;
@@ -37,9 +25,10 @@ type DragSizerState = {
   startpos: number;
 };
 
-class DragSizer extends React.Component {
-  static propTypes: typeof propTypes;
-
+export default class DragSizer extends React.Component<
+  DragSizerProps,
+  DragSizerState
+> {
   sizerRef: React.RefObject<HTMLDivElement>;
 
   listeners: Array<[string, (e: any) => void]>;
@@ -173,6 +162,3 @@ class DragSizer extends React.Component {
     );
   }
 }
-DragSizer.propTypes = propTypes;
-
-export default DragSizer;

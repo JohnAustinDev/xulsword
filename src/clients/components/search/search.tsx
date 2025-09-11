@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import React from 'react';
 import ReactDOM from 'react-dom';
-import PropTypes from 'prop-types';
 import { ProgressBar } from '@blueprintjs/core';
 import {
   clone,
@@ -31,11 +30,7 @@ import {
   PopupParentInitState,
 } from '../../components/popup/popupParentH.ts';
 import Button from '../../components/libxul/button.tsx';
-import {
-  delayHandler,
-  xulPropTypes,
-  addClass,
-} from '../../components/libxul/xul.tsx';
+import { delayHandler, addClass } from '../../components/libxul/xul.tsx';
 import { Box, Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Groupbox from '../../components/libxul/groupbox.tsx';
 import Label from '../../components/libxul/label.tsx';
@@ -65,7 +60,7 @@ import type {
   BookGroupType,
   GType,
   SearchType,
-  WindowDescriptorType,
+  WindowDescriptorPrefType,
 } from '../../../type.ts';
 import type { SearchResult } from '../../../servers/components/libsword.ts';
 import type S from '../../../defaultPrefs.ts';
@@ -79,16 +74,9 @@ import type {
 } from '../../components/popup/popupParentH.ts';
 import type { XulProps } from '../../components/libxul/xul.tsx';
 
-const propTypes = {
-  initialState: PropTypes.object.isRequired,
-  descriptor: PropTypes.object,
-  onlyLucene: PropTypes.bool,
-  ...xulPropTypes,
-};
-
 export type SearchProps = {
   initialState: SearchType;
-  descriptor?: WindowDescriptorType;
+  descriptor?: WindowDescriptorPrefType;
   onlyLucene?: boolean;
 } & XulProps;
 
@@ -154,11 +142,9 @@ export type SearchState = PopupParentState &
   RenderPromiseState;
 
 export default class Search
-  extends React.Component
+  extends React.Component<SearchProps, SearchState>
   implements PopupParent, RenderPromiseComponent
 {
-  static propTypes: typeof propTypes;
-
   handler: typeof handlerH;
 
   popupParentHandler: typeof popupParentHandlerH;
@@ -236,8 +222,7 @@ export default class Search
   }
 
   componentDidMount() {
-    const { renderPromise } = this;
-    const state = this.state as SearchState;
+    const { state, renderPromise } = this;
     const { module } = state;
     this.destroy.push(
       window.IPC.on('progress', (prog: number, id?: string) => {
@@ -262,9 +247,8 @@ export default class Search
   }
 
   componentDidUpdate(_prevProps: any, prevState: SearchState) {
-    const { renderPromise } = this;
-    const state = this.state as SearchState;
-    const { descriptor } = this.props as SearchProps;
+    const { props, state, renderPromise } = this;
+    const { descriptor } = props;
     if (Build.isElectronApp) {
       reMountState = clone({
         ...state,
@@ -319,10 +303,9 @@ export default class Search
   }
 
   updateResults() {
-    const state = this.state as SearchState;
+    const { state, resref, lexref, renderPromise } = this;
     const { displayModule, module, results, searchtext, searching, progress } =
       state;
-    const { resref, lexref, renderPromise } = this;
     const res = resref !== null ? resref.current : null;
     if (res === null || !module) return;
 
@@ -366,9 +349,9 @@ export default class Search
   }
 
   render() {
-    const state = this.state as SearchState;
-    const props = this.props as SearchProps;
     const {
+      props,
+      state,
       renderPromise,
       loadingRef,
       popupRef,
@@ -792,4 +775,3 @@ export default class Search
     );
   }
 }
-Search.propTypes = propTypes;

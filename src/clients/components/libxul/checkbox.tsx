@@ -1,19 +1,16 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Hbox } from './boxes.tsx';
 import Label from './label.tsx';
-import { xulPropTypes, type XulProps, addClass } from './xul.tsx';
+import { addClass } from './xul.tsx';
 import './checkbox.css';
 
-// XUL button
+import type { XulProps } from './xul.tsx';
 
-const propTypes = {
-  ...xulPropTypes,
-  checked: PropTypes.bool,
-  disabled: PropTypes.bool,
-  label: PropTypes.string,
-  initial: PropTypes.bool,
-};
+// The Checkbox may either keep its own checked state OR be a
+// totally controlled component: If the 'initial' prop is
+// undefined, the component will be a totally controlled component
+// (no acting state of its own). If the 'initial' prop is
+// defined, any checked prop value will be ignored.
 
 type CheckboxProps = {
   checked?: boolean | undefined;
@@ -22,18 +19,14 @@ type CheckboxProps = {
   initial?: boolean | undefined;
 } & XulProps;
 
-// The Checkbox may either keep its own checked state OR be a
-// totally controlled component: If the 'initial' prop is
-// undefined, the component will be a totally controlled component
-// (no acting state of its own). If the 'initial' prop is
-// defined, any checked prop value will be ignored.
 type CheckboxState = {
   checked: boolean;
 };
 
-class Checkbox extends React.Component {
-  static propTypes: typeof propTypes;
-
+export default class Checkbox extends React.Component<
+  CheckboxProps,
+  CheckboxState
+> {
   constructor(props: CheckboxProps) {
     super(props);
 
@@ -65,6 +58,3 @@ class Checkbox extends React.Component {
     );
   }
 }
-Checkbox.propTypes = propTypes;
-
-export default Checkbox;

@@ -1,21 +1,16 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { xulPropTypes, type XulProps, htmlAttribs } from './xul.tsx';
+import { htmlAttribs } from './xul.tsx';
 import './label.css';
 
-// XUL label
-const propTypes = {
-  ...xulPropTypes,
-  control: PropTypes.string,
-  value: PropTypes.string,
-};
+import type { XulProps } from './xul.tsx';
 
+// XUL label
 type LabelProps = {
   control?: string | undefined;
   value: string;
 } & XulProps;
 
-function Label({ value = '', ...props }: LabelProps) {
+export default function Label({ value = '', ...props }: LabelProps) {
   const { control } = props;
 
   return (
@@ -24,6 +19,3 @@ function Label({ value = '', ...props }: LabelProps) {
     </label>
   );
 }
-Label.propTypes = propTypes;
-
-export default Label;

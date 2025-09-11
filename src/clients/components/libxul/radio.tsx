@@ -1,21 +1,13 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { stringHash } from '../../../common.ts';
 import { Hbox } from './boxes.tsx';
 import Label from './label.tsx';
-import { xulPropTypes, type XulProps, addClass } from './xul.tsx';
+import { addClass } from './xul.tsx';
 import './radio.css';
 
-// XUL Radio
-const propTypes = {
-  ...xulPropTypes,
-  name: PropTypes.string,
-  checked: PropTypes.bool,
-  disabled: PropTypes.bool,
-  label: PropTypes.string,
-  value: PropTypes.string,
-};
+import type { XulProps } from './xul.tsx';
 
+// XUL Radio
 type RadioProps = {
   name: string;
   checked: boolean;
@@ -24,7 +16,7 @@ type RadioProps = {
   value: string;
 } & XulProps;
 
-function Radio(props: RadioProps) {
+export default function Radio(props: RadioProps) {
   const { name, checked, disabled, label, value } = props;
   const key = stringHash(name, value);
   return (
@@ -42,6 +34,3 @@ function Radio(props: RadioProps) {
     </Hbox>
   );
 }
-Radio.propTypes = propTypes;
-
-export default Radio;

@@ -3,10 +3,11 @@ import { clone, diff, ofClass } from '../../../common.ts';
 import log from '../../log.ts';
 import { GE as G } from '../../G.ts';
 
+import { RGBColor } from 'react-color';
 import type { ConfigType } from '../../../type.ts';
 import type { StyleType } from '../../style.ts';
 import type ChooseFontWin from './chooseFontWin.tsx';
-import type { ChooseFontWinState, ColorType } from './chooseFontWin.tsx';
+import type { ChooseFontWinState } from './chooseFontWin.tsx';
 
 export const startingState = {
   module: '' as string | null, // will be initialized by windowArguments()
@@ -24,8 +25,8 @@ export const startingState = {
 
   // These are initial (unset) user style setting values:
   fontFamily: '' as string, // Shows text: 'Choose...'
-  color: null as ColorType | null, // will be grey
-  background: null as ColorType | null, // will be grey
+  color: null as RGBColor | null, // will be grey
+  background: null as RGBColor | null, // will be grey
   fontSize: 50, // percent on slider
   lineHeight: 50, // percent on slider
 };
@@ -37,12 +38,8 @@ const sliders = {
 
 // Return a partial chooseFont state (just the C.ConfigTemplate props) that will
 // display the values of a particular module style (or the module default style).
-export function styleToState(
-  style: StyleType,
-  module: string | 'default',
-): Partial<ChooseFontWinState> {
-  const state: Partial<ChooseFontWinState> =
-    module === 'default' ? {} : { module };
+export function styleToState(style: StyleType, module: string | 'default') {
+  const state = (module === 'default' ? {} : { module }) as ChooseFontWinState;
   if (module && style) {
     Object.entries(C.ConfigTemplate).forEach((entry) => {
       const skey = entry[0] as keyof ChooseFontWinState;
@@ -55,22 +52,22 @@ export function styleToState(
             typeof v === 'string' &&
             v.match(/^rgba\((\d+), (\d+), (\d+), (\d+)\)/);
           if (match) {
-            const color: ColorType = {
+            const color: RGBColor = {
               r: Number(match[1]),
               g: Number(match[2]),
               b: Number(match[3]),
               a: Number(match[4]),
             };
-            state[skey] = color as any;
+            (state as any)[skey] = color;
           } else if (skey in sliders) {
             const lkey = skey as keyof typeof sliders;
             const { min, max, unit } = sliders[lkey];
             let p = Number(v.replace(unit, '')) || min + (max - min) / 2;
             p = 100 * ((p - min) / (max - min));
-            state[skey] = p as any;
-          } else state[skey] = v as any;
+            (state as any)[skey] = p;
+          } else (state as any)[skey] = v;
         } else {
-          state[skey] = startingState[skey] as any;
+          (state as any)[skey] = startingState[skey];
         }
       }
     });
@@ -146,16 +143,15 @@ export function setStateValue<K extends keyof ChooseFontWinState>(
   key: K,
   value?: ChooseFontWinState[K],
 ): void {
-  this.setState((prevState: ChooseFontWinState) => {
+  this.setState((prevState) => {
     const newState = { ...prevState };
     if (typeof value === 'undefined')
       newState[key as 'coloropen' | 'backgroundopen'] = !newState[key];
     else newState[key] = value;
-    const s: Partial<ChooseFontWinState> = {
-      [key]: newState[key],
+    return {
+      ...newState,
       style: stateToStyle(newState),
     };
-    return s;
   });
 }
 
@@ -187,7 +183,7 @@ export function preclose() {
 }
 
 export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
-  const state = this.state as ChooseFontWinState;
+  const { state } = this;
   const target = e.target as HTMLElement;
   const currentTarget = e.currentTarget as HTMLElement;
   switch (e.type) {
@@ -212,13 +208,12 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
           };
           const { removeAllUserStyles } = state;
           if (removeAllUserStyles) {
-            const s: Partial<ChooseFontWinState> = {
+            this.setState({
               ruSureDialog: (yes: boolean) => {
                 if (yes) okConfirmed();
                 this.setState({ ruSureDialog: null });
               },
-            };
-            this.setState(s);
+            });
           } else okConfirmed();
           break;
         }
@@ -243,41 +238,37 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
         case 'makeDefault': {
           // When one of these becomes checked, a clone of the previous style
           // is saved as its state value, and all other inputs become disabled.
-          // Then the user only has the choice to either apply the new style or
-          // restore the saved style by unchecking the checkbox.
-          this.setState(
-            (
-              prevState0: ChooseFontWinState,
-            ): Partial<ChooseFontWinState> | null => {
-              const prevState = { ...prevState0 };
-              if (prevState.module) {
-                let style;
-                if (!prevState[targid]) {
-                  prevState[targid] = prevState.style;
-                  style = stateToStyle(prevState);
-                } else {
-                  style = prevState[targid] as StyleType;
-                  prevState[targid] = null;
-                }
-                return {
-                  [targid]: prevState[targid],
-                  style,
-                  ...styleToState(
-                    style,
-                    targid === 'makeDefault' && prevState[targid]
-                      ? 'default'
-                      : prevState.module,
-                  ),
-                };
+          // Then the user only has the choice to either apply the new style by
+          // pressing OK or restore the saved style by unchecking the checkbox.
+          this.setState((prevState0) => {
+            const prevState = { ...prevState0 };
+            if (prevState.module) {
+              let style;
+              if (!prevState[targid]) {
+                prevState[targid] = prevState.style;
+                style = stateToStyle(prevState);
+              } else {
+                style = prevState[targid] as StyleType;
+                prevState[targid] = null;
               }
-              return null;
-            },
-          );
+              return {
+                [targid]: prevState[targid],
+                style,
+                ...(styleToState(
+                  style,
+                  targid === 'makeDefault' && prevState[targid]
+                    ? 'default'
+                    : prevState.module,
+                ) as any),
+              };
+            }
+            return null;
+          });
           break;
         }
         case 'module': {
           const select = target as HTMLSelectElement;
-          this.setState((prevState: ChooseFontWinState) => {
+          this.setState((prevState) => {
             return styleToState(prevState.style, select.value);
           });
           break;

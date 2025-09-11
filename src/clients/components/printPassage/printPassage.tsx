@@ -17,7 +17,6 @@ import RenderPromise, {
   RenderPromiseComponent,
   RenderPromiseState,
 } from '../../renderPromise.ts';
-import { xulPropTypes } from '../../components/libxul/xul.tsx';
 import Grid, {
   Column,
   Columns,
@@ -38,8 +37,8 @@ import '../../components/atext/atext.css';
 import './printPassage.css';
 
 import type { ReactElement } from 'react';
-import type { OSISBookType, V11nType } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
+import type { OSISBookType, V11nType } from '../../../type.ts';
 import type { AtextPropsType } from '../atext/atext.tsx';
 import type { PrintOptionsType } from '../../controller.tsx';
 import type { XulProps } from '../../components/libxul/xul.tsx';
@@ -73,10 +72,6 @@ if (Build.isWebApp) {
   (switches[0] as any)[2] = [0, 0, 'usernotes', 'menu.view.usernotes'];
 }
 
-const propTypes = {
-  ...xulPropTypes,
-};
-
 export type PrintPassageProps = XulProps;
 
 const notStatePrefDefault = {
@@ -88,11 +83,9 @@ export type PrintPassageState = typeof S.prefs.printPassage &
   RenderPromiseState;
 
 export default class PrintPassage
-  extends React.Component
+  extends React.Component<PrintPassageProps, PrintPassageState>
   implements RenderPromiseComponent
 {
-  static propTypes: typeof propTypes;
-
   pagebuttons: React.RefObject<HTMLDivElement>;
 
   handler: typeof handlerH;
@@ -273,7 +266,7 @@ export default class PrintPassage
         },
         false,
       );
-      this.setState({ progress: 0 } as PrintPassageState);
+      this.setState({ progress: 0 });
 
       let pages = 0;
 
@@ -357,7 +350,7 @@ export default class PrintPassage
         }
 
         const finished = !!(div && div.dataset.renderkey === renderkey);
-        this.setState({ progress: -1 } as PrintPassageState);
+        this.setState({ progress: -1 });
         Subscription.publish.setControllerState(
           {
             print: {
@@ -479,4 +472,3 @@ export default class PrintPassage
     );
   }
 }
-PrintPassage.propTypes = propTypes;

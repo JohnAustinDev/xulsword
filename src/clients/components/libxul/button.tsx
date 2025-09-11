@@ -1,20 +1,13 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Button as BPButton } from '@blueprintjs/core';
 import { keep } from '../../../common.ts';
-import { xulPropTypes, type XulProps, htmlAttribs } from './xul.tsx';
+import { htmlAttribs } from './xul.tsx';
 import './button.css';
 
 import type { ButtonProps as BPButtonProps } from '@blueprintjs/core';
+import type { XulProps } from './xul.tsx';
 
 // XUL button
-const propTypes = {
-  ...xulPropTypes,
-  fill: PropTypes.oneOf(['xy', 'x', 'y']),
-  checked: PropTypes.bool,
-  dlgType: PropTypes.string,
-};
-
 type ButtonProps = Omit<XulProps, 'align' | 'orient' | 'pack'> &
   Omit<BPButtonProps, 'fill'> & {
     fill?: 'xy' | 'x' | 'y'; // to fill container in x, y or both directions
@@ -22,7 +15,7 @@ type ButtonProps = Omit<XulProps, 'align' | 'orient' | 'pack'> &
     dlgType?: string; // only does button CSS styling
   };
 
-function Button(props: ButtonProps) {
+export default function Button(props: ButtonProps) {
   const { checked, children, disabled, dlgType, fill } = props;
   const cls: string[] = ['button', checked !== false ? 'on' : 'off'];
   if (dlgType) cls.push(dlgType);
@@ -55,9 +48,6 @@ function Button(props: ButtonProps) {
     </div>
   );
 }
-Button.propTypes = propTypes;
-
-export default Button;
 
 export function AnchorButton({
   disabled = false,
@@ -73,4 +63,3 @@ export function AnchorButton({
     </a>
   );
 }
-AnchorButton.propTypes = { ...xulPropTypes, disabled: PropTypes.bool };

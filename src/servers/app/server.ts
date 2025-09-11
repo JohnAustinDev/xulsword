@@ -194,6 +194,21 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
       syncShow.readyToShow = true;
       if (SyncShow.every((x) => x.readyToShow)) showApp();
     }
+    // Prompt for CipherKeys when encrypted modules with no keys, or
+    // incorrect keys, are installed.
+    if (
+      windowRegistry.type === 'xulswordWin' &&
+      Object.values(CipherKeyModules).some((m) => !m.numBooks)
+    )
+      publishSubscription(
+        'modulesInstalled',
+        { renderers: { type: 'xulswordWin' } },
+        {
+          ...clone(C.NEWMODS),
+          nokeymods: getCipherFailConfs(),
+        },
+      );
+
     callingWin = null;
   }
 });
@@ -368,19 +383,6 @@ const openXulswordWindow = () => {
       },
     ),
   );
-
-  // Prompt for CipherKeys when encrypted modules with no keys, or
-  // incorrect keys, are installed.
-  if (Object.keys(CipherKeyModules).length) {
-    publishSubscription(
-      'modulesInstalled',
-      { renderers: { id: xulswordWindow.id } },
-      {
-        ...clone(C.NEWMODS),
-        nokeymods: getCipherFailConfs(),
-      },
-    );
-  }
 
   xulswordWindow.on(
     'ready-to-show',

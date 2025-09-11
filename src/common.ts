@@ -320,8 +320,12 @@ export function drop<T extends Record<string, any>>(
 // property. Depth is 1 by default because React setState performs shallow merging
 // with existing state, meaning a partial state object would overwrite a complete one,
 // resulting in unexpected states.
-export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
-  let difference: Partial<T> | undefined;
+export function diff<T, K extends keyof T>(
+  pv1: any,
+  pv2: T,
+  depth = 1,
+): Pick<T, K> | T | undefined {
+  let difference: Pick<T, K> | undefined;
   // Primatives
   if (
     pv1 === null ||
@@ -346,7 +350,7 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
       typeof pv1 === 'object' &&
       Object.keys(pv1 as Record<string, unknown>).length !== 0
     )
-      difference = {};
+      difference = {} as Pick<T, K>;
   } else {
     // Data objects
     const obj1 = pv1 as PrefObject;
@@ -354,19 +358,19 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
     Object.entries(obj2).forEach((entry2) => {
       const [k2, v2] = entry2;
       if (!(k2 in obj1)) {
-        if (!difference) difference = {};
+        if (!difference) difference = {} as Pick<T, K>;
         (difference as any)[k2] = v2;
       } else {
         const diff2 = diff(obj1[k2], v2, depth - 1);
         if (diff2 !== undefined) {
-          if (!difference) difference = {};
+          if (!difference) difference = {} as Pick<T, K>;
           (difference as any)[k2] = diff2;
         }
       }
     });
     if (depth < 1) {
       Object.keys(obj1).forEach((k1) => {
-        if (!(k1 in obj2) && !difference) difference = {};
+        if (!(k1 in obj2) && !difference) difference = {} as Pick<T, K>;
       });
       if (difference) difference = clone(obj2) as T;
     }

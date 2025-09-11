@@ -1485,7 +1485,6 @@ const Module = {
 
   setCipherKeys(keys: CipherKey[], callerWinID?: number): void {
     if (keys.length) {
-      Window.modal([{ modal: 'darkened', window: 'all' }]);
       if (LibSword.isReady()) LibSword.quit();
       keys.forEach((k) => {
         const { conf, cipherKey } = k;

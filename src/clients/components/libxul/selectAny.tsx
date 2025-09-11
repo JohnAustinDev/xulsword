@@ -1,13 +1,11 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { clone, getModuleOfObject, randomID } from '../../../common.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { htmlAttribs, type XulProps, xulPropTypes } from './xul.tsx';
+import { htmlAttribs } from './xul.tsx';
 import SelectVK from './selectVK.tsx';
 import SelectOR from './selectOR.tsx';
 import { Hbox } from './boxes.tsx';
-import Spacer from './spacer.tsx';
 import ModuleMenu from './modulemenu.tsx';
 import './selectAny.css';
 
@@ -22,6 +20,7 @@ import type {
   RenderPromiseComponent,
   RenderPromiseState,
 } from '../../renderPromise.ts';
+import type { XulProps } from './xul.tsx';
 import type { SelectVKType } from './selectVK.tsx';
 import type { SelectORMType } from './selectOR.tsx';
 
@@ -45,14 +44,6 @@ export type SelectAnyProps = {
   ) => void;
 } & XulProps;
 
-const propTypes = {
-  ...xulPropTypes,
-  initial: PropTypes.object.isRequired,
-  modules: PropTypes.arrayOf(PropTypes.string),
-  disabled: PropTypes.bool,
-  onSelection: PropTypes.func.isRequired,
-};
-
 type SelectAnyState = RenderPromiseState & {
   location: LocationTypes[TabTypes] | undefined;
   reset: string;
@@ -60,9 +51,10 @@ type SelectAnyState = RenderPromiseState & {
 
 let LastVKLocation: LocationVKType | LocationVKCommType | undefined;
 
-class SelectAny extends React.Component implements RenderPromiseComponent {
-  static propTypes: typeof propTypes;
-
+export default class SelectAny
+  extends React.Component<SelectAnyProps, SelectAnyState>
+  implements RenderPromiseComponent
+{
   renderPromise: RenderPromise;
 
   loadingRef: React.RefObject<HTMLDivElement>;
@@ -98,9 +90,8 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
     renderPromise.dispatch();
   }
 
-  onChange(selection: SelectVKType | SelectORMType | undefined, id?: string) {
+  onChange(selection?: SelectVKType | SelectORMType, id?: string) {
     const { onSelection } = this.props as SelectAnyProps;
-    this.setState({ location: selection });
     let location: LocationTypes[TabTypes] | undefined;
     if (selection) {
       if ('v11n' in selection) {
@@ -113,12 +104,13 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
         };
       }
     }
+    this.setState({ location });
     onSelection(location, id);
   }
 
   async onModuleChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const { renderPromise } = this;
-    const { location: oldloc } = this.state as SelectAnyState;
+    const { state, renderPromise } = this;
+    const { location: oldloc } = state;
     const module = e.target.value;
     const newType = G.Tab[module].tabType;
     let location: LocationTypes[TabTypes];
@@ -161,14 +153,13 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
     this.setState({
       location,
       reset: randomID(),
-    } as SelectAnyState);
+    });
   }
 
   render() {
-    const props = this.props as SelectAnyProps;
-    const { location, reset } = this.state as SelectAnyState;
+    const { props, state, onChange, onModuleChange, loadingRef } = this;
+    const { location, reset } = state;
     const { modules, disabled } = props;
-    const { onChange, onModuleChange, loadingRef } = this;
 
     if (!location) return null;
     const module = getModuleOfObject(location) || '';
@@ -222,9 +213,6 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-SelectAny.propTypes = propTypes;
-
-export default SelectAny;
 
 // Pick a valid location from any installed module.
 async function newLocation(

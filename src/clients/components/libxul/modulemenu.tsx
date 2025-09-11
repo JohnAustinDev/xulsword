@@ -1,33 +1,20 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import {
   functionalComponentRenderPromise,
   getLangReadable,
 } from '../../common.ts';
-import { addClass, xulPropTypes, type XulProps } from './xul.tsx';
+import { addClass } from './xul.tsx';
 import Menulist from './menulist.tsx';
 
 import type { ModTypes, TabType } from '../../../type.ts';
+import type { XulProps } from './xul.tsx';
 
 // The ModuleMenu component does not keep its own selection state so it
 // requires that an onChange handler function prop be provided. If the supplied
 // value is empty string, then an empty option will be appended to the module
 // list and it will be initially selected.
-
-const propTypes = {
-  ...xulPropTypes,
-  value: PropTypes.string,
-  language: PropTypes.bool,
-  description: PropTypes.bool,
-  sortByLabel: PropTypes.bool,
-  disabled: PropTypes.bool,
-  allowNotInstalled: PropTypes.bool,
-  modules: PropTypes.arrayOf(PropTypes.string),
-  types: PropTypes.arrayOf(PropTypes.string),
-};
-
 type ModuleMenuProps = {
   value: string;
   language?: boolean; // show language or not
@@ -126,4 +113,3 @@ export default function ModuleMenu({
     </Menulist>
   );
 }
-ModuleMenu.propTypes = propTypes;

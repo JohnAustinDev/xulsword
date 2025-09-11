@@ -18,7 +18,6 @@ import { getIntroductions, getNoteHTML } from '../atext/zversekey.ts';
 import type { HTMLData } from '../../htmlData.ts';
 import type RenderPromise from '../../renderPromise.ts';
 import type Popup from './popup.tsx';
-import type { PopupState } from './popup.tsx';
 
 export type FailReason = { requires: string[]; reason?: string };
 
@@ -285,7 +284,7 @@ export default function handler(this: Popup, e: React.MouseEvent) {
 
     case 'mousedown': {
       if (ofClass(['draghandle'], target)) {
-        this.setState((prevState: PopupState) => {
+        this.setState((prevState) => {
           let { drag } = prevState;
           drag = clone(drag);
           if (!drag) return null;
@@ -303,9 +302,9 @@ export default function handler(this: Popup, e: React.MouseEvent) {
     }
 
     case 'mousemove': {
-      const { drag } = this.state as PopupState;
+      const { drag } = this.state;
       if (!drag || !drag.dragging) return;
-      this.setState((prevState: PopupState) => {
+      this.setState((prevState) => {
         let { drag: ndrag } = prevState;
         ndrag = clone(ndrag);
         if (!ndrag || !ndrag.dragging) return null;
@@ -319,12 +318,12 @@ export default function handler(this: Popup, e: React.MouseEvent) {
 
     case 'mouseleave':
     case 'mouseup': {
-      const { drag } = this.state as PopupState;
+      const { drag } = this.state;
       if (!drag || !drag.dragging) return;
-      this.setState((prevState: PopupState) => {
+      this.setState((prevState) => {
         const { drag } = prevState;
         if (!drag || !drag.dragging) return null;
-        return { drag: { ...drag, dragging: false } } as PopupState;
+        return { drag: { ...drag, dragging: false } };
       });
       break;
     }

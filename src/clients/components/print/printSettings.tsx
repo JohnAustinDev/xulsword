@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import PropTypes from 'prop-types';
 import { Icon, Intent } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
 import analytics, { BibleBrowserEventInfo } from '../../analytics.ts';
@@ -20,7 +19,7 @@ import log from '../../log.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button.tsx';
 import Spacer from '../libxul/spacer.tsx';
-import { addClass, xulPropTypes } from '../libxul/xul.tsx';
+import { addClass } from '../libxul/xul.tsx';
 import Menulist from '../libxul/menulist.tsx';
 import Textbox from '../libxul/textbox.tsx';
 import Label from '../libxul/label.tsx';
@@ -79,11 +78,6 @@ const footerTemplate = `
     <span class="pageNumber"></span> / <span class="totalPages"></span>
   </div>`;
 
-const propTypes = {
-  ...xulPropTypes,
-  print: PropTypes.object.isRequired,
-};
-
 type PrintSettingsProps = XulProps & {
   print: PrintOptionsType;
 };
@@ -97,19 +91,20 @@ export type PrintSettingsState = typeof S.prefs.print & typeof notStatePref;
 
 const renderPromise = rootRenderPromise();
 
-export default class PrintSettings extends React.Component {
-  static propTypes: typeof propTypes;
-
+export default class PrintSettings extends React.Component<
+  PrintSettingsProps,
+  PrintSettingsState
+> {
   iframe: React.RefObject<HTMLIFrameElement>;
 
   selectRefs: {
     margins: {
-      top: React.RefObject<HTMLSelectElement>;
-      right: React.RefObject<HTMLSelectElement>;
-      bottom: React.RefObject<HTMLSelectElement>;
-      left: React.RefObject<HTMLSelectElement>;
+      top: React.RefObject<HTMLInputElement>;
+      right: React.RefObject<HTMLInputElement>;
+      bottom: React.RefObject<HTMLInputElement>;
+      left: React.RefObject<HTMLInputElement>;
     };
-    scale: React.RefObject<HTMLSelectElement>;
+    scale: React.RefObject<HTMLInputElement>;
   };
 
   pagebuttons: React.RefObject<HTMLDivElement>;
@@ -201,7 +196,7 @@ export default class PrintSettings extends React.Component {
             scrollToPage(1);
             this.setState({
               page: 1,
-            } as Partial<PrintSettingsState>);
+            });
             break;
           }
           case 'pageprev': {
@@ -209,7 +204,7 @@ export default class PrintSettings extends React.Component {
             scrollToPage(newPage);
             this.setState({
               page: newPage,
-            } as Partial<PrintSettingsState>);
+            });
             break;
           }
           case 'pagenext': {
@@ -217,32 +212,30 @@ export default class PrintSettings extends React.Component {
             scrollToPage(newPage);
             this.setState({
               page: newPage,
-            } as Partial<PrintSettingsState>);
+            });
             break;
           }
           case 'pagelast': {
             scrollToPage(pages);
             this.setState({
               page: pages,
-            } as Partial<PrintSettingsState>);
+            });
             break;
           }
           case 'portrait':
           case 'landscape': {
-            const s: Partial<PrintSettingsState> = {
+            this.setState({
               landscape: id === 'landscape',
               pages: 0,
-            };
-            this.setState(s);
+            });
             this.setPages2();
             break;
           }
           case 'columns': {
-            const s: Partial<PrintSettingsState> = {
+            this.setState({
               twoColumns: id2 === '2',
               pages: 0,
-            };
-            this.setState(s);
+            });
             this.setPages2();
             break;
           }
@@ -358,11 +351,10 @@ export default class PrintSettings extends React.Component {
         switch (id) {
           case 'pageSize': {
             const select = e.target as HTMLSelectElement;
-            const s: Partial<PrintSettingsState> = {
+            this.setState({
               pageSize: select.value as any,
               pages: 0,
-            };
-            this.setState(s);
+            });
             this.setPages2();
             break;
           }
@@ -382,11 +374,10 @@ export default class PrintSettings extends React.Component {
               const id2x = id2 as keyof PrintSettings['selectRefs']['margins'];
               const select = selectRefs.margins[id2x].current;
               if (select) {
-                const s: Partial<PrintSettingsState> = {
+                this.setState({
                   margins: { ...state.margins, [id2]: Number(select.value) },
                   pages: 0,
-                };
-                this.setState(s);
+                });
                 this.setPages2();
               }
               break;
@@ -397,8 +388,7 @@ export default class PrintSettings extends React.Component {
                 let scale = Number(select.value);
                 if (scale > scaleLimit.max) scale = scaleLimit.max;
                 if (scale < scaleLimit.min) scale = scaleLimit.min;
-                const s: Partial<PrintSettingsState> = { scale, pages: 0 };
-                this.setState(s);
+                this.setState({ scale, pages: 0 });
                 this.setPages2();
               }
               break;
@@ -430,11 +420,11 @@ export default class PrintSettings extends React.Component {
     pageViewToContentScale: number;
     pageToContentScale: number;
   } {
-    const { landscape, pageSize, margins } = this.state as PrintSettingsState;
-    const { print } = this.props as PrintSettingsProps;
+    const { props, state, pagebuttons } = this;
+    const { landscape, pageSize, margins } = state;
+    const { print } = props;
     const { printContainerRef } = printRefs;
     const { pageable } = print;
-    const { pagebuttons } = this;
     const settingsRef = document.querySelector(
       '#root .printsettings-container',
     );
@@ -878,7 +868,6 @@ export default class PrintSettings extends React.Component {
     );
   }
 }
-PrintSettings.propTypes = propTypes;
 
 function getAnalyticInfo() {
   const info = { event: 'print' } as BibleBrowserEventInfo;

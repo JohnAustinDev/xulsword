@@ -10,6 +10,7 @@ import {
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
 import { GE as G } from '../../G.ts';
+import RenderPromise, { RenderPromiseComponent } from '../../renderPromise.ts';
 import renderToRoot from '../../controller.tsx';
 import {
   registerUpdateStateFromPref,
@@ -25,7 +26,7 @@ import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Label from '../../components/libxul/label.tsx';
 import TreeView from '../../components/libxul/treeview.tsx';
 import Button from '../../components/libxul/button.tsx';
-import { xulPropTypes, addClass } from '../../components/libxul/xul.tsx';
+import { addClass } from '../../components/libxul/xul.tsx';
 import { localizeBookmarks } from '../common.ts';
 import * as H from './bmManagerWinH.tsx';
 import './bmManagerWin.css';
@@ -39,11 +40,6 @@ import type {
 } from '../../../type.ts';
 import type { DragSizerVal } from '../../components/libxul/dragsizer.tsx';
 import type { XulProps } from '../../components/libxul/xul.tsx';
-import RenderPromise, { RenderPromiseComponent } from '../../renderPromise.ts';
-
-const propTypes = {
-  ...xulPropTypes,
-};
 
 type BMManagerProps = XulProps;
 
@@ -61,11 +57,9 @@ export type BMManagerState = typeof S.prefs.bookmarkManager &
   };
 
 export default class BMManagerWin
-  extends React.Component
+  extends React.Component<BMManagerProps, BMManagerState>
   implements RenderPromiseComponent
 {
-  static propTypes: typeof propTypes;
-
   localizedRootFolderClone: BookmarkFolderType | null;
 
   currentRootFolderObject: BookmarkFolderType | null;
@@ -109,7 +103,7 @@ export default class BMManagerWin
   constructor(props: BMManagerProps) {
     super(props);
 
-    const state: BMManagerState = {
+    this.state = {
       ...defaultNotStatePref,
       ...(getStatePref(
         'prefs',
@@ -117,7 +111,6 @@ export default class BMManagerWin
       ) as typeof S.prefs.bookmarkManager),
       ...(getStatePref('bookmarks', null) as typeof S.bookmarks),
     };
-    this.state = state;
 
     this.localizedRootFolderClone = null;
     this.searchableItems = [];
@@ -152,12 +145,11 @@ export default class BMManagerWin
   }
 
   componentDidUpdate(_prevProps: BMManagerProps, prevState: BMManagerState) {
-    const state = this.state as BMManagerState;
-    const { printItems } = state;
+    const { state } = this;
     setStatePref('prefs', 'bookmarkManager', prevState, state);
     setStatePref('bookmarks', null, prevState, state);
     if (diff(prevState, keep(state, ['rootfolder', 'cut', 'copy']))) {
-      this.setState({ reset: randomID() } as Partial<BMManagerState>);
+      this.setState({ reset: randomID() });
     }
   }
 
@@ -167,8 +159,7 @@ export default class BMManagerWin
   }
 
   render() {
-    const props = this.props as BMManagerProps;
-    const state = this.state as BMManagerState;
+    const { props, state } = this;
     const {
       rootfolder,
       columns,
@@ -241,7 +232,7 @@ export default class BMManagerWin
               cut: null,
               copy: null,
               reset: randomID(),
-            } as BMManagerState);
+            });
         }}
         domref={loadingRef}
       >
@@ -386,7 +377,7 @@ export default class BMManagerWin
                 orient="vertical"
                 onDragStart={() => treeWidth}
                 onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
-                  this.setState((prevState: BMManagerState) => {
+                  this.setState((prevState) => {
                     return {
                       treeWidth: v.sizerPos,
                       reset: prevState.reset + 1,
@@ -414,13 +405,13 @@ export default class BMManagerWin
               tableToDataRowMap={[]}
               selectedRegions={selectedRegions}
               onCellClick={this.onCellClick}
-              onColumnHide={(c) => {
+              onColumnHide={(c: BMManagerState['columns']) => {
                 this.setState({ columns: c });
               }}
-              onColumnsReordered={(c) => {
+              onColumnsReordered={(c: BMManagerState['columns']) => {
                 this.setState({ columns: c });
               }}
-              onColumnWidthChanged={(c) => {
+              onColumnWidthChanged={(c: BMManagerState['columns']) => {
                 this.setState({ columns: c });
               }}
               onDoubleClick={this.onDoubleClick}
@@ -432,7 +423,6 @@ export default class BMManagerWin
     );
   }
 }
-BMManagerWin.propTypes = propTypes;
 
 renderToRoot(<BMManagerWin id="bookmarkManager" />, {
   onunload: () => {

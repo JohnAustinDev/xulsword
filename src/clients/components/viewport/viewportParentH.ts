@@ -1,8 +1,6 @@
-import type React from 'react';
 import VerseKey from '../../../verseKey.ts';
 import { goToLocationVK } from '../../../commands.ts';
 import C from '../../../constant.ts';
-import type S from '../../../defaultPrefs.ts';
 import { clone, escapeRE, ofClass } from '../../../common.ts';
 import { getElementData } from '../../htmlData.ts';
 import { G, GI } from '../../G.ts';
@@ -16,6 +14,8 @@ import { delayHandler } from '../libxul/xul.tsx';
 import { textChange } from '../atext/ztext.ts';
 import { aTextWheelScroll, chapterChange } from '../atext/zversekey.ts';
 
+import type React from 'react';
+import type { ReactElement } from 'react';
 import type {
   BookGroupType,
   PinPropsType,
@@ -28,7 +28,6 @@ import type { XulswordState } from '../xulsword/xulsword.tsx';
 import type { DragSizerVal } from '../libxul/dragsizer.tsx';
 import type { AtextStateType } from '../atext/atext.tsx';
 import type ViewportWin from '../../app/viewportWin/viewportWin.tsx';
-import type { ViewportWinState } from '../../app/viewportWin/viewportWin.tsx';
 
 // Important: These SP.xulsword properties become independent
 // window properties for windows other than the xulsword window.
@@ -49,21 +48,21 @@ export const vpWindowState = [
   'maximizeNoteBox',
 ] as const;
 
-export function closeMenupopups(component: React.Component) {
-  const state = component.state as XulswordState & ViewportWinState;
-  let historyMenupopup: any;
+export function closeMenupopups(component: Xulsword | ViewportWin) {
+  const { state } = component;
+  let historyMenupopup: ReactElement | undefined;
   if ('historyMenupopup' in component.state) {
-    ({ historyMenupopup } = state);
+    ({ historyMenupopup } = state as XulswordState);
   }
   let reset = 0;
   Array.from(document.getElementsByClassName('tabs')).forEach((t) => {
     if (t.classList.contains('open')) reset += 1;
   });
   if (state && (reset || historyMenupopup)) {
-    component.setState((prevState: typeof state) => {
+    (component as Xulsword).setState((prevState) => {
       let { vpreset } = prevState;
       if (reset) vpreset += 1;
-      const s: Partial<typeof state> = {};
+      const s = {} as XulswordState;
       if (reset) s.vpreset = vpreset + 1;
       if (historyMenupopup) s.historyMenupopup = undefined;
       return s;
@@ -80,16 +79,15 @@ export function bbDragEnd(
   const atext = ofClass(['atext'], target)?.element;
   const index = Number(atext?.dataset.index);
   if (atext && !Number.isNaN(Number(index))) {
-    let { noteBoxHeight, maximizeNoteBox } = this
-      .state as typeof S.prefs.xulsword;
+    let { noteBoxHeight, maximizeNoteBox } = this.state;
     noteBoxHeight = noteBoxHeight.slice();
     maximizeNoteBox = maximizeNoteBox.slice();
     maximizeNoteBox[index] = value.isMinMax === true;
     noteBoxHeight[index] = value.sizerPos;
-    this.setState({
+    (this as Xulsword).setState({
       noteBoxHeight,
       maximizeNoteBox,
-    } as typeof S.prefs.xulsword);
+    });
   }
 }
 
@@ -105,7 +103,7 @@ function setState(
   const panelIndex = Number(index);
   const isPinned = ispinned === 'true';
   if (!isPinned) {
-    comp.setState((prevState: XulswordState | ViewportWinState) => {
+    (comp as Xulsword).setState((prevState) => {
       const {
         location,
         selection,
@@ -128,7 +126,7 @@ function setState(
       };
       const newPinProps = func(pinProps);
       if (newPinProps) {
-        const s: Partial<XulswordState> = {};
+        const s = {} as XulswordState;
         C.PinProps.forEach((key) => {
           if (key in newPinProps) {
             switch (key) {
@@ -165,17 +163,16 @@ function setState(
   } else {
     const atextcomp = comp.atextRefs[panelIndex];
     if (atextcomp?.current) {
-      atextcomp.current.setState((prevState: AtextStateType) => {
+      atextcomp.current.setState((prevState) => {
         if (prevState.pin) {
           const newPinProps = func(prevState.pin);
           if (newPinProps && prevState.pin) {
-            const s: Partial<AtextStateType> = {
+            return {
               pin: {
                 ...prevState.pin,
                 ...newPinProps,
               },
             };
-            return s;
           }
         }
         return null;
@@ -188,7 +185,7 @@ export default function handler(
   this: Xulsword | ViewportWin,
   es: React.SyntheticEvent<any>,
 ) {
-  const state = this.state as XulswordState | ViewportWinState;
+  const { state } = this;
   const { location } = state;
   const { panels } = state;
   const target = es.target as HTMLElement;
@@ -307,7 +304,7 @@ export default function handler(
         case 'text-pin': {
           if (atext && panel) {
             const { columns } = atext.dataset;
-            this.setState((prevState: typeof S.prefs.xulsword) => {
+            (this as Xulsword).setState((prevState) => {
               const { isPinned: ipx } = prevState;
               const ip = ipx.slice();
               const newv = ip[index];
@@ -325,7 +322,7 @@ export default function handler(
           const bg = bookgroup as BookGroupType;
           const bk = bookgroup ? Book[C.SupportedBooks[bg][0]] : null;
           if (bk) {
-            this.setState({
+            (this as Xulsword).setState({
               location: {
                 book: bk.code,
                 chapter: 1,
@@ -340,9 +337,9 @@ export default function handler(
         case 'bookgroupitem': {
           const { book, v11n } = targ.element.dataset;
           if (book && !targ.element.classList.contains('disabled')) {
-            this.setState({
+            (this as Xulsword).setState({
               location: {
-                book,
+                book: book as OSISBookType,
                 chapter: 1,
                 verse: 1,
                 v11n: v11n as V11nType,
@@ -366,7 +363,7 @@ export default function handler(
                 renderPromise2,
               );
               if (newloc && !renderPromise2?.waiting()) {
-                this.setState({
+                (this as Xulsword).setState({
                   location: newloc,
                   selection: null,
                 });
@@ -395,7 +392,7 @@ export default function handler(
                 renderPromise2,
               ).location(location.v11n);
               if (!this.renderPromise.waiting())
-                this.setState({
+                (this as Xulsword).setState({
                   location: newloc,
                   selection: null,
                 });
@@ -405,7 +402,7 @@ export default function handler(
         }
         case 'notebox-maximizer': {
           if (atext) {
-            this.setState((prevState: typeof S.prefs.xulsword) => {
+            (this as Xulsword).setState((prevState) => {
               let { maximizeNoteBox, noteBoxHeight } = prevState;
               maximizeNoteBox = clone(maximizeNoteBox);
               noteBoxHeight = clone(noteBoxHeight);
@@ -433,9 +430,9 @@ export default function handler(
             !state.isPinned[index]
           ) {
             if (targ.type === 'ilt-tab') {
-              this.setState((prevState: typeof S.prefs.xulsword) => {
+              (this as Xulsword).setState((prevState) => {
                 const { ilModules } = prevState;
-                const s: Partial<typeof S.prefs.xulsword> = {
+                const s = {
                   ilModules: ilModules.slice(),
                 };
                 if (!s.ilModules) s.ilModules = [];
@@ -443,11 +440,11 @@ export default function handler(
                 return s;
               });
             } else {
-              this.setState((prevState: typeof S.prefs.xulsword) => {
+              (this as Xulsword).setState((prevState) => {
                 const { panels: pans, mtModules } = prevState;
-                const s: Partial<typeof S.prefs.xulsword> = {
+                const s = {
                   panels: pans.slice(),
-                };
+                } as XulswordState;
                 if (!s.panels) s.panels = [];
                 s.panels[index] = m;
                 if (targ.type === 'mto-tab' || targ.type === 'mts-tab') {

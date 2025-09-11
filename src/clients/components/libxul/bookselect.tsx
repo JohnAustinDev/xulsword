@@ -1,9 +1,8 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { ChangeEvent } from 'react';
 import RefParser from '../../../refParser.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
-import { addClass, xulPropTypes, type XulProps, xulStyle } from './xul.tsx';
+import { addClass, xulStyle } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import Spacer from './spacer.tsx';
 import Stack from './stack.tsx';
@@ -11,7 +10,8 @@ import Menulist from './menulist.tsx';
 import Textbox from './textbox.tsx';
 import './bookselect.css';
 
-import type { GType, OSISBookType } from '../../../type.ts';
+import type { OSISBookType } from '../../../type.ts';
+import type { XulProps } from './xul.tsx';
 
 // XUL Bookselect
 // This component contains an overlapping Textbox and Menulist.
@@ -31,14 +31,6 @@ import type { GType, OSISBookType } from '../../../type.ts';
 // the Textbox is simply returned to its original value without
 // firing onChange.
 
-const propTypes = {
-  ...xulPropTypes,
-  options: PropTypes.arrayOf(PropTypes.string).isRequired,
-  selection: PropTypes.string,
-  disabled: PropTypes.bool,
-  sizetopopup: PropTypes.string,
-};
-
 type BookselectProps = {
   options: OSISBookType[];
   selection?: string | undefined;
@@ -52,9 +44,10 @@ type BookselectState = {
   autocomp: boolean;
 };
 
-class Bookselect extends React.Component {
-  static propTypes: typeof propTypes;
-
+export default class Bookselect extends React.Component<
+  BookselectProps,
+  BookselectState
+> {
   textInput: React.RefObject<HTMLInputElement>;
 
   parser: RefParser;
@@ -82,9 +75,9 @@ class Bookselect extends React.Component {
     this.focusChange = this.focusChange.bind(this);
   }
 
-  getBookOptions = (): PropTypes.ReactElementLike[] => {
-    const { options } = this.props as BookselectProps;
-    const { book } = this.state as BookselectState;
+  getBookOptions() {
+    const { options } = this.props;
+    const { book } = this.state;
     const { Book } = G;
     const books = options.map((bk) => {
       return (
@@ -103,12 +96,11 @@ class Bookselect extends React.Component {
     }
 
     return books;
-  };
+  }
 
-  focusChange = (e: React.FocusEvent) => {
-    const { selection: book } = this.props as BookselectProps;
-    const refelem = this
-      .textInput as unknown as React.RefObject<HTMLInputElement>;
+  focusChange(e: React.FocusEvent) {
+    const { selection: book } = this.props;
+    const refelem = this.textInput;
     const input = refelem !== null ? refelem.current : null;
     if (e.type === 'click') {
       if (input !== null) input.select();
@@ -117,12 +109,11 @@ class Bookselect extends React.Component {
     } else {
       throw Error(`Unhandled focus event: ${e.type}`);
     }
-  };
+  }
 
-  textboxKeyDown = (e: React.KeyboardEvent) => {
-    const { selection: book, onChange } = this.props as BookselectProps;
-    const refelem = this
-      .textInput as unknown as React.RefObject<HTMLInputElement>;
+  textboxKeyDown(e: React.KeyboardEvent) {
+    const { selection: book, onChange } = this.props;
+    const refelem = this.textInput;
     const input = refelem !== null ? refelem.current : null;
     if (input === null) return;
 
@@ -145,10 +136,10 @@ class Bookselect extends React.Component {
       }
       default:
     }
-  };
+  }
 
-  textboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { autocomp } = this.state as BookselectState;
+  textboxChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const { autocomp } = this.state;
     if (autocomp) {
       const loc = this.parser.parse(e.target.value, null)?.location;
       if (loc) {
@@ -162,12 +153,11 @@ class Bookselect extends React.Component {
       this.setState({ pattern: /.*/, autocomp: true });
     }
     e.stopPropagation();
-  };
+  }
 
-  selectChange = (e: React.SyntheticEvent) => {
-    const es = e as React.ChangeEvent<HTMLSelectElement>;
-    this.setState({ book: es.target.value, pattern: /.*/, autocomp: true });
-  };
+  selectChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    this.setState({ book: e.target.value, pattern: /.*/, autocomp: true });
+  }
 
   render() {
     const props = this.props as BookselectProps;
@@ -214,6 +204,3 @@ class Bookselect extends React.Component {
     );
   }
 }
-Bookselect.propTypes = propTypes;
-
-export default Bookselect;

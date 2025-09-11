@@ -17,9 +17,8 @@ import type { XulswordState } from './xulsword.tsx';
 
 // array size will be limited to maxHistoryMenuLength.
 export function addHistory(this: Xulsword, add?: HistoryVKType): void {
-  const { location, selection, history, historyIndex } = this
-    .state as XulswordState;
-  const { renderPromise } = this;
+  const { state, renderPromise } = this;
+  const { location, selection, history, historyIndex } = state;
   if (!location || (add && add.location.v11n !== location.v11n)) return;
   const newhist: HistoryVKType = add || {
     location,
@@ -36,7 +35,7 @@ export function addHistory(this: Xulsword, add?: HistoryVKType): void {
     if (location.book === locvk.book && location.chapter === locvk.chapter)
       return;
   }
-  this.setState((prevState: XulswordState) => {
+  this.setState((prevState) => {
     const newhistory = clone(prevState.history);
     newhistory.splice(prevState.historyIndex, 0, newhist);
     if (newhistory.length > C.UI.Xulsword.maxHistoryMenuLength) {
@@ -53,16 +52,15 @@ export function setHistory(
   index: number,
   promote = false,
 ): void {
-  const { history: h } = this.state as XulswordState;
-  const { renderPromise } = this;
+  const { state, renderPromise } = this;
+  const { history: h } = state;
   if (
     index < 0 ||
     index > h.length - 1 ||
     index > C.UI.Xulsword.maxHistoryMenuLength
   )
     return;
-  this.setState((prevState: XulswordState) => {
-    let ret: Partial<XulswordState> | null = null;
+  this.setState((prevState) => {
     const { history: h, location: l } = prevState;
     const history = clone(h);
     const location = clone(l);
@@ -78,7 +76,7 @@ export function setHistory(
         const targ = history.splice(index, 1);
         history.splice(0, 0, targ[0]);
       }
-      ret = {
+      return {
         location: newloc,
         selection: newsel,
         scroll: { verseAt: 'center' },
@@ -87,7 +85,7 @@ export function setHistory(
         historyMenupopup: undefined,
       };
     }
-    return ret;
+    return null;
   });
 }
 
@@ -104,7 +102,7 @@ export function historyMenu(
   let ie = is + C.UI.Xulsword.maxHistoryMenuLength;
   if (ie > history.length) ie = history.length;
   const items = history.slice(is, ie);
-  if (!items?.length || !location) return null;
+  if (!items?.length || !location) return;
   return (
     <Menupopup>
       {items.map((histitem, i) => {

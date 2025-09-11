@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import {
   isRepoLocal,
   repositoryModuleKey,
@@ -12,7 +11,7 @@ import {
   functionalComponentRenderPromise,
   moduleInfoHTML,
 } from '../../common.ts';
-import { xulPropTypes, type XulProps, htmlAttribs } from './xul.tsx';
+import { htmlAttribs } from './xul.tsx';
 import Button from './button.tsx';
 import Label from './label.tsx';
 import '../../libsword.css'; // modinfo uses .head1
@@ -24,6 +23,7 @@ import type {
   SwordConfType,
   TabTypes,
 } from '../../../type.ts';
+import type { XulProps } from './xul.tsx';
 
 // Parent component should have this included in its state and state-type.
 export const modinfoParentInitialState = {
@@ -113,15 +113,6 @@ export function modinfoParentHandler(
 }
 
 // XUL Sword module info and config
-const propTypes = {
-  ...xulPropTypes,
-  configs: PropTypes.arrayOf(PropTypes.object).isRequired,
-  showConf: PropTypes.string,
-  editConf: PropTypes.bool,
-  refs: PropTypes.object.isRequired,
-  buttonHandler: PropTypes.func.isRequired,
-};
-
 type ModinfoProps = {
   configs: SwordConfType[];
   showConf: string; // unique id of conf to show
@@ -140,7 +131,7 @@ type SwordConfExtraType = SwordConfType & {
   style: string;
 };
 
-function Modinfo({ showConf = '', ...props }: ModinfoProps) {
+export default function Modinfo({ showConf = '', ...props }: ModinfoProps) {
   const { configs: configsx, editConf, refs, buttonHandler } = props;
   const { container, textarea } = refs;
 
@@ -317,6 +308,3 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
     </div>
   );
 }
-Modinfo.propTypes = propTypes;
-
-export default Modinfo;

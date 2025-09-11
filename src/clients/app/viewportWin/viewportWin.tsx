@@ -1,5 +1,7 @@
 import React from 'react';
 import Subscription from '../../../subscription.ts';
+import { setXulswordTabs } from '../../../commands.ts';
+import { getModuleChange, sortTabsByLocale } from '../../../viewport.ts';
 import S from '../../../defaultPrefs.ts';
 import {
   keep,
@@ -19,7 +21,7 @@ import {
   setStatePref,
   windowArguments,
 } from '../../common.ts';
-import { topHandle, xulPropTypes } from '../../components/libxul/xul.tsx';
+import { topHandle } from '../../components/libxul/xul.tsx';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Viewport from '../../components/viewport/viewport.tsx';
 import viewportParentH, {
@@ -28,20 +30,14 @@ import viewportParentH, {
   bbDragEnd as bbDragEndH,
 } from '../../components/viewport/viewportParentH.ts';
 
-import type { NewModulesType, XulswordStateArgType } from '../../../type.ts';
+import type { NewModulesType } from '../../../type.ts';
 import type Atext from '../../components/atext/atext.tsx';
 import type {
   RenderPromiseComponent,
   RenderPromiseState,
 } from '../../renderPromise.ts';
 import type { XulProps } from '../../components/libxul/xul.tsx';
-import {
-  getModuleChange,
-  setXulswordTabs,
-  sortTabsByLocale,
-} from '../../../viewport.ts';
-
-const propTypes = xulPropTypes;
+import type { XulswordState } from '../../components/xulsword/xulsword.tsx';
 
 export type ViewportWinProps = XulProps;
 
@@ -71,11 +67,9 @@ export type ViewportWinState = typeof statePrefDefault &
   RenderPromiseState;
 
 export default class ViewportWin
-  extends React.Component
+  extends React.Component<ViewportWinProps, ViewportWinState>
   implements RenderPromiseComponent
 {
-  static propTypes: typeof propTypes;
-
   viewportParentHandler: any;
 
   bbDragEnd: (e: React.MouseEvent, value: any) => void;
@@ -128,7 +122,7 @@ export default class ViewportWin
     );
     this.destroy.push(
       Subscription.subscribe.modulesInstalled((newmods: NewModulesType) => {
-        const state = this.state as ViewportWinState;
+        const { state } = this;
         const whichTab = sortTabsByLocale(
           newmods.modules
             .filter(
@@ -154,6 +148,7 @@ export default class ViewportWin
                 panelIndex: -1,
               },
               renderPromise,
+              windowArguments().id,
             );
           }
         });
@@ -167,8 +162,7 @@ export default class ViewportWin
     _prevProps: ViewportWinProps,
     prevState: ViewportWinState,
   ) {
-    const { renderPromise } = this;
-    const state = this.state as ViewportWinState;
+    const { state, renderPromise } = this;
     this.persistState(prevState, state);
     this.updateWindowTitle();
     renderPromise.dispatch();
@@ -202,7 +196,7 @@ export default class ViewportWin
   }
 
   updateWindowTitle() {
-    const { panels, ilModules } = this.state as ViewportWinState;
+    const { panels, ilModules } = this.state;
     const i = panels.findIndex((p) => p !== null);
     const m = panels[i];
     const ilm = ilModules[i];
@@ -214,15 +208,24 @@ export default class ViewportWin
     }
   }
 
-  xulswordStateHandler(s: XulswordStateArgType): void {
-    const prevState = this.state as ViewportWinState;
-    const state = typeof s === 'function' ? s(prevState) : this.state;
-    if (state)
-      this.persistState(prevState, { ...state, ...s } as ViewportWinState);
+  xulswordStateHandler(
+    s: Parameters<React.Component<any, XulswordState>['setState']>[0],
+  ) {
+    const prevState = { ...this.state };
+    const state =
+      typeof s === 'function' ? s(prevState as XulswordState, {}) : prevState;
+    if (state) this.persistState(prevState, { ...state, ...s });
   }
 
   render() {
-    const state = this.state as ViewportWinState;
+    const {
+      state,
+      atextRefs,
+      viewportParentHandler,
+      loadingRef,
+      bbDragEnd,
+      xulswordStateHandler,
+    } = this;
     const {
       location,
       selection,
@@ -241,13 +244,6 @@ export default class ViewportWin
       showChooser,
       vpreset,
     } = state;
-    const {
-      atextRefs,
-      viewportParentHandler,
-      loadingRef,
-      bbDragEnd,
-      xulswordStateHandler,
-    } = this;
 
     log.debug('viewportWin state: ', state);
 
@@ -293,7 +289,6 @@ export default class ViewportWin
     );
   }
 }
-ViewportWin.propTypes = propTypes;
 
 renderToRoot(<ViewportWin pack="start" height="100%" />).catch((er) => {
   log.error(er);

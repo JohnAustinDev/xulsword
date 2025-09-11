@@ -9,8 +9,11 @@ import {
   xulswordLocation,
 } from '../../common.ts';
 import C from '../../constant.ts';
-import { setXulswordTabs } from '../../viewport.ts';
-import { goToLocationGB, goToLocationVK } from '../../commands.ts';
+import {
+  goToLocationGB,
+  goToLocationVK,
+  setXulswordTabs,
+} from '../../commands.ts';
 import { resolveXulswordPath } from '../common.ts';
 import { G } from './G.ts';
 import Window, { getBrowserWindows } from './components/window.ts';
@@ -133,6 +136,7 @@ function updateModuleMenus(menux?: Menu) {
                       doWhat: 'toggle',
                     },
                     null,
+                    -1,
                   );
                 }),
               });
@@ -667,6 +671,7 @@ export default class MainMenuBuilder {
                         doWhat: 'show',
                       },
                       null,
+                      -1,
                       () => updateCheckboxAndRadiosFromPref(),
                     );
                   }),
@@ -682,6 +687,7 @@ export default class MainMenuBuilder {
                         doWhat: 'hide',
                       },
                       null,
+                      -1,
                       () => updateCheckboxAndRadiosFromPref(),
                     );
                   }),
@@ -739,6 +745,7 @@ export default class MainMenuBuilder {
                     doWhat: 'show',
                   },
                   null,
+                  -1,
                   () => updateCheckboxAndRadiosFromPref(),
                 );
               }),
@@ -764,6 +771,7 @@ export default class MainMenuBuilder {
                     doWhat: 'hide',
                   },
                   null,
+                  -1,
                   () => updateCheckboxAndRadiosFromPref(),
                 );
               }),

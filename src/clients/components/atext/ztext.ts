@@ -159,7 +159,7 @@ export function libswordText(
       // limited number of cache possibliities (ie. one per module).
       // Cache is also used for DailyDevotion - if the key is not in the
       // Cache use today's date instead of the key.
-      const key = dictKeyToday(modkey, module);
+      const key = dictKeyToday(module) || modkey;
       const keylist = GI.getAllDictionaryKeyList([], renderPromise, module);
       if (!renderPromise?.waiting()) {
         if (key && keylist.includes(key)) {

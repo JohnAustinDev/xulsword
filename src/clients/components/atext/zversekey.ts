@@ -550,12 +550,7 @@ function aTextWheelScroll2(
   atext: HTMLElement,
   prevState: XulswordState | ViewportWinState | AtextStateType,
   renderPromise: RenderPromise,
-) {
-  let ret:
-    | Partial<XulswordState>
-    | Partial<ViewportWinState>
-    | Partial<AtextStateType>
-    | null = null;
+): Partial<XulswordState | ViewportWinState | AtextStateType> | null {
   const atextstate =
     'pin' in prevState ? prevState : (null as AtextStateType | null);
   const parentstate =
@@ -565,25 +560,24 @@ function aTextWheelScroll2(
   const location = atextstate?.pin?.location || parentstate?.location;
   if (location) {
     const columns = Number(atext.dataset.columns);
-    const { module } = atext.dataset;
     let newloc;
     // Multi-column wheel scroll simply adds a verse delta to verse state.
     if (columns > 1) newloc = verseChange(location, count, renderPromise);
     // Single-column wheel scroll allows default browser smooth scroll for
-    // a certain period before updaing verse state to the new top verse.
+    // a certain period before updating verse state to the new top verse.
     else {
       // get first verse which begins in window
       newloc = getScrollVerse(atext, renderPromise);
     }
     if (newloc) {
       if (parentstate) {
-        ret = {
+        return {
           location: newloc,
           scroll: { verseAt: 'top' },
         };
       }
       if (atextstate?.pin) {
-        ret = {
+        return {
           pin: {
             ...atextstate.pin,
             location: newloc,
@@ -593,7 +587,7 @@ function aTextWheelScroll2(
       }
     }
   }
-  return ret;
+  return null;
 }
 
 let WheelSteps = 0;
@@ -609,18 +603,16 @@ export function aTextWheelScroll(
       caller,
       () => {
         const { renderPromise } = caller;
-        caller.setState(
-          (prevState: XulswordState | ViewportWinState | AtextStateType) => {
-            const s = aTextWheelScroll2(
-              WheelSteps,
-              atext,
-              prevState,
-              renderPromise,
-            );
-            WheelSteps = 0;
-            return s;
-          },
-        );
+        (caller as Xulsword).setState((prevState) => {
+          const s = aTextWheelScroll2(
+            WheelSteps,
+            atext,
+            prevState,
+            renderPromise,
+          );
+          WheelSteps = 0;
+          return s as XulswordState;
+        });
       },
       [],
       columns === '1'

@@ -4,11 +4,7 @@ import C from '../../../constant.ts';
 import { GI } from '../../G.ts';
 import { functionalComponentRenderPromise } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
-import {
-  addClass,
-  XulProps,
-  xulPropTypes,
-} from '../../components/libxul/xul.tsx';
+import { addClass, XulProps } from '../../components/libxul/xul.tsx';
 import { Box } from '../libxul/boxes.tsx';
 import './searchHelp.css';
 
@@ -131,4 +127,3 @@ export default function SearchHelp(props: SearchHelpProps) {
     </Box>
   );
 }
-SearchHelp.propTypes = xulPropTypes;

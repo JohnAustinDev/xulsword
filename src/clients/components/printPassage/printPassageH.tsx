@@ -25,14 +25,13 @@ export function handler(this: PrintPassageWin, ex: React.SyntheticEvent) {
   switch (ex.type) {
     case 'change': {
       const cbid = ex.currentTarget.id as keyof PrintPassageState['checkbox'];
-      this.setState((prevState: PrintPassageState) => {
-        const s: Partial<PrintPassageState> = {
+      this.setState((prevState) => {
+        return {
           checkbox: {
             ...prevState.checkbox,
             [cbid]: !prevState.checkbox[cbid],
           },
         };
-        return s;
       });
       break;
     }
@@ -43,11 +42,11 @@ export function handler(this: PrintPassageWin, ex: React.SyntheticEvent) {
 
 export function vkSelectHandler(
   this: PrintPassageWin,
-  selection: SelectVKType,
+  selection?: SelectVKType,
 ) {
   if (selection) {
     const { book } = selection;
-    this.setState((prevState: PrintPassageState) => {
+    this.setState((prevState) => {
       const obook = prevState.chapters?.book;
       if (obook && book && obook !== book) {
         selection.chapter = 1;
@@ -55,7 +54,7 @@ export function vkSelectHandler(
       }
       return {
         chapters: { ...selection },
-      } satisfies Partial<PrintPassageState>;
+      };
     });
   } else this.setState({ chapters: null });
 }

@@ -1,5 +1,3 @@
-import PropTypes from 'prop-types';
-
 import type React from 'react';
 
 export const xulEvents = [
@@ -40,69 +38,12 @@ export const xulCaptureEvents = [
   'onContextMenuCapture',
 ] as const;
 
-// PropTypes checking for XUL attributes
-export const xulPropTypes = {
-  align: PropTypes.oneOf(['start', 'center', 'end', 'baseline', 'stretch']),
-  children: PropTypes.oneOfType([PropTypes.node, PropTypes.array]),
-  className: PropTypes.string,
-  dir: PropTypes.oneOf(['ltr', 'rtl', 'auto']),
-  xuldir: PropTypes.oneOf(['reverse']),
-  flex: PropTypes.string,
-  height: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  hidden: PropTypes.bool,
-  id: PropTypes.string,
-  lang: PropTypes.string,
-  orient: PropTypes.oneOf(['horizontal', 'vertical']),
-  pack: PropTypes.oneOf(['start', 'center', 'end']),
-  domref: PropTypes.any,
-  style: PropTypes.objectOf(
-    PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  ),
-  width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  title: PropTypes.string,
-
-  onClick: PropTypes.func,
-  onDoubleClick: PropTypes.func,
-  onChange: PropTypes.func,
-  onKeyDown: PropTypes.func,
-  onKeyUp: PropTypes.func,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func,
-  onMouseDown: PropTypes.func,
-  onMouseOver: PropTypes.func,
-  onMouseOut: PropTypes.func,
-  onMouseMove: PropTypes.func,
-  onMouseUp: PropTypes.func,
-  onMouseEnter: PropTypes.func,
-  onMouseLeave: PropTypes.func,
-  onWheel: PropTypes.func,
-  onScroll: PropTypes.func,
-  onContextMenu: PropTypes.func,
-  onClickCapture: PropTypes.func,
-  onDoubleClickCapture: PropTypes.func,
-  onChangeCapture: PropTypes.func,
-  onKeyDownCapture: PropTypes.func,
-  onKeyUpCapture: PropTypes.func,
-  onFocusCapture: PropTypes.func,
-  onBlurCapture: PropTypes.func,
-  onMouseDownCapture: PropTypes.func,
-  onMouseOverCapture: PropTypes.func,
-  onMouseOutCapture: PropTypes.func,
-  onMouseMoveCapture: PropTypes.func,
-  onMouseUpCapture: PropTypes.func,
-  onWheelCapture: PropTypes.func,
-  onScrollCapture: PropTypes.func,
-  onContextMenuCapture: PropTypes.func,
-};
-
 // IDE TypeScript checking for props
 export type XulProps = {
   align?: 'start' | 'center' | 'end' | 'baseline' | 'stretch' | undefined;
   children?:
     | React.ReactNode
     | React.ReactNode[]
-    | PropTypes.ReactElementLike
-    | PropTypes.ReactElementLike[]
     | React.ReactPortal
     | undefined
     | null;

@@ -1,13 +1,10 @@
 import React from 'react';
-import { xulPropTypes, type XulProps, htmlAttribs } from './xul.tsx';
+import { htmlAttribs } from './xul.tsx';
 import './stack.css';
 
-// XUL stack
-const propTypes = xulPropTypes;
+import type { XulProps } from './xul.tsx';
 
-function Stack(props: XulProps) {
+// XUL stack
+export default function Stack(props: XulProps) {
   return <div {...htmlAttribs('stack', props)}>{props.children}</div>;
 }
-Stack.propTypes = propTypes;
-
-export default Stack;

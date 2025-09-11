@@ -300,7 +300,11 @@ function Controller(props: ControllerProps) {
   useEffect(() => {
     return Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType) => {
-        Subscription.publish.setControllerState({ progress: -1 }, false);
+        setTimeout(
+          () =>
+            Subscription.publish.setControllerState({ progress: -1 }, false),
+          1,
+        );
         if (Build.isElectronApp) {
           const GT = G as GType;
           log.debug(
@@ -318,7 +322,6 @@ function Controller(props: ControllerProps) {
             const k = cipherKeys.filter((ck) => ck.conf.module && ck.cipherKey);
             if (k.length && !s.dialogs[0].length) {
               GT.Module.setCipherKeys(k, descriptor?.id);
-              s.modal[1]('darkened'); // so there's no flash
             }
           };
           const haserror = newmods.reports.some((r) => r.error);
@@ -411,9 +414,7 @@ function Controller(props: ControllerProps) {
               />,
             );
           });
-          if (dialog.length) {
-            s.dialogs[1](dialog);
-          }
+          s.dialogs[1](dialog);
         }
       },
     );

@@ -13,14 +13,12 @@ import Modinfo, {
   modinfoParentInitialState,
   modinfoParentHandler as modinfoParentHandlerH,
 } from '../../components/libxul/modinfo.tsx';
-import { type XulProps, xulPropTypes } from '../../components/libxul/xul.tsx';
 import '../splashWin/splashWin.css';
 import './aboutWin.css';
 
-import type { ModinfoParent } from '../../components/libxul/modinfo.tsx';
 import type { SwordConfType } from '../../../type.ts';
-
-const propTypes = xulPropTypes;
+import type { ModinfoParent } from '../../components/libxul/modinfo.tsx';
+import type { XulProps } from '../../components/libxul/xul.tsx';
 
 type AboutWinProps = XulProps;
 
@@ -33,9 +31,10 @@ const initialState = {
 export type AboutWinState = typeof initialState &
   typeof modinfoParentInitialState;
 
-export default class AboutWin extends React.Component implements ModinfoParent {
-  static propTypes: typeof propTypes;
-
+export default class AboutWin
+  extends React.Component<AboutWinProps, AboutWinState>
+  implements ModinfoParent
+{
   modinfoRefs: {
     textarea: React.RefObject<HTMLTextAreaElement>;
     container: React.RefObject<HTMLDivElement>;
@@ -50,7 +49,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
       'aboutWinState',
     ) as Partial<AboutWinState> | null;
 
-    const s: AboutWinState = {
+    const s = {
       ...modinfoParentInitialState,
       ...initialState,
       ...(argState || {}),
@@ -80,13 +79,14 @@ export default class AboutWin extends React.Component implements ModinfoParent {
         switch (id) {
           case 'showContributors':
           case 'showModules': {
-            this.setState((prevState: AboutWinState) => {
+            this.setState((prevState) => {
               const p = target.id as 'showModules' | 'showContributors';
-              return {
+              const s = {
                 showContributors: false,
                 showModules: false,
-                [p]: !prevState[p],
               };
+              s[p] = !prevState[p];
+              return s;
             });
             break;
           }
@@ -104,10 +104,9 @@ export default class AboutWin extends React.Component implements ModinfoParent {
   }
 
   render() {
-    const state = this.state as AboutWinState;
+    const { state, handler, modinfoParentHandler, modinfoRefs } = this;
     const { configs, showModules, showContributors, showConf, editConf } =
       state;
-    const { handler, modinfoParentHandler, modinfoRefs } = this;
     const { container, textarea } = modinfoRefs;
 
     const contributors: string[] =
@@ -219,7 +218,6 @@ export default class AboutWin extends React.Component implements ModinfoParent {
     );
   }
 }
-AboutWin.propTypes = propTypes;
 
 renderToRoot(<AboutWin />, { resetOnResize: false }).catch((er) => {
   log.error(er);

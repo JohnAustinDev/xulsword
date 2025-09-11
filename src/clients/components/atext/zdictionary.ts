@@ -165,8 +165,7 @@ function replaceLinks(
   return html;
 }
 
-export function dictKeyToday(modkey: string, module: string): string {
-  let key = modkey;
+export function dictKeyToday(module: string): string {
   if (
     G.FeatureModules.DailyDevotion.includes(module) &&
     !Cache.has('DailyDevotion', module)
@@ -174,10 +173,10 @@ export function dictKeyToday(modkey: string, module: string): string {
     const today = new Date();
     const mo = today.getMonth() + 1;
     const dy = today.getDate();
-    key = `${mo < 10 ? '0' : ''}${String(mo)}.${dy < 10 ? '0' : ''}${dy}`;
     Cache.write(true, 'DailyDevotion', module);
+    return `${mo < 10 ? '0' : ''}${String(mo)}.${dy < 10 ? '0' : ''}${dy}`;
   }
-  return key;
+  return '';
 }
 
 export function getDictEntryHTML(

@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import VerseKey from '../../../verseKey.ts';
 import { getElementData } from '../../htmlData.ts';
 import Cache from '../../../cache.ts';
@@ -22,12 +21,7 @@ import {
   safeScrollIntoView,
 } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
-import {
-  xulPropTypes,
-  addClass,
-  topHandle,
-  delayHandler,
-} from '../libxul/xul.tsx';
+import { addClass, topHandle, delayHandler } from '../libxul/xul.tsx';
 import DragSizer from '../libxul/dragsizer.tsx';
 import { Vbox, Hbox, Box } from '../libxul/boxes.tsx';
 import Spacer from '../libxul/spacer.tsx';
@@ -48,7 +42,6 @@ import type {
   AudioPlayerSelectionGB,
   PinPropsType,
   AudioPlayerSelectionVK,
-  XulswordStateArgType,
   GType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
@@ -59,37 +52,16 @@ import type {
 import type { HTMLData } from '../../htmlData.ts';
 import type { XulProps } from '../libxul/xul.tsx';
 import type { LibSwordResponse } from './ztext.ts';
-
-const propTypes = {
-  ...xulPropTypes,
-  bbDragEnd: PropTypes.func.isRequired,
-  xulswordState: PropTypes.func.isRequired,
-  panelIndex: PropTypes.number.isRequired,
-  columns: PropTypes.number.isRequired,
-  location: PropTypes.object,
-  module: PropTypes.string,
-  ilModule: PropTypes.string,
-  ilModuleOption: PropTypes.arrayOf(PropTypes.string).isRequired,
-  modkey: PropTypes.string,
-  selection: PropTypes.object,
-  scroll: PropTypes.object,
-  isPinned: PropTypes.bool.isRequired,
-  noteBoxHeight: PropTypes.number,
-  maximizeNoteBox: PropTypes.bool,
-  show: PropTypes.object.isRequired,
-  place: PropTypes.object.isRequired,
-  ownWindow: PropTypes.bool,
-  onAudioClick: PropTypes.func.isRequired,
-};
+import type { XulswordState } from '../xulsword/xulsword.tsx';
 
 export type AtextPropsType = Pick<
   typeof S.prefs.xulsword,
   'location' | 'selection' | 'scroll' | 'show' | 'place'
 > & {
-  modkey: string;
+  modkey: string | null;
 
-  module: string | undefined;
-  ilModule: string | undefined;
+  module?: string | null;
+  ilModule?: string | null;
   ilModuleOption: string[];
 
   isPinned: boolean;
@@ -100,10 +72,11 @@ export type AtextPropsType = Pick<
   columns: number;
   ownWindow: boolean;
 
-  xulswordState: (s: XulswordStateArgType) => void;
+  xulswordState: React.Component<any, XulswordState>['setState'];
 
   onAudioClick: (
     selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    e: React.SyntheticEvent,
   ) => void;
   bbDragEnd: (e: React.MouseEvent, value: any) => void;
 };
@@ -128,9 +101,10 @@ export type AtextStateType = typeof stateWinPrefs &
 const windowState: Array<Partial<AtextStateType>> = [];
 
 // XUL Atext
-class Atext extends React.Component implements RenderPromiseComponent {
-  static propTypes: typeof propTypes;
-
+class Atext
+  extends React.Component<AtextProps, AtextStateType>
+  implements RenderPromiseComponent
+{
   handler: typeof handlerH;
 
   wheelScrollTO: NodeJS.Timeout | undefined;
@@ -146,13 +120,12 @@ class Atext extends React.Component implements RenderPromiseComponent {
   constructor(props: AtextProps) {
     super(props);
 
-    const s: AtextStateType = {
+    this.state = {
       ...stateWinPrefs,
       ...notStateWinPrefs,
       ...windowState[props.panelIndex],
       renderPromiseID: 0,
     };
-    this.state = s;
 
     this.sbref = React.createRef();
     this.nbref = React.createRef();
@@ -176,9 +149,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
   }
 
   componentDidUpdate(_prevProps: AtextProps, prevState: AtextStateType) {
-    const { panelIndex } = this.props as AtextProps;
-    const state = this.state as AtextStateType;
-    const { renderPromise } = this;
+    const { props, state, renderPromise } = this;
+    const { panelIndex } = props;
     windowState[panelIndex] = keep(
       state,
       Object.keys(stateWinPrefs) as Array<keyof typeof stateWinPrefs>,
@@ -208,11 +180,9 @@ class Atext extends React.Component implements RenderPromiseComponent {
   // itself, because DOM elements may be silently replaced by React and
   // storing it there insures the hashes are invalidated at the same time.
   onUpdate() {
-    const props = this.props as AtextProps;
-    const state = this.state as AtextStateType;
+    const { props, state, renderPromise } = this;
     const { columns, isPinned, panelIndex, xulswordState } = props;
     const { pin, maxNoteBoxHeight } = state;
-    const { renderPromise } = this;
 
     // Decide what needs to be updated...
     // pinProps are the currently active props according to the panel's
@@ -221,9 +191,9 @@ class Atext extends React.Component implements RenderPromiseComponent {
     // scrollProps are current props that effect scrolling
     const scrollProps = keep({ ...props, ...pinProps }, C.ScrollPropsVK);
 
-    let newState: Partial<AtextStateType> = diff(pin, pinProps)
-      ? { pin: pinProps }
-      : {};
+    let newState = (
+      diff(pin, pinProps) ? { pin: pinProps } : {}
+    ) as AtextStateType;
 
     const { sbref, nbref } = this;
     const sbe = sbref !== null ? sbref.current : null;
@@ -702,9 +672,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
   }
 
   render() {
-    const state = this.state as AtextStateType;
-    const props = this.props as AtextProps;
-    const { renderPromise, loadingRef, handler } = this;
+    const { props, state, renderPromise, loadingRef, handler } = this;
     const { maxNoteBoxHeight, versePerLine } = state;
     const {
       columns,
@@ -760,7 +728,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
     const data: HTMLData = { type: 'text' };
     if (module && ['Dicts', 'Genbks'].includes(G.Tab[module].tabType)) {
       if (module && modkey) data.locationGB = { otherMod: module, key: modkey };
-    } else if (location) data.location = { ...location, vkMod: module };
+    } else if (location)
+      data.location = { ...location, vkMod: module ?? undefined };
 
     const showSelect =
       module &&
@@ -815,7 +784,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
         {module &&
           audioIcon(
             module,
-            isVerseKey ? location?.book || '' : modkey,
+            isVerseKey ? (location?.book ?? '') : (modkey ?? ''),
             location?.chapter,
             onAudioClick,
             renderPromise,
@@ -857,6 +826,5 @@ class Atext extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-Atext.propTypes = propTypes;
 
 export default Atext;

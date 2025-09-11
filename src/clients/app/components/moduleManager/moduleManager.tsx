@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Intent, ProgressBar } from '@blueprintjs/core';
 import {
   downloadKey,
@@ -20,7 +19,7 @@ import {
   windowArguments,
   topToaster,
 } from '../../../common.ts';
-import { addClass, xulPropTypes } from '../../../components/libxul/xul.tsx';
+import { addClass } from '../../../components/libxul/xul.tsx';
 import Button from '../../../components/libxul/button.tsx';
 import { Hbox, Vbox, Box } from '../../../components/libxul/boxes.tsx';
 import Groupbox from '../../../components/libxul/groupbox.tsx';
@@ -79,11 +78,6 @@ export function onunload() {
 let MasterRepoListDownloaded = false;
 let resetOnResize = false;
 
-const propTypes = {
-  ...xulPropTypes,
-  id: PropTypes.oneOf(['moduleManager', 'removeModule']),
-};
-
 export type ManagerProps = XulProps & {
   id: 'moduleManager' | 'removeModule';
 };
@@ -132,11 +126,9 @@ export type ManagerState = ManagerStatePref &
 let ModuleManagerUnmountState: ManagerState | null = null;
 
 export default class ModuleManager
-  extends React.Component
+  extends React.Component<ManagerProps, ManagerState>
   implements ModinfoParent
 {
-  static propTypes: typeof propTypes;
-
   destroy: Array<() => void>;
 
   lastStatePref: Partial<ManagerState> | null;
@@ -157,14 +149,6 @@ export default class ModuleManager
   eventHandler;
 
   modinfoParentHandler: typeof modinfoParentHandlerH;
-
-  sState: (
-    // sState is just for better TypeScript functionality
-    s:
-      | Partial<ManagerState>
-      | ((prevState: ManagerState) => Partial<ManagerState> | null),
-    callback?: () => void,
-  ) => void;
 
   tableDomRefs: {
     [table in (typeof H.Tables)[number]]: React.RefObject<HTMLDivElement>;
@@ -231,12 +215,11 @@ export default class ModuleManager
     this.audioDialogClose = this.audioDialogClose.bind(this);
     this.audioDialogAccept = this.audioDialogAccept.bind(this);
     this.installProgressHandler = this.installProgressHandler.bind(this);
-    this.sState = this.setState.bind(this);
   }
 
   componentDidMount() {
-    const { id } = this.props as ManagerProps;
-    const { installProgressHandler } = this;
+    const { props, installProgressHandler } = this;
+    const { id } = props;
     installProgressHandler();
     // The removeModule window does not (must not!) access Internet, otherwise
     // Internet permission is required.
@@ -247,8 +230,7 @@ export default class ModuleManager
   }
 
   componentDidUpdate(_prevProps: any, prevState: ManagerState) {
-    const props = this.props as ManagerProps;
-    const state = this.state as ManagerState;
+    const { props, state } = this;
     const { id } = props;
     const { repository: prev } = prevState;
     const { repository: next, tables } = state;
@@ -266,7 +248,7 @@ export default class ModuleManager
     // objects. Using lastStatePref allows prevState to be modified.
     this.lastStatePref = setStatePref('prefs', id, this.lastStatePref, state);
     ModuleManagerUnmountState = {
-      ...(this.state as ManagerState),
+      ...this.state,
     };
   }
 
@@ -276,8 +258,10 @@ export default class ModuleManager
   }
 
   async loadTables(): Promise<void> {
-    let state = this.state as ManagerState;
-    const { id } = this.props as ManagerProps;
+    const { props } = this;
+    const { id } = props;
+
+    let newstate = { ...this.state };
 
     // Download data for the repository and module tables
     if (!MasterRepoListDownloaded) {
@@ -285,22 +269,22 @@ export default class ModuleManager
 
       // In xulsword 4.1.0+, removeModule.repository was added, allowing each
       // module's file location to be seen. So do a prefs update if required.
-      if (!state.repository && id === 'removeModule') {
-        (state as any).repository = S.prefs.removeModule.repository;
+      if (!newstate.repository && id === 'removeModule') {
+        (newstate as any).repository = S.prefs.removeModule.repository;
       }
 
       // Build the list of all repositories;
-      const xulswordRepos = H.getXulswordRepos(state);
+      const xulswordRepos = H.getXulswordRepos(newstate);
       let crossWireRepos: Repository[] = [];
       // The removeModule window must not access Internet!!
       if (id !== 'removeModule') {
         try {
           if (!navigator.onLine) throw new Error(`No Internet connection.`);
-          state.progress = [9, 10];
-          this.sState(state);
+          newstate.progress = [9, 10];
+          this.setState(newstate);
           const result = await G.Module.crossWireMasterRepoList();
-          state = this.state as ManagerState;
-          state.progress = null;
+          newstate = { ...this.state };
+          newstate.progress = null;
           if (typeof result === 'string') throw new Error(result);
           crossWireRepos = result;
         } catch (er: any) {
@@ -323,10 +307,10 @@ export default class ModuleManager
       if (id === 'removeModule' || !H.Permission.internet)
         allrepos = allrepos.filter((r) => isRepoLocal(r));
 
-      this.loadRepositoryTable(state, allrepos);
-      this.sState(state);
+      this.loadRepositoryTable(newstate, allrepos);
+      this.setState(newstate);
 
-      H.readReposAndUpdateTables(this, state, allrepos, true).catch((er) =>
+      H.readReposAndUpdateTables(this, newstate, allrepos, true).catch((er) =>
         log.error(er),
       );
     }
@@ -336,8 +320,8 @@ export default class ModuleManager
     // Instantiate progress handler
     this.destroy.push(
       window.IPC.on('progress', (prog: number, id?: string) => {
+        const newstate = { ...this.state };
         log.silly(`moduleManager progress: id=${id} prog=${prog}`);
-        const newstate = this.state as ManagerState;
         if (id) {
           // Set individual repository progress bars
           const { repository, module } = newstate.tables;
@@ -365,7 +349,7 @@ export default class ModuleManager
           }
           // Update main progress bar (shows module downloads only)
           if (repoIndex === -1) H.updateDownloadProgress(newstate, id, prog);
-          this.sState(newstate);
+          this.setState(newstate);
         }
       }),
     );
@@ -665,7 +649,7 @@ export default class ModuleManager
 
   handleColumns(tableName: (typeof H.Tables)[number]) {
     return (columns: TableColumnInfo[]) => {
-      const newstate = this.state as ManagerState;
+      const newstate = { ...this.state };
       const table = newstate[tableName];
       if (table) {
         const { rowSort } = table;
@@ -675,23 +659,23 @@ export default class ModuleManager
           rowSort.propColumnIndex = columns.findIndex((tc) => tc.visible);
         }
         table.columns = columns;
-        this.sState({ [tableName]: table });
+        this.setState({ [tableName]: table } as any);
       }
     };
   }
 
   audioDialogClose() {
-    const newstate = this.state as ManagerState;
+    const newstate = { ...this.state };
     const { showAudioDialog } = newstate;
     if (showAudioDialog.length) {
       const done = showAudioDialog.shift();
       if (done) done.callback(null);
-      this.sState(newstate);
+      this.setState(newstate);
     }
   }
 
   audioDialogAccept() {
-    const newstate = this.state as ManagerState;
+    const newstate = { ...this.state };
     const { showAudioDialog } = newstate;
     if (showAudioDialog.length) {
       const done = showAudioDialog.shift();
@@ -699,12 +683,12 @@ export default class ModuleManager
         const { selection } = done;
         done.callback(selection);
       }
-      this.sState({ showAudioDialog });
+      this.setState({ showAudioDialog });
     }
   }
 
   audioDialogChange(selection: SelectVKType | SelectORMType | undefined) {
-    const newstate = this.state as ManagerState;
+    const newstate = { ...this.state };
     const { showAudioDialog: sad } = newstate;
     const showAudioDialog = sad.slice();
     if (showAudioDialog.length) {
@@ -728,7 +712,7 @@ export default class ModuleManager
           options.lastchapters = ch;
         }
       }
-      this.sState({ showAudioDialog });
+      this.setState({ showAudioDialog });
     }
   }
 
@@ -737,9 +721,9 @@ export default class ModuleManager
   }
 
   render() {
-    const state = this.state as ManagerState;
-    const props = this.props as ManagerProps;
     const {
+      props,
+      state,
       onRowsReordered,
       eventHandler,
       modinfoParentHandler,
@@ -952,7 +936,7 @@ export default class ModuleManager
                 <DragSizer
                   onDragStart={() => state.language.width}
                   onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
-                    this.sState((prevState) => {
+                    this.setState((prevState) => {
                       prevState.language.width = v.sizerPos;
                       H.tableUpdate(prevState, ['language', 'module']);
                       return prevState;
@@ -1057,7 +1041,7 @@ export default class ModuleManager
               <DragSizer
                 onDragStart={() => repository.height}
                 onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
-                  this.sState((prevState) => {
+                  this.setState((prevState) => {
                     if (prevState.repository) {
                       const { repository } = prevState;
                       repository.height = v.sizerPos;
@@ -1147,7 +1131,7 @@ export default class ModuleManager
                 flex="1"
                 fill="x"
                 onClick={() => {
-                  this.sState((prevState) => {
+                  this.setState((prevState) => {
                     if (prevState.repository) {
                       const { repository } = prevState;
                       repository.open = false;
@@ -1165,7 +1149,7 @@ export default class ModuleManager
                 flex="1"
                 fill="x"
                 onClick={() => {
-                  this.sState((prevState) => {
+                  this.setState((prevState) => {
                     if (prevState.repository) {
                       const { repository } = prevState;
                       repository.open = true;
@@ -1245,4 +1229,3 @@ export default class ModuleManager
     );
   }
 }
-ModuleManager.propTypes = propTypes;

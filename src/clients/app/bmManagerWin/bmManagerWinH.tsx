@@ -63,10 +63,10 @@ export function onFolderSelection(
 ): void {
   if (ids[0]) {
     const clicked = ids[0].toString();
-    this.setState((prevState: BMManagerState) => {
+    this.setState((prevState) => {
       let { selectedFolder } = prevState;
       selectedFolder = selectedFolder === clicked ? '' : clicked;
-      const s: Partial<BMManagerState> = {
+      const s = {
         selectedFolder,
         selectedItems: [selectedFolder],
       };
@@ -85,7 +85,7 @@ export function onCellClick(
   _dataColIndex: number,
   e: React.MouseEvent,
 ): void {
-  this.setState((prevState: BMManagerState) => {
+  this.setState((prevState) => {
     const data = this.tableData;
     if (data[dataRowIndex]) {
       const { selectedItems: prevSelectedItems } = prevState;
@@ -96,10 +96,9 @@ export function onCellClick(
           .filter((r) => r !== -1),
         e,
       );
-      const s: Partial<BMManagerState> = {
+      return {
         selectedItems: selectedDataRows.map((i) => data[i][Col.iInfo].id),
       };
-      return s;
     }
     return null;
   });
@@ -142,11 +141,10 @@ export function scrollToItem(this: BMManagerWin, id: string) {
 
 export function onItemSelect(this: BMManagerWin, item: BookmarkItemType) {
   const { rootfolder } = this.state as BMManagerState;
-  const s: Partial<BMManagerState> = {
+  this.setState({
     selectedFolder: rootfolder.id,
     selectedItems: [item.id],
-  };
-  this.setState(s);
+  });
   this.scrollToItem(item.id);
 }
 
@@ -215,36 +213,33 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
       case 'cut': {
         if (selectedItems) {
           this.currentRootFolderObject = null;
-          const s: Partial<BMManagerState> = {
+          this.setState({
             cut: selectedItems,
             copy: null,
             reset: randomID(),
-          };
-          this.setState(s);
+          });
         }
         break;
       }
       case 'copy': {
         if (selectedItems) {
           this.currentRootFolderObject = null;
-          const s: Partial<BMManagerState> = {
+          this.setState({
             copy: selectedItems,
             cut: null,
             reset: randomID(),
-          };
-          this.setState(s);
+          });
         }
         break;
       }
       case 'paste': {
         if (selectedItems[0] && (cut || copy)) {
           G.Commands.pasteBookmarkItems(cut, copy, selectedItems[0]);
-          const s: Partial<BMManagerState> = {
+          this.setState({
             cut: null,
             copy: null,
             reset: randomID(),
-          };
-          this.setState(s);
+          });
         }
         break;
       }
@@ -284,7 +279,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
         if (selectedItems.length) {
           this.setState({
             printItems: selectedItems,
-          } as Partial<BMManagerState>);
+          });
           G.Commands.print({ pageable: true, dialogEnd: 'cancel' })
             .then(() => {
               (

@@ -1,8 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import DOMPurify from 'dompurify';
 import { clearPending } from '../../common.ts';
-import { delayHandler, addClass, xulPropTypes } from './xul.tsx';
+import { delayHandler, addClass } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import './textbox.css';
 
@@ -14,20 +13,6 @@ import type { XulProps } from './xul.tsx';
 // the value prop changes then state will be reset to the prop value. The
 // usual key prop cannot always be used to reset state (see note below).
 // The onChange prop must be provided to retrieve or respond to user input.
-
-const propTypes = {
-  ...xulPropTypes,
-  maxLength: PropTypes.string,
-  multiline: PropTypes.bool,
-  pattern: PropTypes.instanceOf(RegExp),
-  readonly: PropTypes.bool,
-  inputRef: PropTypes.object,
-  disabled: PropTypes.bool,
-  timeout: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  type: PropTypes.oneOf(['search', 'text']),
-  value: PropTypes.string,
-};
-
 type TextboxProps = {
   maxLength?: string;
   multiline?: boolean;
@@ -42,8 +27,8 @@ type TextboxProps = {
 
 type TextboxState = {
   value: string;
-  lastPropsValue: string;
-  lastStateValue: string;
+  lastPropsValue: string | undefined;
+  lastStateValue: string | undefined;
 };
 
 type TBevent =
@@ -51,9 +36,10 @@ type TBevent =
   | React.SyntheticEvent<HTMLTextAreaElement>;
 
 // XUL textbox
-class Textbox extends React.Component {
-  static propTypes: typeof propTypes;
-
+export default class Textbox extends React.Component<
+  TextboxProps,
+  TextboxState
+> {
   // NOTE: The key method of resetting a React text input to its props value
   // does not work in all Textbox use cases. This is because key causes a new
   // component to be rendered, causing loss of focus and cursor position.
@@ -90,7 +76,7 @@ class Textbox extends React.Component {
   }
 
   handleChange(e: TBevent) {
-    const { pattern, timeout, onChange } = this.props as TextboxProps;
+    const { pattern, timeout, onChange } = this.props;
     const target = e.target as HTMLSelectElement | HTMLTextAreaElement;
 
     // Test user input against props.pattern and undo mismatched changes,
@@ -119,9 +105,7 @@ class Textbox extends React.Component {
   }
 
   render() {
-    const props = this.props as TextboxProps;
-    const state = this.state as TextboxState;
-    const { handleChange } = this;
+    const { props, state, handleChange } = this;
     let { type } = props;
     if (!type) type = 'text';
     const useTextArea = !!(type === 'text' && props.multiline);
@@ -158,6 +142,3 @@ class Textbox extends React.Component {
     );
   }
 }
-Textbox.propTypes = propTypes;
-
-export default Textbox;

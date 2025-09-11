@@ -1,5 +1,4 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { SyntheticEvent } from 'react';
 import { dString } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
@@ -8,7 +7,6 @@ import { audioConfigs, clearPending, getMaxChapter } from '../../common.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import {
-  xulPropTypes,
   type XulProps,
   addClass,
   delayHandler,
@@ -30,28 +28,17 @@ import type {
   RenderPromiseState,
 } from '../../renderPromise.ts';
 
-const propTypes = {
-  ...xulPropTypes,
-  bookGroups: PropTypes.arrayOf(PropTypes.string),
-  selection: PropTypes.string.isRequired,
-  availableBooks: PropTypes.instanceOf(Set),
-  hideUnavailableBooks: PropTypes.bool,
-  headingsModule: PropTypes.string,
-  v11n: PropTypes.string.isRequired,
-  onCloseChooserClick: PropTypes.func.isRequired,
-  onAudioClick: PropTypes.func.isRequired,
-};
-
 export type ChooserProps = {
   bookGroups?: BookGroupType[];
   selection: OSISBookType | '';
   availableBooks?: Set<string>;
   hideUnavailableBooks?: boolean;
-  headingsModule?: string;
+  headingsModule?: string | null;
   v11n: V11nType;
   onCloseChooserClick: (e: any) => void;
   onAudioClick: (
-    audio?: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    audio: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    e: React.SyntheticEvent,
   ) => void;
 } & XulProps;
 
@@ -63,9 +50,10 @@ export type ChooserState = RenderPromiseState & {
   slideIndex: Record<string, number>;
 };
 
-class Chooser extends React.Component implements RenderPromiseComponent {
-  static propTypes: typeof propTypes;
-
+class Chooser
+  extends React.Component<ChooserProps, ChooserState>
+  implements RenderPromiseComponent
+{
   slideInterval: NodeJS.Timeout | undefined;
 
   bookgroupTO: NodeJS.Timeout | undefined;
@@ -102,8 +90,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
       slideIndex[g] = 0;
     });
 
-    const s: ChooserState = { bookGroup, slideIndex, renderPromiseID: 0 };
-    this.state = s;
+    this.state = { bookGroup, slideIndex, renderPromiseID: 0 };
 
     let longest = 0;
     this.longestBook = Books[0].code;
@@ -131,8 +118,8 @@ class Chooser extends React.Component implements RenderPromiseComponent {
   }
 
   componentDidMount() {
-    const { rowHeight, renderPromise, centerBook } = this;
-    const { selection } = this.props as ChooserProps;
+    const { props, rowHeight, renderPromise, centerBook } = this;
+    const { selection } = props;
 
     const bookList = document.querySelector('.book-list');
     if (!rowHeight && bookList) {
@@ -187,8 +174,8 @@ class Chooser extends React.Component implements RenderPromiseComponent {
   }
 
   slideUp(rows = 1) {
-    const { rowHeight, listAreaHeight, stopSliding } = this;
-    const { bookGroup, slideIndex } = this.state as ChooserState;
+    const { state, rowHeight, listAreaHeight, stopSliding } = this;
+    const { bookGroup, slideIndex } = state;
 
     const maxScrollIndex =
       C.SupportedBooks[bookGroup].length - listAreaHeight / rowHeight;
@@ -199,7 +186,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     }
 
     if (rowHeight) {
-      this.setState((prevState: ChooserState) => {
+      this.setState((prevState) => {
         let next = prevState.slideIndex[bookGroup] + rows;
         if (next > maxScrollIndex) next = maxScrollIndex;
         prevState.slideIndex[bookGroup] = next;
@@ -209,8 +196,8 @@ class Chooser extends React.Component implements RenderPromiseComponent {
   }
 
   slideDown(rows = 1) {
-    const { rowHeight, stopSliding } = this;
-    const { bookGroup, slideIndex } = this.state as ChooserState;
+    const { state, rowHeight, stopSliding } = this;
+    const { bookGroup, slideIndex } = state;
 
     if (slideIndex[bookGroup] === 0) {
       stopSliding();
@@ -218,7 +205,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     }
 
     if (rowHeight) {
-      this.setState((prevState: ChooserState) => {
+      this.setState((prevState) => {
         let next = prevState.slideIndex[bookGroup] - rows;
         if (next < 0) next = 0;
         prevState.slideIndex[bookGroup] = next;
@@ -228,12 +215,12 @@ class Chooser extends React.Component implements RenderPromiseComponent {
   }
 
   centerBook(book: OSISBookType) {
-    const { rowHeight, listAreaHeight } = this;
-    const { hideUnavailableBooks } = this.props as ChooserProps;
+    const { props, rowHeight, listAreaHeight } = this;
+    const { hideUnavailableBooks } = props;
     if (!hideUnavailableBooks) {
       const { Book } = G;
       const { bookGroup, indexInBookGroup } = Book[book];
-      this.setState((prevState: ChooserState) => {
+      this.setState((prevState) => {
         const { slideIndex } = prevState;
         const maxScrollIndex =
           C.SupportedBooks[bookGroup].length - listAreaHeight / rowHeight;
@@ -241,15 +228,21 @@ class Chooser extends React.Component implements RenderPromiseComponent {
         if (i > maxScrollIndex) i = maxScrollIndex;
         if (i < 0) i = 0;
         slideIndex[bookGroup] = i;
-        return { bookGroup, slideIndex } as ChooserState;
+        return { bookGroup, slideIndex };
       });
     }
   }
 
   render() {
-    const props = this.props as ChooserProps;
-    const state = this.state as ChooserState;
-    const { handler, rowHeight, longestBook, renderPromise, loadingRef } = this;
+    const {
+      props,
+      state,
+      handler,
+      rowHeight,
+      longestBook,
+      renderPromise,
+      loadingRef,
+    } = this;
     const {
       availableBooks,
       headingsModule,
@@ -358,21 +351,21 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-Chooser.propTypes = propTypes;
 
 export default Chooser;
 
 function BookGroupList(
   props: {
     v11n: V11nType;
-    bookGroup?: BookGroupType;
+    bookGroup?: BookGroupType | null;
     selection?: string;
     availableBooks?: Set<string>;
-    headingsModule?: string;
+    headingsModule?: string | null;
     hideUnavailableBooks?: boolean;
     handler?: (e: React.SyntheticEvent) => void;
     onAudioClick?: (
-      selection?: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+      selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+      e: SyntheticEvent<Element, Event>,
     ) => void;
     chooserRef: React.Component;
     renderPromise: RenderPromise;
@@ -430,11 +423,12 @@ function BookGroupItem(
   props: {
     sName: OSISBookType;
     classes?: string[];
-    headingsModule?: string;
+    headingsModule?: string | null;
     v11n: V11nType;
     handler?: (e: React.SyntheticEvent) => void;
     onAudioClick?: (
-      selection?: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+      selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+      e: SyntheticEvent<Element, Event>,
     ) => void;
     chooserRef: React.Component;
     renderPromise: RenderPromise;
@@ -488,12 +482,13 @@ function BookGroupItem(
 }
 
 function ChapterMenu(props: {
-  headingsModule?: string;
+  headingsModule?: string | null;
   bkcode: string;
   v11n: V11nType;
   handler?: (e: React.SyntheticEvent) => void;
   onAudioClick?: (
-    selection?: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    e: SyntheticEvent<Element, Event>,
   ) => void;
   chooserRef: React.Component;
   renderPromise: RenderPromise;

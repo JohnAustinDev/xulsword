@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import PropTypes from 'prop-types';
 import VerseKey from '../../../verseKey.ts';
 import { playAudio } from '../../../commands.ts';
 import C from '../../../constant.ts';
@@ -16,7 +15,7 @@ import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { clearPending } from '../../common.ts';
-import { addClass, xulPropTypes, topHandle } from '../libxul/xul.tsx';
+import { addClass, topHandle } from '../libxul/xul.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Chooser from '../chooser/chooser.tsx';
 import GenbookChooser from '../genbookChooser/genbookChooser.tsx';
@@ -29,7 +28,7 @@ import type {
   AudioPlayerSelectionGB,
   LocationVKType,
   AudioPlayerSelectionVK,
-  XulswordStateArgType,
+  V11nType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type { RenderPromiseState } from '../../renderPromise.ts';
@@ -39,35 +38,7 @@ import type {
   PopupParentState,
   ViewportPopupProps,
 } from '../popup/popupParentH.ts';
-
-const propTypes = {
-  ...xulPropTypes,
-  location: PropTypes.object,
-  selection: PropTypes.object,
-  scroll: PropTypes.object,
-  audio: PropTypes.object.isRequired,
-
-  keys: PropTypes.arrayOf(PropTypes.string).isRequired,
-
-  show: PropTypes.object.isRequired,
-  place: PropTypes.object.isRequired,
-
-  showChooser: PropTypes.bool.isRequired,
-  tabs: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
-  panels: PropTypes.arrayOf(PropTypes.string).isRequired,
-  ilModules: PropTypes.arrayOf(PropTypes.string).isRequired,
-  mtModules: PropTypes.arrayOf(PropTypes.string).isRequired,
-
-  isPinned: PropTypes.arrayOf(PropTypes.bool).isRequired,
-  noteBoxHeight: PropTypes.arrayOf(PropTypes.number).isRequired,
-  maximizeNoteBox: PropTypes.arrayOf(PropTypes.bool).isRequired,
-  ownWindow: PropTypes.bool.isRequired,
-
-  eHandler: PropTypes.func.isRequired,
-  bbDragEnd: PropTypes.func.isRequired,
-  xulswordStateHandler: PropTypes.func.isRequired,
-  atextRefs: PropTypes.arrayOf(PropTypes.object),
-};
+import type { XulswordState } from '../xulsword/xulsword.tsx';
 
 type ViewportProps = ViewportPopupProps &
   XulProps & {
@@ -87,7 +58,7 @@ type ViewportProps = ViewportPopupProps &
 
     eHandler: (e: React.SyntheticEvent) => void;
     bbDragEnd: (e: React.MouseEvent, value: any) => void;
-    xulswordStateHandler: (s: XulswordStateArgType) => void;
+    xulswordStateHandler: React.Component<any, XulswordState>['setState'];
   };
 
 type ViewportState = PopupParentState &
@@ -95,9 +66,10 @@ type ViewportState = PopupParentState &
     reset: number;
   };
 
-class Viewport extends React.Component implements PopupParent {
-  static propTypes: typeof propTypes;
-
+export default class Viewport
+  extends React.Component<ViewportProps, ViewportState>
+  implements PopupParent
+{
   popupParentHandler: typeof popupParentHandlerH;
 
   popupHandler: typeof popupHandlerH;
@@ -117,12 +89,11 @@ class Viewport extends React.Component implements PopupParent {
   constructor(props: ViewportProps) {
     super(props);
 
-    const s: ViewportState = {
+    this.state = {
       ...PopupParentInitState,
       reset: 0,
       renderPromiseID: 0,
     };
-    this.state = s;
 
     this.popupParentHandler = popupParentHandlerH.bind(this);
     this.popupHandler = popupHandlerH.bind(this);
@@ -135,8 +106,7 @@ class Viewport extends React.Component implements PopupParent {
   }
 
   componentDidUpdate() {
-    const { renderPromise } = this;
-    const state = this.state as ViewportState;
+    const { state, renderPromise } = this;
     const { popupParent, elemdata } = state;
     if (popupParent && !document.body.contains(popupParent)) {
       this.setState({ popupParent: null });
@@ -157,7 +127,7 @@ class Viewport extends React.Component implements PopupParent {
     selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
     e: React.SyntheticEvent,
   ) {
-    const { audio } = this.props as ViewportProps;
+    const { audio } = this.props;
     const { open, defaults } = audio;
     const atextClick = !!ofClass(['textarea'], e.target)?.element;
     let file:
@@ -177,10 +147,15 @@ class Viewport extends React.Component implements PopupParent {
   }
 
   render() {
-    const { renderPromise, loadingRef, popupRef, popupHandler, audioHandler } =
-      this;
-    const props = this.props as ViewportProps;
-    const state = this.state as ViewportState;
+    const {
+      props,
+      state,
+      renderPromise,
+      loadingRef,
+      popupRef,
+      popupHandler,
+      audioHandler,
+    } = this;
     const {
       location,
       selection,
@@ -201,7 +176,7 @@ class Viewport extends React.Component implements PopupParent {
       bbDragEnd,
       xulswordStateHandler,
       atextRefs,
-    } = this.props as ViewportProps;
+    } = props;
     const { reset, elemdata, gap, popupParent, popupReset } = state;
 
     const tabcntl = G.Prefs.getBoolPref('xulsword.tabcntl');
@@ -217,7 +192,7 @@ class Viewport extends React.Component implements PopupParent {
     });
 
     // Get all available books from unpinned versekey modules
-    const availableBooks = new Set();
+    const availableBooks: Set<string> = new Set();
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
         GI.getBooksInVKModule(
@@ -496,7 +471,7 @@ class Viewport extends React.Component implements PopupParent {
           <Chooser
             key={[reset, location?.book].join('.')}
             selection={location?.book || ''}
-            v11n={chooserV11n}
+            v11n={chooserV11n as V11nType}
             headingsModule={firstUnpinnedBible}
             bookGroups={bookGroups}
             availableBooks={availableBooks}
@@ -552,6 +527,3 @@ class Viewport extends React.Component implements PopupParent {
     );
   }
 }
-Viewport.propTypes = propTypes;
-
-export default Viewport;

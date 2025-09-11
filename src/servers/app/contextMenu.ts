@@ -1,9 +1,12 @@
 import contextMenuCreator from 'electron-context-menu';
 import log from 'electron-log';
 import i18n from 'i18next';
-import { setXulswordTabs } from '../../viewport.ts';
 import { findBookmarkItem, xulswordLocation } from '../../common.ts';
-import { goToLocationGB, goToLocationVK } from '../../commands.ts';
+import {
+  goToLocationGB,
+  goToLocationVK,
+  setXulswordTabs,
+} from '../../commands.ts';
 import S from '../../defaultPrefs.ts';
 import { G } from './G.ts';
 import CommandsX from './components/commands.ts';
@@ -128,6 +131,7 @@ export default function contextMenu(
                     doWhat: 'hide',
                   },
                   null,
+                  -1,
                 );
             },
           },

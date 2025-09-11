@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Icon, Intent, Menu, MenuDivider, MenuItem } from '@blueprintjs/core';
 import {
   Cell,
@@ -11,7 +10,7 @@ import {
   SelectionModes,
 } from '@blueprintjs/table';
 import { clone, localizeString, ofClass } from '../../../common.ts';
-import { addClass, xulPropTypes, topHandle } from './xul.tsx';
+import { addClass, topHandle } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import '@blueprintjs/table/lib/css/table.css';
 import './table.css';
@@ -32,32 +31,13 @@ import RenderPromise, { RenderPromiseComponent } from '../../renderPromise.ts';
 
 type TableState = Record<string, never>;
 
-const propTypes = {
-  ...xulPropTypes,
-  data: PropTypes.arrayOf(PropTypes.array).isRequired,
-  tableColumns: PropTypes.arrayOf(PropTypes.object).isRequired,
-  tableToDataRowMap: PropTypes.array.isRequired,
-  rowSort: PropTypes.object,
-  selectedRegions: PropTypes.array,
-  cellRendererDependencies: PropTypes.array,
-
-  onCellClick: PropTypes.func,
-  onEditableCellChanged: PropTypes.func,
-  onRowsReordered: PropTypes.func,
-  onColumnsReordered: PropTypes.func,
-  onColumnWidthChanged: PropTypes.func,
-  onColumnHide: PropTypes.func,
-
-  tableCompRef: PropTypes.any,
-};
-
 export type TableProps = XulProps & {
   data: TData;
   tableColumns: TableColumnInfo[];
   tableToDataRowMap: number[];
   rowSort?: TableRowSortState;
   selectedRegions?: Region[];
-  cellRendererDependencies?: React.DependencyList[];
+  cellRendererDependencies?: React.DependencyList;
 
   onCellClick?: (
     dataRowIndex: number,
@@ -166,9 +146,10 @@ function bpColumn(
   );
 }
 
-class Table extends React.Component implements RenderPromiseComponent {
-  static propTypes: typeof propTypes;
-
+export default class Table
+  extends React.Component<TableProps, TableState>
+  implements RenderPromiseComponent
+{
   static scrollTop: Record<string, number>;
 
   tableDomRef: React.RefObject<HTMLDivElement>;
@@ -180,7 +161,7 @@ class Table extends React.Component implements RenderPromiseComponent {
   constructor(props: TableProps) {
     super(props);
 
-    this.state = {} as TableState;
+    this.state = {};
 
     this.tableDomRef = React.createRef();
 
@@ -199,8 +180,9 @@ class Table extends React.Component implements RenderPromiseComponent {
   }
 
   componentDidMount() {
-    const { domref, id } = this.props as TableProps;
-    const { tableDomRef, resizeColumns } = this;
+    const { props, tableDomRef, resizeColumns } = this;
+    const { domref, id } = props;
+
     // Scroll table to previously saved position.
     const tableRef = domref || tableDomRef;
     const t = tableRef.current;
@@ -220,8 +202,8 @@ class Table extends React.Component implements RenderPromiseComponent {
   componentDidUpdate() {
     // Adjust column widths to table width if difference is more than margin.
     const margin = 5;
-    const { tableDomRef, resizeColumns } = this;
-    const { tableColumns, domref } = this.props as TableProps;
+    const { props, tableDomRef, resizeColumns } = this;
+    const { tableColumns, domref } = props;
     const tableRef = domref ?? tableDomRef;
     if (tableRef?.current) {
       const tableWidth = tableRef.current.clientWidth;
@@ -235,7 +217,7 @@ class Table extends React.Component implements RenderPromiseComponent {
   }
 
   componentWillUnmount() {
-    const { id, domref } = this.props as TableProps;
+    const { id, domref } = this.props;
     // Save scroll position.
     const tableRef = domref || this.tableDomRef;
     const t = tableRef.current;
@@ -252,7 +234,7 @@ class Table extends React.Component implements RenderPromiseComponent {
   menuRenderer(internalColIndex?: number) {
     const items: JSX.Element[][] = [];
     if (typeof internalColIndex !== 'undefined') {
-      const props = this.props as TableProps;
+      const { props } = this;
       const { tableColumns, onRowsReordered, onColumnHide } = props;
       const { renderPromise, columnHide } = this;
       const tableColumn = tableColumns.filter((tc) => tc.visible)[
@@ -339,9 +321,8 @@ class Table extends React.Component implements RenderPromiseComponent {
   }
 
   cellRenderer(tableRowIndex: number, internalColIndex: number) {
-    const props = this.props as TableProps;
+    const { props, getCellData, cellSetter } = this;
     const { data, tableColumns } = props;
-    const { getCellData, cellSetter } = this;
     const tableColumn = tableColumns.filter((tc) => tc.visible)[
       internalColIndex
     ];
@@ -403,7 +384,7 @@ class Table extends React.Component implements RenderPromiseComponent {
   }
 
   getCellData(tableRowIndex: number, tableColIndex: number): TCellLookupResult {
-    const props = this.props as TableProps;
+    const { props } = this;
     const { data, tableColumns, tableToDataRowMap } = props;
     const dataRowIndex = tableToDataRowMap[tableRowIndex] ?? tableRowIndex;
     const datarow = data[dataRowIndex];
@@ -419,8 +400,8 @@ class Table extends React.Component implements RenderPromiseComponent {
 
   cellSetter(tableRowIndex: number, tableColIndex: number) {
     return (value: string) => {
-      const { tableColumns, tableToDataRowMap, onEditableCellChanged } = this
-        .props as TableProps;
+      const { tableColumns, tableToDataRowMap, onEditableCellChanged } =
+        this.props;
       const tableColumn = tableColumns[tableColIndex];
       if (onEditableCellChanged)
         onEditableCellChanged(
@@ -432,10 +413,9 @@ class Table extends React.Component implements RenderPromiseComponent {
   }
 
   resizeColumns(tableColumnsx?: TableColumnInfo[]): TableColumnInfo[] {
-    const props = this.props as TableProps;
+    const { props, tableDomRef } = this;
     const { domref, onColumnWidthChanged } = props;
     const tableColumns = clone(tableColumnsx ?? props.tableColumns);
-    const { tableDomRef } = this;
     const tableRef = domref || tableDomRef;
     let w1 = 0;
     if (tableColumns && tableRef.current) {
@@ -459,9 +439,8 @@ class Table extends React.Component implements RenderPromiseComponent {
   }
 
   columnHide(toggleTableColIndex: number, targetTableColIndex: number) {
-    const props = this.props as TableProps;
+    const { props, resizeColumns } = this;
     const { tableColumns, onColumnsReordered, onColumnHide } = props;
-    const { resizeColumns } = this;
     let newTableColumns = clone(tableColumns);
     const toggle = newTableColumns[toggleTableColIndex];
     const target = newTableColumns[targetTableColIndex];
@@ -486,10 +465,8 @@ class Table extends React.Component implements RenderPromiseComponent {
     newInternalColIndex: number,
     length: number,
   ) {
-    const props = this.props as TableProps;
-    const { onColumnsReordered } = props;
-    const { resizeColumns } = this;
-    const { tableColumns } = props;
+    const { props, resizeColumns } = this;
+    const { tableColumns, onColumnsReordered } = props;
     if (onColumnsReordered && oldInternalColIndex !== newInternalColIndex) {
       const internalTableColumns = tableColumns.filter((c) => c.visible);
       const sortedInternalTableColumns =
@@ -509,9 +486,8 @@ class Table extends React.Component implements RenderPromiseComponent {
   }
 
   onColumnWidthChanged(internalColumnIndex: number, size: number): void {
-    const props = this.props as TableProps;
+    const { props, resizeColumns } = this;
     const { onColumnWidthChanged } = props;
-    const { resizeColumns } = this;
     let { tableColumns } = props;
     if (onColumnWidthChanged) {
       tableColumns = clone(tableColumns);
@@ -529,7 +505,7 @@ class Table extends React.Component implements RenderPromiseComponent {
   }
 
   onCellClick(e: React.SyntheticEvent) {
-    const props = this.props as TableProps;
+    const { props } = this;
     const { tableColumns, tableToDataRowMap, onCellClick } = props;
     if (onCellClick) {
       const cell = ofClass(['bp6-table-cell'], e.target);
@@ -553,7 +529,16 @@ class Table extends React.Component implements RenderPromiseComponent {
   }
 
   render() {
-    const props = this.props as TableProps;
+    const {
+      props,
+      renderPromise,
+      tableDomRef,
+      onCellClick,
+      onColumnsReordered,
+      onColumnWidthChanged,
+      cellRenderer,
+      menuRenderer,
+    } = this;
     const {
       data,
       tableColumns,
@@ -563,15 +548,6 @@ class Table extends React.Component implements RenderPromiseComponent {
       onColumnsReordered: propOnColumnsReordered,
       onColumnWidthChanged: propOnColumnWidthChanged,
     } = props;
-    const {
-      renderPromise,
-      tableDomRef,
-      onCellClick,
-      onColumnsReordered,
-      onColumnWidthChanged,
-      cellRenderer,
-      menuRenderer,
-    } = this;
 
     const bpColumns = tableColumns
       .filter((tc) => tc.visible)
@@ -634,7 +610,4 @@ class Table extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-Table.propTypes = propTypes;
 Table.scrollTop = {};
-
-export default Table;

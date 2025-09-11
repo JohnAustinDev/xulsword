@@ -1,46 +1,32 @@
 import React, { ChangeEvent } from 'react';
-import PropTypes from 'prop-types';
-import { setXulswordTabs } from '../../../viewport.ts';
+import { setXulswordTabs } from '../../../commands.ts';
 import { ofClass } from '../../../common.ts';
-import { xulPropTypes, htmlAttribs } from '../libxul/xul.tsx';
+import { htmlAttribs } from '../libxul/xul.tsx';
 import { AnchorButton } from '../libxul/button.tsx';
 import Menupopup from '../libxul/menupopup.tsx';
 import ModuleMenu from '../libxul/modulemenu.tsx';
-import { doUntilDone } from '../../common.ts';
+import { doUntilDone, windowArguments } from '../../common.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import './tabs.css';
 
-import type { XulswordStateArgType } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
   RenderPromiseState,
 } from '../../renderPromise.ts';
 import type { XulProps } from '../libxul/xul.tsx';
-
-const propTypes = {
-  ...xulPropTypes,
-  isPinned: PropTypes.bool.isRequired,
-  module: PropTypes.string,
-  panelIndex: PropTypes.number.isRequired,
-  tabs: PropTypes.arrayOf(PropTypes.string).isRequired,
-  tabcntl: PropTypes.bool.isRequired,
-  ilModule: PropTypes.string,
-  ilModuleOption: PropTypes.arrayOf(PropTypes.string).isRequired,
-  mtModule: PropTypes.string,
-  xulswordState: PropTypes.func,
-};
+import type { XulswordState } from '../xulsword/xulsword.tsx';
 
 type TabsProps = {
   isPinned: boolean;
-  module: string | undefined;
+  module?: string | null;
   panelIndex: number;
   tabs: string[];
   tabcntl: boolean;
-  ilModule: string | undefined;
+  ilModule?: string | null;
   ilModuleOption: Array<string | undefined>;
-  mtModule: string | undefined;
-  xulswordState: (s: XulswordStateArgType) => void;
+  mtModule?: string | null;
+  xulswordState: React.Component<any, XulswordState>['setState'];
 } & XulProps;
 
 type TabsState = RenderPromiseState & {
@@ -49,9 +35,10 @@ type TabsState = RenderPromiseState & {
 };
 
 // XUL Tabs
-class Tabs extends React.Component implements RenderPromiseComponent {
-  static propTypes: typeof propTypes;
-
+class Tabs
+  extends React.Component<TabsProps, TabsState>
+  implements RenderPromiseComponent
+{
   renderPromise: RenderPromise;
 
   loadingRef: React.RefObject<HTMLDivElement>;
@@ -65,7 +52,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
       multiTabMenupopup: null,
       multiTabs: [],
       renderPromiseID: 0,
-    } as TabsState;
+    };
 
     this.checkTabWidth = this.checkTabWidth.bind(this);
     this.multiTabButtonClick = this.multiTabButtonClick.bind(this);
@@ -107,7 +94,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     const { target } = e;
     if (target) {
       const { value } = target as HTMLSelectElement;
-      const { panelIndex, xulswordState } = this.props as TabsProps;
+      const { panelIndex, xulswordState } = this.props;
       doUntilDone((renderPromise2) => {
         const xs = setXulswordTabs(
           {
@@ -116,6 +103,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
             doWhat: 'toggle',
           },
           renderPromise2,
+          windowArguments().id,
         );
         if (!renderPromise2?.waiting()) {
           const tabBank = xs.tabs[panelIndex];
@@ -139,7 +127,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     children: any = null,
     renderPromise: RenderPromise,
   ) {
-    const { panelIndex: i } = this.props as TabsProps;
+    const { panelIndex: i } = this.props;
     const tabType = !m || type === 'ilt-tab' ? 'Texts' : G.Tab[m].tabType;
     const label =
       !m || type === 'ilt-tab'
@@ -162,7 +150,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
   }
 
   getMultiTabSelection(multiTabs: string[]) {
-    const { module, mtModule } = this.props as TabsProps;
+    const { module, mtModule } = this.props;
     if (module && multiTabs.includes(module)) return module;
     if (mtModule && multiTabs.includes(mtModule)) return mtModule;
     if (multiTabs.length && multiTabs[0]) return multiTabs[0];
@@ -171,10 +159,9 @@ class Tabs extends React.Component implements RenderPromiseComponent {
 
   // Move tabs to the multi-tab until there is no overflow.
   checkTabWidth() {
-    const { loadingRef } = this;
-    const { tabs, panelIndex } = this.props as TabsProps;
+    const { state, loadingRef } = this;
+    const { tabs } = this.props;
     const tabsrow = loadingRef.current;
-    const state = this.state as TabsState;
     if (tabsrow && !state.multiTabs.length) {
       const multiTabs: string[] = [];
       const pttab = tabsrow.getElementsByClassName(
@@ -245,13 +232,13 @@ class Tabs extends React.Component implements RenderPromiseComponent {
 
   multiTabButtonClick(e: React.SyntheticEvent) {
     const { renderPromise } = this;
-    const { multiTabMenupopup } = this.state as TabsState;
+    const { multiTabMenupopup } = this.state;
     if (
       !multiTabMenupopup ||
       (multiTabMenupopup && ofClass('button-box', e.target))
     )
       e.stopPropagation();
-    this.setState((prevState: TabsState) => {
+    this.setState((prevState) => {
       let newpup = null;
       if (!prevState.multiTabMenupopup) {
         const { multiTabs } = prevState;
@@ -276,7 +263,8 @@ class Tabs extends React.Component implements RenderPromiseComponent {
   }
 
   render() {
-    const { multiTabs, multiTabMenupopup } = this.state as TabsState;
+    const { props, state, loadingRef, renderPromise, toggleTab } = this;
+    const { multiTabs, multiTabMenupopup } = state;
     const {
       module,
       isPinned,
@@ -285,8 +273,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
       ilModule,
       ilModuleOption,
       tabcntl,
-    } = this.props as TabsProps;
-    const { loadingRef, renderPromise, toggleTab } = this;
+    } = props;
 
     let ilTabLabel = GI.i18n.t('', renderPromise, 'ORIGLabelTab');
     if (!ilTabLabel) ilTabLabel = 'ilt';
@@ -352,6 +339,5 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-Tabs.propTypes = propTypes;
 
 export default Tabs;

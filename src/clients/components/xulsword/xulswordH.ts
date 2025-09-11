@@ -27,7 +27,7 @@ import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 
 export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
-  const state = this.state as XulswordState;
+  const { state } = this;
   const { target } = es;
   const currentId = es.currentTarget?.id;
   switch (es.type) {
@@ -49,7 +49,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         }
         case 'historymenu': {
           e.stopPropagation();
-          this.setState((prevState: XulswordState) => {
+          this.setState((prevState) => {
             if (!prevState.location) return null;
             return {
               historyMenupopup: prevState.historyMenupopup
@@ -77,7 +77,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'nextchap': {
           doUntilDone((rp) => {
             if (rp) {
-              this.setState((prevState: XulswordState) => {
+              this.setState((prevState) => {
                 const { location } = prevState;
                 if (location) {
                   const l = new VerseKey(location, rp);
@@ -88,12 +88,13 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                     rp,
                   );
                   if (newloc) {
-                    const s: Partial<XulswordState> = {
-                      location: newloc,
-                      selection: null,
-                      scroll: { verseAt: 'top' },
-                    };
-                    return rp?.waiting() ? null : s;
+                    return rp?.waiting()
+                      ? null
+                      : {
+                          location: newloc,
+                          selection: null,
+                          scroll: { verseAt: 'top' },
+                        };
                   }
                 }
                 return null;
@@ -106,7 +107,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'nextverse': {
           doUntilDone((rp) => {
             if (rp) {
-              this.setState((prevState: XulswordState) => {
+              this.setState((prevState) => {
                 const { location } = prevState;
                 if (location) {
                   const newloc = verseChange(
@@ -115,12 +116,13 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                     rp,
                   );
                   if (newloc) {
-                    const s: Partial<XulswordState> = {
-                      location: newloc,
-                      selection: newloc,
-                      scroll: { verseAt: 'center' },
-                    };
-                    return rp?.waiting() ? null : s;
+                    return rp?.waiting()
+                      ? null
+                      : {
+                          location: newloc,
+                          selection: newloc,
+                          scroll: { verseAt: 'center' },
+                        };
                   }
                 }
                 return null;
@@ -160,7 +162,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'footnotes':
         case 'crossrefs':
         case 'dictlinks': {
-          this.setState((prevState: XulswordState) => {
+          this.setState((prevState) => {
             let { show } = prevState;
             show = clone(show);
             const id = currentId as keyof ShowType;
@@ -179,7 +181,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           break;
         }
         case 'choosermenu': {
-          this.setState((prevState: XulswordState) => {
+          this.setState((prevState) => {
             let { showChooser } = prevState;
             showChooser = !showChooser;
             return { showChooser };
@@ -233,7 +235,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         if (rp) {
           switch (id) {
             case 'book__menulist__select': {
-              this.setState((prevState: XulswordState) => {
+              this.setState((prevState) => {
                 const { location } = prevState;
                 if (location) {
                   const newloc = new VerseKey(
@@ -245,20 +247,21 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                     },
                     rp,
                   );
-                  const s: Partial<XulswordState> = {
-                    location: newloc.location(),
-                    selection: newloc.location(),
-                    scroll: { verseAt: 'top' },
-                    bsreset: prevState.bsreset + 1,
-                  };
-                  return rp?.waiting() ? null : s;
+                  return rp?.waiting()
+                    ? null
+                    : {
+                        location: newloc.location(),
+                        selection: newloc.location(),
+                        scroll: { verseAt: 'top' },
+                        bsreset: prevState.bsreset + 1,
+                      };
                 }
                 return null;
               });
               break;
             }
             case 'book__textbox__input': {
-              this.setState((prevState: XulswordState) => {
+              this.setState((prevState) => {
                 const { location } = prevState;
                 const newloc = new RefParser(null, {
                   locales: Build.isElectronApp
@@ -267,27 +270,25 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 }).parse(value, location?.v11n || null)?.location;
                 if (newloc && newloc.book) {
                   // Check that the entered location exists.
-                  if (newloc && !newloc.chapter) newloc.chapter = 1;
-                  if (newloc && !newloc.verse) newloc.verse = 1;
-                  if (newloc && verseChange(newloc, 0, rp)) {
-                    const s: Partial<XulswordState> = {
+                  if (!newloc.chapter) newloc.chapter = 1;
+                  if (!newloc.verse) newloc.verse = 1;
+                  if (verseChange(newloc, 0, rp) && !rp?.waiting()) {
+                    return {
                       location: newloc,
                       selection: newloc.verse === 1 ? null : newloc,
                       scroll: { verseAt: 'center' },
                       bsreset: prevState.bsreset + 1,
-                    };
-                    return rp?.waiting() ? null : s;
+                    } as XulswordState;
                   }
                 }
-                return rp?.waiting()
-                  ? null
-                  : { bsreset: prevState.bsreset + 1 };
+                if (!rp?.waiting()) return { bsreset: prevState.bsreset + 1 };
+                return null;
               });
               break;
             }
             case 'chapter__input':
             case 'verse__input': {
-              this.setState((prevState: XulswordState) => {
+              this.setState((prevState) => {
                 const { location } = prevState;
                 // reset Bookselect on Enter key even if chapter doesn't change
                 const bsreset = prevState.bsreset + 1;
@@ -302,17 +303,16 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                     pvk.verse = Number(value);
                     newloc = verseChange(pvk.location(), 0, rp);
                   }
-                  if (newloc) {
-                    const s: Partial<XulswordState> = {
+                  if (newloc && !rp?.waiting())
+                    return {
                       location: newloc,
                       selection: newloc,
                       scroll: { verseAt: 'top' },
                       bsreset,
-                    };
-                    return rp?.waiting() ? null : s;
-                  }
+                    } as XulswordState;
                 }
-                return rp?.waiting() ? null : { bsreset };
+                if (!rp.waiting()) return { bsreset };
+                return null;
               });
               break;
             }
@@ -323,7 +323,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               break;
             }
             case 'audioCodeSelect__select': {
-              const { audio: a } = this.state as XulswordState;
+              const { audio: a } = this.state;
               const { open, file, defaults: d } = clone(a);
               if (file) {
                 const { swordModule } = file;

@@ -7,7 +7,6 @@ import { delayHandler } from '../libxul/xul.tsx';
 
 import type { BookGroupType } from '../../../type.ts';
 import type Chooser from './chooser.tsx';
-import type { ChooserProps, ChooserState } from './chooser.tsx';
 
 export default function handler(this: Chooser, es: React.SyntheticEvent): void {
   const target = es.target as HTMLElement;
@@ -25,8 +24,8 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
         target,
       );
       if (!targ) return;
-      const { bookGroups, headingsModule } = this.props as ChooserProps;
-      const state = this.state as ChooserState;
+      const { bookGroups, headingsModule } = this.props;
+      const { state } = this;
       const bookgroup = target.dataset.bookgroup as BookGroupType;
       switch (targ.type) {
         case 'bookgroup': {

@@ -24,11 +24,12 @@ import type {
   LocationVKType,
   OSISBookType,
   V11nType,
+  WindowDescriptorPrefType,
   WindowDescriptorType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type { SearchResult } from '../../../servers/components/libsword.ts';
-import type { SearchProps, SearchState } from './search.tsx';
+import type { SearchState } from './search.tsx';
 import type Search from './search.tsx';
 
 export type SearchMatchType = {
@@ -145,9 +146,8 @@ function getScopes(
 export async function search(xthis: Search): Promise<boolean> {
   log.debug(`SEARCHING...`);
   if (Build.isElectronApp) (G as GType).LibSword.stopBackgroundSearchIndexer();
-  const state = xthis.state as SearchState;
-  const { renderPromise } = xthis;
-  const { descriptor } = xthis.props as SearchProps;
+  const { props, state, renderPromise } = xthis;
+  const { descriptor } = props;
   const { module, searchtext } = state;
   let { searchtype } = state;
   if (state.progress !== -1) return false;
@@ -322,7 +322,7 @@ export async function libSwordSearch(
                 progress: (i + 1) / scopes.length,
                 progressLabel:
                   scope in Book ? (Book as any)[scope].name : scope,
-              } as Partial<SearchState>);
+              });
             }
             return result;
           };
@@ -371,7 +371,7 @@ export async function autoCreateSearchIndex(
   const csai = G.Prefs.getComplexValue(
     'global.noAutoSearchIndex',
   ) as typeof S.prefs.global.noAutoSearchIndex;
-  const { descriptor } = xthis.props as SearchProps;
+  const { descriptor } = xthis.props;
   if (descriptor && !csai.includes(module)) {
     result = await createSearchIndex(xthis, module, descriptor, renderPromise);
   }
@@ -382,20 +382,19 @@ export const Indexing = { current: '' };
 export async function createSearchIndex(
   xthis: Search,
   module: string,
-  descriptor: WindowDescriptorType,
+  descriptor: WindowDescriptorPrefType,
   renderPromise: RenderPromise,
 ): Promise<boolean> {
   if (Build.isElectronApp && module && module in G.Tab) {
     const GT = G as GType;
     return await new Promise((resolve) => {
-      const s: Partial<SearchState> = {
+      xthis.setState({
         results: { html: '', count: 0, lexhtml: '' },
         pageindex: 0,
         progress: 0,
         progressLabel: GI.i18n.t('', renderPromise, 'BuildingIndex'),
         indexing: true,
-      };
-      xthis.setState(s);
+      });
       Indexing.current = module;
       const winid = descriptor.id;
       // Add a delay before and after index creation to insure UI is responsive.
@@ -418,7 +417,7 @@ export async function createSearchIndex(
               indexing: false,
               progress: -1,
               progressLabel: '',
-            } as Partial<SearchState>);
+            });
             Indexing.current = '';
           })
           .catch((er) => {
@@ -624,8 +623,7 @@ export async function lexicon(
   xthis: Search,
   renderPromise: RenderPromise,
 ) {
-  const state = xthis.state as SearchState;
-  const { searchtext, searchtype, displayModule, results } = state;
+  const { searchtext, searchtype, displayModule, results } = xthis.state;
 
   if (
     !displayModule ||
@@ -781,20 +779,19 @@ export async function lexicon(
 }
 
 export default async function handler(this: Search, e: React.SyntheticEvent) {
-  const state = this.state as SearchState;
+  const { state } = this;
+  const { results } = state;
   const target = e.target as HTMLElement;
   const currentTarget = e.currentTarget as HTMLElement;
-  const { results } = state;
   const count = results?.count || 0;
   switch (e.type) {
     case 'click': {
       switch (currentTarget.id) {
         case 'moreLess': {
-          this.setState((prevState: SearchState) => {
-            const s: Partial<SearchState> = {
+          this.setState((prevState) => {
+            return {
               moreLess: !prevState.moreLess,
             };
-            return s;
           });
           break;
         }
@@ -807,8 +804,8 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
         case 'helpButton': {
           if (Build.isElectronApp) (G as GType).Commands.searchHelp();
           else {
-            this.setState((prevState: SearchState) => {
-              const { onlyLucene } = this.props as SearchProps;
+            this.setState((prevState) => {
+              const { onlyLucene } = this.props;
               const showHelp = prevState.showHelp ? null : (
                 <SearchHelp onlyLucene={onlyLucene} />
               );
@@ -819,7 +816,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
         }
         case 'createIndexButton': {
           const { module } = state;
-          const { descriptor } = this.props as SearchProps;
+          const { descriptor } = this.props;
           if (descriptor && module && G.Tab[module]) {
             const result = await createSearchIndex(
               this,
@@ -830,7 +827,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
             this.setState({
               searchtype: 'SearchAnyWord',
               progress: -1,
-            } as SearchState);
+            });
             if (result)
               search(this).catch((er) => {
                 log.error(er);
@@ -935,7 +932,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
             !['module', 'displayModule'].includes(targid) ||
             (se.value && se.value in G.Tab)
           ) {
-            this.setState({ [targid]: se.value });
+            this.setState({ [targid]: se.value } as SearchState);
           }
 
           break;
