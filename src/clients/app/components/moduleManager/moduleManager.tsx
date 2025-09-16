@@ -872,7 +872,7 @@ export default class ModuleManager
                     id="cancel"
                     flex="1"
                     fill="x"
-                    onClick={audioDialogClose}
+                    onPointerDown={audioDialogClose}
                   >
                     {G.i18n.t('cancel.label')}
                   </Button>
@@ -884,7 +884,7 @@ export default class ModuleManager
                     }
                     flex="1"
                     fill="x"
-                    onClick={audioDialogAccept}
+                    onPointerDown={audioDialogAccept}
                   >
                     {G.i18n.t('ok.label')}
                   </Button>
@@ -930,12 +930,12 @@ export default class ModuleManager
                     id="languageListClose"
                     icon="chevron-left"
                     fill="x"
-                    onClick={eventHandler}
+                    onPointerDown={eventHandler}
                   />
                 </Groupbox>
                 <DragSizer
                   onDragStart={() => state.language.width}
-                  onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
+                  onDragEnd={(_e: PointerEvent, v: DragSizerVal) => {
                     this.setState((prevState) => {
                       prevState.language.width = v.sizerPos;
                       H.tableUpdate(prevState, ['language', 'module']);
@@ -953,7 +953,7 @@ export default class ModuleManager
                 id="languageListOpen"
                 icon="chevron-right"
                 fill="y"
-                onClick={eventHandler}
+                onPointerDown={eventHandler}
               />
             )}
 
@@ -1005,7 +1005,7 @@ export default class ModuleManager
                     intent="primary"
                     fill="x"
                     disabled={disable.moduleInfo}
-                    onClick={eventHandler}
+                    onPointerDown={eventHandler}
                   />
                 )}
                 {infoConfigs.length > 0 && (
@@ -1014,7 +1014,7 @@ export default class ModuleManager
                     intent="primary"
                     fill="x"
                     disabled={disable.moduleInfoBack}
-                    onClick={eventHandler}
+                    onPointerDown={eventHandler}
                   >
                     {G.i18n.t('back.label')}
                   </Button>
@@ -1027,7 +1027,7 @@ export default class ModuleManager
                     intent="primary"
                     fill="x"
                     disabled={disable.moduleCancel}
-                    onClick={eventHandler}
+                    onPointerDown={eventHandler}
                   >
                     {G.i18n.t('cancel.label')}
                   </Button>
@@ -1040,7 +1040,7 @@ export default class ModuleManager
             <div>
               <DragSizer
                 onDragStart={() => repository.height}
-                onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
+                onDragEnd={(_e: PointerEvent, v: DragSizerVal) => {
                   this.setState((prevState) => {
                     if (prevState.repository) {
                       const { repository } = prevState;
@@ -1100,7 +1100,7 @@ export default class ModuleManager
                       intent="primary"
                       fill="x"
                       disabled={disable.repoAdd}
-                      onClick={eventHandler}
+                      onPointerDown={eventHandler}
                     />
                     <Button
                       id="repoDelete"
@@ -1108,14 +1108,14 @@ export default class ModuleManager
                       intent="primary"
                       fill="x"
                       disabled={disable.repoDelete}
-                      onClick={eventHandler}
+                      onPointerDown={eventHandler}
                     />
                     <Button
                       id="repoCancel"
                       intent="primary"
                       fill="x"
                       disabled={disable.repoCancel}
-                      onClick={eventHandler}
+                      onPointerDown={eventHandler}
                     >
                       {G.i18n.t('cancel.label')}
                     </Button>
@@ -1130,7 +1130,7 @@ export default class ModuleManager
               <Button
                 flex="1"
                 fill="x"
-                onClick={() => {
+                onPointerDown={() => {
                   this.setState((prevState) => {
                     if (prevState.repository) {
                       const { repository } = prevState;
@@ -1148,7 +1148,7 @@ export default class ModuleManager
               <Button
                 flex="1"
                 fill="x"
-                onClick={() => {
+                onPointerDown={() => {
                   this.setState((prevState) => {
                     if (prevState.repository) {
                       const { repository } = prevState;
@@ -1173,7 +1173,7 @@ export default class ModuleManager
                 />
               </Hbox>
             )}
-            <Button id="cancel" flex="1" fill="x" onClick={eventHandler}>
+            <Button id="cancel" flex="1" fill="x" onPointerDown={eventHandler}>
               {G.i18n.t('cancel.label')}
             </Button>
             <Button
@@ -1181,7 +1181,7 @@ export default class ModuleManager
               disabled={progress !== null}
               flex="1"
               fill="x"
-              onClick={eventHandler}
+              onPointerDown={eventHandler}
             >
               {G.i18n.t('ok.label')}
             </Button>
@@ -1215,11 +1215,16 @@ export default class ModuleManager
                 id="internet.yes"
                 flex="1"
                 fill="x"
-                onClick={eventHandler}
+                onPointerDown={eventHandler}
               >
                 {G.i18n.t('yes.label')}
               </Button>
-              <Button id="internet.no" flex="1" fill="x" onClick={eventHandler}>
+              <Button
+                id="internet.no"
+                flex="1"
+                fill="x"
+                onPointerDown={eventHandler}
+              >
                 {G.i18n.t('no.label')}
               </Button>
             </Hbox>

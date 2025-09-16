@@ -398,8 +398,8 @@ export default class SelectOR
             const clickHandler = {} as any;
             if (enableMultipleSelection && n.childNodes?.length) {
               clickHandler[
-                enableParentSelection ? 'onDoubleClick' : 'onClick'
-              ] = (e: React.MouseEvent<HTMLSelectElement>) => {
+                enableParentSelection ? 'onDoubleClick' : 'onPointerDown'
+              ] = (e: React.PointerEvent<HTMLSelectElement>) => {
                 openParent(e.currentTarget.value);
               };
             }

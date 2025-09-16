@@ -347,18 +347,52 @@ export function iframeAutoHeight(
   }
 }
 
-// Click events may come from mouse or touch (or even pen) so this checks the
-// event and remembers if the event initiator was a mouse or not.
-export function notMouse(e?: React.SyntheticEvent): boolean | null {
-  const ckey = 'notMouse';
-  if (e) {
-    const { nativeEvent } = e;
-    if ('pointerType' in nativeEvent) {
-      Cache.clear(ckey);
-      Cache.write(nativeEvent.pointerType !== 'mouse', ckey);
-    }
-  }
-  return Cache.has(ckey) ? Cache.read(ckey) : null;
+// The various types of mouse events are fired inconsistently across browsers
+// when mobile touch actions occur. However pointer events are w3c consistent
+// and always occur in the following order:
+// - pointerenter
+// - pointerdown (for devices without hover)
+// - pointerup (for devices without hover)
+// - pointerleave
+export const PointerDownLong = { timeout: null as NodeJS.Timeout | null };
+export function supportsHover(): boolean {
+  return window.matchMedia('(hover: hover)').matches;
+}
+
+// Implement onPointerDownLong, primarily for use by devices without hover
+// support.
+export function onPointerDownLong(
+  func: (e: React.PointerEvent) => void,
+): (e: React.PointerEvent) => void {
+  return supportsHover()
+    ? func
+    : (e: React.PointerEvent) => {
+        const { timeout } = PointerDownLong;
+        if (timeout) clearTimeout(timeout);
+        PointerDownLong.timeout = setTimeout(
+          () => func(e),
+          C.UI.WebApp.longTouchTO,
+        );
+      };
+}
+
+// React does not support pointerover or pointerout, so this function
+// implements the same functionality.
+export function addHoverLinks(
+  container: HTMLElement,
+  classes: string[],
+  handler: (e: PointerEvent) => void,
+) {
+  container
+    .querySelectorAll(classes.map((s) => `.${s}`).join(', '))
+    .forEach((elem) => {
+      (elem as HTMLElement).addEventListener('pointerenter', handler, {
+        capture: true,
+      });
+      (elem as HTMLElement).addEventListener('pointerleave', handler, {
+        capture: true,
+      });
+    });
 }
 
 export function isIBTChildrensBible(

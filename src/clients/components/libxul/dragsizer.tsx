@@ -2,6 +2,7 @@ import React from 'react';
 import './dragsizer.css';
 
 import type { XulProps } from './xul.tsx';
+import { Box } from './boxes.tsx';
 
 export type DragSizerVal = {
   mousePos: number; // mouse position
@@ -12,12 +13,12 @@ export type DragSizerVal = {
 // NOTE: onDragStart plus either onDragging or onDragEnd must be
 // implemented in order for the DragSizer to work.
 type DragSizerProps = {
-  onDragStart: (e: React.MouseEvent) => number;
-  onDragging?: (e: React.MouseEvent, value: DragSizerVal) => void;
-  onDragEnd?: (e: React.MouseEvent, value: DragSizerVal) => void;
   min?: number;
   max?: number | null;
   shrink?: boolean; // moving in positive direction redices the stateProp value
+  onDragStart: (e: PointerEvent) => number;
+  onDragging?: (e: PointerEvent, value: DragSizerVal) => void;
+  onDragEnd?: (e: PointerEvent, value: DragSizerVal) => void;
 } & XulProps;
 
 type DragSizerState = {
@@ -39,13 +40,13 @@ export default class DragSizer extends React.Component<
 
     this.sizerRef = React.createRef();
 
-    this.onMouseDown = this.onMouseDown.bind(this);
-    this.onMouseMove = this.onMouseMove.bind(this);
-    this.onMouseUp = this.onMouseUp.bind(this);
+    this.onPointerDownLong = this.onPointerDownLong.bind(this);
+    this.onPointerMove = this.onPointerMove.bind(this);
+    this.onPointerUp = this.onPointerUp.bind(this);
 
     this.listeners = [
-      ['mousemove', this.onMouseMove],
-      ['mouseup', this.onMouseUp],
+      ['pointermove', this.onPointerMove],
+      ['pointerup', this.onPointerUp],
     ];
   }
 
@@ -67,17 +68,18 @@ export default class DragSizer extends React.Component<
     }
   }
 
-  onMouseDown(e: React.MouseEvent) {
+  onPointerDownLong(e: React.PointerEvent) {
     const { onDragStart, orient } = this.props as DragSizerProps;
-    const dragging = onDragStart(e);
+    const dragging = onDragStart(e.nativeEvent);
     e.preventDefault();
+    e.stopPropagation();
     this.setState({
       dragging,
       startpos: orient === 'vertical' ? e.clientX : e.clientY,
     } as DragSizerState);
   }
 
-  onMouseMove(e: React.MouseEvent) {
+  onPointerMove(e: PointerEvent) {
     const props = this.props as DragSizerProps;
     const { dragging } = this.state as DragSizerState;
     if (dragging !== null) {
@@ -86,12 +88,12 @@ export default class DragSizer extends React.Component<
       const value = this.setSizerValue(e);
       if (value) {
         if (value.sizerPos && onDragging) onDragging(e, value);
-        if (value.isMinMax !== null) this.onMouseUp(e);
+        if (value.isMinMax !== null) this.onPointerUp(e);
       }
     }
   }
 
-  onMouseUp(e: React.MouseEvent) {
+  onPointerUp(e: PointerEvent) {
     const props = this.props as DragSizerProps;
     const { dragging } = this.state as DragSizerState;
     if (dragging !== null) {
@@ -109,7 +111,7 @@ export default class DragSizer extends React.Component<
     }
   }
 
-  setSizerValue(e: React.MouseEvent): DragSizerVal | null {
+  setSizerValue(e: PointerEvent): DragSizerVal | null {
     const { dragging, startpos } = this.state as DragSizerState;
     if (dragging !== null) {
       const props = this.props as DragSizerProps;
@@ -147,16 +149,16 @@ export default class DragSizer extends React.Component<
   render() {
     const props = this.props as DragSizerProps;
     const state = this.state as DragSizerState;
-    const { sizerRef, onMouseDown } = this;
+    const { sizerRef, onPointerDownLong } = this;
     const { dragging } = state;
     const { orient } = props;
 
     return (
       <div className={`dragsizer ${orient || 'horizontal'}`}>
-        <div
+        <Box
           className={(dragging && 'dragging') || ''}
-          ref={sizerRef}
-          onMouseDown={onMouseDown}
+          domref={sizerRef}
+          onPointerDownLong={onPointerDownLong}
         />
       </div>
     );

@@ -42,7 +42,7 @@ export type TableProps = XulProps & {
   onCellClick?: (
     dataRowIndex: number,
     dataColIndex: number,
-    e: React.MouseEvent,
+    e: React.PointerEvent,
   ) => void;
   onEditableCellChanged?: (
     dataRowIndex: number,
@@ -52,7 +52,7 @@ export type TableProps = XulProps & {
   onRowsReordered?: (
     direction: 'ascending' | 'descending',
     dataColIndex: number,
-    e: React.MouseEvent,
+    e: React.PointerEvent,
   ) => void;
   onColumnsReordered?: (tableColumns: TableColumnInfo[]) => void;
   onColumnWidthChanged?: (tableColumns: TableColumnInfo[]) => void;
@@ -251,7 +251,7 @@ export default class Table
           <MenuItem
             key={['sort-asc', dataColIndex].join('.')}
             icon="sort-asc"
-            onClick={(e: React.MouseEvent) =>
+            onPointerDown={(e: React.PointerEvent) =>
               onRowsReordered('ascending', dataColIndex, e)
             }
             text=""
@@ -259,7 +259,7 @@ export default class Table
           <MenuItem
             key={['sort-desc', dataColIndex].join('.')}
             icon="sort-desc"
-            onClick={(e: React.MouseEvent) =>
+            onPointerDown={(e: React.PointerEvent) =>
               onRowsReordered('descending', dataColIndex, e)
             }
             text=""
@@ -279,7 +279,7 @@ export default class Table
               key={['delete', dataColIndex].join('.')}
               icon="delete"
               text={heading}
-              onClick={() => {
+              onPointerDown={() => {
                 columnHide(tableColIndex, tableColIndex);
               }}
             />,
@@ -303,7 +303,7 @@ export default class Table
                 key={['add', heading].join('.')}
                 icon={icon}
                 text={text}
-                onClick={() => {
+                onPointerDown={() => {
                   columnHide(tcol, tableColIndex);
                 }}
               />,
@@ -521,7 +521,7 @@ export default class Table
         onCellClick(
           tableToDataRowMap[tableRowIndex] ?? tableRowIndex,
           dataColIndex,
-          e as React.MouseEvent,
+          e as React.PointerEvent,
         );
       }
     }
@@ -585,7 +585,7 @@ export default class Table
     // tables to LTR has so far been an acceptable solution.
     return (
       <Box
-        {...topHandle('onClick', onCellClick)}
+        {...topHandle('onPointerDown', onCellClick)}
         domref={tableDomRef}
         {...addClass(classes, props)}
         dir="ltr"

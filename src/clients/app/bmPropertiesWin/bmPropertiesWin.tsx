@@ -430,10 +430,10 @@ export default class BMPropertiesWin
         </Grid>
         <Hbox className="dialog-buttons" pack="end" align="end">
           <Spacer flex="10" />
-          <Button id="cancel" flex="1" fill="x" onClick={eventHandler}>
+          <Button id="cancel" flex="1" fill="x" onPointerDown={eventHandler}>
             {G.i18n.t('cancel.label')}
           </Button>
-          <Button id="ok" flex="1" fill="x" onClick={eventHandler}>
+          <Button id="ok" flex="1" fill="x" onPointerDown={eventHandler}>
             {G.i18n.t('ok.label')}
           </Button>
         </Hbox>

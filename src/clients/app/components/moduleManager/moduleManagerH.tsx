@@ -346,7 +346,7 @@ export function onLangCellClick(
   this: ModuleManager,
   dataRowIndex: number,
   _dataColIndex: number,
-  e: React.MouseEvent,
+  e: React.PointerEvent,
 ) {
   const newstate = { ...this.state };
   rowSelect(newstate, e, 'language', dataRowIndex);
@@ -359,7 +359,7 @@ export function onModCellClick(
   this: ModuleManager,
   dataRowIndex: number,
   dataColIndex: number,
-  e: React.MouseEvent,
+  e: React.PointerEvent,
 ) {
   const disabled = ofClass(['disabled'], e.target);
   if (!disabled) {
@@ -412,7 +412,7 @@ export function onRepoCellClick(
   this: ModuleManager,
   dataRowIndex: number,
   dataColIndex: number,
-  e: React.MouseEvent,
+  e: React.PointerEvent,
 ) {
   const state = { ...this.state };
   const newstate = state;
@@ -471,8 +471,8 @@ export function onCustomRepositoryCellEdited(
 export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
   (async () => {
     switch (ev.type) {
-      case 'click': {
-        const e = ev as React.MouseEvent;
+      case 'pointerdown': {
+        const e = ev as React.PointerEvent;
         const [id, idext] = e.currentTarget.id.split('.');
         switch (id) {
           case 'languageListClose':
@@ -840,7 +840,7 @@ export function uninstallRepository(
 // Incorporate a row into, or remove a row from, a table's current selection.
 export function rowSelect(
   state: ManagerState,
-  e: React.MouseEvent,
+  e: React.PointerEvent,
   tableName: 'repository' | 'module' | 'language',
   dataRowIndex: number,
 ) {

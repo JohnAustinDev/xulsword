@@ -31,8 +31,8 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
   const { target } = es;
   const currentId = es.currentTarget?.id;
   switch (es.type) {
-    case 'click': {
-      const e = es as React.MouseEvent;
+    case 'pointerdown': {
+      const e = es as React.PointerEvent;
       switch (currentId) {
         case 'closeplayer': {
           const audio: XulswordState['audio'] = {
@@ -219,7 +219,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         }
         default:
           throw Error(
-            `Unhandled xulswordHandler onClick event on '${currentId}'`,
+            `Unhandled xulswordHandler onPointerDown event on '${currentId}'`,
           );
       }
       break;

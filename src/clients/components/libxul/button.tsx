@@ -38,7 +38,9 @@ export default function Button(props: ButtonProps) {
   return (
     <div
       {...htmlAttribs(cls.join(' '), props)}
-      {...(disabled ? { onClick: undefined, onClickCapture: undefined } : {})}
+      {...(disabled
+        ? { onPointerDown: undefined, onPointerDownCapture: undefined }
+        : {})}
     >
       <div className="button-box">
         <BPButton {...keep(props, bpprops)} fill={!!fill}>
@@ -57,7 +59,9 @@ export function AnchorButton({
     <a
       type="button"
       {...htmlAttribs('anchorbutton', props)}
-      {...(disabled ? { onClick: undefined, onClickCapture: undefined } : {})}
+      {...(disabled
+        ? { onPointerDown: undefined, onPointerDownCapture: undefined }
+        : {})}
     >
       {props.children}
     </a>

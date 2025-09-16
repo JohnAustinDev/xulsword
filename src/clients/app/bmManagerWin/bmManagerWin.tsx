@@ -240,7 +240,7 @@ export default class BMManagerWin
           className="tools"
           pack="start"
           align="center"
-          onClick={buttonHandler}
+          onPointerDown={buttonHandler}
         >
           <Button
             id="button.newFolder"
@@ -376,7 +376,7 @@ export default class BMManagerWin
               <DragSizer
                 orient="vertical"
                 onDragStart={() => treeWidth}
-                onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
+                onDragEnd={(_e: PointerEvent, v: DragSizerVal) => {
                   this.setState((prevState) => {
                     return {
                       treeWidth: v.sizerPos,

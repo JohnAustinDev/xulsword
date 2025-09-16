@@ -12,6 +12,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
+import { addHoverLinks } from '../../common.ts';
 import log from '../../log.ts';
 import RenderPromise, { setLoadingClass } from '../../renderPromise.ts';
 import { getElementData } from '../../htmlData.ts';
@@ -623,7 +624,8 @@ export async function lexicon(
   xthis: Search,
   renderPromise: RenderPromise,
 ) {
-  const { searchtext, searchtype, displayModule, results } = xthis.state;
+  const { state, popupParentHandler } = xthis;
+  const { searchtext, searchtype, displayModule, results } = state;
 
   if (
     !displayModule ||
@@ -774,6 +776,22 @@ export async function lexicon(
         lexdiv.appendChild(document.createElement('div'));
       }
     });
+    addHoverLinks(
+      lexdiv,
+      [
+        'cr',
+        'fn',
+        'un',
+        'sn',
+        'sr',
+        'dt',
+        'dtl',
+        'aboutlink',
+        'introlink',
+        'searchterm',
+      ],
+      popupParentHandler,
+    );
   }
   lexdiv.style.display = ''; // was set to 'none' earlier
 }
@@ -785,7 +803,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
   const currentTarget = e.currentTarget as HTMLElement;
   const count = results?.count || 0;
   switch (e.type) {
-    case 'click': {
+    case 'pointerdown': {
       switch (currentTarget.id) {
         case 'moreLess': {
           this.setState((prevState) => {

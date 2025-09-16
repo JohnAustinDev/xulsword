@@ -102,7 +102,7 @@ export default class Bookselect extends React.Component<
     const { selection: book } = this.props;
     const refelem = this.textInput;
     const input = refelem !== null ? refelem.current : null;
-    if (e.type === 'click') {
+    if (e.type === 'pointerdown') {
       if (input !== null) input.select();
     } else if (e.type === 'blur') {
       this.setState({ book, pattern: /.*/, autocomp: true });
@@ -193,7 +193,7 @@ export default class Bookselect extends React.Component<
               disabled={props.disabled}
               onChange={this.textboxChange}
               onKeyDown={this.textboxKeyDown}
-              onClick={this.focusChange}
+              onPointerDown={this.focusChange}
               onBlur={this.focusChange}
               inputRef={this.textInput}
             />

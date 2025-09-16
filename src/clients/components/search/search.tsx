@@ -21,14 +21,10 @@ import {
   windowArguments,
   getStatePref,
   setStatePref,
+  addHoverLinks,
 } from '../../common.ts';
 import Popup from '../../components/popup/popup.tsx';
-import {
-  popupParentHandler as popupParentHandlerH,
-  popupHandler as popupHandlerH,
-  popupUpClickClose as popupUpClickCloseH,
-  PopupParentInitState,
-} from '../../components/popup/popupParentH.ts';
+import * as H from '../../components/popup/popupParentH.ts';
 import Button from '../../components/libxul/button.tsx';
 import { delayHandler, addClass } from '../../components/libxul/xul.tsx';
 import { Box, Hbox, Vbox } from '../../components/libxul/boxes.tsx';
@@ -125,9 +121,9 @@ const Scopemap = {
 
 // These state properties will not be persisted if xulsword is closed.
 const noPersist = ['results', 'pageindex', 'progress', 'progressLabel'].concat(
-  Object.keys(PopupParentInitState),
+  Object.keys(H.PopupParentInitState),
 ) as Array<
-  | keyof typeof PopupParentInitState
+  | keyof typeof H.PopupParentInitState
   | 'results'
   | 'pageindex'
   | 'progress'
@@ -147,11 +143,11 @@ export default class Search
 {
   handler: typeof handlerH;
 
-  popupParentHandler: typeof popupParentHandlerH;
+  popupParentHandler: typeof H.popupParentHandler;
 
-  popupHandler: typeof popupHandlerH;
+  popupHandler: typeof H.popupHandler;
 
-  popupUpClickClose: typeof popupUpClickCloseH;
+  popupClickClose: typeof H.popupClickClose;
 
   popupDelayTO: PopupParent['popupDelayTO'];
 
@@ -180,7 +176,7 @@ export default class Search
     const abible = G.Tabs.find((t) => t.type === C.BIBLE);
 
     const s: SearchState = {
-      ...PopupParentInitState,
+      ...H.PopupParentInitState,
       ...notStatePref,
       ...(getStatePref('prefs', 'search') as typeof S.prefs.search),
       module: initialState.module,
@@ -211,9 +207,9 @@ export default class Search
 
     this.updateResults = this.updateResults.bind(this);
     this.handler = handlerH.bind(this);
-    this.popupParentHandler = popupParentHandlerH.bind(this);
-    this.popupHandler = popupHandlerH.bind(this);
-    this.popupUpClickClose = popupUpClickCloseH.bind(this);
+    this.popupParentHandler = H.popupParentHandler.bind(this);
+    this.popupHandler = H.popupHandler.bind(this);
+    this.popupClickClose = H.popupClickClose.bind(this);
 
     this.resref = React.createRef();
     this.lexref = React.createRef();
@@ -243,7 +239,6 @@ export default class Search
       );
     }
     renderPromise.dispatch();
-    this.popupUpClickClose();
   }
 
   componentDidUpdate(_prevProps: any, prevState: SearchState) {
@@ -299,11 +294,10 @@ export default class Search
     this.destroy.forEach((d) => {
       d();
     });
-    this.popupUpClickClose(true);
   }
 
   updateResults() {
-    const { state, resref, lexref, renderPromise } = this;
+    const { state, resref, lexref, renderPromise, popupParentHandler } = this;
     const { displayModule, module, results, searchtext, searching, progress } =
       state;
     const res = resref !== null ? resref.current : null;
@@ -327,6 +321,22 @@ export default class Search
       }
       sanitizeHTML(res, results.html);
       formatResult(res, state, renderPromise);
+      addHoverLinks(
+        res,
+        [
+          'cr',
+          'fn',
+          'un',
+          'sn',
+          'sr',
+          'dt',
+          'dtl',
+          'aboutlink',
+          'introlink',
+          'searchterm',
+        ],
+        popupParentHandler,
+      );
       if (!renderPromise.waiting()) res.dataset.resultsHtml = resultsHtml;
     }
 
@@ -355,6 +365,7 @@ export default class Search
       renderPromise,
       loadingRef,
       popupRef,
+      popupClickClose,
       handler,
       popupHandler,
       popupParentHandler,
@@ -456,7 +467,7 @@ export default class Search
         id="helpButton"
         className={showHelp ? 'open' : 'closed'}
         icon={showHelp ? 'cross' : 'help'}
-        onClick={handler}
+        onPointerDown={handler}
       >
         {showHelp}
       </Button>
@@ -464,7 +475,11 @@ export default class Search
 
     return (
       (showHelp && helpButton) || (
-        <Vbox domref={loadingRef} {...addClass('search', props)}>
+        <Vbox
+          domref={loadingRef}
+          {...addClass('search', props)}
+          onPointerDown={popupClickClose}
+        >
           {indexing && (
             <Dialog
               className="indexing-dialog"
@@ -487,7 +502,7 @@ export default class Search
                 key={[gap, elemdata.length, popupReset].join('.')}
                 elemdata={elemdata}
                 gap={gap}
-                onMouseMove={popupHandler}
+                onPointerMove={popupHandler}
                 onPopupClick={popupHandler}
                 onSelectChange={popupHandler}
                 onMouseLeftPopup={popupHandler}
@@ -546,12 +561,12 @@ export default class Search
                         icon="search"
                         flex="1"
                         disabled={progress !== -1 || !module}
-                        onClick={handler}
+                        onPointerDown={handler}
                       >
                         {GI.i18n.t('', renderPromise, 'menu.search')}
                       </Button>
                       {!showHelp && helpButton}
-                      <Button id="moreLess" onClick={handler}>
+                      <Button id="moreLess" onPointerDown={handler}>
                         {!moreLess && (
                           <Label
                             value={GI.i18n.t('', renderPromise, 'more.label')}
@@ -604,7 +619,7 @@ export default class Search
                           <Button
                             id="createIndexButton"
                             disabled={Build.isWebApp || progress !== -1}
-                            onClick={handler}
+                            onPointerDown={handler}
                           >
                             {GI.i18n.t('', renderPromise, 'createIndex.label')}
                           </Button>
@@ -706,9 +721,9 @@ export default class Search
                 pack="start"
                 flex="1"
                 data-context={displayModule}
-                onMouseOut={popupParentHandler}
-                onMouseOver={popupParentHandler}
-                onMouseMove={popupParentHandler}
+                onPointerLeave={popupParentHandler}
+                onPointerEnter={popupParentHandler}
+                onPointerMove={popupParentHandler}
               >
                 {module && G.Tab[module].type === C.BIBLE && (
                   <div className="lexiconParent">
@@ -725,7 +740,7 @@ export default class Search
                     <span
                       id="lexiconResults"
                       ref={this.lexref}
-                      onClick={handler}
+                      onPointerDown={handler}
                     />
                   </div>
                 )}
@@ -735,7 +750,7 @@ export default class Search
                   pack="start"
                   flex="8"
                   domref={this.resref}
-                  onClick={handler}
+                  onPointerDown={handler}
                 />
               </Vbox>
               {count > C.UI.Search.resultsPerPage && (
@@ -744,27 +759,27 @@ export default class Search
                     id="pagefirst"
                     icon="double-chevron-up"
                     disabled={progress !== -1}
-                    onClick={handler}
+                    onPointerDown={handler}
                   />
                   <Spacer orient="vertical" flex="1" />
                   <Button
                     id="pageprev"
                     icon="chevron-up"
                     disabled={progress !== -1}
-                    onClick={handler}
+                    onPointerDown={handler}
                   />
                   <Button
                     id="pagenext"
                     icon="chevron-down"
                     disabled={progress !== -1}
-                    onClick={handler}
+                    onPointerDown={handler}
                   />
                   <Spacer orient="vertical" flex="1" />
                   <Button
                     id="pagelast"
                     icon="double-chevron-down"
                     disabled={progress !== -1}
-                    onClick={handler}
+                    onPointerDown={handler}
                   />
                 </Vbox>
               )}

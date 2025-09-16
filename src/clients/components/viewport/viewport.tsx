@@ -5,12 +5,7 @@ import { playAudio } from '../../../commands.ts';
 import C from '../../../constant.ts';
 import { getPanelWidths, ofClass, stringHash } from '../../../common.ts';
 import Popup from '../popup/popup.tsx';
-import {
-  popupParentHandler as popupParentHandlerH,
-  popupHandler as popupHandlerH,
-  popupUpClickClose as popupUpClickCloseH,
-  PopupParentInitState,
-} from '../popup/popupParentH.ts';
+import * as H from '../popup/popupParentH.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
@@ -57,7 +52,7 @@ type ViewportProps = ViewportPopupProps &
     ownWindow: boolean;
 
     eHandler: (e: React.SyntheticEvent) => void;
-    bbDragEnd: (e: React.MouseEvent, value: any) => void;
+    bbDragEnd: (e: PointerEvent, value: any) => void;
     xulswordStateHandler: React.Component<any, XulswordState>['setState'];
   };
 
@@ -70,11 +65,11 @@ export default class Viewport
   extends React.Component<ViewportProps, ViewportState>
   implements PopupParent
 {
-  popupParentHandler: typeof popupParentHandlerH;
+  popupParentHandler: typeof H.popupParentHandler;
 
-  popupHandler: typeof popupHandlerH;
+  popupHandler: typeof H.popupHandler;
 
-  popupUpClickClose: typeof popupUpClickCloseH;
+  popupClickClose: typeof H.popupClickClose;
 
   popupDelayTO: PopupParent['popupDelayTO'];
 
@@ -90,15 +85,15 @@ export default class Viewport
     super(props);
 
     this.state = {
-      ...PopupParentInitState,
+      ...H.PopupParentInitState,
       reset: 0,
       renderPromiseID: 0,
     };
 
-    this.popupParentHandler = popupParentHandlerH.bind(this);
-    this.popupHandler = popupHandlerH.bind(this);
+    this.popupParentHandler = H.popupParentHandler.bind(this);
+    this.popupHandler = H.popupHandler.bind(this);
     this.audioHandler = this.audioHandler.bind(this);
-    this.popupUpClickClose = popupUpClickCloseH.bind(this);
+    this.popupClickClose = H.popupClickClose.bind(this);
 
     this.loadingRef = React.createRef();
     this.popupRef = React.createRef();
@@ -115,12 +110,10 @@ export default class Viewport
       popupParent.getElementsByClassName('npopup')[0]?.classList.remove('hide');
     }
     renderPromise.dispatch();
-    this.popupUpClickClose();
   }
 
   componentWillUnmount() {
     clearPending(this, ['popupDelayTO', 'popupUnblockTO']);
-    this.popupUpClickClose(true);
   }
 
   audioHandler(
@@ -153,6 +146,8 @@ export default class Viewport
       renderPromise,
       loadingRef,
       popupRef,
+      popupParentHandler,
+      popupClickClose,
       popupHandler,
       audioHandler,
     } = this;
@@ -437,18 +432,19 @@ export default class Viewport
             ownWindow={ownWindow}
             onAudioClick={audioHandler}
             bbDragEnd={bbDragEnd}
+            popupParentHandler={popupParentHandler}
             xulswordState={xulswordStateHandler}
             onWheel={(e: SyntheticEvent) => {
               eHandler(e);
               this.popupParentHandler(e, panel);
             }}
-            onMouseOut={(e: SyntheticEvent) => {
+            onPointerLeave={(e: SyntheticEvent) => {
               this.popupParentHandler(e, panel);
             }}
-            onMouseOver={(e: SyntheticEvent) => {
+            onPointerEnter={(e: SyntheticEvent) => {
               this.popupParentHandler(e, panel);
             }}
-            onMouseMove={(e: SyntheticEvent) => {
+            onPointerMove={(e: SyntheticEvent) => {
               this.popupParentHandler(e, panel);
             }}
             ref={atextRefs[i]}
@@ -465,7 +461,10 @@ export default class Viewport
         domref={loadingRef}
         {...addClass(`viewport ${cls} bp6-focus-disabled`, props)}
         {...style}
-        {...topHandle('onClick', eHandler)}
+        {...topHandle('onPointerDown', (e) => {
+          eHandler(e);
+          popupClickClose(e as React.PointerEvent);
+        })}
       >
         {chooser === 'bible' && showingChooser && (
           <Chooser
@@ -510,7 +509,7 @@ export default class Viewport
                   key={[gap, elemdata.length, popupReset].join('.')}
                   elemdata={elemdata}
                   gap={gap}
-                  onMouseMove={popupHandler}
+                  onPointerMove={popupHandler}
                   onPopupClick={popupHandler}
                   onSelectChange={popupHandler}
                   onMouseLeftPopup={popupHandler}

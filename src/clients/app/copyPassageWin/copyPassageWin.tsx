@@ -271,12 +271,12 @@ export default class CopyPassageWin
           </Groupbox>
           <Spacer flex="1" />
           <Hbox className="dialog-buttons" pack="end" align="end">
-            <Button onClick={passageToClipboard}>
+            <Button onPointerDown={passageToClipboard}>
               {G.i18n.t('menu.edit.copy')}
             </Button>
             <Button
               id="cancel"
-              onClick={() => {
+              onPointerDown={() => {
                 G.Window.close();
               }}
             >

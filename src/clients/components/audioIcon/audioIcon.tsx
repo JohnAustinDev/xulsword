@@ -39,7 +39,7 @@ export default function audioIcon(
       return (
         <div
           className="audio-icon"
-          onClick={(e: React.SyntheticEvent) => {
+          onPointerDown={(e: React.SyntheticEvent) => {
             e.stopPropagation();
             audioHandler(selections[0]?.selection ?? null, e);
           }}

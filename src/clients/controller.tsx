@@ -13,12 +13,13 @@ import Cache from '../cache.ts';
 import C from '../constant.ts';
 import DynamicStyleSheet from './style.ts';
 import ContextData from './contextData.ts';
-import { setGlobalSkin, windowArguments } from './common.ts';
+import { PointerDownLong, setGlobalSkin, windowArguments } from './common.ts';
 import log from './log.ts';
 import {
   delayHandler,
   xulCaptureEvents,
   addClass,
+  XulProps,
 } from './components/libxul/xul.tsx';
 import Print, { PrintContainer } from './components/print/print.tsx';
 import { Hbox } from './components/libxul/boxes.tsx';
@@ -62,7 +63,7 @@ type ControllerProps = {
   resetOnResize: boolean;
   print: PrintOptionsType | null;
   children: ReactElement;
-};
+} & XulProps;
 
 const defaultControllerState = {
   reset: '' as string,
@@ -72,7 +73,10 @@ const defaultControllerState = {
   progress: -1 as number | 'indefinite',
 };
 
-export type ControllerState = Omit<ControllerProps, 'children'> &
+export type ControllerState = Omit<
+  ControllerProps,
+  'children' | keyof XulProps
+> &
   typeof defaultControllerState;
 
 type ControllerStateObj = { [k in keyof ControllerState]: StateArray<k> };
@@ -358,7 +362,7 @@ function Controller(props: ControllerProps) {
                     <Button
                       flex="1"
                       fill="x"
-                      onClick={() => {
+                      onPointerDown={() => {
                         s.dialogs[1](s.dialogs[0].splice(0, 1));
                       }}
                     >
@@ -398,7 +402,7 @@ function Controller(props: ControllerProps) {
                     <Button
                       flex="1"
                       fill="x"
-                      onClick={() => {
+                      onPointerDown={() => {
                         cipherKeys.push({
                           conf,
                           cipherKey: textbox.current?.value ?? '',
@@ -461,7 +465,7 @@ function Controller(props: ControllerProps) {
       <Button
         className="close-card-button"
         icon="cross"
-        onClick={() => history.back()}
+        onPointerDown={() => history.back()}
       />
     );
     switch (s.card[0].name) {
@@ -610,7 +614,11 @@ export default async function renderToRoot(
 
   root.render(
     <StrictMode>
-      <Controller print={print ?? null} resetOnResize={resetOnResize ?? true}>
+      <Controller
+        print={print ?? null}
+        resetOnResize={resetOnResize ?? true}
+        onPointerUp={onPointerUp}
+      >
         {component}
       </Controller>
     </StrictMode>,
@@ -640,4 +648,12 @@ export default async function renderToRoot(
     }
     window.IPC.send('did-finish-render');
   }, 1);
+}
+
+function onPointerUp() {
+  const { timeout } = PointerDownLong;
+  if (timeout) {
+    clearTimeout(timeout);
+    PointerDownLong.timeout = null;
+  }
 }

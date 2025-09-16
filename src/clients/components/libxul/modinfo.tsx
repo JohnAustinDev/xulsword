@@ -47,7 +47,7 @@ export function modinfoParentHandler(
   e: React.SyntheticEvent,
 ): void {
   switch (e.type) {
-    case 'click': {
+    case 'pointerdown': {
       const target = e.currentTarget as HTMLElement;
       const [id, muni] = target.id.split('.');
       switch (id) {
@@ -227,7 +227,7 @@ export default function Modinfo({ showConf = '', ...props }: ModinfoProps) {
                   href="#"
                   id={['top', c.confID].join('.')}
                   className="top-link"
-                  onClick={buttonHandler}
+                  onPointerDown={buttonHandler}
                 >
                   ↑
                 </a>
@@ -246,7 +246,7 @@ export default function Modinfo({ showConf = '', ...props }: ModinfoProps) {
                 <>
                   <Button
                     id={['more', c.confID].join('.')}
-                    onClick={buttonHandler}
+                    onPointerDown={buttonHandler}
                   >
                     {GI.i18n.t('', renderPromise, 'more.label')}
                   </Button>
@@ -256,7 +256,7 @@ export default function Modinfo({ showConf = '', ...props }: ModinfoProps) {
                 <>
                   <Button
                     id={['less', c.confID].join('.')}
-                    onClick={buttonHandler}
+                    onPointerDown={buttonHandler}
                   >
                     {GI.i18n.t('', renderPromise, 'less.label')}
                   </Button>
@@ -264,14 +264,14 @@ export default function Modinfo({ showConf = '', ...props }: ModinfoProps) {
                     <>
                       <Button
                         id={['edit', c.confID].join('.')}
-                        onClick={buttonHandler}
+                        onPointerDown={buttonHandler}
                       >
                         {GI.i18n.t('', renderPromise, 'menu.edit')}
                       </Button>
                       <Button
                         id={['save', c.confID].join('.')}
                         disabled={!editConf}
-                        onClick={buttonHandler}
+                        onPointerDown={buttonHandler}
                       >
                         {GI.i18n.t('', renderPromise, 'save.label')}
                       </Button>

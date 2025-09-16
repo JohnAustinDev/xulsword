@@ -7,7 +7,6 @@ import { G, GI } from '../../G.ts';
 import {
   doUntilDone,
   safeScrollIntoView,
-  notMouse,
   windowArguments,
 } from '../../common.ts';
 import { delayHandler } from '../libxul/xul.tsx';
@@ -72,7 +71,7 @@ export function closeMenupopups(component: Xulsword | ViewportWin) {
 
 export function bbDragEnd(
   this: Xulsword | ViewportWin,
-  e: React.MouseEvent,
+  e: PointerEvent,
   value: DragSizerVal,
 ) {
   const target = e.target as HTMLElement;
@@ -198,8 +197,8 @@ export default function handler(
   const panel = panels[index];
   const type = panel ? G.Tab[panel].type : null;
   switch (es.type) {
-    case 'click': {
-      const e = es as React.MouseEvent;
+    case 'pointerdown': {
+      const e = es as React.PointerEvent;
       const targ = ofClass(
         [
           'text-pin',
@@ -229,7 +228,6 @@ export default function handler(
       e.preventDefault();
       const elem = targ.element;
       const p = getElementData(elem);
-      notMouse(e);
       switch (targ.type) {
         case 'towindow': {
           const cols = atext?.dataset.columns;

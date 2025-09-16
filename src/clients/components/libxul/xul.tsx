@@ -1,37 +1,34 @@
 import type React from 'react';
+import { onPointerDownLong } from '../../common.ts';
 
 export const xulEvents = [
-  'onClick',
   'onDoubleClick',
   'onChange',
   'onKeyDown',
   'onKeyUp',
   'onFocus',
   'onBlur',
-  'onMouseDown',
-  'onMouseOver',
-  'onMouseOut',
-  'onMouseMove',
-  'onMouseUp',
-  'onMouseEnter',
-  'onMouseLeave',
+  'onPointerDown',
+  'onPointerDownLong',
+  'onPointerUp',
+  'onPointerMove',
+  'onPointerEnter',
+  'onPointerLeave',
   'onWheel',
   'onScroll',
   'onContextMenu',
 ] as const;
 
 export const xulCaptureEvents = [
-  'onClickCapture',
   'onDoubleClickCapture',
   'onChangeCapture',
   'onKeyDownCapture',
   'onKeyUpCapture',
   'onFocusCapture',
   'onBlurCapture',
-  'onMouseDownCapture',
-  'onMouseOverCapture',
-  'onMouseOutCapture',
-  'onMouseMoveCapture',
+  'onPointerDownCapture',
+  'onPointerUpCapture',
+  'onPointerMoveCapture',
   'onMouseUpCapture',
   'onWheelCapture',
   'onScrollCapture',
@@ -141,9 +138,22 @@ export function htmlAttribs(
   const r = {
     ...xulClass(className, props),
   } as Record<string, unknown>;
-  xulEvents.forEach((x) => {
-    if (typeof props[x] !== 'undefined') r[x] = props[x];
-  });
+  xulEvents
+    .filter((t) => typeof props[t] !== 'undefined')
+    .forEach((x) => {
+      if (['onPointerDown', 'onPointerDownLong'].includes(x)) {
+        if (x === 'onPointerDownLong' && !('onPointerDown' in props))
+          r.onPointerDown = onPointerDownLong(
+            props[x] as (e: React.PointerEvent) => void,
+          );
+        else if (x === 'onPointerDownLong')
+          r.onPointerDown = (e: React.PointerEvent) => {
+            (props.onPointerDown as any)(e);
+            (props.onPointerDownLong as any)(e);
+          };
+        else r[x] = props[x];
+      } else r[x] = props[x];
+    });
   xulCaptureEvents.forEach((x) => {
     if (props[x] !== undefined) r[x] = props[x];
   });
@@ -197,7 +207,7 @@ export function delayHandler(
   stableParent: object,
   handler: (...args: any) => void,
   args: any[],
-  ms: number | string,
+  delay: number | string,
   nameTO: string,
 ) {
   if (stableParent && typeof stableParent === 'object') {
@@ -206,8 +216,8 @@ export function delayHandler(
         (stableParent as any)[nameTO] as ReturnType<typeof setTimeout>,
       );
     (stableParent as any)[nameTO] = setTimeout(
-      () => handler.call(stableParent, ...args),
-      Number(ms) || 0,
+      ((...args) => handler.bind(stableParent, ...args))(...args),
+      Number(delay) || 0,
     );
   }
 }

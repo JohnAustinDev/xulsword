@@ -83,7 +83,7 @@ export function onCellClick(
   this: BMManagerWin,
   dataRowIndex: number,
   _dataColIndex: number,
-  e: React.MouseEvent,
+  e: React.PointerEvent,
 ): void {
   this.setState((prevState) => {
     const data = this.tableData;
@@ -369,7 +369,7 @@ export function itemRenderer(
       className="search-result-item"
       title={`${notesh ? `[${notesh}] ` : ''}${samplesh}`}
       ref={ref}
-      onClick={handleClick}
+      onPointerDown={handleClick}
     >
       {
         <img

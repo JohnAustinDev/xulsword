@@ -5,6 +5,7 @@
   border: 2px solid var(--border-light);
   height: 100%;
   flex-basis: 100%;
+  touch-action: none; /* Prevents all default browser touch actions */
 }
 .atext:not(:last-child) {
   margin-inline-end: 10px;
@@ -162,6 +163,7 @@ html[dir='rtl'] .notebox-maximizer {
 }
 
 .atext .nb {
+  position: relative; /* required for scroll to work! */
   height: 100%;
   overflow: auto;
   background-color: var(--bg-interface-light);

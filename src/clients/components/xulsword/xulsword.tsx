@@ -73,7 +73,7 @@ export default class Xulsword
 
   viewportParentHandler: any;
 
-  bbDragEnd: (e: React.MouseEvent, value: any) => void;
+  bbDragEnd;
 
   addHistory: typeof addHistoryH;
 
@@ -294,7 +294,7 @@ export default class Xulsword
           <Button
             id="back"
             icon={`chevron-${left}`}
-            onClick={handler}
+            onPointerDown={handler}
             disabled={
               navdisabled ||
               !history.length ||
@@ -309,7 +309,7 @@ export default class Xulsword
             id="historymenu"
             icon={`double-chevron-${left}`}
             rightIcon={`double-chevron-${right}`}
-            onClick={handler}
+            onPointerDown={handler}
             disabled={navdisabled || history.length <= 1}
           >
             {historyMenupopup || <span />}
@@ -322,7 +322,7 @@ export default class Xulsword
           <Button
             id="forward"
             rightIcon={`chevron-${right}`}
-            onClick={handler}
+            onPointerDown={handler}
             disabled={navdisabled || historyIndex === 0}
           >
             {GI.i18n.t('', renderPromise, 'history.forward.label')}
@@ -343,7 +343,7 @@ export default class Xulsword
         <Button
           id="closeplayer"
           className="narrow-screen-hide"
-          onClick={handler}
+          onPointerDown={handler}
         >
           {GI.i18n.t('', renderPromise, 'close.label')}
         </Button>
@@ -370,7 +370,7 @@ export default class Xulsword
             id="xsSearchButton"
             icon="search"
             disabled={searchDisabled}
-            onClick={handler}
+            onPointerDown={handler}
           >
             {GI.i18n.t('', renderPromise, 'menu.search')}
           </Button>
@@ -385,7 +385,7 @@ export default class Xulsword
         icon={
           <Icon icon={showChooser ? 'menu-closed' : 'menu-open'} size={28} />
         }
-        onClick={handler}
+        onPointerDown={handler}
         title={GI.i18n.t(
           '',
           renderPromise,
@@ -402,7 +402,7 @@ export default class Xulsword
             id="printPassage"
             disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
             icon={<Icon icon="print" />}
-            onClick={() => {
+            onPointerDown={() => {
               setStatePref('prefs', 'printPassage', null, {
                 chapters: { ...location, vkMod },
               });
@@ -422,7 +422,7 @@ export default class Xulsword
               id="addcolumn"
               disabled={panels.length >= (window as any).browserMaxPanels}
               icon={<Icon icon="add-column-right" />}
-              onClick={handler}
+              onPointerDown={handler}
               title={GI.i18n.t(
                 '',
                 renderPromise,
@@ -434,7 +434,7 @@ export default class Xulsword
               id="removecolumn"
               disabled={panels.length <= 1}
               icon={<Icon icon="remove-column-right" />}
-              onClick={handler}
+              onPointerDown={handler}
               title={GI.i18n.t('', renderPromise, 'Remove a column of text.', {
                 ns: 'bibleBrowser',
               })}
@@ -445,7 +445,7 @@ export default class Xulsword
           id="headings"
           checked={show.headings}
           icon={<Icon icon="widget-header" />}
-          onClick={handler}
+          onPointerDown={handler}
           title={GI.i18n.t('', renderPromise, 'headingsButton.tooltip')}
           disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
         />
@@ -453,7 +453,7 @@ export default class Xulsword
           id="dictlinks"
           checked={show.dictlinks}
           icon={<Icon icon="link" />}
-          onClick={handler}
+          onPointerDown={handler}
           title={GI.i18n.t('', renderPromise, 'dictButton.tooltip')}
           disabled={
             !panels.find(
@@ -465,7 +465,7 @@ export default class Xulsword
           id="footnotes"
           checked={show.footnotes}
           icon={<Icon icon="asterisk" />}
-          onClick={handler}
+          onPointerDown={handler}
           title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
           disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
         />
@@ -474,7 +474,7 @@ export default class Xulsword
             id="crossrefs"
             checked={show.crossrefs}
             icon={<Icon icon="symbol-cross" />}
-            onClick={handler}
+            onPointerDown={handler}
             title={GI.i18n.t('', renderPromise, 'crossrefsButton.tooltip')}
             disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
           />
@@ -570,18 +570,18 @@ export default class Xulsword
             disabled={navdisabled}
             key={`c${location?.chapter}`}
             onChange={handler}
-            onClick={handler}
+            onPointerDown={handler}
           />
           <Vbox>
             <AnchorButton
               id="nextchap"
               disabled={navdisabled}
-              onClick={handler}
+              onPointerDown={handler}
             />
             <AnchorButton
               id="prevchap"
               disabled={navdisabled}
-              onClick={handler}
+              onPointerDown={handler}
             />
           </Vbox>
           <span>:</span>
@@ -595,18 +595,18 @@ export default class Xulsword
             timeout="600"
             disabled={navdisabled}
             onChange={handler}
-            onClick={handler}
+            onPointerDown={handler}
           />
           <Vbox>
             <AnchorButton
               id="nextverse"
               disabled={navdisabled}
-              onClick={handler}
+              onPointerDown={handler}
             />
             <AnchorButton
               id="prevverse"
               disabled={navdisabled}
-              onClick={handler}
+              onPointerDown={handler}
             />
           </Vbox>
         </Hbox>
@@ -637,7 +637,7 @@ export default class Xulsword
         {...addClass('xulsword', props)}
         pack="start"
         {...topHandle(
-          'onClick',
+          'onPointerDown',
           () => {
             closeMenupopups(this);
           },

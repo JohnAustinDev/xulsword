@@ -6,7 +6,11 @@ import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
-import { safeScrollIntoView, notMouse, windowArguments } from '../../common.ts';
+import {
+  safeScrollIntoView,
+  supportsHover,
+  windowArguments,
+} from '../../common.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 
 import type { GType, PlaceType, SearchType, ShowType } from '../../../type.ts';
@@ -26,7 +30,7 @@ export type PopupParent = RenderPromiseComponent & {
   popupUnblockTO?: NodeJS.Timeout | undefined;
   popupHandler: typeof popupHandler;
   popupParentHandler?: typeof popupParentHandler;
-  popupUpClickClose?: typeof popupUpClickClose; // For WebApp only
+  popupClickClose?: typeof popupClickClose; // For WebApp only
   popupRef?: React.RefObject<Popup>;
 };
 
@@ -47,18 +51,20 @@ export type ViewportPopupProps = {
   atextRefs: Array<React.RefObject<Atext>>;
 };
 
+// Event handler for the container containing links to popups.
 export function popupParentHandler(
   this: PopupParent,
-  es: React.SyntheticEvent,
+  es: React.SyntheticEvent | PointerEvent,
   module?: string,
 ) {
   switch (es.type) {
-    case 'mouseover': {
-      const ppar = ofClass(['npopup'], es.target);
-      const parent = ppar?.element;
-      // Only mouseovers outside of a popup which are not 'x-target_self' are handled here.
+    case 'pointerenter': {
+      const parent = ofClass(['npopup'], es.target)?.element;
+      // Hover over elements outside of a popup which are not 'x-target_self'
+      // are handled here.
       if (parent) return;
-      let targ = ofClass(
+      const { target } = es;
+      const oc = ofClass(
         [
           'cr',
           'fn',
@@ -71,20 +77,21 @@ export function popupParentHandler(
           'introlink',
           'searchterm',
         ],
-        es.target,
-        'self',
+        target,
       );
+      if (!oc) return;
+      const { type } = oc;
+      let element = oc.element as HTMLElement | undefined;
       // searchterm will be a child span of sn and the sn parent is needed, not the searchterm.
-      if (targ?.type === 'searchterm') {
-        targ = ofClass(['sn'], targ.element);
+      if (element?.classList.contains('searchterm')) {
+        element = ofClass(['sn'], element)?.element;
       }
-      if (targ === null) return;
-      if (targ.element.classList.contains('x-target_self')) return;
-      const state = this.state as PopupParentState;
-      const props = this.props as Partial<ViewportPopupProps>;
-      const target = es.target as HTMLElement;
-      const type = module ? G.Tab[module].type : null;
+      if (!element) return;
+      if (element.classList.contains('x-target_self')) return;
+      const { props, state, popupDelayTO } = this;
+      const { popupParent } = state;
       const { place: pl, show: sh, atextRefs, isPinned } = props;
+      const modtype = module ? G.Tab[module].type : null;
       const atext = ofClass(['atext'], target);
       const index = Number(atext?.element?.dataset.index) || 0;
       const atr = ((atext && atextRefs?.[index].current) ||
@@ -93,22 +100,20 @@ export function popupParentHandler(
         (atr && isPinned && isPinned[index] && atr.state.pin.place) || pl;
       const show: ShowType | undefined =
         (atr && isPinned && isPinned[index] && atr.state.pin.show) || sh;
-      const e = es as React.MouseEvent;
-      const { popupDelayTO, renderPromise } = this;
-      const { popupParent } = state;
       if (popupDelayTO) clearTimeout(popupDelayTO);
-      e.preventDefault();
-      const elem = targ.element;
       let openPopup = false;
       let gap = C.UI.Popup.openGap;
-      const data = findElementData(elem);
-      switch (targ.type) {
+      const data = findElementData(element);
+      switch (type) {
         case 'cr':
           if (!place || place.crossrefs === 'popup') openPopup = true;
           break;
         case 'fn':
           // genbk fn are already embedded in the text
-          if ((!place || place.footnotes === 'popup') && type !== C.GENBOOK) {
+          if (
+            (!place || place.footnotes === 'popup') &&
+            modtype !== C.GENBOOK
+          ) {
             openPopup = true;
           }
           break;
@@ -144,25 +149,25 @@ export function popupParentHandler(
           this,
           (el: HTMLElement, dt: HTMLData, gp: number) => {
             updateDataAttribute(el, dt);
-            const s: Partial<PopupParentState> = {
+            this.setState({
               elemdata: [dt],
               gap: gp,
               popupParent: el,
-            };
-            this.setState(s);
+            });
           },
-          [elem, data, gap],
-          targ.type === 'sn'
-            ? C.UI.Popup.strongsOpenDelay
-            : C.UI.Popup.openDelay,
+          [element, data, gap],
+          type === 'sn' ? C.UI.Popup.strongsOpenDelay : C.UI.Popup.openDelay,
           'popupDelayTO',
         );
       }
       break;
     }
 
-    case 'mouseout': {
-      if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
+    case 'pointerleave': {
+      if (supportsHover() && this.popupDelayTO) {
+        clearTimeout(this.popupDelayTO);
+        this.popupDelayTO = undefined;
+      }
       break;
     }
 
@@ -184,7 +189,7 @@ export function popupParentHandler(
       break;
     }
 
-    case 'mousemove': {
+    case 'pointermove': {
       if (
         'popupDelayTO' in this &&
         this.popupDelayTO === null &&
@@ -200,10 +205,11 @@ export function popupParentHandler(
   }
 }
 
+// Event handler for the popup itself.
 export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
   switch (es.type) {
-    case 'click': {
-      const e = es as React.MouseEvent;
+    case 'pointerdown': {
+      const e = es as React.PointerEvent;
       const targ = ofClass(
         [
           'fn',
@@ -235,7 +241,6 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
       const elem = targ.element;
       const data = findElementData(elem);
       const popupY = parent.getBoundingClientRect().y;
-      notMouse(e);
       switch (targ.type) {
         case 'fn':
         case 'sn':
@@ -254,7 +259,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               }
               elemdata.push(data);
               // set the gap so as to position popup under the mouse
-              if (!notMouse(e)) gap = Math.round(e.clientY - popupY - 40);
+              if (supportsHover()) gap = Math.round(e.clientY - popupY - 40);
               const s: Partial<PopupParentState> = {
                 elemdata,
                 gap,
@@ -323,8 +328,8 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               (G as GType).Window.close();
             }
           } else {
-            const s: Partial<PopupParentState> = { popupParent: null };
-            this.setState(s);
+            cancelStrongsHiLights();
+            this.setState({ popupParent: null });
           }
           break;
         }
@@ -335,7 +340,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               elemdata = clone(elemdata);
               elemdata.pop();
               // set the gap so as to position popup under the mouse
-              if (!notMouse(e)) gap = Math.round(e.clientY - popupY - 40);
+              if (supportsHover()) gap = Math.round(e.clientY - popupY - 40);
               const s: Partial<PopupParentState> = {
                 elemdata,
                 gap,
@@ -449,7 +454,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
       break;
     }
 
-    case 'mousemove': {
+    case 'pointermove': {
       const { popupHold } = this.state as PopupParentState;
       if (popupHold) {
         const s: Partial<PopupParentState> = { popupHold: false };
@@ -458,14 +463,16 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
       break;
     }
 
-    case 'mouseleave': {
+    // Close the popup when the mouse leaves it.
+    case 'pointerleave': {
       const { popupRef } = this;
       const { popupParent, popupHold } = this.state as PopupParentState;
       const parent = popupParent || document.getElementById('root');
       if (
         parent &&
         !popupHold &&
-        !(popupRef?.current?.state as PopupState).drag?.dragging
+        !(popupRef?.current?.state as PopupState).drag?.dragging &&
+        supportsHover()
       ) {
         const s: Partial<PopupParentState> = { popupParent: null };
         this.setState(s);
@@ -478,19 +485,29 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
   }
 }
 
-// WebApp closes the popup if the user clicks outside of it.
-let WindowClickFunc: ((e: MouseEvent) => void) | null = null;
-export function popupUpClickClose(this: PopupParent, onlyRemove = false) {
-  if (Build.isWebApp) {
-    if (WindowClickFunc) window.removeEventListener('click', WindowClickFunc);
-    if (!onlyRemove) {
-      WindowClickFunc = (e: MouseEvent) => {
-        const { popupParent } = this.state as PopupParentState;
-        if (popupParent && !ofClass('npopupTX', e.target, 'ancestor-or-self')) {
-          this.setState({ popupParent: null });
-        }
-      };
-      window.addEventListener('click', WindowClickFunc);
-    }
+// Close the popup and/or unhilight strongs numbers if the user clicks outside
+// of the popup.
+export function popupClickClose(this: any, e: React.PointerEvent) {
+  const { popupParent } = this.state as PopupParentState;
+  if (
+    popupParent &&
+    popupParent !== e.target &&
+    !ofClass('npopupTX', e.target, 'ancestor-or-self')
+  ) {
+    cancelStrongsHiLights();
+    this.setState({ popupParent: null });
   }
+}
+
+export const Hilight = {
+  strongsCSS: [] as { sheet: CSSStyleSheet; index: number }[],
+};
+
+export function cancelStrongsHiLights() {
+  Hilight.strongsCSS.reverse().forEach((r) => {
+    if (r.index < r.sheet.cssRules.length) {
+      r.sheet.deleteRule(r.index);
+    }
+  });
+  Hilight.strongsCSS = [];
 }

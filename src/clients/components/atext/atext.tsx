@@ -12,12 +12,12 @@ import {
 } from '../../../common.ts';
 import { G, GI } from '../../G.ts';
 import {
+  addHoverLinks,
   clearPending,
   doUntilDone,
   getMaxChapter,
   iframeAutoHeight,
   libswordImgSrc,
-  notMouse,
   safeScrollIntoView,
 } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
@@ -53,6 +53,7 @@ import type { HTMLData } from '../../htmlData.ts';
 import type { XulProps } from '../libxul/xul.tsx';
 import type { LibSwordResponse } from './ztext.ts';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
+import type { popupParentHandler } from '../popup/popupParentH.ts';
 
 export type AtextPropsType = Pick<
   typeof S.prefs.xulsword,
@@ -72,13 +73,15 @@ export type AtextPropsType = Pick<
   columns: number;
   ownWindow: boolean;
 
+  popupParentHandler: typeof popupParentHandler;
+
   xulswordState: React.Component<any, XulswordState>['setState'];
 
   onAudioClick: (
     selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
     e: React.SyntheticEvent,
   ) => void;
-  bbDragEnd: (e: React.MouseEvent, value: any) => void;
+  bbDragEnd: (e: PointerEvent, value: any) => void;
 };
 
 export type AtextProps = XulProps & AtextPropsType;
@@ -99,6 +102,8 @@ export type AtextStateType = typeof stateWinPrefs &
 // and in Prefs, so that a component reset or program restart won't cause
 // reversion to initial state.
 const windowState: Array<Partial<AtextStateType>> = [];
+
+let InitialLoad = true;
 
 // XUL Atext
 class Atext
@@ -501,9 +506,8 @@ class Atext
             C.UI.Atext.prevNextDelay,
             'prevNextLinkUpdate',
           );
-          // WebApp atext loads should usually scroll to the top. An exception
-          // is the very first load, when notMouse() is null.
-          if (Build.isWebApp && update && notMouse() !== null) {
+          if (Build.isWebApp && update && !InitialLoad) {
+            InitialLoad = false;
             const isVerseKeyTop =
               isVerseKey && scroll?.verseAt === 'top' && location?.verse === 1;
             if (isVerseKeyTop || !isVerseKey)
@@ -545,7 +549,8 @@ class Atext
     xulswordState: AtextPropsType['xulswordState'],
     renderPromise: RenderPromise,
   ) {
-    const { sbref, nbref, navlinks } = this;
+    const { props, sbref, nbref, navlinks, handler } = this;
+    const { popupParentHandler } = props;
     const { module } = libswordProps;
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
@@ -591,17 +596,38 @@ class Atext
           nb = `<div class="fntable">${nb}</div>`;
         }
         if (sb !== undefined) {
-          const pes = sbe.parentElement?.querySelector('.hd');
-          if (module && pes)
-            sanitizeHTML(
-              pes as HTMLElement,
-              `${navlinks(module, renderPromise, true)}`,
-            );
+          const pes = sbe.parentElement?.querySelector(
+            '.hd',
+          ) as HTMLElement | null;
+          if (module && pes) {
+            sanitizeHTML(pes, `${navlinks(module, renderPromise, true)}`);
+            addHoverLinks(pes, ['aboutlink'], popupParentHandler);
+          }
           const { columns } = libswordProps;
           if (module && (typeof columns === 'undefined' || columns === 1))
             sb += `<div class="ft">${navlinks(module, renderPromise)}</div>`;
           sanitizeHTML(sbe, sb);
           libswordImgSrc(sbe);
+          addHoverLinks(
+            sbe,
+            [
+              'cr',
+              'fn',
+              'un',
+              'sn',
+              'sr',
+              'dt',
+              'dtl',
+              'introlink',
+              'searchterm',
+            ],
+            popupParentHandler,
+          );
+          addHoverLinks(
+            sbe,
+            ['cr', 'fn', 'sn', 'un', 'image-viewport'],
+            handler,
+          );
         }
         if (nb !== undefined) {
           sanitizeHTML(nbe, nb);
@@ -743,11 +769,11 @@ class Atext
         domref={loadingRef}
         {...addClass(classes, props)}
         {...topHandle('onDoubleClick', handler, props)}
-        {...topHandle('onClick', handler, props)}
-        {...topHandle('onWheel', handler, props)}
-        {...topHandle('onMouseOver', handler, props)}
-        {...topHandle('onMouseOut', handler, props)}
+        {...topHandle('onPointerEnter', handler, props)}
+        {...topHandle('onPointerDown', handler, props)}
+        {...topHandle('onPointerLeave', handler, props)}
         {...topHandle('onChange', handler, props)}
+        {...topHandle('onWheel', handler, props)}
         data-index={panelIndex}
         data-module={module}
         data-columns={columns}
@@ -765,7 +791,7 @@ class Atext
 
         {showSelect && (
           <Hbox className="origselect" pack="end">
-            <select defaultValue={ilModule} onClick={handler}>
+            <select defaultValue={ilModule} onPointerDown={handler}>
               {ilModuleOption.map((m) => {
                 return (
                   <option

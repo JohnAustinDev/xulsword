@@ -172,7 +172,7 @@ export default class PrintSettings extends React.Component<
       return Math.round(n * 100) / 100;
     };
     switch (e.type) {
-      case 'click': {
+      case 'pointerdown': {
         const { landscape, pageSize, margins, page, pages } = state;
         const electronOptions: Electron.PrintToPDFOptions = {
           landscape,
@@ -673,16 +673,24 @@ export default class PrintSettings extends React.Component<
               <Button
                 id="pagefirst"
                 icon="double-chevron-left"
-                onClick={handler}
+                onPointerDown={handler}
               />
               <Spacer flex="1" />
-              <Button id="pageprev" icon="chevron-left" onClick={handler} />
-              <Button id="pagenext" icon="chevron-right" onClick={handler} />
+              <Button
+                id="pageprev"
+                icon="chevron-left"
+                onPointerDown={handler}
+              />
+              <Button
+                id="pagenext"
+                icon="chevron-right"
+                onPointerDown={handler}
+              />
               <Spacer flex="1" />
               <Button
                 id="pagelast"
                 icon="double-chevron-right"
-                onClick={handler}
+                onPointerDown={handler}
               />
               {page > 0 && (
                 <div className="label-container">
@@ -721,13 +729,13 @@ export default class PrintSettings extends React.Component<
                 id="portrait"
                 checked={!landscape}
                 icon="document"
-                onClick={handler}
+                onPointerDown={handler}
               />
               <Button
                 id="landscape"
                 checked={landscape}
                 icon="document"
-                onClick={handler}
+                onPointerDown={handler}
               />
               {pageable && (
                 <>
@@ -736,13 +744,13 @@ export default class PrintSettings extends React.Component<
                     id="columns.1"
                     checked={!twoColumns}
                     icon="one-column"
-                    onClick={handler}
+                    onPointerDown={handler}
                   />
                   <Button
                     id="columns.2"
                     checked={twoColumns}
                     icon="two-columns"
-                    onClick={handler}
+                    onPointerDown={handler}
                   />
                 </>
               )}
@@ -829,7 +837,7 @@ export default class PrintSettings extends React.Component<
               flex="1"
               fill="x"
               disabled={printDisabled}
-              onClick={handler}
+              onPointerDown={handler}
             >
               {GI.i18n.t('', renderPromise, 'menu.print')}
             </Button>
@@ -843,7 +851,7 @@ export default class PrintSettings extends React.Component<
                 flex="1"
                 fill="x"
                 disabled={printDisabled}
-                onClick={handler}
+                onPointerDown={handler}
               >
                 PDF
               </Button>
@@ -853,14 +861,14 @@ export default class PrintSettings extends React.Component<
                 flex="1"
                 fill="x"
                 disabled={printDisabled}
-                onClick={handler}
+                onPointerDown={handler}
               >
                 {GI.i18n.t('', renderPromise, 'printPreviewCmd.label')}
               </Button>
             </>
           )}
           <Spacer flex="10" />
-          <Button id={dialogEnd} flex="1" fill="x" onClick={handler}>
+          <Button id={dialogEnd} flex="1" fill="x" onPointerDown={handler}>
             {GI.i18n.t('', renderPromise, `${dialogEnd}.label`)}
           </Button>
         </Hbox>

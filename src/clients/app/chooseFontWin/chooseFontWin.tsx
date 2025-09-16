@@ -165,7 +165,7 @@ export default class ChooseFontWin extends React.Component<
                 <Button
                   flex="1"
                   fill="x"
-                  onClick={() => {
+                  onPointerDown={() => {
                     ruSureDialog(false);
                   }}
                 >
@@ -174,7 +174,7 @@ export default class ChooseFontWin extends React.Component<
                 <Button
                   flex="1"
                   fill="x"
-                  onClick={() => {
+                  onPointerDown={() => {
                     ruSureDialog(true);
                   }}
                 >
@@ -270,7 +270,7 @@ export default class ChooseFontWin extends React.Component<
                   id="color"
                   className="picker-button"
                   disabled={disabled}
-                  onClick={handler}
+                  onPointerDown={handler}
                 >
                   <div className="color-box">
                     {coloropen && (
@@ -296,7 +296,7 @@ export default class ChooseFontWin extends React.Component<
                     id="background"
                     className="picker-button"
                     disabled={disabled}
-                    onClick={handler}
+                    onPointerDown={handler}
                   >
                     <div className="color-box">
                       {backgroundopen && (
@@ -335,10 +335,10 @@ export default class ChooseFontWin extends React.Component<
 
         <Hbox className="dialog-buttons" pack="end" align="end">
           <Spacer flex="10" />
-          <Button id="cancel" flex="1" fill="x" onClick={handler}>
+          <Button id="cancel" flex="1" fill="x" onPointerDown={handler}>
             {G.i18n.t('cancel.label')}
           </Button>
-          <Button id="ok" flex="1" fill="x" onClick={handler}>
+          <Button id="ok" flex="1" fill="x" onPointerDown={handler}>
             {G.i18n.t('ok.label')}
           </Button>
         </Hbox>

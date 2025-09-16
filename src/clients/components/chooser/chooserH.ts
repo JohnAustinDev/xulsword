@@ -11,14 +11,14 @@ import type Chooser from './chooser.tsx';
 export default function handler(this: Chooser, es: React.SyntheticEvent): void {
   const target = es.target as HTMLElement;
   switch (es.type) {
-    case 'click': {
-      const e = es as React.MouseEvent;
+    case 'pointerdown': {
+      const e = es as React.PointerEvent;
       e.currentTarget.classList.remove('show');
       break;
     }
 
-    case 'mouseenter': {
-      const e = es as React.MouseEvent;
+    case 'pointerenter': {
+      const e = es as React.PointerEvent;
       const targ = ofClass(
         ['bookgroup', 'bookgroupitem', 'chaptermenucell'],
         target,
@@ -148,13 +148,8 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
       break;
     }
 
-    case 'mouseout': {
-      if (this.headingmenuTO) clearTimeout(this.headingmenuTO);
-      break;
-    }
-
-    case 'mouseleave': {
-      const e = es as React.MouseEvent;
+    case 'pointerleave': {
+      const e = es as React.PointerEvent;
       if (this.headingmenuTO) clearTimeout(this.headingmenuTO);
       const chmenu = ofClass(['chaptermenu'], target);
       const relatedTarget = e.relatedTarget as HTMLElement | null;

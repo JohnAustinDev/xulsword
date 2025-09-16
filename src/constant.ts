@@ -78,6 +78,7 @@ const C = {
     WebApp: {
       narrowW: 300, // px up to which is considered narrow screen
       mobileW: 767, // px up to which is considered mobile
+      longTouchTO: 500, // ms pointerDown before pointerDownLong event triggers
     },
     AcceleratorKey: {
       openModuleManager: 'F2',

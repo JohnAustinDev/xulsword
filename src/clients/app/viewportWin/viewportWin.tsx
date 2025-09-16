@@ -72,7 +72,7 @@ export default class ViewportWin
 {
   viewportParentHandler: any;
 
-  bbDragEnd: (e: React.MouseEvent, value: any) => void;
+  bbDragEnd: (e: PointerEvent, value: any) => void;
 
   dictkeydownTO: NodeJS.Timeout | undefined;
 
@@ -252,7 +252,7 @@ export default class ViewportWin
         domref={loadingRef}
         {...this.props}
         {...topHandle(
-          'onClick',
+          'onPointerDown',
           () => {
             closeMenupopups(this);
           },

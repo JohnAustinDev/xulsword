@@ -269,12 +269,12 @@ class Chooser
       <Vbox
         domref={loadingRef}
         {...addClass(`chooser verse-chooser`, props)}
-        onMouseOut={handler}
+        onPointerLeave={handler}
       >
         <Hbox className="fadetop" />
 
         <Hbox className="chooser-container" flex="20">
-          <div className="close-chooser" onClick={onCloseChooserClick} />
+          <div className="close-chooser" onPointerDown={onCloseChooserClick} />
 
           <Vbox className="bookgroup-selector">
             {bookGroups.map((bg) => {
@@ -287,7 +287,7 @@ class Chooser
                   flex="1"
                   pack="start"
                   align="center"
-                  onMouseEnter={handler}
+                  onPointerEnter={handler}
                   data-bookgroup={bg}
                   data-v11n={v11n}
                 >
@@ -449,7 +449,7 @@ function BookGroupItem(
   return (
     <Hbox
       {...addClass(['bookgroupitem'].concat(c), props)}
-      {...topHandle('onMouseEnter', handler, props)}
+      {...topHandle('onPointerEnter', handler, props)}
       data-book={sName}
       data-v11n={v11n}
     >
@@ -527,8 +527,8 @@ function ChapterMenu(props: {
             data-chapter={ch}
             data-v11n={v11n}
             className="chaptermenucell"
-            onMouseEnter={dlyhandler}
-            onMouseLeave={handler}
+            onPointerEnter={dlyhandler}
+            onPointerLeave={handler}
           >
             {dString(ch)}
             {headingsModule &&
@@ -557,10 +557,10 @@ function ChapterMenu(props: {
     <div
       key={[v11n, bkcode].join('.')}
       className="chaptermenu"
-      onClick={handler}
+      onPointerDown={handler}
     >
       {chmenuCells}
-      <div className="headingmenu" onMouseLeave={handler} />
+      <div className="headingmenu" onPointerLeave={handler} />
     </div>
   );
 }

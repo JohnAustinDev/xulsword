@@ -93,7 +93,7 @@ export function setHistory(
 export function historyMenu(
   this: Xulsword,
   state: XulswordState,
-  onClick: (e: any, i: number) => void,
+  onPointerDown: (e: any, i: number) => void,
 ) {
   const { history, historyIndex, location } = state;
   const { renderPromise } = this;
@@ -125,8 +125,8 @@ export function historyMenu(
           <div
             key={[selected, index, histitem].join('.')}
             className={selected}
-            onClick={(e) => {
-              onClick(e, index);
+            onPointerDown={(e) => {
+              onPointerDown(e, index);
             }}
           >
             {itemvk.readable(G.i18n.language, null, true)}

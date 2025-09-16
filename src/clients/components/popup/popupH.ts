@@ -250,11 +250,16 @@ export function getPopupHTML(
   return html;
 }
 
-export default function handler(this: Popup, e: React.MouseEvent) {
+// Event handler for popup contents.
+export default function handler(
+  this: Popup,
+  e: React.PointerEvent | PointerEvent,
+) {
   const target = e.target as HTMLElement;
   switch (e.type) {
-    case 'mouseover': {
-      const targ = ofClass(
+    case 'pointerenter': {
+      const { target } = e;
+      const oc = ofClass(
         [
           'npopup',
           'cr',
@@ -269,20 +274,23 @@ export default function handler(this: Popup, e: React.MouseEvent) {
         ],
         target,
       );
-      if (!targ || targ.type === 'npopup') return;
+      if (!oc) return;
+      const { element, type } = oc;
+      if (!element) return;
+      if (type === 'npopup') return;
       if (
-        !getPopupHTML(getElementData(targ.element), this.renderPromise, true) &&
+        !getPopupHTML(getElementData(element), this.renderPromise, true) &&
         !this.renderPromise.waiting()
       ) {
-        targ.element.classList.add('empty');
+        element.classList.add('empty');
         log.debug(
-          `Popup failed without reported reason: ${targ.element.classList.value}`,
+          `Popup failed without reported reason: ${element.classList.value}`,
         );
       }
       break;
     }
 
-    case 'mousedown': {
+    case 'pointerdown': {
       if (ofClass(['draghandle'], target)) {
         this.setState((prevState) => {
           let { drag } = prevState;
@@ -301,7 +309,7 @@ export default function handler(this: Popup, e: React.MouseEvent) {
       break;
     }
 
-    case 'mousemove': {
+    case 'pointermove': {
       const { drag } = this.state;
       if (!drag || !drag.dragging) return;
       this.setState((prevState) => {
@@ -316,8 +324,8 @@ export default function handler(this: Popup, e: React.MouseEvent) {
       break;
     }
 
-    case 'mouseleave':
-    case 'mouseup': {
+    case 'pointerleave':
+    case 'pointerup': {
       const { drag } = this.state;
       if (!drag || !drag.dragging) return;
       this.setState((prevState) => {

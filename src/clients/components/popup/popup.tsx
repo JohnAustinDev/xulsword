@@ -6,11 +6,16 @@ import {
   stringHash,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
-import { G, GI } from '../../G.ts';
-import { libswordImgSrc, notMouse, windowArguments } from '../../common.ts';
+import { G } from '../../G.ts';
+import {
+  addHoverLinks,
+  libswordImgSrc,
+  supportsHover,
+  windowArguments,
+} from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { topHandle, htmlAttribs } from '../libxul/xul.tsx';
-import { Box, Hbox } from '../libxul/boxes.tsx';
+import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button.tsx';
 import { getRefBible } from '../atext/zversekey.ts';
 import popupH, { getPopupHTML } from './popupH.ts';
@@ -69,7 +74,7 @@ class Popup
   extends React.Component<PopupProps, PopupState>
   implements RenderPromiseComponent
 {
-  handler: (e: React.MouseEvent) => void;
+  handler;
 
   renderPromise: RenderPromise;
 
@@ -189,7 +194,7 @@ class Popup
   // Write popup contents from LibSword, and update state if popup
   // was repositioned.
   update() {
-    const { props, loadingRef, renderPromise } = this;
+    const { props, loadingRef, renderPromise, handler } = this;
     const { elemdata, isWindow } = props;
     const pts = loadingRef?.current?.getElementsByClassName('popup-text');
     if (!loadingRef.current || !pts)
@@ -214,6 +219,22 @@ class Popup
           if (!renderPromise.waiting()) {
             sanitizeHTML(pt, html);
             libswordImgSrc(pt);
+            addHoverLinks(
+              pt,
+              [
+                'npopup',
+                'cr',
+                'fn',
+                'un',
+                'sn',
+                'sr',
+                'dt',
+                'dtl',
+                'aboutlink',
+                'introlink',
+              ],
+              handler,
+            );
             this.positionPopup(true);
           }
           if (isWindow) this.setTitle();
@@ -229,7 +250,7 @@ class Popup
             this.positionPopup();
             pt.dataset.infokey = infokey;
             // Scroll to the top of the newly written popup.
-            if (Build.isWebApp && notMouse())
+            if (Build.isWebApp && !supportsHover())
               setTimeout(
                 () =>
                   document
@@ -275,7 +296,7 @@ class Popup
     );
   }
 
-  onMouseLeftPopup(e: React.MouseEvent) {
+  onMouseLeftPopup(e: React.PointerEvent) {
     const { props, handler } = this;
     const { onMouseLeftPopup } = props;
     handler(e);
@@ -323,20 +344,20 @@ class Popup
       <div
         ref={loadingRef}
         {...htmlAttribs(`npopup ${cls}`, props)}
-        {...topHandle('onMouseLeave', props.onMouseLeftPopup, props)}
+        {...topHandle('onPointerLeave', props.onMouseLeftPopup, props)}
         {...topHandle('onContextMenu', props.onPopupContextMenu, props)}
         onWheel={(e) => {
           e.stopPropagation();
         }}
       >
-        <div
+        <Vbox
           className="npopupTX userFontBase text"
-          onClick={props.onPopupClick}
-          onMouseDown={handler}
-          onMouseMove={handler}
-          onMouseUp={handler}
-          onMouseOver={handler}
-          onMouseLeave={onMouseLeftPopup}
+          onPointerDown={props.onPopupClick}
+          onPointerDownLong={handler}
+          onPointerMove={handler}
+          onPointerUp={handler}
+          onPointerEnter={handler}
+          onPointerLeave={onMouseLeftPopup}
           style={boxlocation}
           data-data={JSON_attrib_stringify(data)}
         >
@@ -348,7 +369,7 @@ class Popup
             {elemdata && elemdata.length > 1 && (
               <Button className="popupBackLink" icon="arrow-left" />
             )}
-            {!isWindow && !notMouse() && (
+            {!isWindow && supportsHover() && (
               <Button
                 className={[
                   'draghandle',
@@ -389,7 +410,7 @@ class Popup
           </Hbox>
 
           <div className="popup-text" />
-        </div>
+        </Vbox>
       </div>
     );
   }

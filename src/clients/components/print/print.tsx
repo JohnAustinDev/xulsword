@@ -73,7 +73,7 @@ export default function Print(props: PrintProps) {
               id="back"
               flex="1"
               fill="x"
-              onClick={backHandler}
+              onPointerDown={backHandler}
               domref={loadingRef}
             >
               {GI.i18n.t('', renderPromise, 'back.label')}

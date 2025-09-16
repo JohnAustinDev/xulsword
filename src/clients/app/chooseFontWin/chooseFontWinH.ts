@@ -187,7 +187,7 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
   const target = e.target as HTMLElement;
   const currentTarget = e.currentTarget as HTMLElement;
   switch (e.type) {
-    case 'click': {
+    case 'pointerdown': {
       switch (currentTarget.id) {
         case 'cancel': {
           preclose();

@@ -4,24 +4,21 @@ import {
   cleanDoubleClickSelection,
   clone,
   getCSS,
-  JSON_stringify,
   ofClass,
+  pad,
   randomID,
   sanitizeHTML,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
-import type S from '../../../defaultPrefs.ts';
 import { G, GI } from '../../G.ts';
-import { doUntilDone, getExtRefHTML } from '../../common.ts';
+import { doUntilDone, getExtRefHTML, supportsHover } from '../../common.ts';
 import { getElementData } from '../../htmlData.ts';
-import log from '../../log.ts';
 import { delayHandler } from '../libxul/xul.tsx';
+import { cancelStrongsHiLights, Hilight } from '../popup/popupParentH.ts';
 import { aTextWheelScroll, getScrollVerse } from './zversekey.ts';
 
 import type { GType, SearchType } from '../../../type.ts';
 import type Atext from './atext.tsx';
-
-let AddedRules: Array<{ sheet: CSSStyleSheet; index: number }> = [];
 
 function scroll2Note(atext: HTMLElement, id: string) {
   Array.from(atext.getElementsByClassName('fnselected')).forEach((note) => {
@@ -32,15 +29,19 @@ function scroll2Note(atext: HTMLElement, id: string) {
   note.classList.add('fnselected');
   const nb = atext.querySelector('.nb');
   if (nb) {
-    nb.scrollTop = note.offsetTop - note.offsetHeight;
+    nb.scrollTop = note.offsetTop;
   }
   return true;
 }
 
-export default function handler(this: Atext, es: React.SyntheticEvent) {
+// Event handler for a text pane's content.
+export default function handler(
+  this: Atext,
+  es: React.SyntheticEvent | PointerEvent,
+) {
   switch (es.type) {
-    case 'click': {
-      const e = es as React.MouseEvent;
+    case 'pointerdown': {
+      const e = es as React.PointerEvent;
       const targ = ofClass(
         [
           'cr',
@@ -216,134 +217,141 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       break;
     }
 
-    case 'mouseover': {
-      const targ = ofClass(
-        ['cr', 'fn', 'sn', 'un', 'image-viewport'],
-        es.target,
-      );
-      if (targ === null) return;
+    case 'pointerenter': {
+      const { target } = es;
+      const oc = ofClass(['cr', 'fn', 'sn', 'un', 'image-viewport'], target);
+      if (!oc) return;
+      const { element, type } = oc;
+      if (!element) return;
       const { props } = this;
       const { isPinned, module, panelIndex: index, place: pl } = props;
       const { pin } = this.state;
       const place = isPinned && pin ? pin.place : pl;
-      const target = es.target as HTMLElement;
-      const atext = es.currentTarget as HTMLElement;
-      const type = module ? G.Tab[module].type : '';
-      let popupParent: any = ofClass(['npopup'], target);
-      popupParent = popupParent ? popupParent.element : null;
-      const elem = targ.element;
-      const p = getElementData(elem);
+      const atext = ofClass(['atext'], target)?.element;
+      const modtype = module ? G.Tab[module].type : '';
+      const inPopup = ofClass(['npopup'], target);
+      const p = getElementData(element);
       const { title, type: ptype } = p;
       let okay;
-      switch (targ.type) {
-        case 'cr':
-          if (p && place.crossrefs === 'notebox') {
-            okay = scroll2Note(atext, `w${index}.footnote.${ptype}.${title}`);
-          }
-          break;
+      if (atext) {
+        switch (type) {
+          case 'cr':
+            if (p && place.crossrefs === 'notebox') {
+              okay = scroll2Note(atext, `w${index}.footnote.${ptype}.${title}`);
+            }
+            break;
 
-        case 'fn':
-          // genbk fn are embedded in text
-          if (!popupParent && type === C.GENBOOK) okay = null;
-          else if (p && place.footnotes === 'notebox') {
-            okay = scroll2Note(atext, `w${index}.footnote.${ptype}.${title}`);
-          }
-          break;
+          case 'fn':
+            // genbk fn are embedded in text
+            if (!inPopup && modtype === C.GENBOOK) okay = true;
+            else if (p && place.footnotes === 'notebox') {
+              okay = scroll2Note(atext, `w${index}.footnote.${ptype}.${title}`);
+            }
+            break;
 
-        case 'un':
-          if (
-            p &&
-            place.usernotes === 'notebox' &&
-            (type === C.BIBLE || type === C.COMMENTARY)
-          ) {
-            okay = scroll2Note(atext, `w${index}.footnote.${ptype}.${title}`);
-          }
-          break;
+          case 'un':
+            if (
+              p &&
+              place.usernotes === 'notebox' &&
+              (modtype === C.BIBLE || modtype === C.COMMENTARY)
+            ) {
+              okay = scroll2Note(atext, `w${index}.footnote.${ptype}.${title}`);
+            }
+            break;
 
-        case 'sn': {
-          // Add elem's strong's classes to stylesheet for highlighting
-          const classes = Array.from(elem.classList);
-          classes.shift(); // remove sn base class
-          classes
-            .filter((c) => /^S_\w*\d+$/.test(c))
-            .forEach((cls, xx) => {
-              const x = xx > 2 ? 2 : xx;
-              const sheet =
-                document.styleSheets[document.styleSheets.length - 1];
-              const i = sheet.cssRules.length;
-              const matchingStrongs = getCSS(`.matchingStrongs${x} {`);
-              if (matchingStrongs) {
-                sheet.insertRule(
-                  matchingStrongs.rule.cssText.replace(
-                    `matchingStrongs${x}`,
-                    cls,
-                  ),
-                  i,
-                );
-                AddedRules.push({ sheet, index: i });
-              }
-            });
-          break;
+          case 'sn': {
+            // Add elem's strong's classes to stylesheet for highlighting
+            const classes = Array.from(element.classList);
+            classes.shift(); // remove sn base class
+            classes
+              .filter((c) => /^S_\w*\d+$/.test(c))
+              .forEach((sclass, xx) => {
+                const x = xx > 2 ? 2 : xx;
+                const sheet =
+                  document.styleSheets[document.styleSheets.length - 1];
+                const cssRuleTemplate = getCSS(`.matchingStrongs${x} {`);
+                if (cssRuleTemplate) {
+                  // Each Strong's module uses classes with different number
+                  // padding, so multiple rules are required for situations
+                  // such as parallel texts or interlinear.
+                  const sclasses: string[] = [];
+                  const sn = sclass.match(/\d+/);
+                  if (sn) {
+                    const sni = Number(sn[0]);
+                    sclasses.push(
+                      ...[2, 3, 4, 5]
+                        .map((n) => pad(sni, n, 0))
+                        .filter((n, i, a) => !a.slice(i + 1).includes(n))
+                        .map((n) => sclass.replace(/\d+/, n)),
+                    );
+                  } else sclasses.push(sclass);
+                  sclasses.forEach((cls) => {
+                    const i2 = sheet.insertRule(
+                      cssRuleTemplate.rule.cssText.replace(
+                        `matchingStrongs${x}`,
+                        cls,
+                      ),
+                      sheet.cssRules.length,
+                    );
+                    Hilight.strongsCSS.push({ sheet, index: i2 });
+                  });
+                }
+              });
+            break;
+          }
+
+          case 'image-viewport': {
+            okay = true;
+            const img = element.getElementsByTagName('img')[0] as
+              | HTMLImageElement
+              | undefined;
+            if (
+              img &&
+              !img.style.cursor &&
+              img.width < img.naturalWidth &&
+              window.getComputedStyle(img, null).cursor !== 'not-allowed'
+            ) {
+              img.style.cursor = 'zoom-in';
+            }
+            break;
+          }
+
+          default:
+            throw Error(`Unhandled atextHandler mouseOver event '${type}'`);
         }
-
-        case 'image-viewport': {
-          okay = true;
-          const img = elem.getElementsByTagName('img')[0] as
-            | HTMLImageElement
-            | undefined;
-          if (
-            img &&
-            !img.style.cursor &&
-            img.width < img.naturalWidth &&
-            window.getComputedStyle(img, null).cursor !== 'not-allowed'
-          ) {
-            img.style.cursor = 'zoom-in';
-          }
-          break;
-        }
-
-        default:
-          throw Error(`Unhandled atextHandler mouseOver event '${targ.type}'`);
       }
 
-      if (!okay) {
-        // report the problem for debugging
-        if (okay === false) {
-          let msg = `w=${index}\nclass=${elem.className}`;
-          if (p) {
-            Object.entries(p).forEach((entry) => {
-              const [m, val] = entry;
-              msg += `\n${m}=${JSON_stringify(val)}`;
-            });
-          }
-          log.warn(msg);
-        }
-        elem.style.cursor = okay === false ? 'help' : 'default';
+      if (okay === false) {
+        element.style.cursor = okay === false ? 'help' : 'default';
       }
       break;
     }
 
-    case 'mouseout': {
-      const e = es as React.MouseEvent;
+    case 'pointerleave': {
       // Remove any footnote hilighting
-      const atext = es.currentTarget as HTMLElement;
+      const atext = ofClass('atext', es.target)?.element;
       if (atext) {
-        const nbc = atext.lastChild as HTMLElement;
-        Array.from(nbc.getElementsByClassName('fnselected')).forEach((note) => {
-          note.classList.remove('fnselected');
-        });
+        const nbc = atext.lastChild;
+        if (nbc instanceof HTMLElement) {
+          Array.from(nbc.getElementsByClassName('fnselected')).forEach(
+            (note) => {
+              note.classList.remove('fnselected');
+            },
+          );
+        }
       }
 
-      // Remove any dynamically added Strong's classes from CSS stylesheet,
-      // unless we're now over npopup
-      const nowover = e.relatedTarget as HTMLElement | null;
-      if (!nowover?.classList.contains('npopup')) {
-        AddedRules.reverse().forEach((r) => {
-          if (r.index < r.sheet.cssRules.length) {
-            r.sheet.deleteRule(r.index);
-          }
-        });
-        AddedRules = [];
+      if (supportsHover()) {
+        // Remove any dynamically added Strong's classes from CSS stylesheet,
+        // unless we're now over npopup
+        const { target } = es;
+        if (target) {
+          const nowover = (
+            target && 'classList' in target ? target : null
+          ) as HTMLElement | null;
+          if (nowover && !nowover.classList.contains('npopup'))
+            cancelStrongsHiLights();
+        }
       }
       break;
     }

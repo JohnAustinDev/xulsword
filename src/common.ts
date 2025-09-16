@@ -802,33 +802,6 @@ export function ofClass(
   return { element: result, type };
 }
 
-// Returns a promise whose state can be queried or can be rejected at will.
-export function querablePromise<T>(promise: Promise<T>): QuerablePromise<T> {
-  if ('isFulfilled' in promise) return promise as QuerablePromise<T>;
-  const result = promise.then(
-    (v) => {
-      result.isFulfilled = true;
-      result.isPending = false;
-      return v;
-    },
-    (e) => {
-      result.isRejected = true;
-      result.isPending = false;
-      throw e;
-    },
-  ) as QuerablePromise<T>;
-
-  result.isPending = true;
-  result.isRejected = false;
-  result.isFulfilled = false;
-
-  result.reject = (er: any) => {
-    throw er;
-  };
-
-  return result;
-}
-
 // Replaces character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)
 export function replaceASCIIcontrolChars(string: string) {
   let ret = string;
@@ -2199,7 +2172,7 @@ export function tableRowIndexesToBPSelection(rows: number[]): RowSelection {
 export function updateSelectedIndexes(
   toggleRowIndex: number,
   selectedRowIndexes: number[],
-  e: React.MouseEvent,
+  e: React.PointerEvent,
 ): number[] {
   const newSelectedRowIndexes = Array.from(new Set(selectedRowIndexes));
   newSelectedRowIndexes.sort((a, b) => a - b);

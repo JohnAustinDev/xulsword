@@ -73,7 +73,7 @@ export default class AboutWin
 
   handler(e: React.SyntheticEvent) {
     switch (e.type) {
-      case 'click': {
+      case 'pointerdown': {
         const target = e.currentTarget as HTMLElement;
         const [id] = target.id.split('.');
         switch (id) {
@@ -187,7 +187,12 @@ export default class AboutWin
         <Hbox className="dialog-buttons" pack="end" align="end">
           {!!configs.length && (
             <>
-              <Button id="showModules" flex="1" fill="x" onClick={handler}>
+              <Button
+                id="showModules"
+                flex="1"
+                fill="x"
+                onPointerDown={handler}
+              >
                 {showModules
                   ? G.i18n.t('back.label')
                   : G.i18n.t('chooseModule.label')}
@@ -202,7 +207,7 @@ export default class AboutWin
               hidden={showModules}
               flex="1"
               fill="x"
-              onClick={handler}
+              onPointerDown={handler}
             >
               {showContributors
                 ? G.i18n.t('back.label')
@@ -210,7 +215,7 @@ export default class AboutWin
             </Button>
           )}
           <Spacer flex="10" />
-          <Button id="close" flex="1" fill="x" onClick={handler}>
+          <Button id="close" flex="1" fill="x" onPointerDown={handler}>
             {G.i18n.t('close.label')}
           </Button>
         </Hbox>

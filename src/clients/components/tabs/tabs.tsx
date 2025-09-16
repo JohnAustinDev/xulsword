@@ -327,7 +327,7 @@ class Tabs
             mtMod,
             'mts-tab',
             module === mtMod ? 'active' : '',
-            <AnchorButton onClick={this.multiTabButtonClick}>
+            <AnchorButton onPointerDown={this.multiTabButtonClick}>
               {multiTabMenupopup}
             </AnchorButton>,
             renderPromise,
