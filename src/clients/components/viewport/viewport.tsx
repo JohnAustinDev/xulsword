@@ -465,6 +465,7 @@ export default class Viewport
           eHandler(e);
           popupClickClose(e as React.PointerEvent);
         })}
+        {...topHandle('onPointerMove', popupParentHandler)}
       >
         {chooser === 'bible' && showingChooser && (
           <Chooser

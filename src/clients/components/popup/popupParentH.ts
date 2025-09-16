@@ -20,8 +20,6 @@ import type Atext from '../atext/atext.tsx';
 import type Popup from './popup.tsx';
 import type { PopupState } from './popup.tsx';
 
-let WheelScrolling = false;
-
 export type PopupParent = RenderPromiseComponent & {
   state: React.ComponentState;
   props: React.ComponentProps<any>;
@@ -100,10 +98,13 @@ export function popupParentHandler(
         (atr && isPinned && isPinned[index] && atr.state.pin.place) || pl;
       const show: ShowType | undefined =
         (atr && isPinned && isPinned[index] && atr.state.pin.show) || sh;
-      if (popupDelayTO) clearTimeout(popupDelayTO);
       let openPopup = false;
       let gap = C.UI.Popup.openGap;
       const data = findElementData(element);
+      if (popupDelayTO) {
+        clearTimeout(popupDelayTO);
+        this.popupDelayTO = undefined;
+      }
       switch (type) {
         case 'cr':
           if (!place || place.crossrefs === 'popup') openPopup = true;
@@ -144,7 +145,7 @@ export function popupParentHandler(
       // The delayHandler must be used to delay getPopupHTML, or else web apps
       // will make dozens of unnecessary server calls each time the user simply
       // moves the cursor around over a strong's tagged text such as KJV.
-      if (data && openPopup && !popupParent) {
+      if (data && openPopup && !popupParent && popupDelayTO !== null) {
         delayHandler(
           this,
           (el: HTMLElement, dt: HTMLData, gp: number) => {
@@ -163,6 +164,22 @@ export function popupParentHandler(
       break;
     }
 
+    case 'pointermove': {
+      const { popupDelayTO } = this;
+      if (typeof popupDelayTO !== 'undefined') {
+        // Block popup during and after wheel scrolling.
+        const wheelScrollUnblock = !BlockPopup && popupDelayTO === null;
+        if (wheelScrollUnblock) this.popupDelayTO = undefined; // unblocks pup
+        // Cancel pending popup if touch moves.
+        const cancelPopup = !supportsHover() && popupDelayTO;
+        if (cancelPopup) {
+          if (popupDelayTO) clearTimeout(popupDelayTO);
+          this.popupDelayTO = undefined;
+        }
+      }
+      break;
+    }
+
     case 'pointerleave': {
       if (supportsHover() && this.popupDelayTO) {
         clearTimeout(this.popupDelayTO);
@@ -172,31 +189,9 @@ export function popupParentHandler(
     }
 
     case 'wheel': {
-      if ('popupDelayTO' in this) {
-        // Block popup for a time when mouse-wheel is turned, and then
-        // wait until the mouse moves again to re-enable the popup.
-        if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
-        this.popupDelayTO = null; // blocks the popup
-        WheelScrolling = true;
-        delayHandler(
-          this,
-          () => (WheelScrolling = false),
-          [],
-          C.UI.Popup.wheelDeadTime,
-          'popupUnblockTO',
-        );
-      }
-      break;
-    }
-
-    case 'pointermove': {
-      if (
-        'popupDelayTO' in this &&
-        this.popupDelayTO === null &&
-        !WheelScrolling
-      ) {
-        this.popupDelayTO = undefined; // unblocks the popup
-      }
+      // Block popup for a time when mouse-wheel is turned, and then
+      // wait until the mouse moves again to re-enable the popup.
+      blockpopup(this, C.UI.Popup.wheelDeadTime);
       break;
     }
 
@@ -330,6 +325,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           } else {
             cancelStrongsHiLights();
             this.setState({ popupParent: null });
+            blockpopup(this, 750);
           }
           break;
         }
@@ -482,6 +478,27 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
 
     default:
       throw Error(`Unhandled popupHandler event type: '${es.type}'`);
+  }
+}
+
+// Cancel and block popup from opening for a length of time in milliseconds.
+let BlockPopup = false;
+function blockpopup(xthis: PopupParent, length) {
+  if ('popupDelayTO' in xthis) {
+    if (xthis.popupDelayTO) clearTimeout(xthis.popupDelayTO);
+    xthis.popupDelayTO = null; // blocks the popup
+    BlockPopup = true;
+    delayHandler(
+      xthis,
+      () => {
+        BlockPopup = false;
+        // Hoverable re-enables after the mouse moves, otherwise re-enable now.
+        if (!supportsHover()) xthis.popupDelayTO = undefined;
+      },
+      [],
+      length,
+      'popupUnblockTO',
+    );
   }
 }
 
