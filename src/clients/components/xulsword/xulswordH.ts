@@ -6,7 +6,12 @@ import Subscription from '../../../subscription.ts';
 import analytics from '../../analytics.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
-import { doUntilDone, audioSelections } from '../../common.ts';
+import {
+  doUntilDone,
+  audioSelections,
+  Events,
+  eventHandled,
+} from '../../common.ts';
 import log from '../../log.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
 import { genbookChange } from '../atext/ztext.ts';
@@ -26,13 +31,19 @@ import type { AnalyticsInfo } from '../../analytics.ts';
 import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 
-export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
+export default function handler(
+  this: Xulsword,
+  e: React.SyntheticEvent | PointerEvent,
+) {
+  if (Events.blocked) return;
+  const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
+  const _ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { state } = this;
-  const { target } = es;
-  const currentId = es.currentTarget?.id;
-  switch (es.type) {
+  const { target, currentTarget } = e;
+  const currentId =
+    currentTarget instanceof HTMLElement ? currentTarget.id : undefined;
+  switch (e.type) {
     case 'pointerdown': {
-      const e = es as React.PointerEvent;
       switch (currentId) {
         case 'closeplayer': {
           const audio: XulswordState['audio'] = {
@@ -228,9 +239,9 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
     case 'change': {
       // Text inputs use input delay and filtering, meaning that the currentTarget
       // will be the same element as target. So target.id must be used here.
-      if (!('value' in es.target)) return;
-      if (!('id' in es.target)) return;
-      const { id, value } = es.target as { id: string; value: string };
+      if (!target || !('value' in target)) return;
+      if (!target || !('id' in target)) return;
+      const { id, value } = target as { id: string; value: string };
       doUntilDone((rp) => {
         if (rp) {
           switch (id) {
@@ -350,9 +361,9 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               break;
             }
             default:
-              throw Error(
-                `Unhandled xulswordHandler onChange event on '${id}'`,
-              );
+              if (Build.isDevelopment)
+                log.warn(`Unhandled xulswordHandler onChange event on '${id}'`);
+              return;
           }
         }
       });
@@ -465,6 +476,10 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
     }
 
     default:
-      throw Error(`Unhandled xulswordHandler event type '${es.type}'`);
+      if (Build.isDevelopment)
+        log.warn(`Unhandled xulswordHandler event type '${e.type}'`);
+      return;
   }
+
+  eventHandled(e);
 }

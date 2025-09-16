@@ -2,32 +2,38 @@ import type React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { GI } from '../../G.ts';
-import { doUntilDone } from '../../common.ts';
+import { doUntilDone, eventHandled, Events } from '../../common.ts';
+import log from '../../log.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 
 import type { BookGroupType } from '../../../type.ts';
 import type Chooser from './chooser.tsx';
 
-export default function handler(this: Chooser, es: React.SyntheticEvent): void {
-  const target = es.target as HTMLElement;
-  switch (es.type) {
+export default function handler(
+  this: Chooser,
+  e: React.SyntheticEvent | PointerEvent,
+): void {
+  if (Events.blocked) return;
+  const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
+  const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
+  switch (e.type) {
     case 'pointerdown': {
-      const e = es as React.PointerEvent;
-      e.currentTarget.classList.remove('show');
+      if (ep?.currentTarget instanceof HTMLElement)
+        ep.currentTarget.classList.remove('show');
       break;
     }
 
     case 'pointerenter': {
-      const e = es as React.PointerEvent;
-      const targ = ofClass(
-        ['bookgroup', 'bookgroupitem', 'chaptermenucell'],
-        target,
+      const oc = ofClass(
+        ['headingmenu', 'bookgroup', 'bookgroupitem', 'chaptermenucell'],
+        e.target,
       );
-      if (!targ) return;
+      if (!oc) return;
       const { bookGroups, headingsModule } = this.props;
       const { state } = this;
-      const bookgroup = target.dataset.bookgroup as BookGroupType;
-      switch (targ.type) {
+      const { element, type } = oc;
+      const bookgroup = element.dataset.bookgroup as BookGroupType;
+      switch (type) {
         case 'bookgroup': {
           if (
             bookgroup &&
@@ -46,15 +52,15 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
 
         case 'bookgroupitem': {
           const bookList = document.querySelector('.book-list');
-          if (bookList) {
+          if (ep && bookList) {
             if (
-              e.clientY <
+              ep.clientY <
               bookList.getBoundingClientRect().top +
                 C.UI.Chooser.mouseScrollMargin
             )
               this.startSlidingDown(e, 65);
             else if (
-              e.clientY >
+              ep.clientY >
               bookList.getBoundingClientRect().bottom -
                 C.UI.Chooser.mouseScrollMargin
             )
@@ -64,12 +70,16 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
           break;
         }
 
+        case 'headingmenu':
         case 'chaptermenucell': {
-          const chapterMenu = ofClass('chaptermenu', target);
-          if (!chapterMenu) return;
-          const { book, chapter } = targ.element.dataset;
+          const oc3 = ofClass('chaptermenu', e.target);
+          if (!oc3) return;
+          const { element: chaptermenu } = oc3;
+          const { target } = e;
+          const { book, chapter } =
+            target instanceof HTMLElement ? target.dataset : {};
           if (!book || !chapter || !headingsModule) return;
-          const headingmenu = chapterMenu.element.getElementsByClassName(
+          const headingmenu = chaptermenu.getElementsByClassName(
             'headingmenu',
           )[0] as HTMLElement;
           while (headingmenu.firstChild) {
@@ -128,49 +138,83 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
               }
               // If headings were found, then display them inside the popup
               if (headingmenu.childNodes.length) {
-                const row = chapterMenu.element.firstChild as HTMLElement;
+                const row = chaptermenu.firstChild as HTMLElement;
                 if (row) {
                   headingmenu.style.top = `${Number(
                     -2 +
                       (1 + Math.floor((Number(chapter) - 1) / 10)) *
                         row.offsetHeight,
                   )}px`;
-                  chapterMenu.element.classList.add('show');
+                  chaptermenu.classList.add('show');
                 }
+              } else if (Events.lastPointerEvent?.pointerType !== 'mouse') {
+                // Followon events have been blocked below, but no menu items
+                // exist, so initiate a new pointerdown event.
+                /*
+                element.dispatchEvent(
+                  new PointerEvent('pointerdown', {
+                    bubbles: true,
+                    pointerId: 1,
+                    isPrimary: true,
+                    pointerType: 'mouse',
+                  }),
+                );*/
               }
             }
           });
+          // Touch followon events are blocked below, but headingmenu
+          // pointerdown should be handled.
+          // TODO: chaptermenucell is here because the dispatchEvent above
+          // hasn't been made to work yet. So finish that, then remove
+          // 'chaptermenucell' here.
+          if (type === 'chaptermenucell' || type === 'headingmenu') {
+            Events.blocked = false;
+            return;
+          }
           break;
         }
         default:
-          throw Error(`Unhandled chooserH mouseover on: '${targ.type}'`);
+          if (Build.isDevelopment)
+            log.warn(`Unhandled chooserH mouseover on: '${type}'`);
+          return;
+      }
+      // On touch, we've handled mouseover, so ignore followon events.
+      if (Events.lastPointerEvent?.pointerType !== 'mouse') {
+        Events.blocked = true;
+        setTimeout(() => (Events.blocked = false), 500);
       }
       break;
     }
 
     case 'pointerleave': {
-      const e = es as React.PointerEvent;
-      if (this.headingmenuTO) clearTimeout(this.headingmenuTO);
-      const chmenu = ofClass(['chaptermenu'], target);
-      const relatedTarget = e.relatedTarget as HTMLElement | null;
-      if (chmenu && relatedTarget?.classList) {
-        if (!relatedTarget.classList.contains('headingmenu')) {
-          chmenu.element.classList.remove('show');
+      if (ep) {
+        if (this.headingmenuTO) clearTimeout(this.headingmenuTO);
+        const ch3 = ofClass(['chaptermenu'], ep.target);
+        const { relatedTarget } = ep;
+        if (ch3 && relatedTarget instanceof HTMLElement) {
+          const { element: chaptermenu } = ch3;
+          if (!relatedTarget.classList.contains('headingmenu')) {
+            chaptermenu.classList.remove('show');
+          }
         }
       }
       break;
     }
 
     case 'wheel': {
-      const e = es as React.WheelEvent;
+      const ew = e as React.WheelEvent;
       const { rowHeight } = this;
-      const wheelD = Math.round(e.deltaY / rowHeight);
-      if (e.deltaY < 0) this.slideDown(-1 * wheelD);
-      else if (e.deltaY > 0) this.slideUp(wheelD);
+      const wheelD = Math.round(ew.deltaY / rowHeight);
+      if (ew.deltaY < 0) this.slideDown(-1 * wheelD);
+      else if (ew.deltaY > 0) this.slideUp(wheelD);
       break;
     }
 
     default:
-      throw Error(`Unhandled ChooserH event type: '${es.type}'`);
+      if (Build.isDevelopment)
+        log.warn(`Unhandled ChooserH event type: '${e.type}'`);
+      return;
   }
+
+  eventHandled(e);
 }

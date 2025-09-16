@@ -6,9 +6,12 @@ import { getElementData } from '../../htmlData.ts';
 import { G, GI } from '../../G.ts';
 import {
   doUntilDone,
+  eventHandled,
+  Events,
   safeScrollIntoView,
   windowArguments,
 } from '../../common.ts';
+import log from '../../log.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { textChange } from '../atext/ztext.ts';
 import { aTextWheelScroll, chapterChange } from '../atext/zversekey.ts';
@@ -182,12 +185,15 @@ function setState(
 
 export default function handler(
   this: Xulsword | ViewportWin,
-  es: React.SyntheticEvent<any>,
+  e: React.SyntheticEvent<any>,
 ) {
+  if (Events.blocked) return;
+  const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
+  const _ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { state } = this;
   const { location } = state;
   const { panels } = state;
-  const target = es.target as HTMLElement;
+  const { target } = e;
   const mcls = ofClass(['atext', 'tabs'], target);
   const atext = mcls && mcls.type === 'atext' ? mcls.element : null;
   const tabs = mcls && mcls.type === 'tabs' ? mcls.element : null;
@@ -196,9 +202,8 @@ export default function handler(
   const isPinned = isps === 'true';
   const panel = panels[index];
   const type = panel ? G.Tab[panel].type : null;
-  switch (es.type) {
+  switch (e.type) {
     case 'pointerdown': {
-      const e = es as React.PointerEvent;
       const targ = ofClass(
         [
           'text-pin',
@@ -536,16 +541,19 @@ export default function handler(
           }
           break;
         }
-        default:
-          throw Error(
-            `Unhandled handleViewport click event on '${target.className}'`,
-          );
+        default: {
+          const className =
+            target instanceof HTMLElement ? target.className : 'unknown';
+          if (Build.isDevelopment)
+            log.warn(`Unhandled handleViewport click event on '${className}'`);
+          return;
+        }
       }
       break;
     }
 
     case 'keydown': {
-      const e = es as React.KeyboardEvent;
+      const ek = e as React.KeyboardEvent;
       const targ = ofClass(['dictkeyinput'], target);
       if (targ && targ.element && panel && atext) {
         e.stopPropagation();
@@ -554,22 +562,22 @@ export default function handler(
           panel,
           atext,
           targ.element as HTMLInputElement,
-          e.key,
-          e.key === 'Enter' ? 0 : C.UI.Atext.dictKeyInputDelay,
+          ek.key,
+          ek.key === 'Enter' ? 0 : C.UI.Atext.dictKeyInputDelay,
         );
       }
       break;
     }
 
     case 'wheel': {
-      const e = es as React.WheelEvent;
+      const ew = e as React.WheelEvent;
       if (!isPinned && atext && type && !ofClass(['nbc'], target)) {
         if ([C.BIBLE, C.COMMENTARY].includes(type)) {
-          aTextWheelScroll(e, atext, this);
+          aTextWheelScroll(ew, atext, this);
         } else if (type === C.GENBOOK) {
           const sb = atext.getElementsByClassName('sb');
           if (sb.length) {
-            sb[0].scrollLeft += e.deltaY;
+            sb[0].scrollLeft += ew.deltaY;
           }
         }
       }
@@ -577,8 +585,12 @@ export default function handler(
     }
 
     default:
-      throw Error(`Unhandled handleViewport event type '${es.type}'`);
+      if (Build.isDevelopment)
+        log.warn(`Unhandled handleViewport event type '${e.type}'`);
+      return;
   }
+
+  eventHandled(e);
 }
 
 function handleDictKeyInput(

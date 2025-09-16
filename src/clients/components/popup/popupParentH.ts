@@ -7,10 +7,12 @@ import type S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import {
+  eventHandled,
+  Events,
   safeScrollIntoView,
-  supportsHover,
   windowArguments,
 } from '../../common.ts';
+import log from '../../log.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 
 import type { GType, PlaceType, SearchType, ShowType } from '../../../type.ts';
@@ -52,16 +54,20 @@ export type ViewportPopupProps = {
 // Event handler for the container containing links to popups.
 export function popupParentHandler(
   this: PopupParent,
-  es: React.SyntheticEvent | PointerEvent,
+  e: React.SyntheticEvent | PointerEvent,
   module?: string,
 ) {
-  switch (es.type) {
+  if (Events.blocked) return;
+  const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
+  const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
+  const { pointerType } = ep ?? {};
+  switch (e.type) {
     case 'pointerenter': {
-      const parent = ofClass(['npopup'], es.target)?.element;
+      const parent = ofClass(['npopup'], e.target)?.element;
       // Hover over elements outside of a popup which are not 'x-target_self'
       // are handled here.
       if (parent) return;
-      const { target } = es;
+      const { target } = e;
       const oc = ofClass(
         [
           'cr',
@@ -168,10 +174,10 @@ export function popupParentHandler(
       const { popupDelayTO } = this;
       if (typeof popupDelayTO !== 'undefined') {
         // Block popup during and after wheel scrolling.
-        const wheelScrollUnblock = !BlockPopup && popupDelayTO === null;
+        const wheelScrollUnblock = popupDelayTO === null;
         if (wheelScrollUnblock) this.popupDelayTO = undefined; // unblocks pup
-        // Cancel pending popup if touch moves.
-        const cancelPopup = !supportsHover() && popupDelayTO;
+        // Cancel pending popup on touch pointermove.
+        const cancelPopup = pointerType !== 'mouse' && popupDelayTO;
         if (cancelPopup) {
           if (popupDelayTO) clearTimeout(popupDelayTO);
           this.popupDelayTO = undefined;
@@ -181,7 +187,7 @@ export function popupParentHandler(
     }
 
     case 'pointerleave': {
-      if (supportsHover() && this.popupDelayTO) {
+      if (pointerType === 'mouse' && this.popupDelayTO) {
         clearTimeout(this.popupDelayTO);
         this.popupDelayTO = undefined;
       }
@@ -190,22 +196,33 @@ export function popupParentHandler(
 
     case 'wheel': {
       // Block popup for a time when mouse-wheel is turned, and then
-      // wait until the mouse moves again to re-enable the popup.
-      blockpopup(this, C.UI.Popup.wheelDeadTime);
+      // wait until the mouse moves again before re-enabling the popup.
+      if (pointerType === 'mouse')
+        blockpopup(this, C.UI.Popup.wheelDeadTime, true);
       break;
     }
 
     default:
-      throw Error(`Unhandled popupParentH event type: '${es.type}'`);
+      if (Build.isDevelopment)
+        log.warn(`Unhandled popupParentH event type: '${e.type}'`);
+      return;
   }
+
+  eventHandled(e);
 }
 
 // Event handler for the popup itself.
-export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
-  switch (es.type) {
+export function popupHandler(
+  this: PopupParent,
+  e: React.SyntheticEvent | PointerEvent,
+) {
+  if (Events.blocked) return;
+  const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
+  const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
+  const { pointerType } = ep ?? {};
+  switch (e.type) {
     case 'pointerdown': {
-      const e = es as React.PointerEvent;
-      const targ = ofClass(
+      const oc = ofClass(
         [
           'fn',
           'sn',
@@ -223,27 +240,27 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           'npopup',
           'requiremod',
         ],
-        es.target,
+        e.target,
       );
-      if (!targ) return;
-      const state = this.state as PopupParentState;
+      if (!oc) return;
+      const { state } = this;
       const { popupParent } = state;
+      const { element, type } = oc;
       const parent = popupParent || document.getElementById('root');
       // Require popup or window parent but don't search beyond npopup when testing type
-      if (!parent || targ.type === 'npopup') return;
+      if (!parent || type === 'npopup') return;
       e.preventDefault();
       e.stopPropagation();
-      const elem = targ.element;
-      const data = findElementData(elem);
+      const data = findElementData(element);
       const popupY = parent.getBoundingClientRect().y;
-      switch (targ.type) {
+      switch (type) {
         case 'fn':
         case 'sn':
         case 'cr':
         case 'sr':
         case 'dt':
         case 'dtl': {
-          if (data && !targ.element.classList.contains('empty')) {
+          if (ep && data && !element.classList.contains('empty')) {
             this.setState((prevState: PopupParentState) => {
               let { elemdata, gap } = prevState;
               if (elemdata === null) elemdata = [];
@@ -254,7 +271,8 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               }
               elemdata.push(data);
               // set the gap so as to position popup under the mouse
-              if (supportsHover()) gap = Math.round(e.clientY - popupY - 40);
+              if (pointerType === 'mouse')
+                gap = Math.round(ep.clientY - popupY - 40);
               const s: Partial<PopupParentState> = {
                 elemdata,
                 gap,
@@ -269,7 +287,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
             const gfns = parent.getElementsByClassName('gfn');
             Array.from(gfns).forEach((gfn) => {
               const gfne = gfn as HTMLElement;
-              if (gfn !== elem && gfne.dataset.title === data.title)
+              if (gfn !== element && gfne.dataset.title === data.title)
                 safeScrollIntoView(gfne, parent, undefined, 30);
             });
           }
@@ -325,7 +343,9 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           } else {
             cancelStrongsHiLights();
             this.setState({ popupParent: null });
-            blockpopup(this, 750);
+            // Multiple events may fire, and if the popup closes, ignore
+            // them all, as the context is now different.
+            blockpopup(this, 750, false);
           }
           break;
         }
@@ -336,7 +356,8 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               elemdata = clone(elemdata);
               elemdata.pop();
               // set the gap so as to position popup under the mouse
-              if (supportsHover()) gap = Math.round(e.clientY - popupY - 40);
+              if (ep && pointerType === 'mouse')
+                gap = Math.round(ep.clientY - popupY - 40);
               const s: Partial<PopupParentState> = {
                 elemdata,
                 gap,
@@ -368,8 +389,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               additionalArguments: { popupState },
               options: { title: 'popup' },
             });
-            const s: Partial<PopupParentState> = { popupParent: null };
-            this.setState(s);
+            this.setState({ popupParent: null });
           }
           break;
         }
@@ -397,17 +417,20 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           break;
         }
         default:
-          throw Error(
-            `Unhandled popupHandler click class: '${elem.className}'`,
-          );
+          if (Build.isDevelopment)
+            log.warn(
+              `Unhandled popupHandler click class: '${element.className}'`,
+            );
+          return;
       }
       break;
     }
 
     case 'change': {
-      const select = ofClass(['popup-mod-select'], es.target);
-      if (select) {
-        const t = select.element as HTMLSelectElement;
+      const oc = ofClass(['popup-mod-select'], e.target);
+      if (oc) {
+        const { element, type } = oc;
+        const t = element as HTMLSelectElement;
         const { value } = t;
         this.setState((prevState: PopupParentState) => {
           let { elemdata } = prevState;
@@ -428,33 +451,30 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           // Making a selection from a long dropdown may put the mouse outside
           // the popup after selection. So hold the popup open until the mouse
           // moves over the popup and then it leaves again.
-          const s: Partial<PopupParentState> = {
+          return {
             elemdata,
             popupHold: true,
             popupReset: prevState.popupReset + 1,
           };
-          return s;
         });
       } else {
-        const trg = es.target as HTMLElement;
-        throw Error(`Unhandled popupHandler change event: '${trg.className}'`);
+        const trg = e.target as HTMLElement;
+        if (Build.isDevelopment)
+          log.warn(`Unhandled popupHandler change event: '${trg.className}'`);
+        return;
       }
       break;
     }
 
     case 'contextmenu': {
-      const s: Partial<PopupParentState> = {
-        popupHold: true,
-      };
-      this.setState(s);
+      this.setState({ popupHold: true });
       break;
     }
 
     case 'pointermove': {
-      const { popupHold } = this.state as PopupParentState;
+      const { popupHold } = this.state;
       if (popupHold) {
-        const s: Partial<PopupParentState> = { popupHold: false };
-        this.setState(s);
+        this.setState({ popupHold: false });
       }
       break;
     }
@@ -462,38 +482,45 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
     // Close the popup when the mouse leaves it.
     case 'pointerleave': {
       const { popupRef } = this;
-      const { popupParent, popupHold } = this.state as PopupParentState;
+      const { popupParent, popupHold } = this.state;
       const parent = popupParent || document.getElementById('root');
       if (
         parent &&
         !popupHold &&
         !(popupRef?.current?.state as PopupState).drag?.dragging &&
-        supportsHover()
+        pointerType === 'mouse'
       ) {
-        const s: Partial<PopupParentState> = { popupParent: null };
-        this.setState(s);
+        this.setState({ popupParent: null });
       }
       break;
     }
 
     default:
-      throw Error(`Unhandled popupHandler event type: '${es.type}'`);
+      if (Build.isDevelopment)
+        log.warn(`Unhandled popupHandler event type: '${e.type}'`);
+      return;
   }
+
+  eventHandled(e);
 }
 
-// Cancel and block popup from opening for a length of time in milliseconds.
-let BlockPopup = false;
-function blockpopup(xthis: PopupParent, length) {
+// Cancel any pending open-popup, block handlers for a length of time, and
+// optionally wait to re-enable open-popup until the next mousemove is handled.
+function blockpopup(
+  xthis: PopupParent,
+  length: number,
+  thenWaitUntilMouseMoves = false,
+) {
   if ('popupDelayTO' in xthis) {
     if (xthis.popupDelayTO) clearTimeout(xthis.popupDelayTO);
     xthis.popupDelayTO = null; // blocks the popup
-    BlockPopup = true;
+    Events.blocked = true;
     delayHandler(
       xthis,
       () => {
-        BlockPopup = false;
+        Events.blocked = false;
         // Hoverable re-enables after the mouse moves, otherwise re-enable now.
-        if (!supportsHover()) xthis.popupDelayTO = undefined;
+        if (!thenWaitUntilMouseMoves) xthis.popupDelayTO = undefined;
       },
       [],
       length,

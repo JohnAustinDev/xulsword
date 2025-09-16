@@ -355,25 +355,35 @@ export function iframeAutoHeight(
 // - pointerup (for devices without hover)
 // - pointerleave
 export const PointerDownLong = { timeout: null as NodeJS.Timeout | null };
-export function supportsHover(): boolean {
-  return window.matchMedia('(hover: hover)').matches;
-}
 
 // Implement onPointerDownLong, primarily for use by devices without hover
 // support.
 export function onPointerDownLong(
   func: (e: React.PointerEvent) => void,
 ): (e: React.PointerEvent) => void {
-  return supportsHover()
-    ? func
-    : (e: React.PointerEvent) => {
-        const { timeout } = PointerDownLong;
-        if (timeout) clearTimeout(timeout);
-        PointerDownLong.timeout = setTimeout(
-          () => func(e),
-          C.UI.WebApp.longTouchTO,
-        );
-      };
+  return (e: React.PointerEvent) => {
+    const { pointerType } = e;
+    if (pointerType === 'mouse') func(e);
+    else {
+      const { timeout } = PointerDownLong;
+      if (timeout) clearTimeout(timeout);
+      PointerDownLong.timeout = setTimeout(
+        () => func(e),
+        C.UI.WebApp.longTouchTO,
+      );
+    }
+  };
+}
+
+export const Events = {
+  blocked: false,
+  lastPointerEvent: null as PointerEvent | null,
+};
+
+export function eventHandled(e: React.SyntheticEvent | Event) {
+  const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
+  const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
+  if (ep) Events.lastPointerEvent = ep;
 }
 
 // React does not support pointerover or pointerout, so this function

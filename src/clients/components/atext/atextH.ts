@@ -11,7 +11,13 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { doUntilDone, getExtRefHTML, supportsHover } from '../../common.ts';
+import {
+  doUntilDone,
+  eventHandled,
+  Events,
+  getExtRefHTML,
+} from '../../common.ts';
+import log from '../../log.ts';
 import { getElementData } from '../../htmlData.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { cancelStrongsHiLights, Hilight } from '../popup/popupParentH.ts';
@@ -35,13 +41,14 @@ function scroll2Note(atext: HTMLElement, id: string) {
 }
 
 // Event handler for a text pane's content.
-export default function handler(
-  this: Atext,
-  es: React.SyntheticEvent | PointerEvent,
-) {
-  switch (es.type) {
+export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
+  if (Events.blocked) return;
+  const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
+  const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
+  const { pointerType } = ep ?? {};
+  switch (e.type) {
     case 'pointerdown': {
-      const e = es as React.PointerEvent;
+      const { target } = e;
       const targ = ofClass(
         [
           'cr',
@@ -50,13 +57,12 @@ export default function handler(
           'image-viewport',
           'dictkeyinput',
         ],
-        es.target,
+        target,
       );
       if (targ === null) return;
       const { props } = this;
       const { module, panelIndex: index } = props;
-      const target = es.target as HTMLElement;
-      const atext = es.currentTarget as HTMLElement;
+      const atext = e.currentTarget as HTMLElement;
       e.preventDefault();
       let popupParent: any = ofClass(['npopup'], target);
       popupParent = popupParent ? popupParent.element : null;
@@ -134,7 +140,7 @@ export default function handler(
           const scrollcn = viewport.firstChild as HTMLDivElement;
           const img = scrollcn?.firstChild as HTMLImageElement | undefined;
           let expandShrink: boolean | undefined;
-          if (img && ['zoom-in', 'zoom-out'].includes(img.style.cursor)) {
+          if (ep && img && ['zoom-in', 'zoom-out'].includes(img.style.cursor)) {
             const scrollcnS = window.getComputedStyle(scrollcn, null);
             if (scrollcnS.position === 'absolute') {
               expandShrink = img.style.width !== `${img.naturalWidth}px`;
@@ -152,9 +158,9 @@ export default function handler(
             if (expandShrink !== undefined) {
               if (expandShrink) {
                 const cbox = viewport.getBoundingClientRect();
-                const Y = e.clientY - cbox.top;
+                const Y = ep.clientY - cbox.top;
                 const top = Y * (1 - img.naturalWidth / viewport.offsetWidth);
-                const X = e.clientX - cbox.left;
+                const X = ep.clientX - cbox.left;
                 const left =
                   X * (1 - img.naturalHeight / viewport.offsetHeight);
                 scrollcn.style.top = `${top}px`;
@@ -180,13 +186,15 @@ export default function handler(
         }
 
         default:
-          throw Error(`Unhandled atextHandler click event '${targ.type}'`);
+          if (Build.isDevelopment)
+            log.warn(`Unhandled atextHandler click event '${targ.type}'`);
+          return;
       }
       break;
     }
 
     case 'dblclick': {
-      if (ofClass(['sb'], es.target)) {
+      if (ofClass(['sb'], e.target)) {
         // Get selected text
         const selob = window.getSelection();
         if (selob) {
@@ -218,7 +226,7 @@ export default function handler(
     }
 
     case 'pointerenter': {
-      const { target } = es;
+      const { target } = e;
       const oc = ofClass(['cr', 'fn', 'sn', 'un', 'image-viewport'], target);
       if (!oc) return;
       const { element, type } = oc;
@@ -317,7 +325,9 @@ export default function handler(
           }
 
           default:
-            throw Error(`Unhandled atextHandler mouseOver event '${type}'`);
+            if (Build.isDevelopment)
+              log.warn(`Unhandled atextHandler mouseOver event '${type}'`);
+            return;
         }
       }
 
@@ -329,7 +339,7 @@ export default function handler(
 
     case 'pointerleave': {
       // Remove any footnote hilighting
-      const atext = ofClass('atext', es.target)?.element;
+      const atext = ofClass('atext', e.target)?.element;
       if (atext) {
         const nbc = atext.lastChild;
         if (nbc instanceof HTMLElement) {
@@ -341,10 +351,10 @@ export default function handler(
         }
       }
 
-      if (supportsHover()) {
+      if (pointerType === 'mouse') {
         // Remove any dynamically added Strong's classes from CSS stylesheet,
         // unless we're now over npopup
-        const { target } = es;
+        const { target } = e;
         if (target) {
           const nowover = (
             target && 'classList' in target ? target : null
@@ -357,13 +367,13 @@ export default function handler(
     }
 
     case 'wheel': {
-      const e = es as React.WheelEvent;
+      const ew = e as React.WheelEvent;
       const { isPinned, module } = this.props;
       if (isPinned && module) {
-        const atext = es.currentTarget as HTMLElement;
+        const atext = ew.currentTarget as HTMLElement;
         const { type } = G.Tab[module];
-        if (atext && type !== C.DICTIONARY && !ofClass(['nbc'], es.target)) {
-          aTextWheelScroll(e, atext, this);
+        if (atext && type !== C.DICTIONARY && !ofClass(['nbc'], ew.target)) {
+          aTextWheelScroll(ew, atext, this);
         }
       }
       break;
@@ -429,7 +439,7 @@ export default function handler(
 
     case 'change': {
       const { xulswordState, panelIndex } = this.props;
-      const origselect = ofClass(['origselect'], es.target);
+      const origselect = ofClass(['origselect'], e.target);
       if (origselect) {
         const s = origselect.element.firstChild as
           | HTMLSelectElement
@@ -448,6 +458,10 @@ export default function handler(
     }
 
     default:
-      throw Error(`Unhandled atextHandler event type '${es.type}'`);
+      if (Build.isDevelopment)
+        log.warn(`Unhandled atextHandler event type '${e.type}'`);
+      return;
   }
+
+  eventHandled(e);
 }

@@ -9,8 +9,8 @@ import C from '../../../constant.ts';
 import { G } from '../../G.ts';
 import {
   addHoverLinks,
+  Events,
   libswordImgSrc,
-  supportsHover,
   windowArguments,
 } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
@@ -250,7 +250,8 @@ class Popup
             this.positionPopup();
             pt.dataset.infokey = infokey;
             // Scroll to the top of the newly written popup.
-            if (Build.isWebApp && !supportsHover())
+            const { pointerType } = Events.lastPointerEvent ?? {};
+            if (Build.isWebApp && pointerType && pointerType !== 'mouse')
               setTimeout(
                 () =>
                   document
@@ -340,6 +341,8 @@ class Popup
     let cls = 'cs-locale';
     if (isWindow) cls += ` ownWindow viewport`;
 
+    const { pointerType } = Events.lastPointerEvent ?? {};
+
     return (
       <div
         ref={loadingRef}
@@ -369,7 +372,7 @@ class Popup
             {elemdata && elemdata.length > 1 && (
               <Button className="popupBackLink" icon="arrow-left" />
             )}
-            {!isWindow && supportsHover() && (
+            {!isWindow && pointerType && pointerType === 'mouse' && (
               <Button
                 className={[
                   'draghandle',

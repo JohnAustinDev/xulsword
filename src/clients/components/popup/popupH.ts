@@ -8,7 +8,7 @@ import {
 import parseExtendedVKRef from '../../../extrefParser.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G, GI } from '../../G.ts';
-import { moduleInfoHTML } from '../../common.ts';
+import { eventHandled, Events, moduleInfoHTML } from '../../common.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.tsx';
 import { getElementData } from '../../htmlData.ts';
 import log from '../../log.ts';
@@ -253,12 +253,15 @@ export function getPopupHTML(
 // Event handler for popup contents.
 export default function handler(
   this: Popup,
-  e: React.PointerEvent | PointerEvent,
+  e: React.SyntheticEvent | PointerEvent,
 ) {
-  const target = e.target as HTMLElement;
-  switch (e.type) {
+  if (Events.blocked) return;
+  const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
+  const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
+  if (!ep) return;
+  switch (ep.type) {
     case 'pointerenter': {
-      const { target } = e;
+      const { target } = ep;
       const oc = ofClass(
         [
           'npopup',
@@ -291,16 +294,16 @@ export default function handler(
     }
 
     case 'pointerdown': {
-      if (ofClass(['draghandle'], target)) {
+      if (ofClass(['draghandle'], ep.target)) {
         this.setState((prevState) => {
           let { drag } = prevState;
           drag = clone(drag);
           if (!drag) return null;
-          if (!drag.x[0]) drag.x[0] = e.clientX;
-          if (!drag.y[0]) drag.y[0] = e.clientY;
+          if (!drag.x[0]) drag.x[0] = ep.clientX;
+          if (!drag.y[0]) drag.y[0] = ep.clientY;
           if (!drag.adjustment) drag.adjustment = 0;
-          drag.x[1] = e.clientX;
-          drag.y[1] = e.clientY;
+          drag.x[1] = ep.clientX;
+          drag.y[1] = ep.clientY;
           drag.dragging = true;
           return { drag };
         });
@@ -316,8 +319,8 @@ export default function handler(
         let { drag: ndrag } = prevState;
         ndrag = clone(ndrag);
         if (!ndrag || !ndrag.dragging) return null;
-        ndrag.x[1] = e.clientX;
-        ndrag.y[1] = e.clientY;
+        ndrag.x[1] = ep.clientX;
+        ndrag.y[1] = ep.clientY;
         return { drag: ndrag };
       });
       e.preventDefault();
@@ -337,6 +340,10 @@ export default function handler(
     }
 
     default:
-      throw Error(`Unhandled popup event type: '${e.type}`);
+      if (Build.isDevelopment)
+        log.warn(`Unhandled popup event type: '${ep.type}`);
+      return;
   }
+
+  eventHandled(e);
 }
