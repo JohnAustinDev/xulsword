@@ -187,7 +187,10 @@ export default function handler(
   this: Xulsword | ViewportWin,
   e: React.SyntheticEvent<any>,
 ) {
-  if (Events.blocked) return;
+  if (Events.blocked) {
+    e.preventDefault();
+    return;
+  }
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const _ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { state } = this;

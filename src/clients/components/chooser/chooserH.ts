@@ -13,7 +13,10 @@ export default function handler(
   this: Chooser,
   e: React.SyntheticEvent | PointerEvent,
 ): void {
-  if (Events.blocked) return;
+  if (Events.blocked) {
+    e.preventDefault();
+    return;
+  }
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   switch (e.type) {
@@ -181,7 +184,7 @@ export default function handler(
       // On touch, we've handled mouseover, so ignore followon events.
       if (Events.lastPointerEvent?.pointerType !== 'mouse') {
         Events.blocked = true;
-        setTimeout(() => (Events.blocked = false), 500);
+        setTimeout(() => (Events.blocked = false), 150);
       }
       break;
     }

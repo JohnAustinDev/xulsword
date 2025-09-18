@@ -35,7 +35,10 @@ export default function handler(
   this: Xulsword,
   e: React.SyntheticEvent | PointerEvent,
 ) {
-  if (Events.blocked) return;
+  if (Events.blocked) {
+    e.preventDefault();
+    return;
+  }
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const _ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { state } = this;

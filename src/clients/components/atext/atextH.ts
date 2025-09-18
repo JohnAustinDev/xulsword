@@ -42,7 +42,10 @@ function scroll2Note(atext: HTMLElement, id: string) {
 
 // Event handler for a text pane's content.
 export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
-  if (Events.blocked) return;
+  if (Events.blocked) {
+    e.preventDefault();
+    return;
+  }
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { pointerType } = ep ?? {};

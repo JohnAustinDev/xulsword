@@ -255,7 +255,10 @@ export default function handler(
   this: Popup,
   e: React.SyntheticEvent | PointerEvent,
 ) {
-  if (Events.blocked) return;
+  if (Events.blocked) {
+    e.preventDefault();
+    return;
+  }
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   if (!ep) return;

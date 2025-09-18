@@ -57,7 +57,10 @@ export function popupParentHandler(
   e: React.SyntheticEvent | PointerEvent,
   module?: string,
 ) {
-  if (Events.blocked) return;
+  if (Events.blocked) {
+    e.preventDefault();
+    return;
+  }
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { pointerType } = ep ?? {};
@@ -216,7 +219,10 @@ export function popupHandler(
   this: PopupParent,
   e: React.SyntheticEvent | PointerEvent,
 ) {
-  if (Events.blocked) return;
+  if (Events.blocked) {
+    e.preventDefault();
+    return;
+  }
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { pointerType } = ep ?? {};
