@@ -85,18 +85,6 @@ export const G: GTypeMain = {
     return getTab();
   },
 
-  get Books() {
-    return getBooks();
-  },
-
-  get Book() {
-    return getBook();
-  },
-
-  get BooksLocalized() {
-    return getBooksLocalized();
-  },
-
   get BooksLocalizedAll() {
     return getBooksLocalizedAll();
   },
@@ -143,6 +131,22 @@ export const G: GTypeMain = {
 
   get BooksInVKModules() {
     return getBooksInVKModules();
+  },
+
+  getBooks(
+    ...args: Parameters<GType['getBooks']>
+  ): ReturnType<GType['getBooks']> {
+    return getBooks(...args);
+  },
+
+  getBook(...args: Parameters<GType['getBook']>): ReturnType<GType['getBook']> {
+    return getBook(...args);
+  },
+
+  getBooksLocalized(
+    ...args: Parameters<GType['getBooksLocalized']>
+  ): ReturnType<GType['getBooksLocalized']> {
+    return getBooksLocalized(...args);
   },
 
   inlineFile(

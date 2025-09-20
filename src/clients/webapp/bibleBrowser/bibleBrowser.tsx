@@ -156,7 +156,7 @@ socket.on('connect', () => {
     let numPanels = forceSinglePanel ? 1 : panels.length;
     if (numPanels > maxPanels) numPanels = maxPanels;
 
-    cachePreload()
+    cachePreload(locale)
       .then(() => {
         setDefaultBibleBrowserPrefs(Prefs);
         setGlobalPanels(Prefs, numPanels);

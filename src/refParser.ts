@@ -96,7 +96,7 @@ export default class RefParser {
         undefined,
       ]);
     } else {
-      this.booksLocalized = G().BooksLocalized;
+      this.booksLocalized = G().getBooksLocalized(language);
     }
     this.localeDigits = locales.reduce(
       (p, c) => {

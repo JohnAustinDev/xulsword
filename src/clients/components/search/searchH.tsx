@@ -79,7 +79,8 @@ export function getLuceneSearchText(
 // Return an array of book codes from a KJV book-scope string.
 function kjvScopeBooks(scope: string): string[] {
   const books: string[] = [];
-  const { Book, Books } = G;
+  const Book = G.getBook(G.i18n.language);
+  const Books = G.getBooks(G.i18n.language);
   scope.split(/\s+/).forEach((seg) => {
     const bk = seg.split('-');
     let beg = bk[0] in Book ? (Book as any)[bk[0]].index : -1;
@@ -318,7 +319,7 @@ export async function libSwordSearch(
               i === scopes.length - 1,
             );
             if (scopes.length > 1 && xthis) {
-              const { Book } = G;
+              const Book = G.getBook(G.i18n.language);
               xthis.setState({
                 progress: (i + 1) / scopes.length,
                 progressLabel:

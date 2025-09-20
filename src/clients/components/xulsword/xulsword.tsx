@@ -249,13 +249,13 @@ export default class Xulsword
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
         GI.getBooksInVKModule(
-          G.Books.map((b) => b.code),
+          G.getBooks(G.i18n.language).map((b) => b.code),
           renderPromise,
           m,
         ).forEach((bk) => bookset.add(bk));
       }
     });
-    const { Book } = G;
+    const Book = G.getBook(G.i18n.language);
     const booklist = [...bookset].sort((a: OSISBookType, b: OSISBookType) => {
       if (Book[a].index < Book[b].index) return -1;
       if (Book[a].index > Book[b].index) return 1;

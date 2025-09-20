@@ -756,12 +756,10 @@ type RenderPromiseArgs<FUNC extends (...args: any[]) => any> = [
 export type GCallType = [keyof GType, string | null, any[] | undefined];
 
 export type GType = {
-  // Getters
+  // Getters. NOTE: no getter function result may depend on locale, instead
+  // a regular function is required since WebApp clients differ.
   Tabs: ReturnType<typeof getTabs>;
   Tab: ReturnType<typeof getTab>;
-  Books: ReturnType<typeof getBooks>;
-  Book: ReturnType<typeof getBook>;
-  BooksLocalized: ReturnType<typeof getBooksLocalized>;
   BooksLocalizedAll: ReturnType<typeof getBooksLocalizedAll>;
   Config: ReturnType<typeof getConfig>;
   ModuleConfs: ReturnType<typeof getModuleConfs>;
@@ -776,6 +774,9 @@ export type GType = {
   BooksInVKModules: ReturnType<typeof getBooksInVKModules>;
 
   // Functions
+  getBooks: typeof getBooks;
+  getBook: typeof getBook;
+  getBooksLocalized: typeof getBooksLocalized;
   inlineFile: typeof inlineFile;
   inlineAudioFile: typeof inlineAudioFile;
   getModuleConf: typeof getModuleConf;
@@ -823,9 +824,6 @@ export type GIType = {
     GType,
     | 'Tabs'
     | 'Tab'
-    | 'Books'
-    | 'Book'
-    | 'BooksLocalized'
     | 'BooksLocalizedAll'
     | 'Config'
     | 'ModuleConfs'
@@ -840,6 +838,9 @@ export type GIType = {
 } & {
   [name in keyof Pick<
     GType,
+    | 'getBooks'
+    | 'getBook'
+    | 'getBooksLocalized'
     | 'inlineFile'
     | 'inlineAudioFile'
     | 'getModuleConf'
@@ -879,9 +880,9 @@ export type Gsafe = Pick<
   // Includes cache preloaded synchronous functions:
   | 'Tabs'
   | 'Tab'
-  | 'Books'
-  | 'Book'
-  | 'BooksLocalized'
+  | 'getBooks'
+  | 'getBook'
+  | 'getBooksLocalized'
   | 'Config'
   | 'ModuleFonts'
   | 'FeatureModules'
@@ -942,9 +943,6 @@ export const GBuilder: GType & {
   internetSafe: [
     [keyof GType, Array<keyof GType['Tabs']>],
     [keyof GType, Array<keyof GType['Tab']>],
-    [keyof GType, Array<keyof GType['Books']>],
-    [keyof GType, Array<keyof GType['Book']>],
-    [keyof GType, Array<keyof GType['BooksLocalized']>],
     [keyof GType, Array<keyof GType['BooksLocalizedAll']>],
     [keyof GType, Array<keyof GType['Config']>],
     [keyof GType, Array<keyof GType['ModuleConfs']>],
@@ -954,6 +952,9 @@ export const GBuilder: GType & {
     [keyof GType, Array<keyof GType['ModuleConfigDefault']>],
     [keyof GType, Array<keyof GType['ModuleFonts']>],
     [keyof GType, Array<keyof GType['FeatureModules']>],
+    [keyof GType, Array<keyof GType['getBooks']>],
+    [keyof GType, Array<keyof GType['getBook']>],
+    [keyof GType, Array<keyof GType['getBooksLocalized']>],
     [keyof GType, Array<keyof GType['inlineFile']>],
     [keyof GType, Array<keyof GType['inlineAudioFile']>],
     [keyof GType, Array<keyof GType['getModuleConf']>],
@@ -1009,9 +1010,6 @@ export const GBuilder: GType & {
   internetSafe: [
     ['Tabs', []],
     ['Tab', []],
-    ['Books', []],
-    ['Book', []],
-    ['BooksLocalized', []],
     ['BooksLocalizedAll', []],
     ['Config', []],
     ['ModuleConfs', []],
@@ -1021,6 +1019,9 @@ export const GBuilder: GType & {
     ['ModuleConfigDefault', []],
     ['ModuleFonts', []],
     ['FeatureModules', []],
+    ['getBooks', []],
+    ['getBook', []],
+    ['getBooksLocalized', []],
     ['inlineFile', []],
     ['inlineAudioFile', []],
     ['getModuleConf', []],
@@ -1061,9 +1062,6 @@ export const GBuilder: GType & {
   // Getters
   Tabs: 'getter' as any,
   Tab: 'getter' as any,
-  Books: 'getter' as any,
-  Book: 'getter' as any,
-  BooksLocalized: 'getter' as any,
   BooksLocalizedAll: 'getter' as any,
   Config: 'getter' as any,
   ModuleConfs: 'getter' as any,
@@ -1078,6 +1076,9 @@ export const GBuilder: GType & {
   BooksInVKModules: 'getter' as any,
 
   // Functions
+  getBooks: CACHEfunc as any,
+  getBook: CACHEfunc as any,
+  getBooksLocalized: CACHEfunc as any,
   inlineFile: CACHEfunc as any,
   inlineAudioFile: CACHEfunc as any,
   getModuleConf: CACHEfunc as any,

@@ -324,7 +324,7 @@ export default function handler(
         }
         case 'bookgroup': {
           const { bookgroup, v11n } = targ.element.dataset;
-          const { Book } = G;
+          const Book = G.getBook(G.i18n.language);
           const bg = bookgroup as BookGroupType;
           const bk = bookgroup ? Book[C.SupportedBooks[bg][0]] : null;
           if (bk) {

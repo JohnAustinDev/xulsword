@@ -267,7 +267,7 @@ export default class SelectVK
       vkMods,
       showSingleMod,
     } = options || {};
-    const { Book } = G;
+    const Book = G.getBook(G.i18n.language);
 
     const tab = (vkMod && G.Tab[vkMod]) || null;
     const v11n = (tab && tab.v11n) || selection.v11n || 'KJV';
@@ -294,7 +294,7 @@ export default class SelectVK
     // containing those books will be included in the module selector.
     const rp = GI.getBkChsInV11n([], renderPromise, v11n);
     const bkChsInV11n = renderPromise.waiting()
-      ? G.Books.map((b) => b.code)
+      ? G.getBooks(G.i18n.language).map((b) => b.code)
       : rp;
     const bkbgs = (books || bkChsInV11n?.map((r) => r[0])) as OSISBookType[];
     const bookset = new Set<OSISBookType>();
@@ -310,7 +310,7 @@ export default class SelectVK
       tab && modules?.length !== 0
         ? Array.from(bookset).filter((b) =>
             GI.getBooksInVKModule(
-              G.Books.map((b) => b.code),
+              G.getBooks(G.i18n.language).map((b) => b.code),
               renderPromise,
               tab.module,
             ).includes(b),
@@ -383,7 +383,7 @@ export default class SelectVK
     if ((books?.length || 0) > 0) {
       modules = modules.filter((m) =>
         GI.getBooksInVKModule(
-          G.Books.map((b) => b.code),
+          G.getBooks(G.i18n.language).map((b) => b.code),
           renderPromise,
           m,
         ).includes(book),

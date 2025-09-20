@@ -43,7 +43,7 @@ if (widgets.length) {
       if (!locale || !C.Locales.some((x) => x[0] === locale)) locale = 'en';
       Prefs.setCharPref('global.locale', locale);
 
-      cachePreload([['Full publication', { ns: 'widgets' }]])
+      cachePreload(locale, [['Full publication', { ns: 'widgets' }]])
         .then(() => {
           widgets.forEach((widget) => {
             const { id: compid } = widget;

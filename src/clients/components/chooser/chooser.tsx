@@ -77,7 +77,8 @@ class Chooser
     const { selection, hideUnavailableBooks } = props;
     let { bookGroups } = props;
     if (!bookGroups) bookGroups = ['ot', 'nt'];
-    const { Book, Books } = G;
+    const Book = G.getBook(G.i18n.language);
+    const Books = G.getBooks(G.i18n.language);
 
     let bookGroup: BookGroupType =
       selection && selection in Book
@@ -218,7 +219,7 @@ class Chooser
     const { props, rowHeight, listAreaHeight } = this;
     const { hideUnavailableBooks } = props;
     if (!hideUnavailableBooks) {
-      const { Book } = G;
+      const Book = G.getBook(G.i18n.language);
       const { bookGroup, indexInBookGroup } = Book[book];
       this.setState((prevState) => {
         const { slideIndex } = prevState;
@@ -383,7 +384,8 @@ function BookGroupList(
     chooserRef,
     renderPromise,
   } = props;
-  const { Book, Books } = G;
+  const Book = G.getBook(G.i18n.language);
+  const Books = G.getBooks(G.i18n.language);
   const listOfBookIndexes: number[] = [];
   if (bookGroup) {
     C.SupportedBooks[bookGroup].forEach((code) => {
@@ -445,7 +447,7 @@ function BookGroupItem(
     renderPromise,
   } = props;
   const c = classes || [];
-  const { Book } = G;
+  const Book = G.getBook(G.i18n.language);
   return (
     <Hbox
       {...addClass(['bookgroupitem'].concat(c), props)}

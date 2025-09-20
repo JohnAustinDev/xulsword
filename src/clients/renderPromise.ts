@@ -387,19 +387,19 @@ function writeCallToCache(call: GCallType | null, result: any) {
           );
         }
 
-        // Books
-      } else if (call[0] === 'Books') {
-        const r = result as typeof G.Books;
+        // getBooks
+      } else if (call[0] === 'getBooks') {
+        const r = result as ReturnType<typeof G.getBooks>;
         const nckey = GCacheKey(call);
         if (!Cache.has(nckey)) Cache.write(r, nckey);
-        const book: typeof G.Book = r.reduce(
+        const book: ReturnType<typeof G.getBook> = r.reduce(
           (p, c) => {
             p[c.code] = c;
             return p;
           },
           {} as Record<string, BookType>,
         );
-        const nckey2 = GCacheKey(['Book', null, undefined]);
+        const nckey2 = GCacheKey(['getBook', null, [G.i18n.language]]);
         if (!Cache.has(nckey2)) Cache.write(book, nckey2);
 
         // ModuleConfs

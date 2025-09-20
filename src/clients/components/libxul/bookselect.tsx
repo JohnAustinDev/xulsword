@@ -78,7 +78,7 @@ export default class Bookselect extends React.Component<
   getBookOptions() {
     const { options } = this.props;
     const { book } = this.state;
-    const { Book } = G;
+    const Book = G.getBook(G.i18n.language);
     const books = options.map((bk) => {
       return (
         <option key={bk} value={bk}>
@@ -167,7 +167,7 @@ export default class Bookselect extends React.Component<
     // option as it is the only way to update Bookselect state without
     // effecting Textbox state.
     const { book } = state;
-    const { Books } = G;
+    const Books = G.getBooks(G.i18n.language);
     let bookName = book;
     for (let x = 0; x < Books.length; x += 1) {
       if (book && Books[x].code === book) bookName = Books[x].name;

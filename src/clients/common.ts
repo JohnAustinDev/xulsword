@@ -62,6 +62,7 @@ window.WebAppTextScroll = -1;
 // i18n required by the initial render may be supplied and it will display
 // on first render, before another renderPromise dispatch.
 export async function cachePreload(
+  locale: string,
   i18nArgs?: Parameters<GType['i18n']['t']>[],
 ): Promise<void> {
   if (Build.isWebApp) {
@@ -69,8 +70,8 @@ export async function cachePreload(
     return new Promise((resolve) => {
       doUntilDone((renderPromise) => {
         GI.Tabs([], renderPromise);
-        GI.BooksLocalized({}, renderPromise);
-        GI.Books([], renderPromise);
+        GI.getBooksLocalized({}, renderPromise, locale);
+        GI.getBooks([], renderPromise, locale);
         GI.Config({}, renderPromise);
         GI.ModuleFonts([], renderPromise);
         GI.FeatureModules({} as FeatureMods, renderPromise);
@@ -692,7 +693,7 @@ export function isValidVKM(
   if (!module || !(module in G.Tab)) return false;
   if (
     !GI.getBooksInVKModule(
-      G.Books.map((b) => b.code),
+      G.getBooks(G.i18n.language).map((b) => b.code),
       renderPromise,
       module,
     ).includes(location.book as never)

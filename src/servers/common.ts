@@ -57,8 +57,7 @@ import type PrefsElectron from './app/prefs.ts';
 // module book order in lieu of locale book order or xulsword default order
 // (see C.SupportedBooks). Doing so provides a common order for book lists
 // etc., simpler data structures, and a better experience for the user.
-export function getBooks(): BookType[] {
-  const locale = i18n.language;
+export function getBooks(locale: string): BookType[] {
   if (!Cache.has('books', locale)) {
     let books: BookType[] = [];
     let index = 0;
@@ -128,9 +127,9 @@ export function getBooks(): BookType[] {
   return Cache.read('books', locale);
 }
 
-export function getBook(): Record<OSISBookType, BookType> {
+export function getBook(locale: string): Record<OSISBookType, BookType> {
   const book = {} as ReturnType<typeof getBook>;
-  getBooks().forEach((bk: BookType) => {
+  getBooks(locale).forEach((bk: BookType) => {
     book[bk.code] = bk;
   });
   return book;
@@ -199,7 +198,6 @@ export function getBooksInVKModules(): Record<string, OSISBookType[]> {
 export function getBooksInVKModule(module: string): OSISBookType[] {
   if (!Cache.has('booksInModule', module)) {
     const allBkChsInV11n = getAllBkChsInV11n();
-    const book = getBook();
     let v11n = LibSword.getModuleInformation(
       module,
       'Versification',
@@ -223,10 +221,9 @@ export function getBooksInVKModule(module: string): OSISBookType[] {
       // the book is missing from the module.
       const fake = LibSword.getVerseText(module, 'FAKE 1:1', false, options);
       v11nbooks.forEach((code: OSISBookType) => {
-        const bk = book[code];
         const verse1 = LibSword.getVerseText(
           module,
-          `${bk.code} 1:1`,
+          `${code} 1:1`,
           false,
           options,
         );
@@ -234,13 +231,13 @@ export function getBooksInVKModule(module: string): OSISBookType[] {
           // Lopukhin Colossians starts at verse 3, so used verse 3 instead of 2 here:
           const verse2 = LibSword.getVerseText(
             module,
-            `${bk.code} 1:3`,
+            `${code} 1:3`,
             false,
             options,
           );
           if (!verse2 || verse1 === verse2) return;
         }
-        osis.push(bk.code);
+        osis.push(code);
       });
     }
     Cache.write(osis, 'booksInModule', module);
@@ -908,21 +905,9 @@ type BooksLocalizedType = {
   [locale: string]: { [code: string]: [string[], string[], string[]] };
 };
 
-export function getBooksLocalized(): BooksLocalizedType {
-  const locale = i18n.language;
-  return getBooksLocalizedLocale(locale);
-}
-export function getBooksLocalizedAll(): BooksLocalizedType {
-  const r: BooksLocalizedType = {};
-  C.Locales.map((l) => l[0]).forEach((locale) => {
-    const bll = getBooksLocalizedLocale(locale);
-    r[locale] = bll[locale];
-  });
-  return r;
-}
-export function getBooksLocalizedLocale(locale: string) {
+export function getBooksLocalized(locale: string): BooksLocalizedType {
   const b: BooksLocalizedType = { [locale]: {} };
-  const ckey = `getBooksLocalizedLocale(${locale})`;
+  const ckey = `getBooksLocalized(${locale})`;
   if (!Cache.has(ckey)) {
     const toptions = { lng: locale, ns: 'books' };
     // Currently xulsword locales only include ot and nt books.
@@ -944,6 +929,15 @@ export function getBooksLocalizedLocale(locale: string) {
     Cache.write(b, ckey);
   }
   return Cache.read(ckey) as typeof b;
+}
+
+export function getBooksLocalizedAll(): BooksLocalizedType {
+  const r: BooksLocalizedType = {};
+  C.Locales.map((l) => l[0]).forEach((locale) => {
+    const bll = getBooksLocalized(locale);
+    r[locale] = bll[locale];
+  });
+  return r;
 }
 
 // Return the contents of a file. In Electron mode, filepath is an absolute

@@ -176,7 +176,7 @@ export default class Viewport
 
     const tabcntl = G.Prefs.getBoolPref('xulsword.tabcntl');
 
-    const { Book } = G;
+    const Book = G.getBook(G.i18n.language);
 
     // Only versekey panels can be pinned
     const isVerseKey = panels.map((m) => Boolean(m && G.Tab[m].isVerseKey));
@@ -191,7 +191,7 @@ export default class Viewport
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
         GI.getBooksInVKModule(
-          G.Books.map((b) => b.code),
+          G.getBooks(G.i18n.language).map((b) => b.code),
           renderPromise,
           m,
         ).forEach((bk) => availableBooks.add(bk));
