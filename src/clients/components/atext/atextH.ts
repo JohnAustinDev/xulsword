@@ -14,8 +14,8 @@ import { G, GI } from '../../G.ts';
 import {
   doUntilDone,
   eventHandled,
-  Events,
   getExtRefHTML,
+  isBlocked,
 } from '../../common.ts';
 import log from '../../log.ts';
 import { getElementData } from '../../htmlData.ts';
@@ -42,10 +42,7 @@ function scroll2Note(atext: HTMLElement, id: string) {
 
 // Event handler for a text pane's content.
 export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
-  if (Events.blocked) {
-    e.preventDefault();
-    return;
-  }
+  if (isBlocked(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { pointerType } = ep ?? {};

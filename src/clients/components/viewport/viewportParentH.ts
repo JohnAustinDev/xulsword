@@ -8,6 +8,7 @@ import {
   doUntilDone,
   eventHandled,
   Events,
+  isBlocked,
   safeScrollIntoView,
   windowArguments,
 } from '../../common.ts';
@@ -187,10 +188,7 @@ export default function handler(
   this: Xulsword | ViewportWin,
   e: React.SyntheticEvent<any>,
 ) {
-  if (Events.blocked) {
-    e.preventDefault();
-    return;
-  }
+  if (isBlocked(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const _ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { state } = this;

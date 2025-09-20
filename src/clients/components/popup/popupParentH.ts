@@ -9,6 +9,7 @@ import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import {
   eventHandled,
   Events,
+  isBlocked,
   safeScrollIntoView,
   windowArguments,
 } from '../../common.ts';
@@ -57,10 +58,7 @@ export function popupParentHandler(
   e: React.SyntheticEvent | PointerEvent,
   module?: string,
 ) {
-  if (Events.blocked) {
-    e.preventDefault();
-    return;
-  }
+  if (isBlocked(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { pointerType } = ep ?? {};
@@ -219,10 +217,7 @@ export function popupHandler(
   this: PopupParent,
   e: React.SyntheticEvent | PointerEvent,
 ) {
-  if (Events.blocked) {
-    e.preventDefault();
-    return;
-  }
+  if (isBlocked(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { pointerType } = ep ?? {};

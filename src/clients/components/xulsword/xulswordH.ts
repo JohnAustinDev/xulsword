@@ -11,6 +11,7 @@ import {
   audioSelections,
   Events,
   eventHandled,
+  isBlocked,
 } from '../../common.ts';
 import log from '../../log.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
@@ -35,10 +36,7 @@ export default function handler(
   this: Xulsword,
   e: React.SyntheticEvent | PointerEvent,
 ) {
-  if (Events.blocked) {
-    e.preventDefault();
-    return;
-  }
+  if (isBlocked(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const _ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { state } = this;

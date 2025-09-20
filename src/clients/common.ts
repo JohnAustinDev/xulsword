@@ -381,6 +381,22 @@ export const Events = {
   lastPointerEvent: null as PointerEvent | null,
 };
 
+export function isBlocked(e: React.SyntheticEvent | Event): boolean {
+  if (Events.blocked) {
+    if ('nativeEvent' in e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.nativeEvent.preventDefault();
+      e.nativeEvent.stopImmediatePropagation();
+    } else {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+    return true;
+  }
+  return false;
+}
+
 export function eventHandled(e: React.SyntheticEvent | Event) {
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;

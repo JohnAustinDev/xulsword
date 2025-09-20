@@ -506,18 +506,21 @@ class Atext
             C.UI.Atext.prevNextDelay,
             'prevNextLinkUpdate',
           );
-          if (Build.isWebApp && update && !InitialLoad) {
-            InitialLoad = false;
-            const isVerseKeyTop =
-              isVerseKey && scroll?.verseAt === 'top' && location?.verse === 1;
-            if (isVerseKeyTop || !isVerseKey)
-              setTimeout(
-                () =>
-                  document
-                    .querySelector('#controls')
-                    ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
-                100,
-              );
+          if (Build.isWebApp && update) {
+            if (!InitialLoad) {
+              const isVerseKeyTop =
+                isVerseKey &&
+                scroll?.verseAt === 'top' &&
+                location?.verse === 1;
+              if (isVerseKeyTop || !isVerseKey)
+                setTimeout(
+                  () =>
+                    document
+                      .querySelector('#controls')
+                      ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+                  100,
+                );
+            } else InitialLoad = false;
           }
         }
       }
