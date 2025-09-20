@@ -385,6 +385,7 @@ export const Events = {
   'pointerenter',
   'pointerover',
   'pointerdown',
+  'pointermove',
   'pointerup',
   'pointerleave',
 ].forEach((type) => {

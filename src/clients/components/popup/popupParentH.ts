@@ -52,6 +52,7 @@ export type ViewportPopupProps = {
 };
 
 // Event handler for the container containing links to popups.
+let PointerY: number | undefined = undefined;
 export function popupParentHandler(
   this: PopupParent,
   e: React.SyntheticEvent | PointerEvent,
@@ -151,6 +152,7 @@ export function popupParentHandler(
       // will make dozens of unnecessary server calls each time the user simply
       // moves the cursor around over a strong's tagged text such as KJV.
       if (data && openPopup && !popupParent && popupDelayTO !== null) {
+        PointerY = ep?.clientY;
         delayHandler(
           this,
           (el: HTMLElement, dt: HTMLData, gp: number) => {
@@ -175,8 +177,14 @@ export function popupParentHandler(
         // Block popup during and after wheel scrolling.
         const wheelScrollUnblock = popupDelayTO === null;
         if (wheelScrollUnblock) this.popupDelayTO = undefined; // unblocks pup
-        // Cancel pending popup on touch pointermove.
-        const cancelPopup = pointerType !== 'mouse' && popupDelayTO;
+        // Cancel pending popup on touch pointermove > 10px, to allow scrolling
+        // without opening a popup.
+        const cancelPopup =
+          pointerType !== 'mouse' &&
+          popupDelayTO &&
+          ep &&
+          typeof PointerY !== 'undefined' &&
+          Math.abs(ep.clientY - PointerY) > 10;
         if (cancelPopup) {
           if (popupDelayTO) clearTimeout(popupDelayTO);
           this.popupDelayTO = undefined;
