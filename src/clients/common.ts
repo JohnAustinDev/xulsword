@@ -382,12 +382,16 @@ export const Events = {
 };
 
 ['pointerenter', 'pointerdown', 'pointerup', 'pointerleave'].forEach((type) => {
-  addEventListener(type, (e) => {
-    if (Events.blocked) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-    }
-  }, {capture: true, passive: false })
+  addEventListener(
+    type,
+    (e) => {
+      if (Events.blocked) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    },
+    { capture: true, passive: false },
+  );
 });
 
 export function eventHandled(e: React.SyntheticEvent | Event) {

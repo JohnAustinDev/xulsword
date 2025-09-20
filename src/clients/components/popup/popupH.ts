@@ -8,10 +8,7 @@ import {
 import parseExtendedVKRef from '../../../extrefParser.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G, GI } from '../../G.ts';
-import {
-  eventHandled,
-  moduleInfoHTML,
-} from '../../common.ts';
+import { eventHandled, moduleInfoHTML } from '../../common.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.tsx';
 import { getElementData } from '../../htmlData.ts';
 import log from '../../log.ts';

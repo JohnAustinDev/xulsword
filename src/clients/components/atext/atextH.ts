@@ -11,11 +11,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import {
-  doUntilDone,
-  eventHandled,
-  getExtRefHTML,
-} from '../../common.ts';
+import { doUntilDone, eventHandled, getExtRefHTML } from '../../common.ts';
 import log from '../../log.ts';
 import { getElementData } from '../../htmlData.ts';
 import { delayHandler } from '../libxul/xul.tsx';

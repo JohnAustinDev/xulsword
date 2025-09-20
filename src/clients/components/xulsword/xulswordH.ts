@@ -6,11 +6,7 @@ import Subscription from '../../../subscription.ts';
 import analytics from '../../analytics.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
-import {
-  doUntilDone,
-  audioSelections,
-  eventHandled,
-} from '../../common.ts';
+import { doUntilDone, audioSelections, eventHandled } from '../../common.ts';
 import log from '../../log.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
 import { genbookChange } from '../atext/ztext.ts';

@@ -232,7 +232,11 @@ export default class VerseKey {
     v11n = null as V11nType | null,
     notHTML = false as boolean,
   ): string {
-    const Book = G().getBook(locale);
+    const Book = GICall(G().getBook(G().i18n.language), this.#renderPromise, [
+      'getBook',
+      null,
+      [locale],
+    ]);
     const l = this.location(v11n || this.#v11nCurrent);
     const guidir = C.Locales.reduce(
       (p, c) => (c[0] === locale ? c[2] : p),
