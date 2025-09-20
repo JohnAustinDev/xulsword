@@ -5,7 +5,6 @@
   border: 2px solid var(--border-light);
   height: 100%;
   flex-basis: 100%;
-  touch-action: none; /* Prevents all default browser touch actions */
 }
 .atext:not(:last-child) {
   margin-inline-end: 10px;
