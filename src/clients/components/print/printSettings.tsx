@@ -14,6 +14,7 @@ import {
   windowArguments,
   topToaster,
   iframeAutoHeight,
+  doUntilDone,
 } from '../../common.ts';
 import log from '../../log.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
@@ -541,11 +542,15 @@ export default class PrintSettings extends React.Component<
     // Set and report results.
     this.setState({ page: 1, pages });
     if (pages > C.UI.Print.maxPages) {
-      this.addToast({
-        message: `${GI.i18n.t('', renderPromise, 'printPages.label')}: 1-${pages}`,
-        timeout: 5000,
-        intent: Intent.WARNING,
-      }).catch((er) => log.error(er));
+      doUntilDone((renderPromise) => {
+        const message = `${GI.i18n.t('', renderPromise, 'printPages.label')}: 1-${pages}`;
+        if (!renderPromise.waiting())
+          this.addToast({
+            message,
+            timeout: 5000,
+            intent: Intent.WARNING,
+          }).catch((er) => log.error(er));
+      });
     }
   }
 

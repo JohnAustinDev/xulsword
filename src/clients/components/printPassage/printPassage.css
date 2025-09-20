@@ -20,7 +20,7 @@
 }
 .printControls .bp6-progress-bar {
   position: absolute;
-  top: 70px;
+  bottom: 2px;
   width: calc(100% - 30px);
 }
 .printControls .text-options label {

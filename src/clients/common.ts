@@ -381,13 +381,21 @@ export const Events = {
   lastPointerEvent: null as PointerEvent | null,
 };
 
-['pointerenter', 'pointerdown', 'pointerup', 'pointerleave'].forEach((type) => {
+[
+  'pointerenter',
+  'pointerover',
+  'pointerdown',
+  'pointerup',
+  'pointerleave',
+].forEach((type) => {
   addEventListener(
     type,
     (e) => {
-      if (Events.blocked) {
+      // Pointerover is not supported by React, but browsers generate it.
+      if (Events.blocked || type === 'pointerover') {
         e.preventDefault();
         e.stopImmediatePropagation();
+        if (Build.isDevelopment) log.warn(`Inhibited ${type} event.`);
       }
     },
     { capture: true, passive: false },
@@ -398,6 +406,7 @@ export function eventHandled(e: React.SyntheticEvent | Event) {
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   if (ep) Events.lastPointerEvent = ep;
+  e.stopPropagation();
 }
 
 // React does not support pointerover or pointerout, so this function
