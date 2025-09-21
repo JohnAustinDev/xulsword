@@ -6,7 +6,12 @@ import Subscription from '../../../subscription.ts';
 import analytics from '../../analytics.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
-import { doUntilDone, audioSelections, eventHandled } from '../../common.ts';
+import {
+  doUntilDone,
+  audioSelections,
+  eventHandled,
+  isBlocked,
+} from '../../common.ts';
 import log from '../../log.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
 import { genbookChange } from '../atext/ztext.ts';
@@ -30,6 +35,7 @@ export default function handler(
   this: Xulsword,
   e: React.SyntheticEvent | PointerEvent,
 ) {
+  if (isBlocked(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const _ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { state } = this;

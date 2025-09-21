@@ -1,4 +1,5 @@
 import type React from 'react';
+import C from '../../../constant.ts';
 import { onPointerLong } from '../../common.ts';
 
 export const xulEvents = [
@@ -145,6 +146,7 @@ export function htmlAttribs(
         if (x === 'onPointerDownLong' && !('onPointerDown' in props))
           r.onPointerDown = onPointerLong(
             props[x] as (e: React.PointerEvent) => void,
+            C.UI.WebApp.longTouchTO,
           );
         else if (x === 'onPointerDownLong')
           r.onPointerDown = (e: React.PointerEvent) => {

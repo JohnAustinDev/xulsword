@@ -361,13 +361,13 @@ export function iframeAutoHeight(
 // pointerup or significant pointermove event within a certain amount of time.
 export function onPointerLong(
   func: (e: React.PointerEvent) => void,
-  timems = C.UI.WebApp.longTouchTO,
+  timems: number,
 ): (e: React.PointerEvent) => void {
   return (e: React.PointerEvent) => {
     const { pointerType, pointerId } = e;
     if (pointerType === 'mouse') func(e);
     else {
-      const { clientY, target } = e;
+      const { clientX, clientY, target } = e;
       (target as HTMLElement).setPointerCapture(e.pointerId);
       const to = setTimeout(() => {
         func(e);
@@ -385,7 +385,11 @@ export function onPointerLong(
       };
       const move = (x: any) => {
         const e = x as PointerEvent;
-        if (Math.abs(e.clientY - clientY) > C.UI.WebApp.touchMaxMove) clear();
+        if (
+          Math.abs(e.clientX - clientX) > C.UI.WebApp.touchMaxMove ||
+          Math.abs(e.clientY - clientY) > C.UI.WebApp.touchMaxMove
+        )
+          clear();
       };
       target.addEventListener('pointermove', move);
       target.addEventListener('pointerup', clear);
@@ -398,35 +402,20 @@ export const Events = {
   lastPointerEvent: null as PointerEvent | null,
 };
 
+export function isBlocked(e: React.SyntheticEvent | Event): boolean {
+  if (Events.blocked) {
+    e.stopPropagation();
+    return true;
+  }
+  return false;
+}
+
 export function eventHandled(e: React.SyntheticEvent | Event) {
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   if (ep) Events.lastPointerEvent = ep;
   e.stopPropagation();
 }
-
-// Totally block (ignore) these events when Events.blocked is true.
-// NOTE: pointerover is not supported by React, but browsers generate it.
-[
-  'pointerover',
-  'pointerenter',
-  'pointerdown',
-  'pointermove',
-  'pointerup',
-  'pointerleave',
-].forEach((type) => {
-  addEventListener(
-    type,
-    (e) => {
-      if (Events.blocked) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        if (Build.isDevelopment) log.warn(`Inhibited ${type} event.`);
-      }
-    },
-    { capture: true, passive: false },
-  );
-});
 
 // React does not support pointerover or pointerout, so this function
 // implements the same functionality where pointerover/pointerout is needed.

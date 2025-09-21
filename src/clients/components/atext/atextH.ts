@@ -15,7 +15,7 @@ import {
   doUntilDone,
   eventHandled,
   getExtRefHTML,
-  onPointerLong,
+  isBlocked,
 } from '../../common.ts';
 import log from '../../log.ts';
 import { getElementData } from '../../htmlData.ts';
@@ -42,6 +42,7 @@ function scroll2Note(atext: HTMLElement, id: string) {
 
 // Event handler for a text pane's content.
 export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
+  if (isBlocked(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { pointerType } = ep ?? {};
@@ -293,7 +294,8 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
                         .map((n) => sclass.replace(/\d+/, n)),
                     );
                   } else sclasses.push(sclass);
-                  const func = (_e: any) =>
+                  const func = (_e: any) => {
+                    cancelStrongsHiLights();
                     sclasses.forEach((cls) => {
                       const i2 = sheet.insertRule(
                         cssRuleTemplate.rule.cssText.replace(
@@ -304,8 +306,9 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
                       );
                       Hilight.strongsCSS.push({ sheet, index: i2 });
                     });
+                  };
                   if (pointerType === 'mouse') func(e);
-                  else onPointerLong(func, C.UI.WebApp.shortTouchTO)(e as any);
+                  else func(e);
                 }
               });
             break;

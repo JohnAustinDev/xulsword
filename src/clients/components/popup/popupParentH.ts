@@ -9,6 +9,7 @@ import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import {
   eventHandled,
   Events,
+  isBlocked,
   onPointerLong,
   safeScrollIntoView,
   windowArguments,
@@ -58,6 +59,7 @@ export function popupParentHandler(
   e: React.SyntheticEvent | PointerEvent,
   module?: string,
 ) {
+  if (isBlocked(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { pointerType } = ep ?? {};
@@ -217,6 +219,7 @@ export function popupHandler(
   this: PopupParent,
   e: React.SyntheticEvent | PointerEvent,
 ) {
+  if (isBlocked(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { pointerType } = ep ?? {};
@@ -355,7 +358,6 @@ export function popupHandler(
               (G as GType).Window.close();
             }
           } else {
-            cancelStrongsHiLights();
             this.setState({ popupParent: null });
             // Multiple events may fire, and if the popup closes, ignore
             // them all, as the context is now different.
@@ -459,7 +461,6 @@ export function popupHandler(
         !(popupRef?.current?.state as PopupState).drag?.dragging &&
         pointerType === 'mouse'
       ) {
-        cancelStrongsHiLights();
         this.setState({ popupParent: null });
         blockpopup(this, C.UI.Popup.closeDeadTime, false);
       }
@@ -549,12 +550,12 @@ function blockpopup(
 // of the popup.
 export function popupClickClose(this: any, e: React.PointerEvent) {
   const { popupParent } = this.state as PopupParentState;
+  cancelStrongsHiLights();
   if (
     popupParent &&
     popupParent !== e.target &&
     !ofClass('npopupTX', e.target, 'ancestor-or-self')
   ) {
-    cancelStrongsHiLights();
     this.setState({ popupParent: null });
     blockpopup(this, C.UI.Popup.closeDeadTime, false);
   }

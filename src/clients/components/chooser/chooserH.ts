@@ -2,7 +2,7 @@ import type React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { GI } from '../../G.ts';
-import { doUntilDone, eventHandled, Events } from '../../common.ts';
+import { doUntilDone, eventHandled, Events, isBlocked } from '../../common.ts';
 import log from '../../log.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 
@@ -13,6 +13,7 @@ export default function handler(
   this: Chooser,
   e: React.SyntheticEvent | PointerEvent,
 ): void {
+  if (isBlocked(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   switch (e.type) {

@@ -8,7 +8,7 @@ import {
 import parseExtendedVKRef from '../../../extrefParser.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G, GI } from '../../G.ts';
-import { eventHandled, moduleInfoHTML } from '../../common.ts';
+import { eventHandled, isBlocked, moduleInfoHTML } from '../../common.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.tsx';
 import { getElementData } from '../../htmlData.ts';
 import log from '../../log.ts';
@@ -255,6 +255,7 @@ export default function handler(
   this: Popup,
   e: React.SyntheticEvent | PointerEvent,
 ) {
+  if (isBlocked(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   if (!ep) return;
