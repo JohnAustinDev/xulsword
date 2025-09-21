@@ -79,6 +79,7 @@ const C = {
       narrowW: 300, // px up to which is considered narrow screen
       mobileW: 767, // px up to which is considered mobile
       longTouchTO: 500, // ms pointerDown before pointerDownLong event triggers
+      shortTouchTO: 150,
       touchMaxMove: 5, // pointerdown is canceled if pointermove delta > this
     },
     AcceleratorKey: {
@@ -119,6 +120,7 @@ const C = {
       openDelay: 100, // ms between hover and popup opening
       strongsOpenDelay: 550, // ms
       wheelDeadTime: 1000, // ms of dead-time after wheel-scroll
+      closeDeadTime: 500, // ms events are blocked after popup close
     },
     Atext: {
       fontSize: 14, // px nominal font-size

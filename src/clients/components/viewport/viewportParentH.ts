@@ -7,6 +7,7 @@ import { G, GI } from '../../G.ts';
 import {
   doUntilDone,
   eventHandled,
+  onPointerLong,
   safeScrollIntoView,
   windowArguments,
 } from '../../common.ts';
@@ -184,7 +185,7 @@ function setState(
 
 export default function handler(
   this: Xulsword | ViewportWin,
-  e: React.SyntheticEvent<any>,
+  e: React.SyntheticEvent | PointerEvent,
 ) {
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const _ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
@@ -490,9 +491,11 @@ export default function handler(
         case 'dictkey': {
           const key = elem.innerText;
           if (atext && key) {
-            setState(this, atext, () => {
-              return { modkey: key };
-            });
+            onPointerLong(() => {
+              setState(this, atext, () => {
+                return { modkey: key };
+              });
+            })(e as React.PointerEvent);
           }
           break;
         }

@@ -356,21 +356,39 @@ export function iframeAutoHeight(
 // - pointerup (for devices without hover)
 // - pointerout, pointerleave
 
-// Implement onPointerDownLong, primarily for use by devices without hover
-// support.
-export function onPointerDownLong(
+// Implement onPointerDownLong, which is identical to onPointerDown for mouse
+// events. For other pointer events it only handles the event if there is no
+// pointerup or significant pointermove event within a certain amount of time.
+export function onPointerLong(
   func: (e: React.PointerEvent) => void,
+  timems = C.UI.WebApp.longTouchTO,
 ): (e: React.PointerEvent) => void {
   return (e: React.PointerEvent) => {
-    const { pointerType } = e;
+    const { pointerType, pointerId } = e;
     if (pointerType === 'mouse') func(e);
     else {
+      const { clientY, target } = e;
+      (target as HTMLElement).setPointerCapture(e.pointerId);
       const to = setTimeout(() => {
         func(e);
-        e.target.removeEventListener('pointerup', clear);
-      }, C.UI.WebApp.longTouchTO);
-      const clear = () => clearTimeout(to);
-      e.target.addEventListener('pointerup', clear);
+        clear();
+      }, timems);
+      const clear = () => {
+        clearTimeout(to);
+        try {
+          target.removeEventListener('pointermove', move);
+          target.removeEventListener('pointerup', clear);
+          (target as HTMLElement).releasePointerCapture(e.pointerId);
+        } catch (er) {
+          /* empty */
+        }
+      };
+      const move = (x: any) => {
+        const e = x as PointerEvent;
+        if (Math.abs(e.clientY - clientY) > C.UI.WebApp.touchMaxMove) clear();
+      };
+      target.addEventListener('pointermove', move);
+      target.addEventListener('pointerup', clear);
     }
   };
 }

@@ -9,6 +9,7 @@ import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import {
   eventHandled,
   Events,
+  onPointerLong,
   safeScrollIntoView,
   windowArguments,
 } from '../../common.ts';
@@ -52,7 +53,6 @@ export type ViewportPopupProps = {
 };
 
 // Event handler for a container containing links to popups.
-let PointerY: number | undefined = undefined;
 export function popupParentHandler(
   this: PopupParent,
   e: React.SyntheticEvent | PointerEvent,
@@ -152,21 +152,27 @@ export function popupParentHandler(
       // will make dozens of unnecessary server calls each time the user simply
       // moves the cursor around over a strong's tagged text such as KJV.
       if (data && openPopup && !popupParent && popupDelayTO !== null) {
-        PointerY = ep?.clientY;
-        delayHandler(
-          this,
-          (el: HTMLElement, dt: HTMLData, gp: number) => {
-            updateDataAttribute(el, dt);
-            this.setState({
-              elemdata: [dt],
-              gap: gp,
-              popupParent: el,
-            });
-          },
-          [element, data, gap],
-          type === 'sn' ? C.UI.Popup.strongsOpenDelay : C.UI.Popup.openDelay,
-          'popupDelayTO',
-        );
+        const func = (el: HTMLElement, dt: HTMLData, gp: number) => {
+          updateDataAttribute(el, dt);
+          this.setState({
+            elemdata: [dt],
+            gap: gp,
+            popupParent: el,
+          });
+        };
+        if (pointerType === 'mouse')
+          delayHandler(
+            this,
+            func,
+            [element, data, gap],
+            type === 'sn' ? C.UI.Popup.strongsOpenDelay : C.UI.Popup.openDelay,
+            'popupDelayTO',
+          );
+        else
+          onPointerLong(
+            () => func(element, data, gap),
+            C.UI.WebApp.shortTouchTO,
+          )(e as any);
       }
       break;
     }
@@ -177,21 +183,6 @@ export function popupParentHandler(
         // Unblock popup after mouse wheel scrolling.
         const wheelScrollUnblock = popupDelayTO === null;
         if (wheelScrollUnblock) this.popupDelayTO = undefined; // unblocks pup
-        // Cancel pending popup on touch pointermove > 5px, to allow scrolling
-        // without opening a popup.
-        const cancelPopup =
-          pointerType !== 'mouse' &&
-          popupDelayTO &&
-          ep &&
-          typeof PointerY !== 'undefined' &&
-          Math.abs(ep.clientY - PointerY) > C.UI.WebApp.touchMaxMove;
-        if (cancelPopup) {
-          if (popupDelayTO) {
-            clearTimeout(popupDelayTO);
-            log.debug(`Popup timeout was canceled due to pointermove.`);
-          }
-          this.popupDelayTO = undefined;
-        }
       }
       break;
     }
@@ -270,32 +261,38 @@ export function popupHandler(
         case 'dt':
         case 'dtl': {
           if (ep && data && !element.classList.contains('empty')) {
-            PointerY = ep?.clientY;
-            delayHandler(
-              this,
-              (ep: PointerEvent, data: HTMLData) => {
-                this.setState((prevState: PopupParentState) => {
-                  let { elemdata, gap } = prevState;
-                  if (elemdata === null) elemdata = [];
-                  else elemdata = clone(elemdata);
-                  // sn links within sn popups should keep their original context
-                  if (elemdata.at(-1)?.type === 'sn' && data.type === 'sn') {
-                    data.context = elemdata.at(-1)?.context;
-                  }
-                  elemdata.push(data);
-                  // set the gap so as to position popup under the mouse
-                  if (pointerType === 'mouse')
-                    gap = Math.round(ep.clientY - popupY - 40);
-                  return {
-                    elemdata,
-                    gap,
-                  };
-                });
-              },
-              [ep, data],
-              pointerType === 'mouse' ? 1 : C.UI.Popup.openDelay,
-              'popupDelayTO',
-            );
+            const func = (ep: PointerEvent, data: HTMLData) => {
+              this.setState((prevState: PopupParentState) => {
+                let { elemdata, gap } = prevState;
+                if (elemdata === null) elemdata = [];
+                else elemdata = clone(elemdata);
+                // sn links within sn popups should keep their original context
+                if (elemdata.at(-1)?.type === 'sn' && data.type === 'sn') {
+                  data.context = elemdata.at(-1)?.context;
+                }
+                elemdata.push(data);
+                // set the gap so as to position popup under the mouse
+                if (pointerType === 'mouse')
+                  gap = Math.round(ep.clientY - popupY - 40);
+                return {
+                  elemdata,
+                  gap,
+                };
+              });
+            };
+            if (pointerType === 'mouse')
+              delayHandler(
+                this,
+                func,
+                [ep, data],
+                pointerType === 'mouse' ? 1 : C.UI.Popup.openDelay,
+                'popupDelayTO',
+              );
+            else
+              onPointerLong(
+                () => func(ep, data),
+                C.UI.WebApp.shortTouchTO,
+              )(e as any);
           }
           break;
         }
@@ -362,7 +359,7 @@ export function popupHandler(
             this.setState({ popupParent: null });
             // Multiple events may fire, and if the popup closes, ignore
             // them all, as the context is now different.
-            blockpopup(this, 750, false);
+            blockpopup(this, C.UI.Popup.closeDeadTime, false);
           }
           break;
         }
@@ -448,22 +445,6 @@ export function popupHandler(
       if (popupHold) {
         this.setState({ popupHold: false });
       }
-      const { popupDelayTO } = this;
-      if (pointerType !== 'mouse' && popupDelayTO) {
-        // Cancel pending popup on touch pointermove > 5px, to allow scrolling
-        // without opening another popup.
-        const cancelPopup =
-          ep &&
-          typeof PointerY !== 'undefined' &&
-          Math.abs(ep.clientY - PointerY) > C.UI.WebApp.touchMaxMove;
-        if (cancelPopup) {
-          if (popupDelayTO) {
-            clearTimeout(popupDelayTO);
-            log.debug(`Popup timeout was canceled due to pointermove.`);
-          }
-          this.popupDelayTO = undefined;
-        }
-      }
       break;
     }
 
@@ -478,7 +459,9 @@ export function popupHandler(
         !(popupRef?.current?.state as PopupState).drag?.dragging &&
         pointerType === 'mouse'
       ) {
+        cancelStrongsHiLights();
         this.setState({ popupParent: null });
+        blockpopup(this, C.UI.Popup.closeDeadTime, false);
       }
       break;
     }
@@ -573,6 +556,7 @@ export function popupClickClose(this: any, e: React.PointerEvent) {
   ) {
     cancelStrongsHiLights();
     this.setState({ popupParent: null });
+    blockpopup(this, C.UI.Popup.closeDeadTime, false);
   }
 }
 
@@ -581,10 +565,14 @@ export const Hilight = {
 };
 
 export function cancelStrongsHiLights() {
-  Hilight.strongsCSS.reverse().forEach((r) => {
-    if (r.index < r.sheet.cssRules.length) {
-      r.sheet.deleteRule(r.index);
-    }
-  });
+  Hilight.strongsCSS
+    .sort((a, b) => b.index - a.index)
+    .forEach((r) => {
+      try {
+        r.sheet.deleteRule(r.index);
+      } catch (er) {
+        /* empty */
+      }
+    });
   Hilight.strongsCSS = [];
 }

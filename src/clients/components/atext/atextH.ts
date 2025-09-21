@@ -11,7 +11,12 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { doUntilDone, eventHandled, getExtRefHTML } from '../../common.ts';
+import {
+  doUntilDone,
+  eventHandled,
+  getExtRefHTML,
+  onPointerLong,
+} from '../../common.ts';
 import log from '../../log.ts';
 import { getElementData } from '../../htmlData.ts';
 import { delayHandler } from '../libxul/xul.tsx';
@@ -263,6 +268,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
 
           case 'sn': {
             // Add elem's strong's classes to stylesheet for highlighting
+            if (inPopup) return;
             const classes = Array.from(element.classList);
             classes.shift(); // remove sn base class
             classes
@@ -287,16 +293,19 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
                         .map((n) => sclass.replace(/\d+/, n)),
                     );
                   } else sclasses.push(sclass);
-                  sclasses.forEach((cls) => {
-                    const i2 = sheet.insertRule(
-                      cssRuleTemplate.rule.cssText.replace(
-                        `matchingStrongs${x}`,
-                        cls,
-                      ),
-                      sheet.cssRules.length,
-                    );
-                    Hilight.strongsCSS.push({ sheet, index: i2 });
-                  });
+                  const func = (_e: any) =>
+                    sclasses.forEach((cls) => {
+                      const i2 = sheet.insertRule(
+                        cssRuleTemplate.rule.cssText.replace(
+                          `matchingStrongs${x}`,
+                          cls,
+                        ),
+                        sheet.cssRules.length,
+                      );
+                      Hilight.strongsCSS.push({ sheet, index: i2 });
+                    });
+                  if (pointerType === 'mouse') func(e);
+                  else onPointerLong(func, C.UI.WebApp.shortTouchTO)(e as any);
                 }
               });
             break;

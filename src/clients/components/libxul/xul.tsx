@@ -1,5 +1,5 @@
 import type React from 'react';
-import { onPointerDownLong } from '../../common.ts';
+import { onPointerLong } from '../../common.ts';
 
 export const xulEvents = [
   'onDoubleClick',
@@ -143,7 +143,7 @@ export function htmlAttribs(
     .forEach((x) => {
       if (['onPointerDown', 'onPointerDownLong'].includes(x)) {
         if (x === 'onPointerDownLong' && !('onPointerDown' in props))
-          r.onPointerDown = onPointerDownLong(
+          r.onPointerDown = onPointerLong(
             props[x] as (e: React.PointerEvent) => void,
           );
         else if (x === 'onPointerDownLong')
