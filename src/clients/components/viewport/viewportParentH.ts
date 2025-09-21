@@ -398,7 +398,8 @@ export default function handler(
               if (!this.renderPromise.waiting())
                 (this as Xulsword).setState({
                   location: newloc,
-                  selection: null,
+                  selection: newloc,
+                  scroll: { verseAt: 'center' }
                 });
             }
           });

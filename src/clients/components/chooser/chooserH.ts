@@ -16,10 +16,13 @@ export default function handler(
   if (isBlocked(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
+  const { pointerType } = ep ?? {};
   switch (e.type) {
     case 'pointerdown': {
-      if (ep?.currentTarget instanceof HTMLElement)
+      if (ep?.currentTarget instanceof HTMLElement) {
         ep.currentTarget.classList.remove('show');
+        return; // let viewportParentH finish handling this event
+      }
       break;
     }
 
@@ -179,7 +182,7 @@ export default function handler(
           return;
       }
       // On touch, we've handled mouseover, so ignore followon events.
-      if (Events.lastPointerEvent?.pointerType !== 'mouse') {
+      if (pointerType !== 'mouse') {
         Events.blocked = true;
         setTimeout(() => (Events.blocked = false), 150);
       }
