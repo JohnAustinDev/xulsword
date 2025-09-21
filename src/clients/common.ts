@@ -351,11 +351,10 @@ export function iframeAutoHeight(
 // The various types of mouse events are fired inconsistently across browsers
 // when mobile touch actions occur. However pointer events are w3c consistent
 // and always occur in the following order:
-// - pointerenter
+// - pointerover, pointerenter
 // - pointerdown (for devices without hover)
 // - pointerup (for devices without hover)
-// - pointerleave
-export const PointerDownLong = { timeout: null as NodeJS.Timeout | null };
+// - pointerout, pointerleave
 
 // Implement onPointerDownLong, primarily for use by devices without hover
 // support.
@@ -366,12 +365,12 @@ export function onPointerDownLong(
     const { pointerType } = e;
     if (pointerType === 'mouse') func(e);
     else {
-      const { timeout } = PointerDownLong;
-      if (timeout) clearTimeout(timeout);
-      PointerDownLong.timeout = setTimeout(
-        () => func(e),
-        C.UI.WebApp.longTouchTO,
-      );
+      const to = setTimeout(() => {
+        func(e);
+        e.target.removeEventListener('pointerup', clear);
+      }, C.UI.WebApp.longTouchTO);
+      const clear = () => clearTimeout(to);
+      e.target.addEventListener('pointerup', clear);
     }
   };
 }
@@ -381,9 +380,18 @@ export const Events = {
   lastPointerEvent: null as PointerEvent | null,
 };
 
+export function eventHandled(e: React.SyntheticEvent | Event) {
+  const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
+  const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
+  if (ep) Events.lastPointerEvent = ep;
+  e.stopPropagation();
+}
+
+// Totally block (ignore) these events when Events.blocked is true.
+// NOTE: pointerover is not supported by React, but browsers generate it.
 [
-  'pointerenter',
   'pointerover',
+  'pointerenter',
   'pointerdown',
   'pointermove',
   'pointerup',
@@ -392,8 +400,7 @@ export const Events = {
   addEventListener(
     type,
     (e) => {
-      // Pointerover is not supported by React, but browsers generate it.
-      if (Events.blocked || type === 'pointerover') {
+      if (Events.blocked) {
         e.preventDefault();
         e.stopImmediatePropagation();
         if (Build.isDevelopment) log.warn(`Inhibited ${type} event.`);
@@ -403,15 +410,8 @@ export const Events = {
   );
 });
 
-export function eventHandled(e: React.SyntheticEvent | Event) {
-  const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
-  const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
-  if (ep) Events.lastPointerEvent = ep;
-  e.stopPropagation();
-}
-
 // React does not support pointerover or pointerout, so this function
-// implements the same functionality.
+// implements the same functionality where pointerover/pointerout is needed.
 export function addHoverLinks(
   container: HTMLElement,
   classes: string[],

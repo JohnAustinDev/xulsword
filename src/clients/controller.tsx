@@ -13,7 +13,7 @@ import Cache from '../cache.ts';
 import C from '../constant.ts';
 import DynamicStyleSheet from './style.ts';
 import ContextData from './contextData.ts';
-import { PointerDownLong, setGlobalSkin, windowArguments } from './common.ts';
+import { setGlobalSkin, windowArguments } from './common.ts';
 import log from './log.ts';
 import {
   delayHandler,
@@ -614,11 +614,7 @@ export default async function renderToRoot(
 
   root.render(
     <StrictMode>
-      <Controller
-        print={print ?? null}
-        resetOnResize={resetOnResize ?? true}
-        onPointerUp={onPointerUp}
-      >
+      <Controller print={print ?? null} resetOnResize={resetOnResize ?? true}>
         {component}
       </Controller>
     </StrictMode>,
@@ -648,12 +644,4 @@ export default async function renderToRoot(
     }
     window.IPC.send('did-finish-render');
   }, 1);
-}
-
-function onPointerUp() {
-  const { timeout } = PointerDownLong;
-  if (timeout) {
-    clearTimeout(timeout);
-    PointerDownLong.timeout = null;
-  }
 }

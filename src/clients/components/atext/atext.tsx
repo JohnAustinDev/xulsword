@@ -604,37 +604,19 @@ class Atext
           ) as HTMLElement | null;
           if (module && pes) {
             sanitizeHTML(pes, `${navlinks(module, renderPromise, true)}`);
-            addHoverLinks(pes, ['aboutlink'], popupParentHandler);
+            this.hoverLinks(pes);
           }
           const { columns } = libswordProps;
           if (module && (typeof columns === 'undefined' || columns === 1))
             sb += `<div class="ft">${navlinks(module, renderPromise)}</div>`;
           sanitizeHTML(sbe, sb);
           libswordImgSrc(sbe);
-          addHoverLinks(
-            sbe,
-            [
-              'cr',
-              'fn',
-              'un',
-              'sn',
-              'sr',
-              'dt',
-              'dtl',
-              'introlink',
-              'searchterm',
-            ],
-            popupParentHandler,
-          );
-          addHoverLinks(
-            sbe,
-            ['cr', 'fn', 'sn', 'un', 'image-viewport'],
-            handler,
-          );
+          this.hoverLinks(sbe);
         }
         if (nb !== undefined) {
           sanitizeHTML(nbe, nb);
           libswordImgSrc(nbe);
+          this.hoverLinks(nbe);
         }
         const nbc = nbe.parentNode as any;
         fntable = nbe.firstChild as HTMLElement | null;
@@ -648,6 +630,28 @@ class Atext
         }
       }
     }
+  }
+
+  hoverLinks(div: HTMLElement) {
+    const { props, handler } = this;
+    const { popupParentHandler } = props;
+    addHoverLinks(
+      div,
+      [
+        'cr',
+        'fn',
+        'un',
+        'sn',
+        'sr',
+        'dt',
+        'dtl',
+        'introlink',
+        'aboutlink',
+        'searchterm',
+      ],
+      popupParentHandler,
+    );
+    addHoverLinks(div, ['cr', 'fn', 'sn', 'un', 'image-viewport'], handler);
   }
 
   // IMPORTANT: verse doesn't effect libsword output, so always remove

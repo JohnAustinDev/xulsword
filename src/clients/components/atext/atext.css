@@ -162,13 +162,16 @@ html[dir='rtl'] .notebox-maximizer {
 }
 
 .atext .nb {
-  position: relative; /* required for scroll to work! */
+  position: relative; /* required for note scrolling to work! */
   height: 100%;
   overflow: auto;
   background-color: var(--bg-interface-light);
   border: 2px solid var(--border-dark);
   border-radius: 8px;
   padding: 0px 5px 0px 5px;
+}
+.atext .nb:has(.npopup) {
+  position: unset; /* required for popup placement to work! */
 }
 @media (max-width: 767px) {
   /* Dictionary nb must have max-width for mobile multi-panel

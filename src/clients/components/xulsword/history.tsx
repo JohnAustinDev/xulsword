@@ -10,6 +10,7 @@ import { clone } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
 import Menupopup from '../libxul/menupopup.tsx';
+import { Box } from '../libxul/boxes.tsx';
 
 import type { HistoryVKType } from '../../../type.ts';
 import type Xulsword from './xulsword.tsx';
@@ -122,7 +123,7 @@ export function historyMenu(
         const index = i + is;
         const selected = index === historyIndex ? 'selected' : '';
         return (
-          <div
+          <Box
             key={[selected, index, histitem].join('.')}
             className={selected}
             onPointerDown={(e) => {
@@ -130,7 +131,7 @@ export function historyMenu(
             }}
           >
             {itemvk.readable(G.i18n.language, null, true)}
-          </div>
+          </Box>
         );
       })}
     </Menupopup>
