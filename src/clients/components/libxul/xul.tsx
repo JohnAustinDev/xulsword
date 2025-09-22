@@ -147,6 +147,7 @@ export function htmlAttribs(
           r.onPointerDown = onPointerLong(
             props[x] as (e: React.PointerEvent) => void,
             C.UI.WebApp.longTouchTO,
+            true,
           );
         else if (x === 'onPointerDownLong')
           r.onPointerDown = (e: React.PointerEvent) => {

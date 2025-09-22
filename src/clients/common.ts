@@ -356,12 +356,15 @@ export function iframeAutoHeight(
 // - pointerup (for devices without hover)
 // - pointerout, pointerleave
 
-// Implement onPointerDownLong, which is identical to onPointerDown for mouse
-// events. For other pointer events it only handles the event if there is no
-// pointerup or significant pointermove event within a certain amount of time.
+// Delay handling of a canceleable pointer event by timems milliseconds.
+// The event will not be handled if the pointer moves after the press, or
+// optionally, if the pointer is not held down throughout the delay. This
+// allows handling of long-hold events as well as cancelling undesired
+// pointer events when scrolling.
 export function onPointerLong(
   func: (e: React.PointerEvent) => void,
   timems: number,
+  longPress = false,
 ): (e: React.PointerEvent) => void {
   return (e: React.PointerEvent) => {
     const { pointerType, pointerId } = e;
@@ -392,7 +395,7 @@ export function onPointerLong(
           clear();
       };
       target.addEventListener('pointermove', move);
-      target.addEventListener('pointerup', clear);
+      if (longPress) target.addEventListener('pointerup', clear);
     }
   };
 }
