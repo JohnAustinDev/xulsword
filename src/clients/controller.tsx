@@ -115,6 +115,26 @@ function addStateToHistory(state: ControllerState) {
   else history.pushState(controllerState, '', url);
 }
 
+let didFinishRenderTO: NodeJS.Timeout | null | undefined;
+function didFinishRender() {
+  if (descriptor?.fitToContent) {
+    const [htmlElem] = Array.from(document.getElementsByTagName('html'));
+    const [bodyElem] = Array.from(document.getElementsByTagName('body'));
+    if (htmlElem && bodyElem) {
+      const b = bodyElem.getBoundingClientRect();
+      if (b && Build.isElectronApp) {
+        // Add 20 px, otherwise unnecessary scrollbars may appear.
+        (G as GType).Window.setContentSize(b.width + 10, b.height + 10);
+      }
+      // Now that the window has been resized, remove the fitToContent
+      // class so content will fill the window even if it shrinks.
+      htmlElem.classList.remove('fitToContent');
+    }
+  }
+  if (Build.isElectronApp) window.IPC.send('did-finish-render');
+  didFinishRenderTO = null; // never run this again
+}
+
 function Controller(props: ControllerProps) {
   const { children } = props;
   const s0 = { ...defaultControllerState, ...props };
@@ -130,6 +150,14 @@ function Controller(props: ControllerProps) {
   }
 
   const textbox: React.RefObject<HTMLInputElement> = React.createRef();
+
+  // Run didFinishRender() one time.
+  useEffect(() => {
+    if (didFinishRenderTO !== null) {
+      if (didFinishRenderTO) clearTimeout(didFinishRenderTO);
+      didFinishRenderTO = setTimeout(didFinishRender, 100);
+    }
+  });
 
   // IPC component-reset setup:
   useEffect(() => {
@@ -626,22 +654,4 @@ export default async function renderToRoot(
   };
 
   if (typeof onload === 'function') onload();
-
-  setTimeout(() => {
-    if (descriptor?.fitToContent) {
-      const [htmlElem] = Array.from(document.getElementsByTagName('html'));
-      const [bodyElem] = Array.from(document.getElementsByTagName('body'));
-      if (htmlElem && bodyElem) {
-        const b = bodyElem.getBoundingClientRect();
-        if (b && Build.isElectronApp) {
-          // Add 20 px, otherwise unnecessary scrollbars may appear.
-          (G as GType).Window.setContentSize(b.width + 10, b.height + 10);
-        }
-        // Now that the window has been resized, remove the fitToContent
-        // class so content will fill the window even if it shrinks.
-        htmlElem.classList.remove('fitToContent');
-      }
-    }
-    window.IPC.send('did-finish-render');
-  }, 1);
 }
