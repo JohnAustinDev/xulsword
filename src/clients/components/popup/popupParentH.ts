@@ -1,6 +1,6 @@
 import type React from 'react';
 import Subscription from '../../../subscription.ts';
-import { clone, ofClass, randomID } from '../../../common.ts';
+import { clone, getCSS, ofClass, pad, randomID } from '../../../common.ts';
 import { goToLocationVK } from '../../../commands.ts';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
@@ -65,10 +65,7 @@ export function popupParentHandler(
   const { pointerType } = ep ?? {};
   switch (e.type) {
     case 'pointerenter': {
-      const parent = ofClass(['npopup'], e.target)?.element;
-      // Hover over elements outside of a popup which are not 'x-target_self'
-      // are handled here.
-      if (parent) return;
+      if (ofClass(['npopup'], e.target)) return;
       const { target } = e;
       const oc = ofClass(
         [
@@ -94,6 +91,8 @@ export function popupParentHandler(
       }
       if (!element) return;
       if (element.classList.contains('x-target_self')) return;
+      // Onyl elements outside of a popup which are not 'x-target_self'
+      // will open the popup.
       const { props, state, popupDelayTO } = this;
       const { popupParent } = state;
       const { place: pl, show: sh, atextRefs, isPinned } = props;
@@ -462,6 +461,7 @@ export function popupHandler(
         pointerType === 'mouse'
       ) {
         this.setState({ popupParent: null });
+        cancelStrongsHiLights();
         blockpopup(this, C.UI.Popup.closeDeadTime, false);
       }
       break;
@@ -550,20 +550,64 @@ function blockpopup(
 // of the popup.
 export function popupClickClose(this: any, e: React.PointerEvent) {
   const { popupParent } = this.state as PopupParentState;
-  cancelStrongsHiLights();
-  if (
-    popupParent &&
-    popupParent !== e.target &&
-    !ofClass('npopupTX', e.target, 'ancestor-or-self')
-  ) {
-    this.setState({ popupParent: null });
-    blockpopup(this, C.UI.Popup.closeDeadTime, false);
+  const { pointerType, target } = e;
+  if (target instanceof HTMLElement) {
+    // Usually, closing the popup should cancel sn hilighting. However, not in
+    // the case of non-mouse pointers targeting sn links, which occurs both
+    // when a strongs link is touched and when a strongs popup's close button
+    // is touched. Otherwise touched links will not stay hilighted in the first
+    // case, and in the second case there would be no way to see hilights
+    // across texts while unobscured by a popup.
+    if (!(pointerType !== 'mouse' && target.classList.contains('sn')))
+      cancelStrongsHiLights();
+    if (
+      popupParent &&
+      popupParent !== target &&
+      !ofClass('npopupTX', target, 'ancestor-or-self')
+    ) {
+      this.setState({ popupParent: null });
+      blockpopup(this, C.UI.Popup.closeDeadTime, false);
+    }
   }
 }
 
 export const Hilight = {
   strongsCSS: [] as { sheet: CSSStyleSheet; index: number }[],
 };
+
+export function strongsHilights(classes: string[]) {
+  classes
+    .filter((c) => /^S_\w*\d+$/.test(c))
+    .forEach((sclass, xx) => {
+      const x = xx > 2 ? 2 : xx;
+      const sheet = document.styleSheets[document.styleSheets.length - 1];
+      const cssRuleTemplate = getCSS(`.matchingStrongs${x} {`);
+      if (cssRuleTemplate) {
+        // Each Strong's module uses classes with different number
+        // padding, so multiple rules are required for situations
+        // such as parallel texts or interlinear.
+        const sclasses: string[] = [];
+        const sn = sclass.match(/\d+/);
+        if (sn) {
+          const sni = Number(sn[0]);
+          sclasses.push(
+            ...[2, 3, 4, 5]
+              .map((n) => pad(sni, n, 0))
+              .filter((n, i, a) => !a.slice(i + 1).includes(n))
+              .map((n) => sclass.replace(/\d+/, n)),
+          );
+        } else sclasses.push(sclass);
+        cancelStrongsHiLights();
+        sclasses.forEach((cls) => {
+          const i2 = sheet.insertRule(
+            cssRuleTemplate.rule.cssText.replace(`matchingStrongs${x}`, cls),
+            sheet.cssRules.length,
+          );
+          Hilight.strongsCSS.push({ sheet, index: i2 });
+        });
+      }
+    });
+}
 
 export function cancelStrongsHiLights() {
   Hilight.strongsCSS

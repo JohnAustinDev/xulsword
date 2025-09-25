@@ -185,7 +185,7 @@ export function htmlAttribs(
 
 // Use topHandle() when there is a xulEvent prop on a React component's top-
 // level element. Otherwise any event prop of that same type on an instance
-// of that component would never be called.
+// of that component will never be called.
 export function topHandle(
   name: (typeof xulEvents)[number] | (typeof xulCaptureEvents)[number],
   func?: (e: React.SyntheticEvent) => any,

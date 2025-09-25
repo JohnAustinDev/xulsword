@@ -20,7 +20,11 @@ import {
 import log from '../../log.ts';
 import { getElementData } from '../../htmlData.ts';
 import { delayHandler } from '../libxul/xul.tsx';
-import { cancelStrongsHiLights, Hilight } from '../popup/popupParentH.ts';
+import {
+  cancelStrongsHiLights,
+  Hilight,
+  strongsHilights,
+} from '../popup/popupParentH.ts';
 import { aTextWheelScroll, getScrollVerse } from './zversekey.ts';
 
 import type { GType, SearchType } from '../../../type.ts';
@@ -49,6 +53,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
   switch (e.type) {
     case 'pointerdown': {
       const { target } = e;
+      if (ofClass(['npopup'], target)) return;
       const targ = ofClass(
         [
           'cr',
@@ -59,7 +64,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
         ],
         target,
       );
-      if (targ === null) return;
+      if (!targ) return;
       const { props } = this;
       const { module, panelIndex: index } = props;
       const atext = e.currentTarget as HTMLElement;
@@ -227,6 +232,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
 
     case 'pointerenter': {
       const { target } = e;
+      if (ofClass(['npopup'], target)) return;
       const oc = ofClass(['cr', 'fn', 'sn', 'un', 'image-viewport'], target);
       if (!oc) return;
       const { element, type } = oc;
@@ -237,7 +243,6 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
       const place = isPinned && pin ? pin.place : pl;
       const atext = ofClass(['atext'], target)?.element;
       const modtype = module ? G.Tab[module].type : '';
-      const inPopup = ofClass(['npopup'], target);
       const p = getElementData(element);
       const { title, type: ptype } = p;
       let okay;
@@ -251,7 +256,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
 
           case 'fn':
             // genbk fn are embedded in text
-            if (!inPopup && modtype === C.GENBOOK) okay = true;
+            if (modtype === C.GENBOOK) okay = true;
             else if (p && place.footnotes === 'notebox') {
               okay = scroll2Note(atext, `w${index}.footnote.${ptype}.${title}`);
             }
@@ -269,48 +274,9 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
 
           case 'sn': {
             // Add elem's strong's classes to stylesheet for highlighting
-            if (inPopup) return;
             const classes = Array.from(element.classList);
             classes.shift(); // remove sn base class
-            classes
-              .filter((c) => /^S_\w*\d+$/.test(c))
-              .forEach((sclass, xx) => {
-                const x = xx > 2 ? 2 : xx;
-                const sheet =
-                  document.styleSheets[document.styleSheets.length - 1];
-                const cssRuleTemplate = getCSS(`.matchingStrongs${x} {`);
-                if (cssRuleTemplate) {
-                  // Each Strong's module uses classes with different number
-                  // padding, so multiple rules are required for situations
-                  // such as parallel texts or interlinear.
-                  const sclasses: string[] = [];
-                  const sn = sclass.match(/\d+/);
-                  if (sn) {
-                    const sni = Number(sn[0]);
-                    sclasses.push(
-                      ...[2, 3, 4, 5]
-                        .map((n) => pad(sni, n, 0))
-                        .filter((n, i, a) => !a.slice(i + 1).includes(n))
-                        .map((n) => sclass.replace(/\d+/, n)),
-                    );
-                  } else sclasses.push(sclass);
-                  const func = (_e: any) => {
-                    cancelStrongsHiLights();
-                    sclasses.forEach((cls) => {
-                      const i2 = sheet.insertRule(
-                        cssRuleTemplate.rule.cssText.replace(
-                          `matchingStrongs${x}`,
-                          cls,
-                        ),
-                        sheet.cssRules.length,
-                      );
-                      Hilight.strongsCSS.push({ sheet, index: i2 });
-                    });
-                  };
-                  if (pointerType === 'mouse') func(e);
-                  else func(e);
-                }
-              });
+            strongsHilights(classes);
             break;
           }
 
@@ -357,18 +323,13 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
         }
       }
 
-      if (pointerType === 'mouse') {
-        // Remove any dynamically added Strong's classes from CSS stylesheet,
-        // unless we're now over npopup
-        const { target } = e;
-        if (target) {
-          const nowover = (
-            target && 'classList' in target ? target : null
-          ) as HTMLElement | null;
-          if (nowover && !nowover.classList.contains('npopup'))
-            cancelStrongsHiLights();
-        }
-      }
+      if (
+        ep &&
+        pointerType === 'mouse' &&
+        !ofClass(['npopup'], ep.target) &&
+        !ofClass(['npopup'], ep.relatedTarget)
+      )
+        cancelStrongsHiLights();
       break;
     }
 

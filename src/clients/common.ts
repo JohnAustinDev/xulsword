@@ -367,35 +367,34 @@ export function onPointerLong(
   longPress = false,
 ): (e: React.PointerEvent) => void {
   return (e: React.PointerEvent) => {
-    const { pointerType, pointerId } = e;
+    const { pointerType, pointerId, clientX, clientY, target } = e;
     if (pointerType === 'mouse') func(e);
     else {
-      const { clientX, clientY, target } = e;
-      (target as HTMLElement).setPointerCapture(e.pointerId);
+      (target as HTMLElement).setPointerCapture(pointerId);
       const to = setTimeout(() => {
         func(e);
-        clear();
+        cancel();
       }, timems);
-      const clear = () => {
+      const cancel = () => {
         clearTimeout(to);
         try {
-          target.removeEventListener('pointermove', move);
-          target.removeEventListener('pointerup', clear);
-          (target as HTMLElement).releasePointerCapture(e.pointerId);
+          target.removeEventListener('pointermove', pointermove);
+          target.removeEventListener('pointerup', cancel);
+          (target as HTMLElement).releasePointerCapture(pointerId);
         } catch (er) {
           /* empty */
         }
       };
-      const move = (x: any) => {
+      const pointermove = (x: any) => {
         const e = x as PointerEvent;
         if (
           Math.abs(e.clientX - clientX) > C.UI.WebApp.touchMaxMove ||
           Math.abs(e.clientY - clientY) > C.UI.WebApp.touchMaxMove
         )
-          clear();
+          cancel();
       };
-      target.addEventListener('pointermove', move);
-      if (longPress) target.addEventListener('pointerup', clear);
+      target.addEventListener('pointermove', pointermove);
+      if (longPress) target.addEventListener('pointerup', cancel);
     }
   };
 }
@@ -421,7 +420,7 @@ export function eventHandled(e: React.SyntheticEvent | Event) {
 }
 
 // React does not support pointerover or pointerout, so this function
-// implements the same functionality where pointerover/pointerout is needed.
+// implements the same functionality where that is needed.
 export function addHoverLinks(
   container: HTMLElement,
   classes: string[],

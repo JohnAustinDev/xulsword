@@ -154,13 +154,12 @@ export default class DragSizer extends React.Component<
     const { orient } = props;
 
     return (
-      <div className={`dragsizer ${orient || 'horizontal'}`}>
-        <Box
-          className={(dragging && 'dragging') || ''}
-          domref={sizerRef}
-          onPointerDownLong={onPointerDownLong}
-        />
-      </div>
+      <Box
+        className={`dragsizer ${orient || 'horizontal'}`}
+        onPointerDownLong={onPointerDownLong}
+      >
+        <Box className={(dragging && 'dragging') || ''} domref={sizerRef} />
+      </Box>
     );
   }
 }
