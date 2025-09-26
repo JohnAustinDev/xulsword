@@ -842,7 +842,7 @@ class Atext
               : undefined
           }
         >
-          <Hbox>
+          <Hbox pack={'center'}>
             <DragSizer
               onDragStart={() => realNoteBoxHeight}
               onDragEnd={bbDragEnd}

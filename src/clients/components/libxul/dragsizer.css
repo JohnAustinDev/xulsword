@@ -4,15 +4,15 @@
 }
 
 .dragsizer.vertical {
-  width: 4px;
+  width: 20px;
   height: 95%;
-  margin: auto 6px auto 6px;
+  margin: auto 0;
 }
 
 .dragsizer.horizontal {
   width: 95%;
-  height: 4px;
-  margin: 6px auto 6px auto;
+  height: 20px;
+  margin: 0 auto;
 }
 
 .dragsizer > div {
@@ -27,6 +27,7 @@
   width: 4px;
   top: 0px;
   bottom: 0px;
+  margin: auto 8px auto 8px;
 }
 
 .dragsizer.horizontal > div {
@@ -34,6 +35,7 @@
   height: 4px;
   left: 0px;
   right: 0px;
+  margin: 8px auto 8px auto;
 }
 
 .dragsizer > .dragging {

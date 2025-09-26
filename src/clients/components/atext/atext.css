@@ -138,9 +138,8 @@ html[dir='rtl'] .sbcontrols {
 .atext .nbc.noteboxEmpty {
   display: none;
 }
-
-.atext .dragsizer {
-  width: 75%;
+.atext .dragsizer.horizontal {
+  width: 88%;
 }
 .atext .notebox-maximizer {
   position: absolute;
