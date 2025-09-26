@@ -298,8 +298,8 @@ export class Analytics {
     };
     const { event } = info;
     // framehost
-    const origins = window.location.ancestorOrigins;
-    const origin = origins[origins.length - 1];
+    const origins = window.location.ancestorOrigins ?? [];
+    const origin = origins[origins.length - 1] ?? 'unknown';
 
     // Apply any Analytics settings specified by our info.
     const setting =

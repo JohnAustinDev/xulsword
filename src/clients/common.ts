@@ -370,7 +370,9 @@ export function onPointerLong(
     const { pointerType, pointerId, clientX, clientY, target } = e;
     if (pointerType === 'mouse') func(e);
     else {
-      (target as HTMLElement).setPointerCapture(pointerId);
+      try {
+        (target as HTMLElement).setPointerCapture(pointerId);
+      } catch (er) { /* empty */ }
       const to = setTimeout(() => {
         func(e);
         cancel();

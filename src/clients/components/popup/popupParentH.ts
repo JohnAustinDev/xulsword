@@ -528,22 +528,20 @@ function blockpopup(
   length: number,
   thenWaitUntilMouseMoves = false,
 ) {
-  if ('popupDelayTO' in xthis) {
-    if (xthis.popupDelayTO) clearTimeout(xthis.popupDelayTO);
-    xthis.popupDelayTO = null; // blocks the popup
-    Events.blocked = true;
-    delayHandler(
-      xthis,
-      () => {
-        Events.blocked = false;
-        // Hoverable re-enables after the mouse moves, otherwise re-enable now.
-        if (!thenWaitUntilMouseMoves) xthis.popupDelayTO = undefined;
-      },
-      [],
-      length,
-      'popupUnblockTO',
-    );
-  }
+  if (xthis.popupDelayTO) clearTimeout(xthis.popupDelayTO);
+  xthis.popupDelayTO = null; // blocks the popup
+  Events.blocked = true;
+  delayHandler(
+    xthis,
+    () => {
+      Events.blocked = false;
+      // Hoverable re-enables after the mouse moves, otherwise re-enable now.
+      if (!thenWaitUntilMouseMoves) xthis.popupDelayTO = undefined;
+    },
+    [],
+    length,
+    'popupUnblockTO',
+  );
 }
 
 // Close the popup and/or unhilight strongs numbers if the user clicks outside
