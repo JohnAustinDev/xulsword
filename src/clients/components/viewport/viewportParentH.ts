@@ -232,9 +232,9 @@ export default function handler(
       );
       if (targ === null) return;
       e.preventDefault();
-      const elem = targ.element;
-      const p = getElementData(elem);
-      switch (targ.type) {
+      const { element, type } = targ;
+      const p = getElementData(element);
+      switch (type) {
         case 'towindow': {
           const cols = atext?.dataset.columns;
           if (Build.isElectronApp && atext && cols !== undefined) {
@@ -339,8 +339,8 @@ export default function handler(
           break;
         }
         case 'bookgroupitem': {
-          const { book, v11n } = targ.element.dataset;
-          if (book && !targ.element.classList.contains('disabled')) {
+          const { book, v11n } = element.dataset;
+          if (book && !element.classList.contains('disabled')) {
             (this as Xulsword).setState({
               location: {
                 book: book as OSISBookType,
@@ -354,35 +354,11 @@ export default function handler(
           break;
         }
         case 'chaptermenucell': {
-          const { book, chapter, v11n } = targ.element.dataset;
-          doUntilDone((renderPromise2) => {
-            if (book && chapter) {
-              const newloc = chapterChange(
-                {
-                  book: book as OSISBookType,
-                  chapter: Number(chapter),
-                  v11n: v11n as V11nType,
-                },
-                0,
-                renderPromise2,
-              );
-              if (newloc && !renderPromise2?.waiting()) {
-                (this as Xulsword).setState({
-                  location: newloc,
-                  selection: null,
-                });
-              }
-            }
-          });
+          elementDataGoTo(this, element);
           break;
         }
         case 'heading-link': {
-          const {
-            module: m,
-            book: b,
-            chapter: c,
-            verse: v,
-          } = targ.element.dataset;
+          const { module: m, book: b, chapter: c, verse: v } = element.dataset;
           const v11n = (m && G.Tab[m].v11n) || null;
           doUntilDone((renderPromise2) => {
             if (location && m && b && v && v11n) {
@@ -399,7 +375,7 @@ export default function handler(
                 (this as Xulsword).setState({
                   location: newloc,
                   selection: newloc,
-                  scroll: { verseAt: 'center' }
+                  scroll: { verseAt: 'center' },
                 });
             }
           });
@@ -427,14 +403,14 @@ export default function handler(
         case 'mts-tab':
         case 'mto-tab':
         case 'ilt-tab': {
-          const m = elem.dataset.module;
+          const m = element.dataset.module;
           if (
             m &&
             m !== 'disabled' &&
-            !elem.classList.contains('disabled') &&
+            !element.classList.contains('disabled') &&
             !state.isPinned[index]
           ) {
-            if (targ.type === 'ilt-tab') {
+            if (type === 'ilt-tab') {
               (this as Xulsword).setState((prevState) => {
                 const { ilModules } = prevState;
                 const s = {
@@ -452,7 +428,7 @@ export default function handler(
                 } as XulswordState;
                 if (!s.panels) s.panels = [];
                 s.panels[index] = m;
-                if (targ.type === 'mto-tab' || targ.type === 'mts-tab') {
+                if (type === 'mto-tab' || type === 'mts-tab') {
                   s.mtModules = mtModules.slice();
                   s.mtModules[index] = m;
                 }
@@ -469,7 +445,7 @@ export default function handler(
               setState(this, atext, (prevState: PinPropsType) => {
                 return textChange(
                   atext,
-                  targ.type === 'nextchaplink',
+                  type === 'nextchaplink',
                   renderPromise2,
                   prevState,
                 );
@@ -482,7 +458,7 @@ export default function handler(
         case 'dtl':
           if (
             p?.locationGB &&
-            elem.classList.contains('x-target_self') &&
+            element.classList.contains('x-target_self') &&
             atext
           ) {
             const modkey = p.locationGB.key;
@@ -492,7 +468,7 @@ export default function handler(
           }
           break;
         case 'dictkey': {
-          const key = elem.innerText;
+          const key = element.innerText;
           if (atext && key) {
             onPointerLong(() => {
               setState(this, atext, () => {
@@ -510,7 +486,7 @@ export default function handler(
                 'gfn',
               ) as HTMLCollectionOf<HTMLElement>;
               Array.from(gfns).forEach((gfn) => {
-                if (gfn !== elem && gfn.dataset.title === p.title)
+                if (gfn !== element && gfn.dataset.title === p.title)
                   safeScrollIntoView(gfn, parent.element, undefined, 30);
               });
             }
@@ -536,7 +512,7 @@ export default function handler(
           break;
         }
         case 'origoption': {
-          const value = elem.getAttribute('value');
+          const value = element.getAttribute('value');
           if (value && atext) {
             const [, , , mod] = value.split('.');
             setState(this, atext, () => {
@@ -553,6 +529,14 @@ export default function handler(
           return;
         }
       }
+      break;
+    }
+
+    case 'pointerenter': {
+      // We arrive here by calling this handler directly within the chooser
+      // after touch of a chaptermenucell with no heading menu items.
+      const targ = ofClass(['chaptermenucell'], target);
+      if (targ) elementDataGoTo(this, targ.element);
       break;
     }
 
@@ -595,6 +579,29 @@ export default function handler(
   }
 
   eventHandled(e);
+}
+
+function elementDataGoTo(xthis: Xulsword | ViewportWin, element: HTMLElement) {
+  const { book, chapter, v11n } = element.dataset;
+  doUntilDone((renderPromise2) => {
+    if (book && chapter) {
+      const newloc = chapterChange(
+        {
+          book: book as OSISBookType,
+          chapter: Number(chapter),
+          v11n: v11n as V11nType,
+        },
+        0,
+        renderPromise2,
+      );
+      if (newloc && !renderPromise2?.waiting()) {
+        (xthis as Xulsword).setState({
+          location: newloc,
+          selection: null,
+        });
+      }
+    }
+  });
 }
 
 function handleDictKeyInput(

@@ -12,8 +12,8 @@ import {
   delayHandler,
   topHandle,
 } from '../libxul/xul.tsx';
-import handlerH from './chooserH.ts';
 import audioIcon from '../audioIcon/audioIcon.tsx';
+import handlerH from './chooserH.ts';
 import './chooser.css';
 
 import type {
@@ -27,6 +27,7 @@ import type {
   RenderPromiseComponent,
   RenderPromiseState,
 } from '../../renderPromise.ts';
+import type Xulsword from '../xulsword/xulsword.tsx';
 
 export type ChooserProps = {
   bookGroups?: BookGroupType[];
@@ -35,7 +36,7 @@ export type ChooserProps = {
   hideUnavailableBooks?: boolean;
   headingsModule?: string | null;
   v11n: V11nType;
-  onCloseChooserClick: (e: any) => void;
+  viewportParentHandler: Xulsword['viewportParentHandler'];
   onAudioClick: (
     audio: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
     e: React.SyntheticEvent,
@@ -249,7 +250,7 @@ class Chooser
       headingsModule,
       selection,
       v11n,
-      onCloseChooserClick,
+      viewportParentHandler,
       onAudioClick,
     } = props;
     let { bookGroups } = props;
@@ -275,7 +276,10 @@ class Chooser
         <Hbox className="fadetop" />
 
         <Hbox className="chooser-container" flex="20">
-          <div className="close-chooser" onPointerDown={onCloseChooserClick} />
+          <div
+            className="close-chooser"
+            onPointerDown={viewportParentHandler}
+          />
 
           <Vbox className="bookgroup-selector">
             {bookGroups.map((bg) => {

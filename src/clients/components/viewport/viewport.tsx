@@ -475,7 +475,7 @@ export default class Viewport
             headingsModule={firstUnpinnedBible}
             bookGroups={bookGroups}
             availableBooks={availableBooks}
-            onCloseChooserClick={eHandler}
+            viewportParentHandler={eHandler}
             onAudioClick={audioHandler}
           />
         )}

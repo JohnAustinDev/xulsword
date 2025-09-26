@@ -372,7 +372,9 @@ export function onPointerLong(
     else {
       try {
         (target as HTMLElement).setPointerCapture(pointerId);
-      } catch (er) { /* empty */ }
+      } catch (er) {
+        /* empty */
+      }
       const to = setTimeout(() => {
         func(e);
         cancel();

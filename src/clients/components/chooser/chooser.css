@@ -271,7 +271,7 @@ html[dir='rtl'] .chaptermenu {
   border-radius: 6px;
   z-index: 9;
 }
-.chaptermenu.show .headingmenu {
+.bookgroupitem:hover .chaptermenu.show .headingmenu {
   visibility: visible;
 }
 .chaptermenu .heading-link {

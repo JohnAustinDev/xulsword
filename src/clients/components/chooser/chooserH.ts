@@ -82,6 +82,7 @@ export default function handler(
           const { book, chapter } =
             target instanceof HTMLElement ? target.dataset : {};
           if (!book || !chapter || !headingsModule) return;
+          const { viewportParentHandler } = this.props;
           const headingmenu = chaptermenu.getElementsByClassName(
             'headingmenu',
           )[0] as HTMLElement;
@@ -150,27 +151,17 @@ export default function handler(
                   )}px`;
                   chaptermenu.classList.add('show');
                 }
-              } else if (Events.lastPointerEvent?.pointerType !== 'mouse') {
-                // Followon events have been blocked below, but no menu items
-                // exist, so initiate a new pointerdown event.
-                /*
-                element.dispatchEvent(
-                  new PointerEvent('pointerdown', {
-                    bubbles: true,
-                    pointerId: 1,
-                    isPrimary: true,
-                    pointerType: 'mouse',
-                  }),
-                );*/
+              } else if (pointerType !== 'mouse') {
+                // Touch followon events were blocked (below) and no menu items
+                // exist, so unblock and handle with viewportParentHandler.
+                Events.blocked = false;
+                return viewportParentHandler(e);
               }
             }
           });
-          // Touch followon events are blocked below, but headingmenu
-          // pointerdown should be handled.
-          // TODO: chaptermenucell is here because the dispatchEvent above
-          // hasn't been made to work yet. So finish that, then remove
-          // 'chaptermenucell' here.
-          if (type === 'chaptermenucell' || type === 'headingmenu') {
+          // Touch followon events were blocked (below) but headingmenu
+          // pointerdown should be handled, so unblock now for that.
+          if (type === 'headingmenu') {
             Events.blocked = false;
             return;
           }
@@ -181,10 +172,14 @@ export default function handler(
             log.warn(`Unhandled chooserH mouseover on: '${type}'`);
           return;
       }
-      // On touch, we've handled mouseover, so ignore followon events.
+      // On touch, we've handled pointerover, so ignore followon events, until
+      // the user points again another time.
       if (pointerType !== 'mouse') {
         Events.blocked = true;
-        setTimeout(() => (Events.blocked = false), 150);
+        setTimeout(
+          () => (Events.blocked = false),
+          C.UI.Chooser.bookgroupHoverDelay,
+        );
       }
       break;
     }
