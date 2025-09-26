@@ -1,5 +1,6 @@
 .dragsizer {
   position: relative;
+  touch-action: none;
 }
 
 .dragsizer.vertical {

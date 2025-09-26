@@ -1,5 +1,5 @@
 import React from 'react';
-import { dString } from '../../../common.ts';
+import { dString, ofClass } from '../../../common.ts';
 import VerseKey from '../../../verseKey.ts';
 import Subscription from '../../../subscription.ts';
 import { goToLocationGB, goToLocationVK } from '../../../commands.ts';
@@ -822,7 +822,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
         }
         case 'helpButton': {
           if (Build.isElectronApp) (G as GType).Commands.searchHelp();
-          else {
+          else if (!ofClass('bp6-button-text', target)) {
             this.setState((prevState) => {
               const { onlyLucene } = this.props;
               const showHelp = prevState.showHelp ? null : (

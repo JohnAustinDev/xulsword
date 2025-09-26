@@ -40,7 +40,7 @@ export default class DragSizer extends React.Component<
 
     this.sizerRef = React.createRef();
 
-    this.onPointerDownLong = this.onPointerDownLong.bind(this);
+    this.onPointerDown = this.onPointerDown.bind(this);
     this.onPointerMove = this.onPointerMove.bind(this);
     this.onPointerUp = this.onPointerUp.bind(this);
 
@@ -68,7 +68,7 @@ export default class DragSizer extends React.Component<
     }
   }
 
-  onPointerDownLong(e: React.PointerEvent) {
+  onPointerDown(e: React.PointerEvent) {
     const { onDragStart, orient } = this.props as DragSizerProps;
     const dragging = onDragStart(e.nativeEvent);
     e.preventDefault();
@@ -149,14 +149,14 @@ export default class DragSizer extends React.Component<
   render() {
     const props = this.props as DragSizerProps;
     const state = this.state as DragSizerState;
-    const { sizerRef, onPointerDownLong } = this;
+    const { sizerRef, onPointerDown } = this;
     const { dragging } = state;
     const { orient } = props;
 
     return (
       <Box
         className={`dragsizer ${orient || 'horizontal'}`}
-        onPointerDownLong={onPointerDownLong}
+        onPointerDown={onPointerDown}
       >
         <Box className={(dragging && 'dragging') || ''} domref={sizerRef} />
       </Box>
