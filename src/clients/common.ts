@@ -15,6 +15,8 @@ import {
   JSON_attrib_stringify,
   prefType,
   dString,
+  getCSS,
+  pad,
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
@@ -346,6 +348,57 @@ export function iframeAutoHeight(
       window.parent.postMessage({ type: 'iframeHeight', height: -1 }, '*');
     }
   }
+}
+
+const Hilight = {
+  strongsCSS: [] as { sheet: CSSStyleSheet; index: number }[],
+};
+
+export function strongsHilights(classes: string[]) {
+  classes
+    .filter((c) => /^S_\w*\d+$/.test(c))
+    .forEach((sclass, xx) => {
+      const x = xx > 2 ? 2 : xx;
+      const sheet = document.styleSheets[document.styleSheets.length - 1];
+      const cssRuleTemplate = getCSS(`.matchingStrongs${x} {`);
+      if (cssRuleTemplate) {
+        // Each Strong's module uses classes with different number
+        // padding, so multiple rules are required for situations
+        // such as parallel texts or interlinear.
+        const sclasses: string[] = [];
+        const sn = sclass.match(/\d+/);
+        if (sn) {
+          const sni = Number(sn[0]);
+          sclasses.push(
+            ...[2, 3, 4, 5]
+              .map((n) => pad(sni, n, 0))
+              .filter((n, i, a) => !a.slice(i + 1).includes(n))
+              .map((n) => sclass.replace(/\d+/, n)),
+          );
+        } else sclasses.push(sclass);
+        cancelStrongsHiLights();
+        sclasses.forEach((cls) => {
+          const i2 = sheet.insertRule(
+            cssRuleTemplate.rule.cssText.replace(`matchingStrongs${x}`, cls),
+            sheet.cssRules.length,
+          );
+          Hilight.strongsCSS.push({ sheet, index: i2 });
+        });
+      }
+    });
+}
+
+export function cancelStrongsHiLights() {
+  Hilight.strongsCSS
+    .sort((a, b) => b.index - a.index)
+    .forEach((r) => {
+      try {
+        r.sheet.deleteRule(r.index);
+      } catch (er) {
+        /* empty */
+      }
+    });
+  Hilight.strongsCSS = [];
 }
 
 // The various types of mouse events are fired inconsistently across browsers

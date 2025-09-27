@@ -16,15 +16,12 @@ import {
   eventHandled,
   getExtRefHTML,
   isBlocked,
+  cancelStrongsHiLights,
+  strongsHilights,
 } from '../../common.ts';
 import log from '../../log.ts';
 import { getElementData } from '../../htmlData.ts';
 import { delayHandler } from '../libxul/xul.tsx';
-import {
-  cancelStrongsHiLights,
-  Hilight,
-  strongsHilights,
-} from '../popup/popupParentH.ts';
 import { aTextWheelScroll, getScrollVerse } from './zversekey.ts';
 
 import type { GType, SearchType } from '../../../type.ts';
@@ -126,61 +123,68 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           break;
 
         case 'image-viewport': {
-          // When an image-viewport is clicked, the viewport's current width and height
-          // will become fixed and it will be made the relative ancestor of the scroll-
-          // container, which will become absolutely positioned. With the mouse cursor
-          // position in the viewport recorded as (Xt, Yt) the image is resized to its
-          // natural width and height and the scroll-container top and left are set to
-          // calculated (Xn, Yn) such that the image pixel that was under the cursor when
-          // it was clicked will remain under the cursor after the image is resized to
-          // its natural size. If clicked again, the image will be resized back to the
-          // viewport width with scroll-container top and left set to 0.
-          // Yn = Y(1 - (Wi/Wv))
-          // WHERE:
-          // Yn = CSS top value of the image container with respect to viewport
-          // Y = Y coordinate of the cursor within the viewport (containing the fit image)
-          // Wi = Width of the natural image
-          // Wv = Width of the viewport
-          const viewport = elem as HTMLDivElement;
-          const scrollcn = viewport.firstChild as HTMLDivElement;
-          const img = scrollcn?.firstChild as HTMLImageElement | undefined;
-          let expandShrink: boolean | undefined;
-          if (ep && img && ['zoom-in', 'zoom-out'].includes(img.style.cursor)) {
-            const scrollcnS = window.getComputedStyle(scrollcn, null);
-            if (scrollcnS.position === 'absolute') {
-              expandShrink = img.style.width !== `${img.naturalWidth}px`;
-            } else if (img.width < img.naturalWidth) {
-              expandShrink = true;
-              const viewportS = window.getComputedStyle(viewport, null);
-              const vph = viewportS.height;
-              const vpw = viewportS.width;
-              viewport.style.height = vph;
-              viewport.style.width = vpw;
-              viewport.style.position = 'relative';
-              viewport.style.overflow = 'visible';
-              scrollcn.style.position = 'absolute';
-            }
-            if (expandShrink !== undefined) {
-              if (expandShrink) {
-                const cbox = viewport.getBoundingClientRect();
-                const Y = ep.clientY - cbox.top;
-                const top = Y * (1 - img.naturalWidth / viewport.offsetWidth);
-                const X = ep.clientX - cbox.left;
-                const left =
-                  X * (1 - img.naturalHeight / viewport.offsetHeight);
-                scrollcn.style.top = `${top}px`;
-                scrollcn.style.left = `${left}px`;
-                img.style.width = `${img.naturalWidth}px`;
-                img.style.cursor = 'zoom-out';
-              } else {
-                scrollcn.style.top = '0';
-                scrollcn.style.left = '0';
-                img.style.width = `${viewport.offsetWidth}px`;
-                img.style.cursor = 'zoom-in';
+          // When pointerType isn't mouse it usually means that pinch zoom is
+          // available, so let that be used instead of click-zoom.
+          if (pointerType === 'mouse') {
+            // When an image-viewport is clicked, the viewport's current width and height
+            // will become fixed and it will be made the relative ancestor of the scroll-
+            // container, which will become absolutely positioned. With the mouse cursor
+            // position in the viewport recorded as (Xt, Yt) the image is resized to its
+            // natural width and height and the scroll-container top and left are set to
+            // calculated (Xn, Yn) such that the image pixel that was under the cursor when
+            // it was clicked will remain under the cursor after the image is resized to
+            // its natural size. If clicked again, the image will be resized back to the
+            // viewport width with scroll-container top and left set to 0.
+            // Yn = Y(1 - (Wi/Wv))
+            // WHERE:
+            // Yn = CSS top value of the image container with respect to viewport
+            // Y = Y coordinate of the cursor within the viewport (containing the fit image)
+            // Wi = Width of the natural image
+            // Wv = Width of the viewport
+            const viewport = elem as HTMLDivElement;
+            const scrollcn = viewport.firstChild as HTMLDivElement;
+            const img = scrollcn?.firstChild as HTMLImageElement | undefined;
+            let expandShrink: boolean | undefined;
+            if (
+              ep &&
+              img &&
+              ['zoom-in', 'zoom-out'].includes(img.style.cursor)
+            ) {
+              const scrollcnS = window.getComputedStyle(scrollcn, null);
+              if (scrollcnS.position === 'absolute') {
+                expandShrink = img.style.width !== `${img.naturalWidth}px`;
+              } else if (img.width < img.naturalWidth) {
+                expandShrink = true;
+                const viewportS = window.getComputedStyle(viewport, null);
+                const vph = viewportS.height;
+                const vpw = viewportS.width;
+                viewport.style.height = vph;
+                viewport.style.width = vpw;
+                viewport.style.position = 'relative';
+                viewport.style.overflow = 'visible';
+                scrollcn.style.position = 'absolute';
               }
-            } else img.style.cursor = '';
+              if (expandShrink !== undefined) {
+                if (expandShrink) {
+                  const cbox = viewport.getBoundingClientRect();
+                  const Y = ep.clientY - cbox.top;
+                  const top = Y * (1 - img.naturalWidth / viewport.offsetWidth);
+                  const X = ep.clientX - cbox.left;
+                  const left =
+                    X * (1 - img.naturalHeight / viewport.offsetHeight);
+                  scrollcn.style.top = `${top}px`;
+                  scrollcn.style.left = `${left}px`;
+                  img.style.width = `${img.naturalWidth}px`;
+                  img.style.cursor = 'zoom-out';
+                } else {
+                  scrollcn.style.top = '0';
+                  scrollcn.style.left = '0';
+                  img.style.width = `${viewport.offsetWidth}px`;
+                  img.style.cursor = 'zoom-in';
+                }
+              } else img.style.cursor = '';
+            }
           }
-
           break;
         }
 

@@ -22,6 +22,8 @@ import {
   getStatePref,
   setStatePref,
   addHoverLinks,
+  strongsHilights,
+  cancelStrongsHiLights,
 } from '../../common.ts';
 import Popup from '../../components/popup/popup.tsx';
 import * as H from '../../components/popup/popupParentH.ts';
@@ -45,10 +47,8 @@ import Dialog from '../../components/libxul/dialog.tsx';
 import ModuleMenu from '../../components/libxul/modulemenu.tsx';
 import handlerH, {
   search,
-  hilightStrongs,
   formatResult,
   lexicon,
-  strongsCSS,
 } from './searchH.tsx';
 import './search.css';
 
@@ -308,16 +308,11 @@ export default class Search
     if (!displayModule || !results) {
       sanitizeHTML(res, '');
     } else if (res.dataset.resultsHtml !== resultsHtml) {
-      // clear dynamic CSS
-      strongsCSS.added.forEach((r) => {
-        if (r < strongsCSS.sheet.cssRules.length) {
-          strongsCSS.sheet.deleteRule(r);
-        }
-      });
-      strongsCSS.added = [];
+      cancelStrongsHiLights();
       // build a page from results, module and pageindex
-      if (isStrongsModule && searchtext.includes('lemma:')) {
-        hilightStrongs(searchtext.match(/lemma:\s*\S+/g));
+      const strongs = searchtext.match(/lemma:\s*\S+/g);
+      if (strongs?.length && isStrongsModule) {
+        strongsHilights(strongs.map((l) => l.replace(/lemma:\s*/, 'S_')));
       }
       sanitizeHTML(res, results.html);
       formatResult(res, state, renderPromise);

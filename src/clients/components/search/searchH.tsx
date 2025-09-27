@@ -6,13 +6,12 @@ import { goToLocationGB, goToLocationVK } from '../../../commands.ts';
 import {
   noAutoSearchIndex,
   escapeRE,
-  getCSS,
   sanitizeHTML,
   randomID,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { addHoverLinks } from '../../common.ts';
+import { addHoverLinks, cancelStrongsHiLights } from '../../common.ts';
 import log from '../../log.ts';
 import RenderPromise, { setLoadingClass } from '../../renderPromise.ts';
 import { getElementData } from '../../htmlData.ts';
@@ -26,7 +25,6 @@ import type {
   OSISBookType,
   V11nType,
   WindowDescriptorPrefType,
-  WindowDescriptorType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type { SearchResult } from '../../../servers/components/libsword.ts';
@@ -45,12 +43,6 @@ const libSwordSearchTypes = {
   ENTRYATTRIBUTE: -3,
   LUCENE: -4,
   COMPOUND: -5,
-};
-
-export const strongsCSS = {
-  css: null as { sheet: CSSStyleSheet; rule: CSSRule; index: number } | null,
-  sheet: document.styleSheets[document.styleSheets.length - 1],
-  added: [] as number[],
 };
 
 export function getLuceneSearchText(
@@ -594,30 +586,6 @@ function getSearchMatches(
   }
 
   return matches;
-}
-
-export function hilightStrongs(strongs: RegExpMatchArray | null) {
-  strongsCSS.added.forEach((r) => {
-    if (r < strongsCSS.sheet.cssRules.length) {
-      strongsCSS.sheet.deleteRule(r);
-    }
-  });
-  strongsCSS.added = [];
-  strongs?.forEach((s) => {
-    const c = `S_${s.replace(/lemma:\s*/, '')}`;
-    log.debug(`Adding sn class: ${c}`);
-    const index = strongsCSS.sheet.cssRules.length;
-    if (!strongsCSS.css) {
-      strongsCSS.css = getCSS('.resultBox .matchingStrongs {');
-    }
-    if (strongsCSS.css) {
-      strongsCSS.sheet.insertRule(
-        strongsCSS.css.rule.cssText.replace('matchingStrongs', c),
-        index,
-      );
-      strongsCSS.added.push(index);
-    }
-  });
 }
 
 export async function lexicon(
