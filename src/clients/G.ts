@@ -345,11 +345,13 @@ function prepCall(thecall: GCallType): GCallType {
   return [name, method, args];
 }
 
-// Determine calls to report to the analytics service.
 type MyFuncData = {
   event: BibleBrowserEventInfo['event'];
   targ: keyof BibleBrowserEventInfo;
 };
+
+// ReportAnalyticsG lists the G calls that will be reported to the analytics
+// service.
 const ReportAnalyticsG: Partial<
   Record<
     keyof GType,
@@ -368,6 +370,7 @@ const ReportAnalyticsG: Partial<
     search: { event: 'search', targ: 'searchtxt' },
   },
 };
+
 function reportAnalytics(call: GCallType) {
   const [p, m, args] = call;
   if (['callBatchSync', 'callBatch'].includes(p) && args) {

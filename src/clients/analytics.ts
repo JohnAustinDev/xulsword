@@ -258,10 +258,9 @@ export class Analytics {
   }
 
   record(info: AnalyticsInfo) {
-    this.getAnalytics(info)
+    this.logAnalytics(info)
       .then((analytics) => {
         const { event } = analytics;
-        // Send it!
         if (typeof this.tag === 'function') this.tag('event', event, analytics);
         else if (Build.isDevelopment) {
           console.log('recordEvent: ', event, analytics);
@@ -270,7 +269,9 @@ export class Analytics {
       .catch((er) => this.error(er));
   }
 
-  // Record an event triggered by any HTML element.
+  // Record an event associated with an HTML element. This function may be
+  // used with HTMLElement.addEventListener() so the event will be recorded
+  // when triggered on the element.
   recordElementEvent(info: Partial<AnalyticsInfo>, elem: HTMLElement) {
     let i = Analytics.elementInfo(elem);
     if (info) i = { ...i, ...info } as AnalyticsInfo;
@@ -281,9 +282,10 @@ export class Analytics {
     this.record(fullInfo);
   }
 
-  // Send an AnalyticsInfo object to the server which will respond
-  // with a complete analytics object to report.
-  async getAnalytics(info: AnalyticsInfo): Promise<AnalyticsObject> {
+  // Send AnalyticsInfo to the server, where it will be completed to become an
+  // AnalyticsObject and logged in the event log. The AnalyticsObject is then
+  // returned from the server.
+  async logAnalytics(info: AnalyticsInfo): Promise<AnalyticsObject> {
     const infoValToString = (
       val: string | number | boolean | undefined,
     ): string => {

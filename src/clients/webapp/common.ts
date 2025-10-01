@@ -288,10 +288,17 @@ export function updateLinks(
       }
     }
 
+    // Analytics chapter1 and chapters should be undefined except if multiple
+    // chapters are being selected.
+    let chapter1: number | undefined;
+    let chapters: number | undefined;
+
     // Update URL using the urlTemplate
     if (urlTemplate) {
       const sel = clone(selection);
       if (myclass === 'dl_chapters') {
+        chapter1 = ch1;
+        chapters = ch2 > ch1 ? 1 + ch2 - ch1 : 1;
         if ('book' in sel) {
           sel.chapter = ch1;
           sel.lastchapter = ch2;
@@ -316,20 +323,13 @@ export function updateLinks(
       );
     }
 
+    // Update analytics info so it will be recorded when anchor is clicked.
+    Analytics.addInfo({ event: 'download', chapter1, chapters }, anchor);
+
     // Animate the link so the user sees the change
     const animate = ofClass('update_url', anchor);
     if (!isReset && animate) {
       jQuery(anchor).fadeTo(1, 0).fadeTo(1000, 1);
     }
-
-    // Update analytics info so it will be recorded when anchor is clicked.
-    Analytics.addInfo(
-      {
-        event: 'download',
-        chapter1: ch1 === ch2 ? undefined : ch1,
-        chapters: ch1 === ch2 ? undefined : 1 + ch2 - ch1,
-      },
-      anchor,
-    );
   }
 }

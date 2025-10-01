@@ -36,7 +36,11 @@ function rlog(level: LogLevel, ...args: unknown[]) {
         // Production browser can only log error or warn to server.
         levels.indexOf(level) <= levels.indexOf('warn'))
     ) {
-      window.IPC.send('log', ...largs);
+      try {
+        window.IPC.send('log', ...largs);
+      } catch (er) {
+        // This happens if webapp log is called before socket.io connects.
+      }
     }
     if (Build.isDevelopment) {
       if (er) throw er;
