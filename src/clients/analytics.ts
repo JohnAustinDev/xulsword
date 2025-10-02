@@ -299,9 +299,16 @@ export class Analytics {
       });
     };
     const { event } = info;
+
     // framehost
-    const origins = window.location.ancestorOrigins ?? [];
-    const origin = origins[origins.length - 1] ?? 'unknown';
+    let origin = window.location.hostname;
+    if (window.location.ancestorOrigins)
+      [origin] = window.location.ancestorOrigins;
+    else if (document.referrer) {
+      try {
+        origin = new URL(document.referrer).hostname;
+      } catch (er) { /* empty */ }
+    }
 
     // Apply any Analytics settings specified by our info.
     const setting =
