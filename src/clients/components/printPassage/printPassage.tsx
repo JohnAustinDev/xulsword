@@ -281,7 +281,7 @@ export default class PrintPassage
             }, 1);
           }) as Promise<string>;
           return await r2;
-        });
+        }, printRefs.printContainerRef);
       } catch (er) {
         break;
       }
@@ -291,7 +291,9 @@ export default class PrintPassage
       div.innerHTML += sanitizeHTML(r);
       libswordImgSrc(div);
       if (Math.floor(div.scrollWidth / div.clientWidth) > C.UI.Print.maxPages) {
-        log.info(`Stopping passage render at ${chIndex}/${renderChaps.length} chapters.`);
+        log.info(
+          `Stopping passage render at ${chIndex}/${renderChaps.length} chapters.`,
+        );
         break;
       }
     }

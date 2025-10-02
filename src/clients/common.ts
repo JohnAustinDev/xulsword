@@ -115,12 +115,13 @@ export function functionalComponentRenderPromise(loadingSelector?: string) {
 // functions are synchronous, the passed renderPromise will be null.
 export function doUntilDone(
   func: (renderPromise: RenderPromise) => void,
+  loadingRef?: React.RefObject<HTMLElement>,
 ): void {
   const doFunc = () => {
     func(renderPromise);
     renderPromise.dispatch();
   };
-  const renderPromise = new RenderPromise(doFunc);
+  const renderPromise = new RenderPromise(doFunc, loadingRef);
   doFunc();
 }
 Cache.write(doUntilDone, 'doUntilDone');
@@ -131,6 +132,7 @@ Cache.write(doUntilDone, 'doUntilDone');
 // will be resolved.
 export async function doUntilDoneAsync<R>(
   func: (renderPromise: RenderPromise) => Promise<R>,
+  loadingRef?: React.RefObject<HTMLElement>,
 ): Promise<R> {
   return new Promise((resolve, reject) => {
     const doFunc = async () => {
@@ -140,7 +142,7 @@ export async function doUntilDoneAsync<R>(
     };
     const renderPromise = new RenderPromise(() => {
       doFunc().catch((er) => reject(er));
-    });
+    }, loadingRef);
     doFunc().catch((er) => reject(er));
   });
 }
@@ -1115,19 +1117,21 @@ export function getExtRefHTML(
     false,
     true,
   );
-  analytics.record({
-    event: 'verse',
-    module: mod,
-    extref: locations
-      .filter(Boolean)
-      .map(
-        (l: any) =>
-          `${l.book} ${l.chapter}${l.verse ? ':' + l.verse : ''}${
-            l.lastverse && l.lastverse !== l.verse ? '-' + l.lastverse : ''
-          }`,
-      )
-      .join('; '),
-  });
+  const parsedExtref = locations
+    .filter(Boolean)
+    .map(
+      (l: any) =>
+        `${l.book} ${l.chapter}${l.verse ? ':' + l.verse : ''}${
+          l.lastverse && l.lastverse !== l.verse ? '-' + l.lastverse : ''
+        }`,
+    )
+    .join('; ');
+  if (parsedExtref.length)
+    analytics.record({
+      event: 'verse',
+      module: mod,
+      extref: parsedExtref,
+    });
   list.forEach((locOrStr, i) => {
     let h = '';
     if (typeof locOrStr === 'string') {
