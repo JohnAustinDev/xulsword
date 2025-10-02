@@ -17,6 +17,7 @@ import { getElementData } from '../../htmlData.ts';
 import { G, GI } from '../../G.ts';
 import { dString } from '../../../common.ts';
 import addBookmarks from '../../bookmarks.tsx';
+import analytics from '../../analytics.ts';
 import {
   getNoteHTML,
   getChapterHeader,
@@ -93,6 +94,11 @@ export function libswordText(
             options,
           );
           if (!renderPromise?.waiting()) {
+            analytics.record({
+              event: 'chapter',
+              module: `${module},${ilModule}`,
+              locationvk: `${book}.${chapter}`,
+            });
             r.textHTML += text.replace(/interV2/gm, `cs-${ilModule}`);
           }
         } else if (
@@ -109,6 +115,11 @@ export function libswordText(
             options,
           );
           if (!renderPromise?.waiting()) {
+            analytics.record({
+              event: 'chapter',
+              module,
+              locationvk: `${book}.${chapter}`,
+            });
             r.textHTML += text;
             r.notes += notes;
           }
@@ -130,6 +141,11 @@ export function libswordText(
           options,
         );
         if (!renderPromise?.waiting()) {
+          analytics.record({
+            event: 'chapter',
+            module,
+            locationvk: `${book}.${chapter}`,
+          });
           r.textHTML += text;
           r.notes += notes;
         }
@@ -138,7 +154,7 @@ export function libswordText(
     }
     case C.GENBOOK: {
       if (modkey) {
-        const { text, notes } = GI.LibSword.getGenBookChapterText(
+        const { text } = GI.LibSword.getGenBookChapterText(
           { text: '', notes: '' },
           renderPromise,
           module,
@@ -146,6 +162,7 @@ export function libswordText(
           options,
         );
         if (!renderPromise?.waiting()) {
+          analytics.record({ event: 'chapter', module, locationky: modkey });
           // Genbook notes are included at the end of textHTML.
           r.textHTML += text;
         }
@@ -181,6 +198,7 @@ export function libswordText(
 
           // Set the final results.
           const de = getDictEntryHTML(key, module, renderPromise, undefined);
+          analytics.record({ event: 'glossary', module, locationky: key });
           r.textHTML += `<div class="dictentry">${de}</div>`;
           const sel = new RegExp(`(dictkey)([^>]*">${escapeRE(key)}<)`);
           const list = Cache.read('keyHTML', module)

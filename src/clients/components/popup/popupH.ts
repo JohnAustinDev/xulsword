@@ -12,6 +12,7 @@ import { eventHandled, isBlocked, moduleInfoHTML } from '../../common.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.tsx';
 import { getElementData } from '../../htmlData.ts';
 import log from '../../log.ts';
+import analytics from '../../analytics.ts';
 import { getDictEntryHTML, getLemmaHTML } from '../atext/zdictionary.ts';
 import { getIntroductions, getNoteHTML } from '../atext/zversekey.ts';
 
@@ -171,6 +172,11 @@ export function getPopupHTML(
               renderPromise,
               failReason,
             );
+            analytics.record({
+              event: 'glossary',
+              module: context,
+              locationky: reflist[0].replace(/^.*?:/, ''),
+            });
           }
         } else failReason.requires.push(context);
       }
@@ -214,6 +220,11 @@ export function getPopupHTML(
           renderPromise,
           failReason,
         );
+        analytics.record({
+          event: 'glossary',
+          module: dnames.join(';'),
+          locationky: dword,
+        });
       }
       break;
     }
@@ -221,7 +232,14 @@ export function getPopupHTML(
     case 'aboutlink': {
       if (context) {
         const conf = GI.getModuleConf(null, renderPromise, context);
-        if (conf) html = moduleInfoHTML([conf], renderPromise);
+        if (conf) {
+          html = moduleInfoHTML([conf], renderPromise);
+          analytics.record({
+            event: 'glossary',
+            module: context,
+            locationky: 'aboutlink',
+          });
+        }
       }
       break;
     }
@@ -235,7 +253,14 @@ export function getPopupHTML(
             `${book}.${chapter}`,
             renderPromise,
           );
-          if (intro?.textHTML) html = intro.textHTML;
+          if (intro?.textHTML) {
+            html = intro.textHTML;
+            analytics.record({
+              event: 'glossary',
+              module: context,
+              locationky: 'introlink',
+            });
+          }
         } else failReason.requires.push(context);
       }
       break;
@@ -307,7 +332,7 @@ export default function handler(
           drag.dragging = true;
           return { drag };
         });
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
       }
       break;
     }
@@ -323,7 +348,7 @@ export default function handler(
         ndrag.y[1] = ep.clientY;
         return { drag: ndrag };
       });
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       break;
     }
 

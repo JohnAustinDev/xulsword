@@ -71,7 +71,7 @@ export default class DragSizer extends React.Component<
   onPointerDown(e: React.PointerEvent) {
     const { onDragStart, orient } = this.props as DragSizerProps;
     const dragging = onDragStart(e.nativeEvent);
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     e.stopPropagation();
     this.setState({
       dragging,
@@ -83,7 +83,7 @@ export default class DragSizer extends React.Component<
     const props = this.props as DragSizerProps;
     const { dragging } = this.state as DragSizerState;
     if (dragging !== null) {
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       const { onDragging } = props;
       const value = this.setSizerValue(e);
       if (value) {
@@ -98,7 +98,7 @@ export default class DragSizer extends React.Component<
     const { dragging } = this.state as DragSizerState;
     if (dragging !== null) {
       const { orient, onDragging, onDragEnd } = props;
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       const value = this.setSizerValue(e);
       if (!onDragging) {
         const sizerElem = this.sizerRef.current as HTMLDivElement | undefined;
@@ -119,7 +119,7 @@ export default class DragSizer extends React.Component<
       let { min } = props;
       if (!min) min = 0;
       const sizerElem = this.sizerRef.current as HTMLDivElement | undefined;
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       if (sizerElem) {
         const rtlcontext = getComputedStyle(sizerElem).direction;
         const shrink2 =

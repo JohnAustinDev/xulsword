@@ -231,7 +231,7 @@ export default function handler(
         target,
       );
       if (targ === null) return;
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       const { element, type } = targ;
       const p = getElementData(element);
       switch (type) {

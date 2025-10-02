@@ -252,7 +252,7 @@ export function popupHandler(
       const parent = popupParent || document.getElementById('root');
       // Require popup or window parent but don't search beyond npopup when testing type
       if (!parent || type === 'npopup') return;
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       e.stopPropagation();
       const data = findElementData(element);
       const popupY = parent.getBoundingClientRect().y;

@@ -151,7 +151,7 @@ html[dir='rtl'] .bookgrouplist {
   background-color: var(--color-primary);
   color: var(--bg-bp6-light);
 }
-.bookgroupitem.selected .bp6-icon {
+.bookgroupitem.selected > .audio-icon .bp6-icon {
   color: var(--bg-interface-dark);
 }
 .other .bookgroupitem.selected {

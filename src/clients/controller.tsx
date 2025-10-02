@@ -462,7 +462,7 @@ function Controller(props: ControllerProps) {
         align="center"
         {...xulCaptureEvents.reduce((p: any, c) => {
           p[c] = (ev: SyntheticEvent) => {
-            ev.preventDefault();
+            if (ev.cancelable) ev.preventDefault();
             ev.stopPropagation();
           };
           return p;

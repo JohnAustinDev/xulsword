@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Icon, Intent } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
-import analytics, { BibleBrowserEventInfo } from '../../analytics.ts';
+import analytics from '../../analytics.ts';
 import { clone, randomID } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
@@ -28,10 +28,14 @@ import Groupbox from '../libxul/groupbox.tsx';
 import './printSettings.css';
 
 import type { ToastProps } from '@blueprintjs/core';
+import type { GType } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
+import type {
+  AnalyticsInfo,
+  BibleBrowserEventInfo,
+} from '../../analytics.ts';
 import type { ControllerState, PrintOptionsType } from '../../controller.tsx';
 import type { XulProps } from '../libxul/xul.tsx';
-import { GType } from '../../../type.ts';
 
 // This PrintSettings component is composed of the following parts:
 // - Optional CUSTOM SETTINGS may be rendered elsewhere and provided via the
@@ -883,7 +887,7 @@ export default class PrintSettings extends React.Component<
 }
 
 function getAnalyticInfo() {
-  const info = { event: 'print' } as BibleBrowserEventInfo;
+  const info = { event: 'print' } as AnalyticsInfo;
 
   const [appState] = Subscription.publish.getControllerState();
   const { type } = windowArguments();
@@ -891,14 +895,17 @@ function getAnalyticInfo() {
     type === 'printPassageWin' ||
     (appState && appState.card && appState.card.name === 'printPassage')
   ) {
-    info.setting = 'printPassage';
+    // The info is only available in some other component, so rely on that
+    // component to have used setInfoOverride for this record.
+    info.overrideKey = 'printPassage';
   } else {
     // This is assuming we're printing the viewport!
     const { panels, location } = G.Prefs.getComplexValue(
       'xulsword',
     ) as typeof S.prefs.xulsword;
-    info.module = panels[0] || '';
-    info.locationvk = `${location?.book || 'book?'} ${location?.chapter || 'chapter?'}`;
+    (info as BibleBrowserEventInfo).module = panels[0] || '';
+    (info as BibleBrowserEventInfo).locationvk =
+      `${location?.book || 'book?'} ${location?.chapter || 'chapter?'}`;
   }
 
   return info;

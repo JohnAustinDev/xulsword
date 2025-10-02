@@ -1,5 +1,4 @@
 import C from '../constant.ts';
-import analytics from './analytics.ts';
 import {
   JSON_stringify,
   GCacheKey,
@@ -9,20 +8,17 @@ import {
   gcallResultCompression,
 } from '../common.ts';
 import Cache from '../cache.ts';
-import Subscription from '../subscription.ts';
 import { GBuilder } from '../type.ts';
 import { callResultDecompress } from './common.ts';
 import RenderPromise, { GCallsOrPromise } from './renderPromise.ts';
 import log from './log.ts';
 import CookiePrefs from './webapp/prefs.ts';
 
-import type { AnalyticsInfo, BibleBrowserEventInfo } from './analytics.ts';
 import type {
   GCallType,
   GIType,
   Gsafe,
   GType,
-  LocationVKType,
   PrefValue,
 } from '../type.ts';
 
@@ -240,7 +236,6 @@ async function asyncRequest(call: GCallType) {
   const ckey = GCacheKey(call);
   if (cacheable && Cache.has(ckey))
     return await Promise.resolve(Cache.read(ckey));
-  reportAnalytics(call);
   log.silly(
     `${ckey} ${JSON_stringify(call)} async ${cacheable ? 'miss' : 'uncacheable'}`,
   );
@@ -272,7 +267,6 @@ function syncRequest(call: GCallType) {
   const ckey = GCacheKey(call);
   const cacheable = isCallCacheable(GBuilder, call);
   if (cacheable && Cache.has(ckey)) return Cache.read(ckey);
-  reportAnalytics(call);
   if (Build.isWebApp) {
     if (cacheable)
       throw new Error(
@@ -343,87 +337,4 @@ function prepCall(thecall: GCallType): GCallType {
     }
   }
   return [name, method, args];
-}
-
-type MyFuncData = {
-  event: BibleBrowserEventInfo['event'];
-  targ: keyof BibleBrowserEventInfo;
-};
-
-// ReportAnalyticsG lists the G calls that will be reported to the analytics
-// service.
-const ReportAnalyticsG: Partial<
-  Record<
-    keyof GType,
-    MyFuncData | Partial<Record<keyof GType['LibSword'], MyFuncData>>
-  >
-> = {
-  locationVKText: { event: 'verse', targ: 'extref' },
-  LibSword: {
-    getChapterText: { event: 'chapter', targ: 'locationvk' },
-    getChapterTextMulti: { event: 'chapter', targ: 'locationvk' },
-    getGenBookChapterText: { event: 'chapter', targ: 'locationky' },
-    getDictionaryEntry: { event: 'glossary', targ: 'locationky' },
-    getFirstDictionaryEntry: { event: 'glossary', targ: 'locationky' },
-    getVerseText: { event: 'verse', targ: 'locationvk' },
-    // getIntroductions: { event: 'introduction' }, Fires for EVERY chapter read, so is useless
-    search: { event: 'search', targ: 'searchtxt' },
-  },
-};
-
-function reportAnalytics(call: GCallType) {
-  const [p, m, args] = call;
-  if (['callBatchSync', 'callBatch'].includes(p) && args) {
-    args[0].forEach((call: GCallType) => {
-      reportAnalytics(call);
-    });
-    return;
-  }
-
-  if (ReportAnalyticsG && p in ReportAnalyticsG) {
-    const ms = ReportAnalyticsG[p];
-    if (ms) {
-      const [appState] = Subscription.publish.getControllerState();
-      // Don't record the many events that occur during print preview
-      if (
-        appState &&
-        !appState.print &&
-        (!appState.card || appState.card.name != 'printPassage')
-      ) {
-        let info: AnalyticsInfo | undefined;
-        // LibSword methods parameters are all [module(s), target, ...]
-        if (p === 'LibSword' && args) {
-          if (m && m in ms) {
-            const { event, targ } = (ms as any)[m];
-            const mod = Array.isArray(args[0]) ? args[0][0] : args[0];
-            const targv = Array.isArray(args[1]) ? args[1][0] : args[1];
-            info = {
-              event,
-              module: mod || '',
-              [targ]: targv || '',
-            };
-          }
-        } else if (p === 'locationVKText' && 'event' in ms && args) {
-          // locationVKText is [locationVK[], module, ...]
-          const { event, targ } = ms;
-          info = {
-            event,
-            module: args[1] || '',
-            [targ]: (args[0] as (LocationVKType | null)[])
-              .filter(Boolean)
-              .map(
-                (l: any) =>
-                  `${l.book} ${l.chapter}${l.verse ? ':' + l.verse : ''}${
-                    l.lastverse && l.lastverse !== l.verse
-                      ? '-' + l.lastverse
-                      : ''
-                  }`,
-              )
-              .join('; '),
-          };
-        }
-        if (info) analytics.record(info);
-      }
-    }
-  }
 }

@@ -4,8 +4,9 @@ import type S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import log from '../../log.ts';
-import type RenderPromise from '../../renderPromise.ts';
+import analytics from '../../analytics.ts';
 
+import type RenderPromise from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
 import type { FailReason } from '../popup/popupH.ts';
 
@@ -336,7 +337,14 @@ export function getStrongsModAndKey(
           options,
         );
         if (r.text === C.NOTFOUND) mod = null;
-        if (mod && r.key) ({ key } = r);
+        if (mod && r.key) {
+          analytics.record({
+            event: 'glossary',
+            module: mod,
+            locationky: keys[0],
+          });
+          ({ key } = r);
+        }
         if ((!mod || !key) && reason) {
           reason.reason = `${snclass}? (${snum})`;
         }

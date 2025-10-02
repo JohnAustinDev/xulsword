@@ -22,7 +22,9 @@ import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import { G, GI } from './G.ts';
 import VerseKey from '../verseKey.ts';
+import parseExtendedVKRef from '../extrefParser.ts';
 import RenderPromise from './renderPromise.ts';
+import analytics from './analytics.ts';
 import { getElementData, HTMLData } from './htmlData.ts';
 import log from './log.ts';
 
@@ -54,7 +56,6 @@ import type {
   Gsafe,
 } from '../type.ts';
 import type { XulswordState } from './components/xulsword/xulsword.tsx';
-import parseExtendedVKRef from '../extrefParser.ts';
 
 window.WebAppTextScroll = -1;
 
@@ -109,20 +110,40 @@ export function functionalComponentRenderPromise(loadingSelector?: string) {
 // Run a function taking a render promise until the function completes without
 // the render promise waiting. The function may run any number of times but is
 // guaranteed to run once from beginning to end with renderPromise.waiting()
-// being zero. This means the function must check renderPromise.waiting()
-// before any code that should only be run once. In Electron, where GI
+// being zero. This means the function 'func' MUST check renderPromise.waiting
+// before any code that should only be run once! In Electron, where GI
 // functions are synchronous, the passed renderPromise will be null.
 export function doUntilDone(
   func: (renderPromise: RenderPromise) => void,
 ): void {
-  const renderPromise = new RenderPromise(() => {
+  const doFunc = () => {
     func(renderPromise);
     renderPromise.dispatch();
-  });
-  func(renderPromise);
-  renderPromise.dispatch();
+  };
+  const renderPromise = new RenderPromise(doFunc);
+  doFunc();
 }
 Cache.write(doUntilDone, 'doUntilDone');
+
+// Similar to doUntilDone, except it returns a promise for the result of the
+// function 'func'. The function 'func' will be run and awaited again and
+// again until renderPromise.waiting is 0, at which time that final value
+// will be resolved.
+export async function doUntilDoneAsync<R>(
+  func: (renderPromise: RenderPromise) => Promise<R>,
+): Promise<R> {
+  return new Promise((resolve, reject) => {
+    const doFunc = async () => {
+      const r = await func(renderPromise);
+      if (!renderPromise.waiting()) resolve(r);
+      renderPromise.dispatch();
+    };
+    const renderPromise = new RenderPromise(() => {
+      doFunc().catch((er) => reject(er));
+    });
+    doFunc().catch((er) => reject(er));
+  });
+}
 
 // Return the renderPromise that resets the root controller whenever it is
 // fulfilled.
@@ -1081,18 +1102,32 @@ export function getExtRefHTML(
 
   const mod = targetmod || alternates[0] || '';
   const html: string[] = [];
+  const locations = list.map((x) => {
+    return typeof x !== 'string' && (showText || x.subid) ? x : null;
+  });
   const texts = GI.locationVKText(
     [],
     renderPromise,
-    list.map((x) => {
-      return typeof x !== 'string' && (showText || x.subid) ? x : null;
-    }),
+    locations,
     mod,
     alternates,
     keepNotes,
     false,
     true,
   );
+  analytics.record({
+    event: 'verse',
+    module: mod,
+    extref: locations
+      .filter(Boolean)
+      .map(
+        (l: any) =>
+          `${l.book} ${l.chapter}${l.verse ? ':' + l.verse : ''}${
+            l.lastverse && l.lastverse !== l.verse ? '-' + l.lastverse : ''
+          }`,
+      )
+      .join('; '),
+  });
   list.forEach((locOrStr, i) => {
     let h = '';
     if (typeof locOrStr === 'string') {

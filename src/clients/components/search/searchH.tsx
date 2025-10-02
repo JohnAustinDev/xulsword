@@ -11,10 +11,11 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { addHoverLinks, cancelStrongsHiLights } from '../../common.ts';
+import { addHoverLinks } from '../../common.ts';
 import log from '../../log.ts';
 import RenderPromise, { setLoadingClass } from '../../renderPromise.ts';
 import { getElementData } from '../../htmlData.ts';
+import analytics from '../../analytics.ts';
 import SearchHelp from '../searchHelp/searchHelp.tsx';
 import { getStrongsModAndKey } from '../atext/zdictionary.ts';
 
@@ -310,6 +311,7 @@ export async function libSwordSearch(
               true,
               i === scopes.length - 1,
             );
+            analytics.record({ event: 'search', module, searchtxt: search });
             if (scopes.length > 1 && xthis) {
               const Book = G.getBook(G.i18n.language);
               xthis.setState({

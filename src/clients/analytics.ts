@@ -1,6 +1,9 @@
 /* eslint-disable no-console */
-import { JSON_parse, JSON_stringify } from '../common.ts';
+import { JSON_parse, JSON_stringify, stringHash } from '../common.ts';
 import log from './log.ts';
+
+// This module is also packaged as a library that may be be used by a web
+// server to log page events.
 
 // The Analytics class allows analytics data to be collected during use of the
 // App or WebApp. The class must be initialized with a globalThis tag function
@@ -54,7 +57,7 @@ export type AnalyticsInfoFinal = AnalyticsInfo & {
 // server is the best way to produce complete and standardized labels.
 export type AnalyticsInfo = {
   event: AnalyticsEvents;
-  setting?: string;
+  overrideKey?: string;
 } & (
   | DownloadLinkInfo
   | BibleBrowserEventInfo
@@ -102,7 +105,6 @@ export type BibleBrowserEventInfo = {
     'chapter' | 'verse' | 'search' | 'print' | 'glossary'
   >;
   module: string;
-  setting?: string;
   locationvk?: string;
   locationky?: string;
   extref?: string;
@@ -112,7 +114,11 @@ export type BibleBrowserEventInfo = {
 export class Analytics {
   private tag: AnalyticsTag | null;
 
-  private settings: { [key: string]: Partial<AnalyticsInfo> };
+  private infoOverride: { [key: string]: AnalyticsInfo };
+
+  private recorded: string[];
+
+  public recordingStopped: boolean;
 
   // A data-info attribute may have been encoded as JSON or as key value
   // pairs like data-info="mid: 1234, chapter1: 8".
@@ -245,7 +251,9 @@ export class Analytics {
   // A null tag will log hits to the console, instead of reporting them.
   constructor(tag: AnalyticsTag | null) {
     this.tag = tag;
-    this.settings = {};
+    this.infoOverride = {};
+    this.recorded = [];
+    this.recordingStopped = false;
 
     // GT will not send data to GA from a third-party iframe without this:
     if (tag) {
@@ -253,17 +261,20 @@ export class Analytics {
     }
   }
 
-  set(key: string, value: Partial<AnalyticsInfo>) {
-    this.settings[key] = value;
+  setInfoOverride(overrideKey: string, value: AnalyticsInfo) {
+    this.infoOverride[overrideKey] = value;
   }
 
   record(info: AnalyticsInfo) {
     this.logAnalytics(info)
       .then((analytics) => {
-        const { event } = analytics;
-        if (typeof this.tag === 'function') this.tag('event', event, analytics);
-        else if (Build.isDevelopment) {
-          console.log('recordEvent: ', event, analytics);
+        if (analytics) {
+          const { event } = analytics;
+          if (typeof this.tag === 'function')
+            this.tag('event', event, analytics);
+          else if (Build.isDevelopment) {
+            console.log('recordEvent: ', event, analytics);
+          }
         }
       })
       .catch((er) => this.error(er));
@@ -282,10 +293,16 @@ export class Analytics {
     this.record(fullInfo);
   }
 
-  // Send AnalyticsInfo to the server, where it will be completed to become an
-  // AnalyticsObject and logged in the event log. The AnalyticsObject is then
-  // returned from the server.
-  async logAnalytics(info: AnalyticsInfo): Promise<AnalyticsObject> {
+  // Send qualifying AnalyticsInfo to the server, where it will be completed to
+  // become an AnalyticsObject and logged in the server's event log. That
+  // AnalyticsObject is then returned from the server and returned by this
+  // function, where it may then be handled by tags as needed. NOTE: The
+  // AnalyticsInfo will be ignored if it has already been recorded during this
+  // session, or if recordingStopped is true, in which case undefined will be
+  // returned by this function.
+  async logAnalytics(
+    info: AnalyticsInfo,
+  ): Promise<AnalyticsObject | undefined> {
     const infoValToString = (
       val: string | number | boolean | undefined,
     ): string => {
@@ -307,19 +324,21 @@ export class Analytics {
     else if (document.referrer) {
       try {
         origin = new URL(document.referrer).hostname;
-      } catch (er) { /* empty */ }
+      } catch (er) {
+        /* empty */
+      }
     }
 
-    // Apply any Analytics settings specified by our info.
-    const setting =
-      info.setting && info.setting in this.settings
-        ? this.settings[info.setting]
+    // Apply any Analytics info overrides.
+    const infoOverride =
+      info.overrideKey && info.overrideKey in this.infoOverride
+        ? this.infoOverride[info.overrideKey]
         : {};
-    info.setting = undefined;
+    info.overrideKey = undefined;
 
     const send: AnalyticsInfoFinal & { action: AnalyticsActions } = {
-      ...setting,
       ...info,
+      ...infoOverride,
       action: analyticsEventActionMap[event],
       webapp: Build.isWebApp,
       origin,
@@ -328,6 +347,16 @@ export class Analytics {
       if (typeof entry[1] === 'undefined') delete (send as any)[entry[0]];
     });
 
+    // Recording may have been stopped/re-started by external components.
+    if (this.recordingStopped) return undefined;
+
+    // Only record one send value per session.
+    const key = stringHash(send);
+    if (this.recorded.includes(key)) return undefined;
+    this.recorded.push(key);
+
+    // Electron app does not currently send events to any server. But if that
+    // is ever enabled, be sure to check Permission.internet first!
     if (Build.isElectronApp) return send;
 
     return new Promise((resolve) => {

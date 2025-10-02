@@ -552,8 +552,7 @@ class Atext
     xulswordState: AtextPropsType['xulswordState'],
     renderPromise: RenderPromise,
   ) {
-    const { props, sbref, nbref, navlinks, handler } = this;
-    const { popupParentHandler } = props;
+    const { sbref, nbref, navlinks } = this;
     const { module } = libswordProps;
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
