@@ -69,6 +69,8 @@ import type {
 } from '../../type.ts';
 import type { ManagerStatePref } from '../../clients/app/components/moduleManager/moduleManager.tsx';
 
+app.userAgentFallback = C.HTTPUserAgent;
+
 Dirs.init();
 
 completePanelPrefDefaultArrays(3);

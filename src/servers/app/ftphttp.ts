@@ -1119,7 +1119,6 @@ export async function getFileHTTP(
         });
       });
       try {
-        ses.setUserAgent(C.HTTPUserAgent);
         ses.setDownloadPath(fpath.dirname(destpath));
         ses.downloadURL(url);
       } catch (er) {

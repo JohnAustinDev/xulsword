@@ -62,6 +62,19 @@ export type AnalyticsInfo = {
   | DownloadLinkInfo
   | DownloadMediaInfo
   | BibleBrowserEventInfo
+  | PlayAudioInfo
+  | {
+      event: keyof Pick<
+        typeof analyticsEventActionMap,
+        'playVideo' | 'installApp'
+      >;
+      nid: number | string;
+      type: 'android' | 'ios' | 'kinescope' | 'youtube' | 'vimeo' | string;
+      url?: string;
+    }
+);
+
+export type PlayAudioInfo =
   | {
       event: keyof Pick<typeof analyticsEventActionMap, 'playAudio'>;
       AudioCode: string;
@@ -76,28 +89,18 @@ export type AnalyticsInfo = {
   | {
       event: keyof Pick<typeof analyticsEventActionMap, 'playAudio'>;
       mid: number | string;
-    }
-  | {
-      event: keyof Pick<
-        typeof analyticsEventActionMap,
-        'playVideo' | 'installApp'
-      >;
-      nid: number | string;
-      type: 'android' | 'ios' | 'kinescope' | 'youtube' | 'vimeo' | string;
-      url?: string;
-    }
-);
+    };
 
 export type DownloadMediaInfo = {
-      event: keyof Pick<typeof analyticsEventActionMap, 'download'>;
-      mid: number;
-      // chapter1 and chapters MUST be undefined for single chapter downloads,
-      // and MUST be set for multi-chapter downloads.
-      chapter1?: number | string;
-      chapters?: number | string;
-      format: 'mp3';
-      package: 'zip' | 'none';
-    };
+  event: keyof Pick<typeof analyticsEventActionMap, 'download'>;
+  mid: number;
+  // chapter1 and chapters MUST be undefined for single chapter downloads,
+  // and MUST be set for multi-chapter downloads.
+  chapter1?: number | string;
+  chapters?: number | string;
+  format: 'mp3';
+  package: 'zip' | 'none';
+};
 
 export type DownloadLinkInfo = {
   event: keyof Pick<typeof analyticsEventActionMap, 'download'>;
