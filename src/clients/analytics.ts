@@ -275,6 +275,19 @@ export class Analytics {
     this.infoOverride[overrideKey] = value;
   }
 
+  // Record an event associated with an HTML element. This function may be
+  // used with HTMLElement.addEventListener() so the event will be recorded
+  // when triggered on the element.
+  recordElementEvent(info: Partial<AnalyticsInfo>, elem: HTMLElement) {
+    let i = Analytics.elementInfo(elem);
+    if (info) i = { ...i, ...info } as AnalyticsInfo;
+    // The combination of the element's attribute info ('i') and 'info' must be
+    // a complete AnalyticsInfo object or an error may result. But object
+    // completeness is not checked here.
+    const fullInfo = i as AnalyticsInfo;
+    this.record(fullInfo);
+  }
+
   record(info: AnalyticsInfo) {
     this.logAnalytics(info)
       .then((analytics) => {
@@ -288,19 +301,6 @@ export class Analytics {
         }
       })
       .catch((er) => this.error(er));
-  }
-
-  // Record an event associated with an HTML element. This function may be
-  // used with HTMLElement.addEventListener() so the event will be recorded
-  // when triggered on the element.
-  recordElementEvent(info: Partial<AnalyticsInfo>, elem: HTMLElement) {
-    let i = Analytics.elementInfo(elem);
-    if (info) i = { ...i, ...info } as AnalyticsInfo;
-    // The combination of the element's attribute info ('i') and 'info' must be
-    // a complete AnalyticsInfo object or an error may result. But object
-    // completeness is not checked here.
-    const fullInfo = i as AnalyticsInfo;
-    this.record(fullInfo);
   }
 
   // Send qualifying AnalyticsInfo to the server, where it will be completed to
@@ -329,13 +329,15 @@ export class Analytics {
 
     // framehost
     let origin = window.location.hostname;
-    if (window.location.ancestorOrigins)
-      [origin] = window.location.ancestorOrigins;
-    else if (document.referrer) {
-      try {
-        origin = new URL(document.referrer).hostname;
-      } catch (er) {
-        /* empty */
+    if (window.frameElement && window.frameElement.nodeName === 'IFRAME') {
+      if (window.location.ancestorOrigins)
+        [origin] = window.location.ancestorOrigins;
+      else if (document.referrer) {
+        try {
+          origin = new URL(document.referrer).hostname;
+        } catch (er) {
+          /* empty */
+        }
       }
     }
 
