@@ -327,19 +327,17 @@ export class Analytics {
     };
     const { event } = info;
 
-    // framehost
-    let origin = window.location.hostname;
-    if (window.frameElement && window.frameElement.nodeName === 'IFRAME') {
-      if (window.location.ancestorOrigins)
+    // Origin domain
+    let origin;
+    try {
+      if (window.location.ancestorOrigins && window.location.ancestorOrigins[0])
         [origin] = window.location.ancestorOrigins;
-      else if (document.referrer) {
-        try {
-          origin = new URL(document.referrer).hostname;
-        } catch (er) {
-          /* empty */
-        }
-      }
+      if (!origin && document.referrer) origin = document.referrer;
+      if (origin) origin = new URL(origin).hostname;
+    } catch (er) {
+      origin = '';
     }
+    if (!origin) origin = window.location.hostname;
 
     // Apply any Analytics info overrides.
     const infoOverride =
