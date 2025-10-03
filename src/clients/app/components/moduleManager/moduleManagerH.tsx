@@ -1939,7 +1939,7 @@ export function getLocalModuleOperations(
     }
   });
 
-  log.debug('Module operations: ', operations);
+  log.verbose('Module operations: ', operations);
   return operations;
 }
 

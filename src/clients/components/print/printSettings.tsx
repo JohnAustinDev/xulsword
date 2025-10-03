@@ -664,7 +664,7 @@ export default class PrintSettings extends React.Component<
       }
     `;
     }
-    // log.debug('style: ', style);
+    log.debug('style: ', style);
 
     const showpaging =
       !printDisabled &&

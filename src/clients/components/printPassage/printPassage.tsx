@@ -99,6 +99,8 @@ export default class PrintPassage
 
   componentInstanceID: string;
 
+  static renderingKeys: string[] = [];
+
   constructor(props: PrintPassageProps) {
     super(props);
 
@@ -177,11 +179,7 @@ export default class PrintPassage
           componentInstanceID,
         );
         if (tdiv.dataset.renderkey !== renderkey) {
-          // Set renderkey now because the soon-to-be scheduled operations will
-          // self terminate if tdiv renderkey changes.
-          tdiv.dataset.renderkey = renderkey;
           this.renderChapters(
-            tdiv,
             renderkey,
             vkMod,
             book,
@@ -197,7 +195,6 @@ export default class PrintPassage
   }
 
   async renderChapters(
-    tdiv: HTMLDivElement,
     renderkey: string,
     vkMod: string,
     book: OSISBookType,
@@ -209,7 +206,15 @@ export default class PrintPassage
       crossrefsText: boolean;
     },
   ) {
-    sanitizeHTML(tdiv, '');
+    log.verbose(`${renderkey} PrintPassage renderChapters is starting...`);
+    let div = printRefs.printContainerRef.current;
+    if (!div) return;
+
+    sanitizeHTML(div, '');
+    // All async opperations below will self terminate if div's renderkey is
+    // changed as React updates the DOM.
+    div.dataset.renderkey = renderkey;
+
     const settings = {
       module: vkMod,
       show,
@@ -235,7 +240,7 @@ export default class PrintPassage
 
     // Don't report the many chapter, verse and glossary reads to
     // analytics!
-    analytics.recordingStopped = true;
+    analytics.stop();
 
     // Show the progress bar.
     Subscription.publish.setControllerState(
@@ -245,11 +250,11 @@ export default class PrintPassage
       false,
     );
     this.setState({ progress: 0 });
+    PrintPassage.renderingKeys.push(renderkey);
 
     // Render each chapter successively to the DOM, as long as the renderKey
     // remains unchanged. Rendering stops when the number of pages exceeds
     // C.UI.Print.maxPages pages, or all chapters have been added to the DOM.
-    let div = printRefs.printContainerRef.current;
     let chIndex = 0;
     for (; div && chIndex < renderChaps.length; chIndex++) {
       const [book, chapter] = renderChaps[chIndex];
@@ -262,7 +267,13 @@ export default class PrintPassage
                 printRefs.printContainerRef.current?.dataset.renderkey !==
                 renderkey
               )
-                reject2(new Error(`Chapter rendering was interrupted`));
+                reject2(
+                  new Error(
+                    `${renderkey} Chapter rendering was interrupted (${
+                      printRefs.printContainerRef.current?.dataset.renderkey
+                    } != ${renderkey})`,
+                  ),
+                );
               const chapterText = bibleChapterText(
                 {
                   ...settings,
@@ -274,49 +285,55 @@ export default class PrintPassage
                 this.setState({
                   progress: chIndex / renderChaps.length,
                 });
-                resolve2(chapterText);
-              } else {
-                resolve2('waiting'); // Not returned by doUntilDoneAsync
+                return resolve2(chapterText);
               }
+              return resolve2('waiting'); // Not returned by doUntilDoneAsync
             }, 1);
           }) as Promise<string>;
           return await r2;
         }, printRefs.printContainerRef);
-      } catch (er) {
+      } catch (er: any) {
+        log.verbose(er.message);
         break;
+      } finally {
+        div = printRefs.printContainerRef.current;
       }
-      div = printRefs.printContainerRef.current;
       if (div?.dataset.renderkey !== renderkey) break;
-      log.debug(`Loading chapter to DOM: ${chapter}`);
+      log.verbose(`${renderkey} Loading chapter to DOM: ${chapter}`);
       div.innerHTML += sanitizeHTML(r);
       libswordImgSrc(div);
       if (Math.floor(div.scrollWidth / div.clientWidth) > C.UI.Print.maxPages) {
         log.info(
-          `Stopping passage render at ${chIndex}/${renderChaps.length} chapters.`,
+          `${renderkey} Stopping chapter rendering at ${chIndex}/${renderChaps.length} chapters.`,
         );
         break;
       }
     }
 
     if (div) {
-      log.debug(
-        `Finished loading ${Math.floor(
+      log.verbose(
+        `${renderkey} Finished rendering with ${Math.floor(
           div.scrollWidth / div.clientWidth,
-        )} pages to DOM`,
+        )} pages in DOM div.`,
       );
     }
 
-    this.setState({ progress: -1 });
-    Subscription.publish.setControllerState(
-      {
-        print: {
-          printDisabled: false,
-        } as PrintOptionsType,
-      },
-      false,
-    );
-    printRefs.setPages();
-    analytics.recordingStopped = false;
+    const { renderingKeys } = PrintPassage;
+    const index = renderingKeys.indexOf(renderkey);
+    if (index !== -1) renderingKeys.splice(index, 1);
+    if (index === -1 || !renderingKeys.length) {
+      this.setState({ progress: -1 });
+      Subscription.publish.setControllerState(
+        {
+          print: {
+            printDisabled: false,
+          } as PrintOptionsType,
+        },
+        false,
+      );
+      printRefs.setPages();
+      analytics.start();
+    }
 
     return chIndex === renderChaps.length ? chIndex : 0;
   }

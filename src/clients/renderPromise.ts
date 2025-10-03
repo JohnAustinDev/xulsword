@@ -154,17 +154,20 @@ export default class RenderPromise {
             renderPromises.forEach((rp) => {
               rp.calls.push(...rp.pendingCalls);
               rp.pendingCalls = [];
+              const { renderPromises } = RenderPromise;
+              // rp may have been dispatched again during callBatchThenCache,
+              // so check we aren't adding duplicate instances to the list.
+              if (!renderPromises.includes(rp)) renderPromises.push(rp);
             });
-            RenderPromise.renderPromises.push(...renderPromises);
-            const { retryDelay } = RenderPromise;
-            if (!retryDelay) RenderPromise.retryDelay = 2500;
-            else if (
-              pleaseWait === 'RATE LIMITED' &&
-              retryDelay < 24 * 60 * 60 * 1000
-            )
-              RenderPromise.retryDelay = 2 * retryDelay;
-            log.debug(
-              `Retrying dispatch after ${RenderPromise.retryDelay} ms.`,
+            if (!RenderPromise.retryDelay) {
+              RenderPromise.retryDelay = 2500;
+            } else if (pleaseWait === 'RATE LIMITED') {
+              const { retryDelay } = RenderPromise;
+              if (retryDelay < 24 * 60 * 60 * 1000)
+                RenderPromise.retryDelay = 2 * retryDelay;
+            }
+            log.verbose(
+              `Retrying dispatch after ${pleaseWait} ${RenderPromise.retryDelay} ms.`,
             );
             RenderPromise.batchDispatch();
           }
@@ -229,7 +232,7 @@ export default class RenderPromise {
       }
       setLoadingClass(this, true);
       const { renderPromises } = RenderPromise;
-      renderPromises.push(this);
+      if (!renderPromises.includes(this)) renderPromises.push(this);
       RenderPromise.batchDispatch();
     }
   }

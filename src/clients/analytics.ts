@@ -118,7 +118,7 @@ export class Analytics {
 
   private recorded: string[];
 
-  public recordingStopped: boolean;
+  private recordingStopped: boolean;
 
   // A data-info attribute may have been encoded as JSON or as key value
   // pairs like data-info="mid: 1234, chapter1: 8".
@@ -261,6 +261,16 @@ export class Analytics {
     }
   }
 
+  stop() {
+    this.recordingStopped = true;
+    log.verbose(`Analytics STOPPED`);
+  }
+
+  start() {
+    this.recordingStopped = false;
+    log.verbose(`Analytics RESTARTED`);
+  }
+
   setInfoOverride(overrideKey: string, value: AnalyticsInfo) {
     this.infoOverride[overrideKey] = value;
   }
@@ -348,11 +358,17 @@ export class Analytics {
     });
 
     // Recording may have been stopped/re-started by external components.
-    if (this.recordingStopped) return undefined;
+    if (this.recordingStopped) {
+      log.verbose(`Skipping analytics (STOPPED)`, send);
+      return undefined;
+    }
 
     // Only record one send value per session.
     const key = stringHash(send);
-    if (this.recorded.includes(key)) return undefined;
+    if (this.recorded.includes(key)) {
+      log.verbose(`Skipping analytics (REPEATED)`, send);
+      return undefined;
+    }
     this.recorded.push(key);
 
     // Electron app does not currently send events to any server. But if that

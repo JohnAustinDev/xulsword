@@ -394,7 +394,7 @@ export default class Prefs {
         const { id } = this.storage;
         let store: PrefStorage | null = null;
         if (this.storage.type === 'none') {
-          this.log?.debug(`Prefs store is none: ${aStorex}`);
+          this.log?.verbose(`Prefs store is none: ${aStorex}`);
         } else {
           store = this.getStore(aStore, id);
         }
@@ -532,7 +532,7 @@ export default class Prefs {
             this.writeStore(store as PrefStoreType);
         });
       } else {
-        this.log?.debug(
+        this.log?.verbose(
           `Skipping pref stores write: type=${this.getStorageType()}`,
         );
       }
@@ -652,7 +652,7 @@ export default class Prefs {
       if (s.store) {
         success = this.writeStore(store);
       } else {
-        this.log?.debug(
+        this.log?.verbose(
           `Skipping pref store write: store=${store} type=${this.getStorageType()}`,
         );
       }
@@ -663,7 +663,7 @@ export default class Prefs {
       // such as global.locale, caches must be cleared before prefs are updated!
       if (clearRendererCaches && this.browserWindow) {
         this.browserWindow.getAllWindows().forEach((w) => {
-          this.log?.debug(
+          this.log?.verbose(
             `Prefs is clearing renderer caches: clearRendererCaches=true`,
           );
           w.webContents.send('cache-reset');

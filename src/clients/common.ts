@@ -136,8 +136,13 @@ export async function doUntilDoneAsync<R>(
 ): Promise<R> {
   return new Promise((resolve, reject) => {
     const doFunc = async () => {
-      const r = await func(renderPromise);
-      if (!renderPromise.waiting()) resolve(r);
+      let r;
+      try {
+        r = await func(renderPromise);
+      } catch (er) {
+        return reject(er);
+      }
+      if (!renderPromise.waiting()) return resolve(r);
       renderPromise.dispatch();
     };
     const renderPromise = new RenderPromise(() => {
@@ -1021,10 +1026,10 @@ export function registerUpdateStateFromPref(
           d?.global?.locale !== G.i18n.language
         ) {
           Cache.clear();
-          log.debug(`Cache cleared (locale)`);
+          log.verbose(`Cache cleared (locale)`);
         } else if (aStore === 'bookmarks') {
           Cache.clear('bookmarkMap');
-          log.debug(`bookmarkMap cache cleared`);
+          log.verbose(`bookmarkMap cache cleared`);
         }
         c.setState(different);
       }

@@ -1170,7 +1170,7 @@ const Module = {
   ): Promise<ZIP | string> {
     const { type } = download;
     const downloadkey = downloadKey(download);
-    log.debug(`Starting download: `, logid(downloadkey));
+    log.verbose(`Starting download: `, logid(downloadkey));
 
     let threshProgress = 0;
     let done = false;
@@ -1306,9 +1306,9 @@ const Module = {
     const result = await zipPromise;
     progress(-1);
     if (typeof result === 'string') {
-      log.debug(`Failed download: ${logid(downloadkey)} ${logdls()}`);
+      log.verbose(`Failed download: ${logid(downloadkey)} ${logdls()}`);
     } else {
-      log.debug(`Successful download: ${logid(downloadkey)} ${logdls()}`);
+      log.verbose(`Successful download: ${logid(downloadkey)} ${logdls()}`);
       DownloadModuleZips.finished[downloadkey] = result;
     }
     delete DownloadModuleZips.ongoing[downloadkey];
@@ -1333,7 +1333,7 @@ const Module = {
       : DownloadModuleZips.ongoing;
     const entries = Object.entries(toCancel);
     if (entries.length) {
-      log.debug(`CANCEL-ONGOING: ${entries.length} items! ${logdls()}`);
+      log.verbose(`CANCEL-ONGOING: ${entries.length} items! ${logdls()}`);
       downloadCancel(entries.map((e) => e[0]));
       let cancelResults: PromiseSettledResult<string | ZIP>[] = [];
       try {
@@ -1347,11 +1347,11 @@ const Module = {
         if (r.status === 'fulfilled') {
           cancelled.push(entries[i][0]);
         } else {
-          log.debug(r.reason);
+          log.verbose(r.reason);
         }
       });
       entries.forEach((e) => delete DownloadModuleZips.ongoing[e[0]]);
-      log.debug(
+      log.verbose(
         `CANCEL-ONGOING COMPLETE: ${entries.length} items! ${logdls()}`,
       );
     }

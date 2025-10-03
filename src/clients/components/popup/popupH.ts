@@ -311,7 +311,7 @@ export default function handler(
         !this.renderPromise.waiting()
       ) {
         element.classList.add('empty');
-        log.debug(
+        log.verbose(
           `Popup failed without reported reason: ${element.classList.value}`,
         );
       }

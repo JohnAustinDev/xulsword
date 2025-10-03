@@ -203,7 +203,7 @@ class Tabs
 
         contentWidth = fudge + padding + ptwidth + ntwidth + mtwidth + iltwidth;
         /*
-        log.debug(`Tab row ${panelIndex}: ${JSON_stringify({
+        log.verbose(`Tab row ${panelIndex}: ${JSON_stringify({
           calcWidth: contentWidth,
           realWidth: tabsrow.clientWidth,
           fudge,

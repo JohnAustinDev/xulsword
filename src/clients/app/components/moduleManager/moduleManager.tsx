@@ -640,7 +640,7 @@ export default class ModuleManager
         }
       });
     }
-    log.debug(
+    log.verbose(
       `loadModuleTable: ${modtable.modules?.allmodules.length} modules`,
     );
 

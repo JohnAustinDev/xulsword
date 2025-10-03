@@ -139,7 +139,7 @@ function getScopes(
 }
 
 export async function search(xthis: Search): Promise<boolean> {
-  log.debug(`SEARCHING...`);
+  log.verbose(`SEARCHING...`);
   if (Build.isElectronApp) (G as GType).LibSword.stopBackgroundSearchIndexer();
   const { props, state, renderPromise } = xthis;
   const { descriptor } = props;
@@ -267,7 +267,7 @@ export async function search(xthis: Search): Promise<boolean> {
 
   setLoadingClass(renderPromise, false);
 
-  log.debug(`FINISHED SEARCHING!`);
+  log.verbose(`FINISHED SEARCHING!`);
   return true;
 }
 
@@ -395,7 +395,7 @@ export async function createSearchIndex(
       const winid = descriptor.id;
       // Add a delay before and after index creation to insure UI is responsive.
       setTimeout(() => {
-        log.debug(`BUILDING createSearchIndex...`);
+        log.verbose(`BUILDING createSearchIndex...`);
         GT.LibSword.searchIndexBuild(module, winid)
           .then((result) => {
             // For some reason, indexing sometimes seems to corrupt the order of
@@ -417,7 +417,7 @@ export async function createSearchIndex(
             Indexing.current = '';
           })
           .catch((er) => {
-            log.debug(er);
+            log.verbose(er);
             noAutoSearchIndex(G.Prefs, module);
             resolve(false);
           });

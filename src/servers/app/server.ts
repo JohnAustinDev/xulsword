@@ -442,7 +442,7 @@ const openXulswordWindow = () => {
 const init = async () => {
   if (Build.isDevelopment) {
     (devToolsInstaller as any)(REACT_DEVELOPER_TOOLS)
-      .then((name: string) => log.debug(`Added Extension:  ${name}`))
+      .then((name: string) => log.verbose(`Added Extension:  ${name}`))
       .catch((er: any) => log.error(er));
   }
 

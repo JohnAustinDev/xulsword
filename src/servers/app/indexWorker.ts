@@ -76,6 +76,6 @@ process.on('message', (msg: MessagesToIndexWorker) => {
       send({ msg: 'failed' });
   }
 
-  log.debug(`Index Worker: disconnect after ${JSON_stringify(msg)}`);
+  log.verbose(`Index Worker: disconnect after ${JSON_stringify(msg)}`);
   process.disconnect();
 });

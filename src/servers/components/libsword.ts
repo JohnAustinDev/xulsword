@@ -724,17 +724,17 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     let success: boolean;
     try {
       success = await this.searchIndexBuild(module);
-      log.debug(`searchIndexBuild ${module} success=${success}`);
+      log.verbose(`searchIndexBuild ${module} success=${success}`);
     } catch (er) {
       success = false;
-      log.debug(`searchIndexBuild failed: ${unknown2String(er, ['message'])}`);
+      log.verbose(`searchIndexBuild failed: ${unknown2String(er, ['message'])}`);
     }
     if (this.backgroundIndexerTO) {
       clearTimeout(this.backgroundIndexerTO);
       this.backgroundIndexerTO = null;
     }
 
-    log.debug(
+    log.verbose(
       `Finished background index, success=${success}: ${module} (${Math.ceil((new Date().valueOf() - start) / 1000)}s)`,
     );
     return success;
@@ -833,7 +833,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
           } minutes)`,
         );
       } else {
-        log.debug(`No modules to index. (${modulesToIndex.length} modules)`);
+        log.verbose(`No modules to index. (${modulesToIndex.length} modules)`);
       }
     }
   },
@@ -897,7 +897,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
           done();
           if (indexer && !indexer.killed) {
             indexer.kill();
-            log.debug(`indexer killed`);
+            log.verbose(`indexer killed`);
           }
           if (!this.isReady()) {
             log.error(

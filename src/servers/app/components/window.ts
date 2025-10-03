@@ -455,7 +455,7 @@ const Window = {
     Data.write(descriptorToPref(d), d.dataID);
 
     const url = resolveHtmlPath(`${d.type}.html`);
-    log.debug(`Loading URL: ${url}`);
+    log.verbose(`Loading URL: ${url}`);
     win.loadURL(url).catch((er) => {
       log.error(er);
     });
@@ -649,7 +649,7 @@ const Window = {
             return;
           if (!type || type === 'all' || type === r) {
             if (r === 'cache-reset') {
-              log.debug(
+              log.verbose(
                 `Clearing ${win.id} cache: Window.reset(${typex}, ${windowx?.toString()})`,
               );
             }
@@ -710,7 +710,7 @@ const Window = {
       // Send to a printer
       const opts = electronOptions;
       await new Promise<void>((resolve, reject) => {
-        log.debug(`print: `, opts);
+        log.verbose(`print: `, opts);
         win.webContents.print(
           opts,
           (suceeded: boolean, failureReason: string) => {
@@ -752,7 +752,7 @@ const Window = {
           return await Promise.reject(er);
         }
         if (result && !result.canceled && result.filePath) {
-          log.debug(`printToPDF: `, electronOptions);
+          log.verbose(`printToPDF: `, electronOptions);
           try {
             const data = await win.webContents.printToPDF(electronOptions);
             if (data) {
@@ -773,7 +773,7 @@ const Window = {
       const tmp = new LocalFile(Window.tmpDir({ type: 'xulswordWin' })[0]);
       if (tmp.exists() && tmp.isDirectory()) {
         tmp.append(`${randomID()}.pdf`);
-        log.debug(`printToPDF: `, electronOptions);
+        log.verbose(`printToPDF: `, electronOptions);
         try {
           const data = await win.webContents.printToPDF(electronOptions);
           if (data) {

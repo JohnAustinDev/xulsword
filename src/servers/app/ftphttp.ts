@@ -94,7 +94,7 @@ export function ftpCancelableInit(cancelkey: string): number {
       return FtpCancelable[cancelkey].callbacks.length;
     }
   }
-  log.debug(`Init: ${logid(cancelkey)}`);
+  log.verbose(`Init: ${logid(cancelkey)}`);
   FtpCancelable[cancelkey] = { callbacks: [], cause: null };
   return 0;
 }
@@ -201,7 +201,7 @@ export function ftpCancel(
   });
   keys.forEach((k) => {
     if (FtpCancelable[k].callbacks.length) {
-      log.debug(`FTP canceled FTP=${logid(k, null, true)}`);
+      log.verbose(`FTP canceled FTP=${logid(k, null, true)}`);
     }
     FtpCancelable[k].callbacks.reverse().forEach((x) => {
       x[1].reverse().forEach((f) => {
@@ -232,7 +232,7 @@ export function httpCancel(cancelkey?: string | string[]): number {
   };
   if (!cancelkey) {
     Object.entries(HttpCancelable).forEach((entry) => {
-      log.debug(`HTTP canceled '${entry[0]}'`);
+      log.verbose(`HTTP canceled '${entry[0]}'`);
       callCallback(entry[1]);
     });
     return canceled;
@@ -244,7 +244,7 @@ export function httpCancel(cancelkey?: string | string[]): number {
       Object.entries(HttpCancelable).forEach((entry) => {
         const keyobj = keyToDownload(entry[0]) as HTTPDownload;
         if (cancelkeydl.http === keyobj.http) {
-          log.debug(`Canceled HTTP '${keyobj.http}'`);
+          log.verbose(`Canceled HTTP '${keyobj.http}'`);
           callCallback(entry[1]);
         }
       });
@@ -272,7 +272,7 @@ export function failCause(
   const str = typeof ret === 'string' ? ret : ret.message;
   const { domain } = cancelDownload;
   const cause = `(${domain} ${logid(cancelDownload)}) ${str}`;
-  log.debug(cause);
+  log.verbose(cause);
   if (str === C.UI.Manager.cancelMsg) return C.UI.Manager.cancelMsg;
   return cause;
 }
@@ -304,7 +304,7 @@ export function destroyFTPconnections(domain?: string | null) {
             c.destroy();
           })
           .catch((er) => {
-            log.debug(er);
+            log.verbose(er);
           });
       });
       activeConnections[domain] = [];
@@ -314,7 +314,7 @@ export function destroyFTPconnections(domain?: string | null) {
             c.destroy();
           })
           .catch((er) => {
-            log.debug(er);
+            log.verbose(er);
           });
       });
       waitingConnections[domain] = [];
@@ -336,7 +336,7 @@ function freeConnection(c: FTP, domain: string) {
   const i = activeConnections[domain]?.indexOf(c);
   if (i !== undefined && i !== -1) {
     activeConnections[domain].splice(i, 1);
-    log.debug(
+    log.verbose(
       `Freed 1 connection to ${domain}; ${activeConnections[domain].length} still active.`,
     );
   }
@@ -377,7 +377,7 @@ async function createActiveConnection(
           .flat().length < max
       ) {
         id = ftpThrowIfCanceled(cancelkey);
-        log.debug(`Connecting: ${domain}`);
+        log.verbose(`Connecting: ${domain}`);
         c = new FTP();
         activeConnections[domain].push(c);
         c.connect({
@@ -391,7 +391,7 @@ async function createActiveConnection(
             abortP(c)
               .then(() => c?.destroy())
               .catch((er) => {
-                log.debug(er);
+                log.verbose(er);
               });
             forgetConnection(c, domain);
             reject(C.UI.Manager.cancelMsg);
@@ -405,13 +405,13 @@ async function createActiveConnection(
     if (c) {
       const cc = c;
       cc.on('error', (er: Error) => {
-        log.debug(`ftp connect on-error ${domain}: '${er.toString()}'.`);
+        log.verbose(`ftp connect on-error ${domain}: '${er.toString()}'.`);
         abortP(cc)
           .then(() => {
             cc.destroy();
           })
           .catch((err) => {
-            log.debug(err);
+            log.verbose(err);
           });
         if (er.message.includes('too many connections')) {
           MaxDomainConnections[domain] = activeConnections[domain].length;
@@ -539,7 +539,7 @@ export async function ftp<Retval>(
 
   ftpCancelableOperation(cancelkey, id, () => {
     abortP(c).catch((err) => {
-      log.debug(err);
+      log.verbose(err);
     });
     freeConnection(c, domain);
   });
@@ -554,7 +554,7 @@ export async function ftp<Retval>(
         c.destroy();
       })
       .catch((err) => {
-        log.debug(err);
+        log.verbose(err);
       });
     forgetConnection(c, domain);
     return await Promise.reject(er);
@@ -608,7 +608,7 @@ async function listP(c: FTP, dirpath: string): Promise<ListingElement[]> {
     log.silly(`START listP=${dirpath}`);
     const to = setTimeout(() => {
       abortP(c).catch((err) => {
-        log.debug(err);
+        log.verbose(err);
       });
       reject(new Error('listP timeout'));
     }, OperationTimeoutFTP);
@@ -634,7 +634,7 @@ async function sizeP(c: FTP, filepath: string): Promise<number> {
   return await new Promise((resolve, reject) => {
     const to = setTimeout(() => {
       abortP(c).catch((err) => {
-        log.debug(err);
+        log.verbose(err);
       });
       reject(new Error('sizeP timeout'));
     }, OperationTimeoutFTP);
@@ -652,7 +652,7 @@ async function getP(c: FTP, filepath: string): Promise<NodeJS.ReadableStream> {
   return await new Promise((resolve, reject) => {
     const to = setTimeout(() => {
       abortP(c).catch((err) => {
-        log.debug(err);
+        log.verbose(err);
       });
       reject(new Error('getP timeout'));
     }, OperationTimeoutFTP);

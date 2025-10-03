@@ -169,7 +169,8 @@ io.on('connection', (socket) => {
           ? [`log too long. [${json.length}]`]
           : JSON_parse(json);
       if (type in log && Array.isArray(logargs)) {
-        const limited = await isLimited(socket);
+        // Don't let development log messages rate limit the dev server!
+        const limited = Build.isDevelopment ? '' : await isLimited(socket);
         if (limited) logargs.push(`(${limited})`);
         try {
           log[type as LogLevel](

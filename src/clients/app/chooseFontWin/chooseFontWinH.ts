@@ -201,7 +201,7 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
             if (module && !diff(style.module.default, style.module[module])) {
               delete style.module[module];
             }
-            log.debug(`ChooseFont style: `, style);
+            log.verbose(`ChooseFont style: `, style);
             G.Prefs.setComplexValue('style', style, 'style');
             preclose();
             G.Window.close();

@@ -167,7 +167,7 @@ function Controller(props: ControllerProps) {
           G.Prefs.getCharPref('global.skin') as typeof S.prefs.global.skin,
         );
       if (dynamicStyleSheet) {
-        log.debug(
+        log.verbose(
           `Renderer reset (stylesheet, cache, component): ${descriptor?.id || 'unknown'}`,
         );
         const st = Build.isElectronApp
@@ -237,7 +237,7 @@ function Controller(props: ControllerProps) {
           (fullState as any)[S] = val;
           if (S === 'dialogs' || stringHash(v0) !== stringHash(val)) {
             if (S === 'reset')
-              log.debug(`Controller reset: ${JSON_stringify(partialState)}`);
+              log.verbose(`Controller reset: ${JSON_stringify(partialState)}`);
             const setMe = s[S][1] as (a: any) => void;
             if (partialState.print !== null && S === 'reset') {
               setTimeout(() => setMe(val), 1);
@@ -263,7 +263,7 @@ function Controller(props: ControllerProps) {
         delayHandler(
           delayHandlerThis,
           () => {
-            log.debug(
+            log.verbose(
               `Renderer reset (component): ${descriptor?.id || 'unknown'}`,
             );
             s.reset[1](randomID());
@@ -339,7 +339,7 @@ function Controller(props: ControllerProps) {
         );
         if (Build.isElectronApp) {
           const GT = G as GType;
-          log.debug(
+          log.verbose(
             `Renderer reset (cache, stylesheet, component): ${descriptor?.id || 'unknown'}`,
           );
           const st = Build.isElectronApp
@@ -568,14 +568,14 @@ export default async function renderToRoot(
   const { print, resetOnResize, htmlCssClass, onload, onunload } =
     options || {};
 
-  log.debug(`Initializing new window:`, descriptor);
+  log.verbose(`Initializing new window:`, descriptor);
 
   // On web clients, IPC is not available until the socket is connected.
   window.addEventListener('error', (e) => log.error(e));
   window.addEventListener('unhandledrejection', (e) => log.error(e));
   window.IPC.on('cache-reset', () => {
     Cache.clear();
-    log.debug(`CLEARED ALL CACHES`);
+    log.verbose(`CLEARED ALL CACHES`);
     Cache.write(
       `${descriptor?.type || 'unknown'}:${descriptor?.id || 'unknown'}`,
       'windowID',
