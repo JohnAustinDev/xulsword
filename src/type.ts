@@ -70,6 +70,7 @@ declare global {
     ProcessInfo: ReturnType<typeof getProcessInfo>;
     WebAppClient: 'BibleBrowser' | 'Widgets';
     WebAppTextScroll: number;
+    RenderPromises: readonly RenderPromise[];
   }
 
   // These are available everywhere:

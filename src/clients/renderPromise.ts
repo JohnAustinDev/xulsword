@@ -213,6 +213,7 @@ export default class RenderPromise {
       this.type = 'functionComponent';
       this.callback = null;
     }
+    window.RenderPromises = RenderPromise.renderPromises;
   }
 
   waiting(): number {
