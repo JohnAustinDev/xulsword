@@ -35,7 +35,11 @@ export type WidgetMenulistData = {
   props: Omit<MenulistProps, 'onChange'>;
   data: {
     urlroot: string;
-    items: FileItem[] | FileItem[][] | string[];
+    items: (
+      | { option: FileItem | FileItem[] | string }
+      | { optgroup: string }
+      | { hr: string }
+    )[];
   };
 };
 
@@ -107,7 +111,7 @@ const defaultSettings: AllComponentsData = {
       },
       data: {
         urlroot: '/some-url',
-        items: ['Item 1', 'Item 2'],
+        items: [{ option: 'Item 1' }, { option: 'Item 2' }],
       },
     },
   },

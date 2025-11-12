@@ -1,4 +1,5 @@
 import React from 'react';
+import { randomID } from '../../../common.ts';
 import { addClass } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import './menulist.css';
@@ -40,7 +41,7 @@ export default function Menulist({
   return (
     <Box {...addClass('menulist xsinput', props)}>
       <select
-        id={props.id ? `${props.id}__select` : undefined}
+        id={props.id ? `${props.id}__select` : randomID()}
         disabled={disabled}
         multiple={multiple}
         size={props.size}

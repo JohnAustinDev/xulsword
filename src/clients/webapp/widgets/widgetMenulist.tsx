@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { randomID } from '../../../common.ts';
 import log from '../../log.ts';
-import { G, GI } from '../../G.ts';
+import { GI } from '../../G.ts';
 import { functionalComponentRenderPromise } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { Analytics } from '../../analytics.ts';
 import Menulist from '../../components/libxul/menulist.tsx';
 import { getProps } from '../common.ts';
 
-import type { ChangeEvent } from 'react';
-import type { AnalyticsInfo } from '../../analytics.ts';
+import type { ChangeEvent, ReactNode } from 'react';
 import type { MenulistProps } from '../../components/libxul/menulist.tsx';
 import type { FileItem, WidgetMenulistData } from './defaultSettings.ts';
 
@@ -34,22 +33,25 @@ export default function WidgetMenulist(
     return getProps(props, {
       disabled: false,
       multiple: false,
-      value: '0',
+      value: data.items.findIndex((d) => 'option' in d),
     });
   });
 
   useEffect(() => {
     const { value } = state;
-    const index = value && typeof value === 'string' ? Number(value) || 0 : 0;
+    // The MenuList values are always numbers, but will accept strings from
+    // Drupal data.
+    const index = Number.isNaN(Number(value)) ? 0 : Number(value);
     if (actions && data) {
       const { urlroot, items } = data;
       actions.forEach((action) => {
         switch (action) {
           case 'update_url': {
             const item = items[index];
+            const option = 'option' in item ? item.option : null;
             const elem = document.getElementById(compid)?.parentElement;
-            if (elem && typeof item !== 'string') {
-              const links = Array.isArray(item) ? item : [item];
+            if (elem && option && typeof option !== 'string') {
+              const links = Array.isArray(option) ? option : [option];
               const a = Array.from(
                 elem.querySelectorAll('.update_url a, a.update_url'),
               );
@@ -61,11 +63,13 @@ export default function WidgetMenulist(
                   const rel = relurl.replace(/^\//, '');
                   anchor.setAttribute('href', `${root}/${rel}`);
                   anchor.textContent = optionText(link, false, renderPromise);
-                  const info: AnalyticsInfo = {
-                    event: 'download',
-                    mid,
-                  };
-                  Analytics.addInfo(info, anchor);
+                  Analytics.addInfo(
+                    {
+                      event: 'download',
+                      mid,
+                    },
+                    anchor,
+                  );
                   if (
                     typeof size !== 'undefined' &&
                     anchor.parentElement?.tagName === 'SPAN'
@@ -100,12 +104,55 @@ export default function WidgetMenulist(
         .fadeTo(1000, 1);
   }
 
-  const options = data
-    ? data.items.map((d, i) => (
-        <option key={optionKey(d)} value={i.toString()}>
-          {optionText(Array.isArray(d) ? d[0] : d, true, renderPromise)}
+  type DataItem = (typeof data.items)[number] & { dataItemIndex: number };
+  function getElement(d: DataItem): ReactNode {
+    const { dataItemIndex } = d;
+    if ('option' in d) {
+      const { option } = d;
+      return (
+        <option key={randomID()} value={dataItemIndex}>
+          {optionText(
+            Array.isArray(option) ? option[0] : option,
+            true,
+            renderPromise,
+          )}
         </option>
-      ))
+      );
+    } else if ('optgroup' in d) {
+      const { optgroup, children } = d as {
+        dataItemIndex: number;
+        optgroup: string;
+        children: DataItem[];
+      };
+      return (
+        <optgroup key={randomID()} label={optgroup}>
+          {children.map((op) => getElement(op))}
+        </optgroup>
+      );
+    }
+    // React warns about support for hr in select, so remove for now:
+    // return <hr key={key} className={d.hr} />;
+    return null;
+  }
+
+  // The optgroup item is just a string but needs to be a container now, so
+  // reduce the data array, converting optgroups to containers with children.
+  const options = data
+    ? (data.items as DataItem[])
+        .map((d, i) => {
+          d.dataItemIndex = i;
+          return d;
+        })
+        .reduce((p, c) => {
+          const pl = p.at(-1);
+          if (pl && 'optgroup' in pl && 'option' in c)
+            (pl as any).children.push(c);
+          else p.push(c);
+          if ('optgroup' in c) (c as any).children = [];
+          return p;
+        }, [] as DataItem[])
+        .map((d) => getElement(d))
+        .filter(Boolean)
     : [];
 
   return (
@@ -113,16 +160,6 @@ export default function WidgetMenulist(
       {options}
     </Menulist>
   );
-}
-
-function optionKey(data: string | FileItem | FileItem[]): string {
-  if (data && typeof data === 'string') return randomID();
-  const d = (Array.isArray(data) ? data : [data]) as FileItem[];
-  const id = d
-    .map((x) => x.relurl)
-    .filter(Boolean)
-    .join(', ');
-  return id || randomID();
 }
 
 function optionText(
