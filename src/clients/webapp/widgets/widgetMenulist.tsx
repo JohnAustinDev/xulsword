@@ -48,21 +48,23 @@ export default function WidgetMenulist(
         switch (action) {
           case 'update_url': {
             const item = items[index];
-            const option = 'option' in item ? item.option : null;
+            const selOption = 'option' in item ? item.option : null;
             const elem = document.getElementById(compid)?.parentElement;
-            if (elem && option && typeof option !== 'string') {
-              const links = Array.isArray(option) ? option : [option];
+            if (elem && selOption && typeof selOption !== 'string') {
+              const fileItems = Array.isArray(selOption)
+                ? selOption
+                : [selOption];
               const a = Array.from(
                 elem.querySelectorAll('.update_url a, a.update_url'),
               );
-              links.forEach((link, x) => {
-                const { relurl, size, mid } = link;
+              fileItems.forEach((fileItem, x) => {
+                const { updateUrlLabel, label, relurl, size, mid } = fileItem;
                 const anchor = a[x] as HTMLElement;
                 if (anchor && relurl) {
                   const root = urlroot.replace(/\/$/, '');
                   const rel = relurl.replace(/^\//, '');
                   anchor.setAttribute('href', `${root}/${rel}`);
-                  anchor.textContent = optionText(link, false, renderPromise);
+                  anchor.textContent = updateUrlLabel ?? label;
                   Analytics.addInfo(
                     {
                       event: 'download',
@@ -104,29 +106,24 @@ export default function WidgetMenulist(
         .fadeTo(1000, 1);
   }
 
-  type DataItem = (typeof data.items)[number] & { dataItemIndex: number };
-  function getElement(d: DataItem): ReactNode {
+  type IndexedDataItem = (typeof data.items)[number] & {
+    dataItemIndex: number;
+    children: IndexedDataItem[];
+  };
+  function getElement(d: IndexedDataItem): ReactNode {
     const { dataItemIndex } = d;
     if ('option' in d) {
       const { option } = d;
       return (
         <option key={randomID()} value={dataItemIndex}>
-          {optionText(
-            Array.isArray(option) ? option[0] : option,
-            true,
-            renderPromise,
-          )}
+          {(option as FileItem).label}
         </option>
       );
     } else if ('optgroup' in d) {
-      const { optgroup, children } = d as {
-        dataItemIndex: number;
-        optgroup: string;
-        children: DataItem[];
-      };
+      const { optgroup, children } = d;
       return (
         <optgroup key={randomID()} label={optgroup}>
-          {children.map((op) => getElement(op))}
+          {children.map((d) => getElement(d))}
         </optgroup>
       );
     }
@@ -135,10 +132,12 @@ export default function WidgetMenulist(
     return null;
   }
 
-  // The optgroup item is just a string but needs to be a container now, so
-  // reduce the data array, converting optgroups to containers with children.
-  const options = data
-    ? (data.items as DataItem[])
+  // The optgroup item is just a string but needs to be a container for React,
+  // so reduce the data array, converting optgroups to containers with
+  // children. Also filter out hr until React supports them.
+  return (
+    <Menulist onChange={onChange} {...(state as any)} domref={loadingRef}>
+      {(data.items as IndexedDataItem[])
         .map((d, i) => {
           d.dataItemIndex = i;
           return d;
@@ -150,40 +149,9 @@ export default function WidgetMenulist(
           else p.push(c);
           if ('optgroup' in c) (c as any).children = [];
           return p;
-        }, [] as DataItem[])
+        }, [] as IndexedDataItem[])
         .map((d) => getElement(d))
-        .filter(Boolean)
-    : [];
-
-  return (
-    <Menulist onChange={onChange} {...(state as any)} domref={loadingRef}>
-      {options}
+        .filter(Boolean)}
     </Menulist>
   );
-}
-
-function optionText(
-  data: string | FileItem,
-  isMenulistText: boolean,
-  renderPromise: RenderPromise,
-): string {
-  if (typeof data === 'string') return data;
-  return getEBookTitle(data, isMenulistText, renderPromise);
-}
-
-// Return eBook link text and menulist text.
-function getEBookTitle(
-  data: FileItem,
-  menu: boolean,
-  renderPromise: RenderPromise,
-): string {
-  const { ntitle, full, label } = data;
-  if (full)
-    return menu
-      ? GI.i18n.t('', renderPromise, 'Full publication', { ns: 'widgets' })
-      : ntitle;
-
-  if (label) return menu ? label : `${label}: ${ntitle}`;
-
-  return ntitle;
 }

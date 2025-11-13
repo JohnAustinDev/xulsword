@@ -36,7 +36,7 @@ export type WidgetMenulistData = {
   data: {
     urlroot: string;
     items: (
-      | { option: FileItem | FileItem[] | string }
+      | { option: FileItem | string }
       | { optgroup: string }
       | { hr: string }
     )[];
@@ -44,12 +44,11 @@ export type WidgetMenulistData = {
 };
 
 export type FileItem = {
-  ntitle: string;
   mid: number;
+  label: string;
+  relurl: string;
   size?: string;
-  relurl?: string;
-  full?: boolean;
-  label?: string;
+  updateUrlLabel?: string;
 };
 
 export type ZipData = [ch1: number, ch2: number, size: number];
