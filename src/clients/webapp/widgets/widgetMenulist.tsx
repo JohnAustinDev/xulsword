@@ -30,7 +30,7 @@ export default function WidgetMenulist(
 
   const { renderPromise, loadingRef } = functionalComponentRenderPromise();
   const defaultIndex = !Number.isNaN(Number(value))
-    ? value
+    ? Number(value)
     : data.items.findIndex((d) => 'option' in d);
   const [state, setState] = useState(() => {
     return getProps(props, {
