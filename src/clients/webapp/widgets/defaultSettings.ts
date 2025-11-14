@@ -31,6 +31,7 @@ export type WidgetORData = {
 export type WidgetMenulistData = {
   component: 'selectMenulist';
   actions?: WidgetActions[];
+  autodownload: boolean;
   langcode: (typeof C.Locales)[number][0];
   props: Omit<MenulistProps, 'onChange'>;
   data: {
@@ -104,6 +105,7 @@ const defaultSettings: AllComponentsData = {
 
     selectMenulist_1: {
       component: 'selectMenulist',
+      autodownload: false,
       langcode: 'en',
       props: {
         value: 'Item 1',

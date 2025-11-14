@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { randomID } from '../../../common.ts';
 import log from '../../log.ts';
-import { GI } from '../../G.ts';
 import { functionalComponentRenderPromise } from '../../common.ts';
-import RenderPromise from '../../renderPromise.ts';
 import { Analytics } from '../../analytics.ts';
 import Menulist from '../../components/libxul/menulist.tsx';
 import { getProps } from '../common.ts';
@@ -26,14 +24,19 @@ export default function WidgetMenulist(
   wprops: WidgetMenulistProps,
 ): React.JSX.Element {
   const { compid, settings } = wprops;
-  const { actions: actions, props, data } = settings;
+  const { actions, autodownload, props, data } = settings;
+  // eslint-disable-next-line react/prop-types
+  const { value } = props;
 
   const { renderPromise, loadingRef } = functionalComponentRenderPromise();
+  const defaultIndex = !Number.isNaN(Number(value))
+    ? value
+    : data.items.findIndex((d) => 'option' in d);
   const [state, setState] = useState(() => {
     return getProps(props, {
       disabled: false,
       multiple: false,
-      value: data.items.findIndex((d) => 'option' in d),
+      value: defaultIndex,
     });
   });
 
@@ -51,38 +54,33 @@ export default function WidgetMenulist(
             const selOption = 'option' in item ? item.option : null;
             const elem = document.getElementById(compid)?.parentElement;
             if (elem && selOption && typeof selOption !== 'string') {
-              const fileItems = Array.isArray(selOption)
-                ? selOption
-                : [selOption];
-              const a = Array.from(
+              const [anchor] = Array.from(
                 elem.querySelectorAll('.update_url a, a.update_url'),
-              );
-              fileItems.forEach((fileItem, x) => {
-                const { updateUrlLabel, label, relurl, size, mid } = fileItem;
-                const anchor = a[x] as HTMLElement;
-                if (anchor && relurl) {
-                  const root = urlroot.replace(/\/$/, '');
-                  const rel = relurl.replace(/^\//, '');
-                  anchor.setAttribute('href', `${root}/${rel}`);
-                  anchor.textContent = updateUrlLabel ?? label;
-                  Analytics.addInfo(
-                    {
-                      event: 'download',
-                      mid,
-                    },
-                    anchor,
-                  );
-                  if (
-                    typeof size !== 'undefined' &&
-                    anchor.parentElement?.tagName === 'SPAN'
-                  ) {
-                    const sizeSpan = anchor.parentElement.nextElementSibling;
-                    if (sizeSpan && sizeSpan.tagName === 'SPAN') {
-                      sizeSpan.textContent = size ? ` (${size})` : '';
-                    }
+              ) as HTMLElement[];
+              const { updateUrlLabel, label, relurl, size, mid } = selOption;
+              if (anchor && relurl) {
+                const root = urlroot.replace(/\/$/, '');
+                const rel = relurl.replace(/^\//, '');
+                anchor.setAttribute('href', `${root}/${rel}`);
+                anchor.textContent = updateUrlLabel ?? label;
+                Analytics.addInfo(
+                  {
+                    event: 'download',
+                    mid,
+                  },
+                  anchor,
+                );
+                if (
+                  typeof size !== 'undefined' &&
+                  anchor.parentElement?.tagName === 'SPAN'
+                ) {
+                  const sizeSpan = anchor.parentElement.nextElementSibling;
+                  if (sizeSpan && sizeSpan.tagName === 'SPAN') {
+                    sizeSpan.textContent = size ? ` (${size})` : '';
                   }
                 }
-              });
+                if (index !== defaultIndex && autodownload) anchor.click();
+              }
             }
             break;
           }
