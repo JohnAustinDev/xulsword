@@ -8,7 +8,8 @@ import type { AllComponentsData } from '../common.ts';
 export type WidgetActions =
   | 'bible_audio_Play'
   | 'genbk_audio_Play'
-  | 'update_url';
+  | 'update_url'
+  | 'update_owl';
 
 export type WidgetVKData = {
   component: 'selectVK';
@@ -50,6 +51,7 @@ export type FileItem = {
   relurl: string;
   size?: string;
   updateUrlLabel?: string;
+  owlIndex?: [index: number, speed: number, animate: boolean];
 };
 
 export type ZipData = [ch1: number, ch2: number, size: number];

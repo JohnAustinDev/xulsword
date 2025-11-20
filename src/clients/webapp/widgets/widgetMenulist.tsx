@@ -20,6 +20,8 @@ export type WidgetMenulistProps = {
 
 export type WidgetMenulistState = Omit<MenulistProps, 'onChange'>;
 
+let OwlBugFix: number; // Setting owl carousel to the current value breaks it.
+
 export default function WidgetMenulist(
   wprops: WidgetMenulistProps,
 ): React.JSX.Element {
@@ -42,18 +44,18 @@ export default function WidgetMenulist(
 
   useEffect(() => {
     const { value } = state;
+    const { urlroot, items } = data;
     // The MenuList values are always numbers, but will accept strings from
     // Drupal data.
     const index = Number.isNaN(Number(value)) ? 0 : Number(value);
-    if (actions && data) {
-      const { urlroot, items } = data;
+    const item = items[index];
+    const selOption = 'option' in item ? item.option : null;
+    if (actions && data && selOption && typeof selOption !== 'string') {
       actions.forEach((action) => {
         switch (action) {
           case 'update_url': {
-            const item = items[index];
-            const selOption = 'option' in item ? item.option : null;
             const elem = document.getElementById(compid)?.parentElement;
-            if (elem && selOption && typeof selOption !== 'string') {
+            if (elem) {
               const [anchor] = Array.from(
                 elem.querySelectorAll('.update_url a, a.update_url'),
               ) as HTMLElement[];
@@ -80,6 +82,20 @@ export default function WidgetMenulist(
                   }
                 }
                 if (index !== defaultIndex && autodownload) anchor.click();
+              }
+            }
+            break;
+          }
+          case 'update_owl': {
+            const owl = jQuery('.owl-carousel');
+            if (owl) {
+              const { owlIndex } = selOption;
+              if (
+                typeof owlIndex !== 'undefined' &&
+                (typeof OwlBugFix === 'undefined' || owlIndex[0] !== OwlBugFix)
+              ) {
+                owl.trigger('to.owl.carousel', owlIndex);
+                [OwlBugFix] = owlIndex;
               }
             }
             break;
