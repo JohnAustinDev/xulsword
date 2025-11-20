@@ -21,6 +21,7 @@ export type WidgetMenulistProps = {
 export type WidgetMenulistState = Omit<MenulistProps, 'onChange'>;
 
 let OwlBugFix: number; // Setting owl carousel to the current value breaks it.
+let currentIndex: number;
 
 export default function WidgetMenulist(
   wprops: WidgetMenulistProps,
@@ -31,14 +32,14 @@ export default function WidgetMenulist(
   const { value } = props;
 
   const { renderPromise, loadingRef } = functionalComponentRenderPromise();
-  const defaultIndex = !Number.isNaN(Number(value))
+  currentIndex = !Number.isNaN(Number(value))
     ? Number(value)
     : data.items.findIndex((d) => 'option' in d);
   const [state, setState] = useState(() => {
     return getProps(props, {
       disabled: false,
       multiple: false,
-      value: defaultIndex,
+      value: currentIndex,
     });
   });
 
@@ -81,7 +82,10 @@ export default function WidgetMenulist(
                     sizeSpan.textContent = size ? ` (${size})` : '';
                   }
                 }
-                if (index !== defaultIndex && autodownload) anchor.click();
+                if (index !== currentIndex && autodownload) {
+                  anchor.click();
+                  currentIndex = index;
+                }
               }
             }
             break;
