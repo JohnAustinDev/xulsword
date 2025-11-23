@@ -26,6 +26,13 @@ import type {
 } from './widgets/defaultSettings.ts';
 import type { SelectVKType } from '../components/libxul/selectVK.tsx';
 
+declare global {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  var setMenulistWidgetState: {
+    [compid: string]: (state: WidgetMenulistData['props']) => void;
+  };
+}
+
 export type AllComponentsData = {
   react: {
     [id: string]: ComponentData;

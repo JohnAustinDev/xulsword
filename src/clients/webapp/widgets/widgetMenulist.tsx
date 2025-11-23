@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { randomID } from '../../../common.ts';
+import { diff, randomID } from '../../../common.ts';
 import log from '../../log.ts';
 import { functionalComponentRenderPromise } from '../../common.ts';
 import { Analytics } from '../../analytics.ts';
 import Menulist from '../../components/libxul/menulist.tsx';
+import { delayHandler } from '../../components/libxul/xul.tsx';
 import { getProps } from '../common.ts';
 
 import type { ChangeEvent, ReactNode } from 'react';
@@ -42,6 +43,16 @@ export default function WidgetMenulist(
       value: currentIndex,
     });
   });
+
+  // Component state may be controlled externally by using this:
+  if (!('setMenulistWidgetState' in globalThis))
+    globalThis.setMenulistWidgetState = {};
+  globalThis.setMenulistWidgetState[compid] = (newState) => {
+    if (diff(state, newState)) {
+      animateWidget(compid, false);
+      setState(newState);
+    }
+  };
 
   useEffect(() => {
     const { value } = state;
@@ -110,18 +121,37 @@ export default function WidgetMenulist(
         }
       });
     }
+    animateWidget(compid, true);
   }, [state.value]);
 
   function onChange(
     e: React.SyntheticEvent<HTMLSelectElement, ChangeEvent>,
   ): void {
     const select = e.target as HTMLSelectElement;
+    animateWidget(compid, false);
     setState({ value: select.value });
+  }
+
+  function animateWidget(compid: string, inOut = false) {
+    const cto = `animate-${compid}`;
     const elem = document.getElementById(compid)?.parentElement;
-    if (elem)
-      jQuery(elem.querySelectorAll('.update_url a, a.update_url'))
-        .fadeTo(1, 0)
-        .fadeTo(1000, 1);
+    if (elem) {
+      const jels = jQuery(elem.querySelectorAll('.update_url a, a.update_url'));
+      if (inOut) {
+        delayHandler(
+          globalThis,
+          (j) => {
+            j.fadeTo(1000, 1);
+            (globalThis as any)[cto] = null;
+          },
+          [jels],
+          250,
+          cto,
+        );
+      } else if (!(globalThis as any)[cto]) {
+        jels.fadeTo(1, 0);
+      }
+    }
   }
 
   type IndexedDataItem = (typeof data.items)[number] & {
