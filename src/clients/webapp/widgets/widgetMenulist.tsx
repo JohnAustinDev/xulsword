@@ -21,8 +21,7 @@ export type WidgetMenulistProps = {
 
 export type WidgetMenulistState = Omit<MenulistProps, 'onChange'>;
 
-let OwlBugFix: number; // Setting owl carousel to the current value breaks it.
-let currentIndex: number;
+const persist = {} as any;
 
 export default function WidgetMenulist(
   wprops: WidgetMenulistProps,
@@ -32,15 +31,21 @@ export default function WidgetMenulist(
   // eslint-disable-next-line react/prop-types
   const { value } = props;
 
+  if (!(compid in persist))
+    persist[compid] = {
+      owlBugFix: undefined, // Setting owl carousel to the current value breaks it.
+      noAutodownload: true,
+      selectChanged: false,
+    };
+
   const { renderPromise, loadingRef } = functionalComponentRenderPromise();
-  currentIndex = !Number.isNaN(Number(value))
-    ? Number(value)
-    : data.items.findIndex((d) => 'option' in d);
   const [state, setState] = useState(() => {
     return getProps(props, {
       disabled: false,
       multiple: false,
-      value: currentIndex,
+      value: !Number.isNaN(Number(value))
+        ? Number(value)
+        : data.items.findIndex((d) => 'option' in d),
     });
   });
 
@@ -49,7 +54,7 @@ export default function WidgetMenulist(
     globalThis.setMenulistWidgetState = {};
   globalThis.setMenulistWidgetState[compid] = (newState) => {
     if (diff(state, newState)) {
-      animateWidget(compid, false);
+      animateSelection(compid, false);
       setState(newState);
     }
   };
@@ -93,9 +98,12 @@ export default function WidgetMenulist(
                     sizeSpan.textContent = size ? ` (${size})` : '';
                   }
                 }
-                if (index !== currentIndex && autodownload) {
+                if (
+                  persist[compid].selectChanged &&
+                  !persist.noAutodownload &&
+                  autodownload
+                ) {
                   anchor.click();
-                  currentIndex = index;
                 }
               }
             }
@@ -107,10 +115,11 @@ export default function WidgetMenulist(
               const { owlIndex } = selOption;
               if (
                 typeof owlIndex !== 'undefined' &&
-                (typeof OwlBugFix === 'undefined' || owlIndex[0] !== OwlBugFix)
+                (typeof persist[compid].owlBugFix === 'undefined' ||
+                  owlIndex[0] !== persist[compid].owlBugFix)
               ) {
                 owl.trigger('to.owl.carousel', owlIndex);
-                [OwlBugFix] = owlIndex;
+                [persist[compid].owlBugFix] = owlIndex;
               }
             }
             break;
@@ -121,18 +130,23 @@ export default function WidgetMenulist(
         }
       });
     }
-    animateWidget(compid, true);
+    animateSelection(compid, true);
+    persist[compid].selectChanged = false;
   }, [state.value]);
 
   function onChange(
     e: React.SyntheticEvent<HTMLSelectElement, ChangeEvent>,
   ): void {
     const select = e.target as HTMLSelectElement;
-    animateWidget(compid, false);
-    setState({ value: select.value });
+    if (diff(state, { value: select.value })) {
+      animateSelection(compid, false);
+      persist[compid].selectChanged = true;
+      setState({ value: select.value });
+      persist.noAutodownload = false;
+    }
   }
 
-  function animateWidget(compid: string, inOut = false) {
+  function animateSelection(compid: string, inOut = false) {
     const cto = `animate-${compid}`;
     const elem = document.getElementById(compid)?.parentElement;
     if (elem) {
