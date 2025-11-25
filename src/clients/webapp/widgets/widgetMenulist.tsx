@@ -12,7 +12,8 @@ import type { MenulistProps } from '../../components/libxul/menulist.tsx';
 import type { FileItem, WidgetMenulistData } from './defaultSettings.ts';
 
 // A React component widget for selection from a set of options, such as a set
-// of eBook files.
+// of eBook files. When the selection is changed these actions may be run
+// depending on component settings: update_url, update_owl.
 
 export type WidgetMenulistProps = {
   compid: string;
@@ -21,7 +22,14 @@ export type WidgetMenulistProps = {
 
 export type WidgetMenulistState = Omit<MenulistProps, 'onChange'>;
 
-const persist = {} as any;
+type Persist = {
+  noAutodownload: boolean;
+  components: {
+    [compid: string]: { selectChanged: boolean };
+  };
+};
+
+let persist: Persist;
 
 export default function WidgetMenulist(
   wprops: WidgetMenulistProps,
@@ -31,12 +39,9 @@ export default function WidgetMenulist(
   // eslint-disable-next-line react/prop-types
   const { value } = props;
 
-  if (!(compid in persist))
-    persist[compid] = {
-      owlBugFix: undefined, // Setting owl carousel to the current value breaks it.
-      noAutodownload: true,
-      selectChanged: false,
-    };
+  if (!persist) persist = { noAutodownload: true, components: {} };
+  if (!(compid in persist.components))
+    persist.components[compid] = { selectChanged: false };
 
   const { renderPromise, loadingRef } = functionalComponentRenderPromise();
   const [state, setState] = useState(() => {
@@ -99,7 +104,7 @@ export default function WidgetMenulist(
                   }
                 }
                 if (
-                  persist[compid].selectChanged &&
+                  persist.components[compid].selectChanged &&
                   !persist.noAutodownload &&
                   autodownload
                 ) {
@@ -110,16 +115,21 @@ export default function WidgetMenulist(
             break;
           }
           case 'update_owl': {
-            const owl = jQuery('.owl-carousel');
-            if (owl) {
+            const domowl = jQuery('.owl-carousel');
+            if (domowl) {
               const { owlIndex } = selOption;
-              if (
-                typeof owlIndex !== 'undefined' &&
-                (typeof persist[compid].owlBugFix === 'undefined' ||
-                  owlIndex[0] !== persist[compid].owlBugFix)
-              ) {
-                owl.trigger('to.owl.carousel', owlIndex);
-                [persist[compid].owlBugFix] = owlIndex;
+              if (typeof owlIndex !== 'undefined') {
+                delayHandler(
+                  globalThis,
+                  (domo, index) => {
+                    const owl: any = domo?.data('owl.carousel');
+                    if (index[0] !== owl.relative(owl.current()))
+                      domo.trigger('to.owl.carousel', index);
+                  },
+                  [domowl, owlIndex],
+                  250,
+                  `update_owl`,
+                );
               }
             }
             break;
@@ -131,7 +141,7 @@ export default function WidgetMenulist(
       });
     }
     animateSelection(compid, true);
-    persist[compid].selectChanged = false;
+    persist.components[compid].selectChanged = false;
   }, [state.value]);
 
   function onChange(
@@ -140,14 +150,14 @@ export default function WidgetMenulist(
     const select = e.target as HTMLSelectElement;
     if (diff(state, { value: select.value })) {
       animateSelection(compid, false);
-      persist[compid].selectChanged = true;
+      persist.components[compid].selectChanged = true;
       setState({ value: select.value });
       persist.noAutodownload = false;
     }
   }
 
   function animateSelection(compid: string, inOut = false) {
-    const cto = `animate-${compid}`;
+    const cto = `animate.${compid}`;
     const elem = document.getElementById(compid)?.parentElement;
     if (elem) {
       const jels = jQuery(elem.querySelectorAll('.update_url a, a.update_url'));
