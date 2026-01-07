@@ -4,7 +4,12 @@ import C from '../../constant.ts';
 import { type PrefObject } from '../../type.ts';
 import Dirs from './dirs.ts';
 
-// Cache to disk store PrefValue data referenced by key.
+// Cache to disk PrefValue data referenced by key. The purpose of this cache is
+// to decrease server startup time by saving computation intensive data to
+// disk, so it can be loaded directly into RAM upon first read. This data is
+// only written to disk if/when writeAllStores() is called. Once the data is
+// written, it becomes persistent (even between server restarts) and may ONLY
+// be cleared by calling delete().
 const DiskCache = {
   storage: {} as PrefObject,
 

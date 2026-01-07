@@ -21,8 +21,8 @@ import Subscription from '../../subscription.ts';
 import Cache from '../../cache.ts';
 import C from '../../constant.ts';
 import handleGlobal from '../handleG.ts';
-import { resetMain } from '../common.ts';
 import Dirs from '../components/dirs.ts';
+import DiskCache from '../components/diskcache.ts';
 import LibSword from '../components/libsword.ts';
 
 import type { Socket } from 'socket.io';
@@ -90,13 +90,16 @@ Subscription.subscribe.resetMain(() => {
   Cache.clear();
   LibSword.init();
 });
+// This server never calls DiskCache.writeAllStores(). This causes DiskCache
+// to operate no differently than regular cache (if cleared by resetMain()).
+Subscription.subscribe.resetMain(() => DiskCache.delete());
 setInterval(() => {
   const reset = Dirs.xsModsUser.append('reset');
   if (reset.exists()) {
     reset.remove();
     if (!reset.exists()) {
       log.warn(`Resetting server after reset file detection.`);
-      resetMain();
+      Subscription.publish.resetMain();
     }
   }
 }, 5000);
