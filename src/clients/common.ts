@@ -316,14 +316,14 @@ export function clearPending(
 export function safeScrollIntoView(
   elem: HTMLElement,
   ancestor: HTMLElement,
-  arg?: ScrollIntoViewOptions,
+  options?: ScrollIntoViewOptions,
   percent?: number,
 ) {
   // Only behaviour instant is supported, since any smooth animation would
   // need to be completed before ancestor adjustments could be made.
-  const arg2: ScrollIntoViewOptions = arg ?? {};
-  arg2.behavior = 'instant';
-  elem.scrollIntoView(arg2);
+  const opts: ScrollIntoViewOptions = options ?? {};
+  opts.behavior = 'instant';
+  elem.scrollIntoView(opts);
   let st: HTMLElement | null = elem;
   let setToZero = false;
   let adjust = true;
@@ -343,6 +343,74 @@ export function safeScrollIntoView(
     if (st === ancestor) setToZero = true;
     st = st.parentNode as HTMLElement | null;
   }
+}
+
+// Find the first scrollable ancestor to return as the scroll container.
+// Returns null if elem is null or there is no scrollable ancestor.
+export function firstScrollableAncestor(
+  elem: HTMLElement | null | undefined,
+): HTMLElement | null {
+  if (elem) {
+    let ancestor = elem.parentElement as HTMLElement | null;
+    let scrollContainer: HTMLElement | null = null;
+    while (ancestor) {
+      const cs = window.getComputedStyle(ancestor);
+      const { overflowY } = cs;
+      const canScroll =
+        (overflowY === 'auto' ||
+          overflowY === 'scroll' ||
+          overflowY === 'overlay') &&
+        ancestor.scrollHeight > ancestor.clientHeight;
+      if (canScroll) {
+        scrollContainer = ancestor;
+        break;
+      }
+      ancestor = ancestor.parentElement as HTMLElement | null;
+    }
+    return scrollContainer;
+  }
+  return null;
+}
+
+// Scroll a container so that a descendant appears a certain percentage down
+// relative to the top of the container. Returns true if scroll was changed.
+export function containerScrollTo(
+  container: HTMLElement | null | undefined,
+  descendant: HTMLElement | null | undefined,
+  options?: ScrollToOptions & { percent?: number; skipIfVisible?: boolean },
+): boolean {
+  if (container && descendant) {
+    const opts = options ?? {};
+    const { top, percent, skipIfVisible } = {
+      percent: 33,
+      skipIfVisible: true,
+      ...opts,
+    };
+    // Compute element's top relative to the scroll container, taking
+    // into account existing scrollTop.
+    const containerRect = container.getBoundingClientRect();
+    const elemRect = descendant.getBoundingClientRect();
+    const elemTopRelative =
+      elemRect.top - containerRect.top + container.scrollTop;
+    const desiredScrollTop =
+      elemTopRelative - (top ?? (percent / 100) * container.clientHeight);
+    const maxScrollTop = container.scrollHeight - container.clientHeight;
+    opts.top = Math.max(0, Math.min(desiredScrollTop, maxScrollTop));
+    if (
+      !skipIfVisible ||
+      elemRect.bottom - containerRect.top > container.clientHeight
+    ) {
+      if (container.scrollTop !== opts.top) {
+        if ((container as any).scrollTo) {
+          (container as any).scrollTo(opts);
+        } else {
+          container.scrollTop = opts.top;
+        }
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 // Send a message to the iframe parent with the clientHeight of a selected div.

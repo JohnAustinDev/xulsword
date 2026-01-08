@@ -56,6 +56,7 @@ export type XulswordProps = XulProps;
 // they written to Prefs.
 const notStatePrefDefault = {
   historyMenupopup: undefined as React.JSX.Element | undefined,
+  focusPanel: -1,
   bsreset: 0,
   vpreset: 0,
   searchDisabled: true,
@@ -234,6 +235,7 @@ export default class Xulsword
       ilModules,
       mtModules,
       keys,
+      focusPanel,
       scroll,
       isPinned,
       noteBoxHeight,
@@ -717,6 +719,7 @@ export default class Xulsword
             show={show}
             place={place}
             keys={keys}
+            focusPanel={focusPanel}
             scroll={scroll}
             isPinned={isPinned}
             noteBoxHeight={noteBoxHeight}

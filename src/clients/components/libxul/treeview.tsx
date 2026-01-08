@@ -2,7 +2,7 @@ import React from 'react';
 import { Tree } from '@blueprintjs/core';
 import C from '../../../constant.ts';
 import { clone, diff } from '../../../common.ts';
-import { safeScrollIntoView } from '../../common.ts';
+import { containerScrollTo, firstScrollableAncestor } from '../../common.ts';
 
 import type { TreeEventHandler, TreeNodeInfo } from '@blueprintjs/core';
 import type { XulProps } from './xul.tsx';
@@ -11,13 +11,17 @@ import type { XulProps } from './xul.tsx';
 // then onSelection must also be defined and the selection will be controlled by the
 // parent. If expandedIDs is defined then onExpansion must also be defined and the
 // expansion will be controlled by the parent. If enableMultipleSelection is false,
-// then only one node will be selected at a time.
+// then only one node will be selected at a time. The first selectedIDs element
+// will be scrolled into view, one time after the TreeView is mounted, unless
+// noAutoScroll is set.
+
 export type TreeViewProps = XulProps & {
   initialState: TreeNodeInfo[];
   enableMultipleSelection?: boolean;
   selectedIDs?: Array<string | number>;
   expandedIDs?: Array<string | number>;
   bpClassName?: string; // a BluePrint class for the Tree element
+  noAutoScroll?: boolean;
   onSelection?: (ids: Array<string | number>) => void;
   onExpansion?: (ids: Array<string | number>) => void;
   onNodeClick?: TreeEventHandler;
@@ -163,12 +167,17 @@ export default function TreeView({
     initialState,
     selectedIDs,
     expandedIDs,
+    noAutoScroll,
     onSelection,
     onExpansion,
     onNodeClick,
     treeRef: treeRef0,
   } = props;
-  const treeRef1: React.RefObject<Tree> = React.createRef();
+
+  // React useRef() is required here, not createRef(), because createRef
+  // returns an immutable object whose current value will always be null
+  // during the mount useEffect setTimeout.
+  const treeRef1: React.MutableRefObject<Tree | null> = React.useRef(null);
   const treeRef = treeRef0 || treeRef1;
 
   const [nodes, dispatch] = React.useReducer(treeReducer, initialState);
@@ -198,26 +207,19 @@ export default function TreeView({
   const previousSelection = usePreviousSelection(selection);
   const previousExpansion = usePreviousExpansion(expansion);
 
-  // On mount, scroll to selection
+  // On mount, scroll to selection unless noAutoScroll
   React.useEffect(() => {
-    setTimeout(() => {
-      if (selection.length && treeRef.current) {
-        const elem = treeRef.current.getNodeContentElement(selection[0]);
-        if (elem) {
-          const el = elem.getBoundingClientRect();
-          if (el.top < 100 || el.bottom > window.innerHeight - 100) {
-            let treeElem = elem.parentElement as HTMLElement;
-            while (
-              !treeElem.classList.contains('treeview') &&
-              treeElem.parentElement
-            ) {
-              treeElem = treeElem.parentElement;
-            }
-            safeScrollIntoView(elem, treeElem, { block: 'center' });
+    if (!noAutoScroll) {
+      setTimeout(() => {
+        const { current } = treeRef;
+        if (selection.length && current) {
+          const elem = current.getNodeContentElement(selection[0]);
+          if (elem) {
+            containerScrollTo(firstScrollableAncestor(elem), elem);
           }
         }
-      }
-    }, C.UI.TreeScrollDelay);
+      }, 1);
+    }
   }, []);
 
   // Call onSelection and onExpansion when NOT controlled.

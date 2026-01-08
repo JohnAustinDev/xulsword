@@ -42,6 +42,7 @@ type ViewportProps = ViewportPopupProps &
     scroll: typeof S.prefs.xulsword.scroll;
     audio: typeof S.prefs.xulsword.audio;
     keys: typeof S.prefs.xulsword.keys;
+    focusPanel: number;
     showChooser: typeof S.prefs.xulsword.showChooser;
     tabs: typeof S.prefs.xulsword.tabs;
     panels: typeof S.prefs.xulsword.panels;
@@ -155,6 +156,7 @@ export default class Viewport
       location,
       selection,
       keys,
+      focusPanel,
       show,
       place,
       tabs,
@@ -484,6 +486,7 @@ export default class Viewport
             key={reset}
             panels={panels}
             keys={keys}
+            focusPanel={focusPanel}
             xulswordStateHandler={xulswordStateHandler}
             onAudioClick={audioHandler}
           />

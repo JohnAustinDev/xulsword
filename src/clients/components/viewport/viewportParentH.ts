@@ -130,6 +130,8 @@ function setState(
       const newPinProps = func(pinProps);
       if (newPinProps) {
         const s = {} as XulswordState;
+        s.focusPanel = panelIndex; // for genbkchooser scroll-to
+        s.vpreset = Math.random(); // for genbkchooser scroll-to
         C.PinProps.forEach((key) => {
           if (key in newPinProps) {
             switch (key) {
@@ -415,6 +417,8 @@ export default function handler(
                 const { ilModules } = prevState;
                 const s = {
                   ilModules: ilModules.slice(),
+                  focusPanel: index,      // for genbkchooser scroll-to
+                  vpreset: Math.random(), // for genbkchooser scroll-to
                 };
                 if (!s.ilModules) s.ilModules = [];
                 s.ilModules[index] = ilModules[index] ? '' : m;
@@ -425,6 +429,8 @@ export default function handler(
                 const { panels: pans, mtModules } = prevState;
                 const s = {
                   panels: pans.slice(),
+                  focusPanel: index,      // for genbkchooser scroll-to
+                  vpreset: Math.random(), // for genbkchooser scroll-to
                 } as XulswordState;
                 if (!s.panels) s.panels = [];
                 s.panels[index] = m;

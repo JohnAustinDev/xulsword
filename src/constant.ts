@@ -165,8 +165,7 @@ const C = {
     },
     BMManager: {
       searchResultBreakAfter: 128,
-    },
-    TreeScrollDelay: 100,
+    }
   },
 
   CompressibleCalls: {

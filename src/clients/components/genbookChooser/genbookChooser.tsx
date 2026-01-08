@@ -1,12 +1,18 @@
 import React from 'react';
-import { clone, gbAncestorIDs, ofClass, stringHash } from '../../../common.ts';
+import {
+  clone,
+  diff,
+  gbAncestorIDs,
+  ofClass,
+  stringHash,
+} from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import {
   audioGenBookNode,
   chooserGenbks,
-  safeScrollIntoView,
+  containerScrollTo,
 } from '../../common.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import { addClass } from '../libxul/xul.tsx';
@@ -26,9 +32,17 @@ import type {
 import type { XulProps } from '../libxul/xul.tsx';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
 
+// The GenbookChooser uses a TreeView to show the Table Of Contents of those
+// panels that contain general book modules. The keys prop optionally selects
+// a chapter of each general book. The focusPanel is an index into panels to
+// choose one general book's selected key to be scrolled to when GenbookChooser
+// is mounted. Note: this scrolling does not happen during render, only during
+// mount (thus applying a new key prop value will perform a scroll).
+
 export type GenbookChooserProps = {
   panels: Array<string | null>;
   keys?: Array<string | null>;
+  focusPanel?: number | null;
   onAudioClick: (
     selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
     e: React.SyntheticEvent,
@@ -74,30 +88,17 @@ export default class GenbookChooser
   }
 
   componentDidMount() {
-    const { props, renderPromise, scrollTo } = this;
-    const { panels } = props;
-    const firstGenbookKeyIndex = panels.findIndex(
-      (m) => m && m in G.Tab && G.Tab[m].tabType === 'Genbks',
-    );
-    if (firstGenbookKeyIndex !== -1) {
-      scrollTo(firstGenbookKeyIndex, undefined, 1000);
+    const { props, renderPromise, expandKeyParents, scrollTo } = this;
+    const { keys, focusPanel } = props;
+    if (keys && typeof focusPanel === 'number' && focusPanel !== -1) {
+      expandKeyParents(focusPanel);
+      setTimeout(() => scrollTo(focusPanel), 1);
     }
     renderPromise.dispatch();
   }
 
-  componentDidUpdate(prevProps: GenbookChooserProps) {
-    const { props, renderPromise } = this;
-    const { keys: prevkeys } = prevProps;
-    const { keys } = props;
-    const { scrollTo } = this;
-    if (keys) {
-      const firstChangedKeyIndex = keys.findIndex(
-        (k, i) => (k && !prevkeys) || (k && prevkeys && k !== prevkeys[i]),
-      );
-      if (firstChangedKeyIndex !== -1) {
-        scrollTo(firstChangedKeyIndex, { block: 'center', behavior: 'smooth' });
-      }
-    }
+  componentDidUpdate() {
+    const { renderPromise } = this;
     renderPromise.dispatch();
   }
 
@@ -117,32 +118,20 @@ export default class GenbookChooser
     }
   }
 
-  scrollTo(
-    panelIndex: number,
-    options?: ScrollIntoViewOptions,
-    timeout?: number,
-  ) {
-    const { props, expandKeyParents, treeRef, loadingRef } = this;
+  scrollTo(focusPanel: number, options?: ScrollIntoViewOptions) {
+    const { props, treeRef, loadingRef } = this;
     const { panels, keys } = props;
-    const m = panels[panelIndex];
-    const k = keys && keys[panelIndex];
-    if (m && k) {
-      const func = () => {
-        const treekey = [m, panelIndex].join('.');
-        if (treekey) {
-          const elem = treeRef[treekey]?.current?.getNodeContentElement(k);
-          if (elem && loadingRef.current) {
-            safeScrollIntoView(
-              elem,
-              loadingRef.current,
-              options || { block: 'center' },
-            );
-          }
-        }
-      };
-      expandKeyParents(panelIndex);
-      if (timeout) setTimeout(func, timeout);
-      else func();
+    const m = panels[focusPanel];
+    const k = keys && keys[focusPanel];
+    const treekey = [m, focusPanel].join('.');
+    if (m && k && treekey) {
+      const elem = treeRef[treekey]?.current?.getNodeContentElement(k);
+      if (elem && loadingRef.current) {
+        const container = loadingRef.current.querySelector(
+          '.scroll-parent',
+        ) as HTMLElement | null;
+        containerScrollTo(container, elem, options);
+      }
     }
   }
 
@@ -172,7 +161,7 @@ export default class GenbookChooser
         ancestors.forEach((id) => expanded.push(id));
       }
       expandedIDs[panelIndex] = expanded;
-      this.setState({ expandedIDs });
+      if (diff(state.expandedIDs, expandedIDs)) this.setState({ expandedIDs });
     }
   }
 
@@ -256,6 +245,7 @@ export default class GenbookChooser
                     initialState={childNodes}
                     selectedIDs={key ? [key] : []}
                     expandedIDs={expandedIDs[panelIndex]}
+                    noAutoScroll={true}
                     onSelection={(sel) => {
                       xulswordStateHandler(newState(panelIndex, sel));
                     }}

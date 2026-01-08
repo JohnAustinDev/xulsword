@@ -75,7 +75,7 @@ export function onFolderSelection(
     setTimeout(() => {
       const { selectedFolder } = this.state as BMManagerState;
       if (selectedFolder) this.scrollToItem(selectedFolder);
-    }, C.UI.TreeScrollDelay);
+    }, 1);
   }
 }
 
