@@ -2,6 +2,7 @@ import React from 'react';
 import {
   clone,
   diff,
+  findTreeNode,
   gbAncestorIDs,
   ofClass,
   stringHash,
@@ -15,7 +16,7 @@ import {
   containerScrollTo,
 } from '../../common.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
-import { addClass } from '../libxul/xul.tsx';
+import { addClass, delayHandler } from '../libxul/xul.tsx';
 import TreeView, { forEachNode } from '../libxul/treeview.tsx';
 import '../chooser/chooser.css';
 import './genbookChooser.css';
@@ -36,8 +37,8 @@ import type { XulswordState } from '../xulsword/xulsword.tsx';
 // panels that contain general book modules. The keys prop optionally selects
 // a chapter of each general book. The focusPanel is an index into panels to
 // choose one general book's selected key to be scrolled to when GenbookChooser
-// is mounted. Note: this scrolling does not happen during render, only during
-// mount (thus applying a new key prop value will perform a scroll).
+// is mounted. Note: this scrolling only happens once after mount (thus
+// applying a new key prop value will perform a scroll).
 
 export type GenbookChooserProps = {
   panels: Array<string | null>;
@@ -60,6 +61,8 @@ export default class GenbookChooser
 {
   treeNodes: Record<string, TreeNodeInfo[]>;
 
+  finishedScrolling: boolean;
+
   treeRef: Record<string, React.RefObject<Tree>>;
 
   renderPromise: RenderPromise;
@@ -75,12 +78,14 @@ export default class GenbookChooser
       renderPromiseID: 0,
     };
 
+    this.finishedScrolling = false; // scroll once after mount
+
     this.treeNodes = {};
     this.treeRef = {};
 
     this.expandKeyParents = this.expandKeyParents.bind(this);
     this.onNodeClick = this.onNodeClick.bind(this);
-    this.scrollTo = this.scrollTo.bind(this);
+    this.scrollToSelection = this.scrollToSelection.bind(this);
     this.needsTreeParent = this.needsTreeParent.bind(this);
 
     this.loadingRef = React.createRef();
@@ -88,49 +93,62 @@ export default class GenbookChooser
   }
 
   componentDidMount() {
-    const { props, renderPromise, expandKeyParents, scrollTo } = this;
-    const { keys, focusPanel } = props;
-    if (keys && typeof focusPanel === 'number' && focusPanel !== -1) {
-      expandKeyParents(focusPanel);
-      setTimeout(() => scrollTo(focusPanel), 1);
-    }
+    const { renderPromise, scrollToSelection } = this;
+    scrollToSelection();
     renderPromise.dispatch();
   }
 
   componentDidUpdate() {
-    const { renderPromise } = this;
+    const { renderPromise, scrollToSelection } = this;
+    scrollToSelection();
     renderPromise.dispatch();
   }
 
-  onNodeClick(
-    node: TreeNodeInfo,
-    _nodePath: number[],
-    e: React.MouseEvent<HTMLElement>,
-  ) {
-    const { onAudioClick } = this.props;
-    if (
-      'nodeData' in node &&
-      node.nodeData &&
-      !ofClass('bp6-tree-node-label', e.target)
-    ) {
-      onAudioClick(node.nodeData as AudioPlayerSelectionGB | null, e);
-      e.stopPropagation();
-    }
-  }
-
-  scrollTo(focusPanel: number, options?: ScrollIntoViewOptions) {
-    const { props, treeRef, loadingRef } = this;
-    const { panels, keys } = props;
-    const m = panels[focusPanel];
-    const k = keys && keys[focusPanel];
-    const treekey = [m, focusPanel].join('.');
-    if (m && k && treekey) {
-      const elem = treeRef[treekey]?.current?.getNodeContentElement(k);
-      if (elem && loadingRef.current) {
-        const container = loadingRef.current.querySelector(
-          '.scroll-parent',
-        ) as HTMLElement | null;
-        containerScrollTo(container, elem, options);
+  scrollToSelection() {
+    const { props, treeNodes, treeRef, loadingRef, expandKeyParents } = this;
+    const { keys, panels, focusPanel } = props;
+    if (keys && !this.finishedScrolling) {
+      // Find each panelIndex that may be scrolled to.
+      const panelIndexes = panels.reduce((p, m, i) => {
+        const tnk = [m, i].join('.');
+        if (
+          keys[i] &&
+          tnk in treeNodes &&
+          findTreeNode(keys[i], treeNodes[tnk])
+        )
+          p.push(i);
+        return p;
+      }, [] as number[]);
+      // Expand and scroll to one.
+      if (panelIndexes.length) {
+        let panelIndex = typeof focusPanel === 'number' ? focusPanel : -1;
+        if (!panelIndexes.includes(panelIndex)) [panelIndex] = panelIndexes;
+        expandKeyParents(panelIndex);
+        setTimeout(() => {
+          const key = keys[panelIndex];
+          if (key) {
+            const elem =
+              treeRef[
+                [panels[panelIndex], panelIndex].join('.')
+              ]?.current?.getNodeContentElement(key);
+            if (elem && loadingRef.current) {
+              const container = loadingRef.current.querySelector(
+                '.scroll-parent',
+              ) as HTMLElement | null;
+              containerScrollTo(container, elem);
+            }
+          }
+        }, 1);
+        // Allow some time for multiple renders to scroll until finished. Then
+        // scrolling must be stopped to allow the user to manipulate the
+        // chooser tree.
+        delayHandler(
+          this,
+          () => (this.finishedScrolling = true),
+          [],
+          1000,
+          'finishedScrollingTO',
+        );
       }
     }
   }
@@ -162,6 +180,22 @@ export default class GenbookChooser
       }
       expandedIDs[panelIndex] = expanded;
       if (diff(state.expandedIDs, expandedIDs)) this.setState({ expandedIDs });
+    }
+  }
+
+  onNodeClick(
+    node: TreeNodeInfo,
+    _nodePath: number[],
+    e: React.MouseEvent<HTMLElement>,
+  ) {
+    const { onAudioClick } = this.props;
+    if (
+      'nodeData' in node &&
+      node.nodeData &&
+      !ofClass('bp6-tree-node-label', e.target)
+    ) {
+      onAudioClick(node.nodeData as AudioPlayerSelectionGB | null, e);
+      e.stopPropagation();
     }
   }
 
@@ -205,6 +239,7 @@ export default class GenbookChooser
               audioGenBookNode(node, m, node.id.toString(), renderPromise),
             );
             treeNodes[treekey] = childNodes;
+            this.finishedScrolling = false; // need to scroll again now.
           }
           treeRef[treekey] = React.createRef();
         }
