@@ -527,7 +527,7 @@ export type GenBookTOC = {
 };
 
 // GenBookKeys describes GenBooks structure (chapter names/order/hierarchy)
-// as well as maps all GenBook keys. Key order is ctitical (each parent is
+// as well as maps all GenBook keys. Key order is critical (each parent is
 // followed by its children, in order). GenBook key separator is C.GBKSEP and
 // parent nodes always end with C.GBKSEP.
 export type GenBookKeys = string[];
