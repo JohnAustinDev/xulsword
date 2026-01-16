@@ -681,10 +681,10 @@ export function audioConfigs(
   return audioConfs;
 }
 
-// Return possible audio player selections by updating audioModule, path and
-// possibly book, chapter or key. This is done by checking each of the
-// selection's swordModule AudioCode audio modules. If book, chapter or key of
-// the input selection is undefined, the first applicable audio file will be
+// Return possible audio player selections by updating the selection's Audio-
+// Code, path and possibly book, chapter or key. This is done by checking each
+// of the selection's swordModule AudioCodes for audio. If book, chapter or key
+// of the input selection is undefined, the first applicable audio file will be
 // chosen and the returned book and chapter will be updated accordingly.
 export function audioSelections(
   selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,

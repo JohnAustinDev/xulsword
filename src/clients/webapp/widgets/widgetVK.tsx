@@ -91,7 +91,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
     const anchors = comParent?.querySelectorAll('.update_url a, a.update_url');
     if (anchors && data && updateUrl) {
       (Array.from(anchors) as HTMLAnchorElement[]).forEach((a) => {
-        updateLinks(selection, a, data, updateUrl, isReset);
+        updateLinks(a, selection, data, updateUrl, isReset);
       });
     }
   };

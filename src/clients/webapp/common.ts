@@ -22,7 +22,7 @@ import type {
   WidgetMenulistData,
   WidgetORData,
   WidgetVKData,
-  UpdateLUrlDataType,
+  UpdateUrlDataType,
 } from './widgets/defaultSettings.ts';
 import type { SelectVKType } from '../components/libxul/selectVK.tsx';
 
@@ -219,11 +219,13 @@ export function createNodeList(chaplist: ChaplistType): TreeNodeInfo[] {
   return hierarchy(flatNodesSorted);
 }
 
+// Update an anchor's href and text (including possibly a file size) to
+// correspond with a particular selection from the data.
 export function updateLinks(
-  selection: SelectVKType | SelectORMType,
   anchor: HTMLAnchorElement,
+  selection: SelectVKType | SelectORMType,
   data: ChaplistType,
-  updateUrl: UpdateLUrlDataType,
+  updateUrl: UpdateUrlDataType,
   isReset: boolean,
 ) {
   let parent = '';
@@ -341,7 +343,8 @@ export function updateLinks(
       anchor,
     );
 
-    // Animate the link so the user sees the change
+    // Animate the link if it is of class update_url so the user notices the
+    // change.
     const animate = ofClass('update_url', anchor);
     if (!isReset && animate) {
       jQuery(anchor).fadeTo(1, 0).fadeTo(1000, 1);

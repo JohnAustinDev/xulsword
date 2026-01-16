@@ -17,7 +17,7 @@ export type WidgetVKData = {
   langcode: (typeof C.Locales)[number][0];
   props: Omit<SelectVKProps, 'onSelection'>;
   data?: ChaplistType;
-  update_url?: UpdateLUrlDataType;
+  update_url?: UpdateUrlDataType;
 };
 
 export type WidgetORData = {
@@ -26,7 +26,7 @@ export type WidgetORData = {
   langcode: (typeof C.Locales)[number][0];
   props: Omit<SelectORProps, 'onSelection'>;
   data: ChaplistType;
-  update_url?: UpdateLUrlDataType;
+  update_url?: UpdateUrlDataType;
 };
 
 export type WidgetMenulistData = {
@@ -69,7 +69,7 @@ export type ChaplistType = {
   >;
 };
 
-export type UpdateLUrlDataType = {
+export type UpdateUrlDataType = {
   [className: string]: string | { [dlkey: string]: string };
   urlTemplate: string;
 };

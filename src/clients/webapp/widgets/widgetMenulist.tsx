@@ -76,10 +76,10 @@ export default function WidgetMenulist(
       actions.forEach((action) => {
         switch (action) {
           case 'update_url': {
-            const elem = document.getElementById(compid)?.parentElement;
-            if (elem) {
+            const comParent = document.getElementById(compid)?.parentElement;
+            if (comParent) {
               const [anchor] = Array.from(
-                elem.querySelectorAll('.update_url a, a.update_url'),
+                comParent.querySelectorAll('.update_url a, a.update_url'),
               ) as HTMLElement[];
               const { updateUrlLabel, label, relurl, size, mid } = selOption;
               if (anchor && relurl) {

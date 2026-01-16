@@ -84,7 +84,7 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
     const anchors = comParent?.querySelectorAll('.update_url a, a.update_url');
     if (anchors && updateUrl)
       (Array.from(anchors) as HTMLAnchorElement[]).forEach((anchor) => {
-        updateLinks(selection, anchor, data, updateUrl, isReset);
+        updateLinks(anchor, selection, data, updateUrl, isReset);
       });
   };
 
