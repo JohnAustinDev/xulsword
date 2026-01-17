@@ -271,11 +271,14 @@ export function updateLinks(
       CHAPTER: chapter,
     }).forEach((e) => {
       const [placeholder, value] = e;
-      if (typeof value !== 'undefined')
+      if (typeof value !== 'undefined') {
+        // Just show 'chapter 0' as 'chapter 1' even if it is an intro.
+        const v = value.toString() === '0' ? '1' : value;
         linkText = linkText.replace(
           new RegExp(`\\b${placeholder}\\b`, 'g'),
-          value.toString(),
+          v.toString(),
         );
+      }
     });
 
     // Update the link text, as well as any size text found in parenthesis.
@@ -319,7 +322,7 @@ export function updateLinks(
           if (segs.length) segs[segs.length - 1] = '';
           const qualParent = segs.join(C.GBKSEP);
           const keys = [];
-          for (let i = ch1 - 1; i <= ch2 - 1; i++) {
+          for (let i = ch1; i <= ch2; i++) {
             const qualName = data[parent].find(
               (q) =>
                 Number(q[0].toString().replace(/^(\d\d\d)( .*)?$/, '$1')) === i,

@@ -1157,7 +1157,6 @@ export function getAllDictionaryKeyList(module: string): string[] {
   return DiskCache.read(pkey, module) as ModulesCache[string]['keylist'];
 }
 
-// Important: allGbKeys must be output of getGenBookTableOfContents().
 export function genBookTreeNodes(
   module: string,
   expanded?: boolean,

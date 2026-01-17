@@ -825,13 +825,13 @@ export function getGenBookAudio(
         const allGbKeys = gbPaths(treeNodes);
         const r: GenBookAudio = {};
         Object.entries(audio).forEach((entry) => {
-          const [pathx, str] = entry;
+          const [pathx, ords] = entry;
           const px = pathx.split(C.GBKSEP).filter(Boolean);
           const parentPath: AudioPath = [];
           px.forEach((p, i) => {
             parentPath[i] = Number(p.replace(/^(\d+).*?$/, '$1'));
           });
-          audioConfNumbers(str).forEach((n) => {
+          audioConfNumbers(ords).forEach((n) => {
             const pp = parentPath.slice() as AudioPath;
             pp.push(n);
             const kx = Object.entries(allGbKeys).find((e) => !diff(pp, e[1]));

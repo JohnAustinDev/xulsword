@@ -1745,13 +1745,15 @@ export function gbPaths(genbkTreeNodes: TreeNodeInfo[]): GenBookAudio {
   function addPath(nodes: TreeNodeInfo[], parentPath?: number[]) {
     const pp = parentPath || [];
     const i = pp.length;
-    let n = 0;
+    let ch = 1; // Chapter 0 belongs to the introduction
     nodes.forEach((node) => {
       const path = pp.slice();
-      path[i] = n;
-      r[node.id] = path;
-      if (node.childNodes) addPath(node.childNodes, path);
-      n += 1;
+      path[i] = ch;
+      if (node.childNodes) {
+        r[node.id] = [...path, 0]; // the introduction
+        addPath(node.childNodes, path);
+      } else r[node.id] = path;
+      ch += 1;
     });
     return nodes;
   }
@@ -1937,11 +1939,11 @@ function IBTtemplateURL(
     // by using path name for XSPARENT/XSKEY whenever possible, since IBT's
     // widgetOR includes path names.
     const useOrd = /^\d+(\/\d+)*$/.test(keys[0]);
-    const segs = keys[0].split(C.GBKSEP).map((seg) => {
-      if (useOrd) return Number(seg);
-      return seg.replace(/^\d\d\d /, '');
-    });
     if (keys.length > 1) {
+      const segs = keys[0].split(C.GBKSEP).map((seg) => {
+        if (useOrd) return Number(seg);
+        return seg.replace(/^\d\d\d /, '');
+      });
       let failed = false;
       const chs = keys.map((k) =>
         k.split(C.GBKSEP).map((x) => {
@@ -1974,6 +1976,14 @@ function IBTtemplateURL(
       if (phs.XSPACKAGE === 'auto') phs.XSPACKAGE = chl > ch ? 'zip' : 'none';
       else if (phs.XSPACKAGE === 'none' && chl > ch) return false;
     } else {
+      let segs = keys[0].split(C.GBKSEP);
+      // IBT introduction requests are the parent without a following slash. 
+      // Ending with a slash means 'all children' rather than 'introduction'.
+      if (segs.at(-1)?.match(/^0(00 .*)?$/)) segs.pop();
+      segs = segs.map((seg) => {
+        if (useOrd) return Number(seg).toString();
+        return seg.replace(/^\d\d\d /, '');
+      });
       phs.XSKEY = segs.join(C.GBKSEP);
       let chapter = '';
       if (segs.length) {
@@ -2022,7 +2032,7 @@ export function resolveTemplateURL(
     .sort((ea, eb) => eb[0].length - ea[0].length)
     .forEach((entry) => {
       const [ph, value] = entry;
-      if (value && url2.includes(ph))
+      if (value !== undefined && url2.includes(ph))
         url2 = url2.replaceAll(ph, value.toString());
     });
 
