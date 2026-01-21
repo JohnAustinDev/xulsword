@@ -2013,15 +2013,17 @@ function IBTtemplateURL(
       else if (phs.XSPACKAGE === 'none' && chl > ch) return false;
     } else {
       let segs = keys[0].split(C.GBKSEP);
-      // IBT introduction requests use the parent key without a following
-      // slash (ending with a slash means 'all children' rather than
+      // IBT introduction chapter(s) requests use the parent key without a
+      // following slash (ending with a slash means 'all children' rather than
       // introduction).
-      if (segs.at(-1)?.match(/^(0|000)( .*)?$/)) segs.pop();
+      const isIntro = segs.at(-1)?.match(/^(0|000)( .*)?$/);
+      if (isIntro) segs.pop();
       segs = segs.map((seg) => {
         if (useOrd) return Number(seg).toString();
         return seg.replace(/^\d\d\d /, '');
       });
-      phs.XSKEY = segs.join(C.GBKSEP);
+      // IBT introduction key requests however must end with slash.
+      phs.XSKEY = `${segs.join(C.GBKSEP)}${isIntro ? '/' : ''}`;
       let chapter = '';
       if (segs.length) {
         chapter = segs[segs.length - 1].toString();
