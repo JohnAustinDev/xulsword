@@ -45,11 +45,7 @@ import Spacer from '../../components/libxul/spacer.tsx';
 import Stack from '../../components/libxul/stack.tsx';
 import Dialog from '../../components/libxul/dialog.tsx';
 import ModuleMenu from '../../components/libxul/modulemenu.tsx';
-import handlerH, {
-  search,
-  formatResult,
-  lexicon,
-} from './searchH.tsx';
+import handlerH, { search, formatResult, lexicon } from './searchH.tsx';
 import './search.css';
 
 import type {

@@ -191,6 +191,12 @@ export default class LocalFile {
     return fs.readFileSync(this.path, options) as Buffer;
   }
 
+  rename(newName: string) {
+    const newpath = path.join(path.dirname(this.path), newName);
+    fs.renameSync(this.path, newpath);
+    this.path = newpath;
+  }
+
   remove(recursive = false) {
     fs.rmSync(this.path, { recursive });
   }

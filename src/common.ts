@@ -42,7 +42,6 @@ import type {
   AudioPlayerSelectionVK,
   AudioPlayerSelectionGB,
   GIType,
-  GITypeMain,
   Gsafe,
 } from './type.ts';
 import type { doUntilDone as DoUntilDone } from './clients/common.ts';
@@ -879,12 +878,12 @@ export function unknown2String(v: unknown, checkProps?: string[]): string {
 }
 
 export function pad(
-  padMe: string | number,
+  value: string | number,
   len: number,
-  char: string | number,
+  padding: string | number,
 ): string {
-  let r: string = padMe.toString();
-  const c = char.toString().substring(0, 1);
+  let r: string = value.toString();
+  const c = padding.toString().substring(0, 1);
   while (r.length < len) r = `${c}${r}`;
   return r;
 }
@@ -1740,17 +1739,25 @@ export function dictTreeNodes(
   return Cache.read(ckey);
 }
 
-export function gbPaths(genbkTreeNodes: TreeNodeInfo[]): GenBookAudio {
+// Return a mapping from general book keys to audio file paths.
+// Data comes here this way:
+// - libsword.readGenBookLibSword(GenBookTOC): GenBookKeys
+// - genBookTreeNodes(GenBookKeys): TreeNodeInfo[]
+// - gbAudioPaths(TreeNodeInfo[]): GenBookAudio
+export function gbAudioPaths(
+  genbkTreeNodes: TreeNodeInfo[],
+  zeroIsIntroduction: boolean,
+): GenBookAudio {
   const r: GenBookAudio = {};
   function addPath(nodes: TreeNodeInfo[], parentPath?: number[]) {
     const pp = parentPath || [];
     const i = pp.length;
-    let ch = 1; // Chapter 0 belongs to the introduction
+    let ch = zeroIsIntroduction ? 1 : 0;
     nodes.forEach((node) => {
       const path = pp.slice();
       path[i] = ch;
       if (node.childNodes) {
-        r[node.id] = [...path, 0]; // the introduction
+        r[node.id] = zeroIsIntroduction ? [...path, 0] : path;
         addPath(node.childNodes, path);
       } else r[node.id] = path;
       ch += 1;
@@ -1892,6 +1899,35 @@ export function subtractGenBookAudioChapters(
   return r;
 }
 
+// Return the SWORD modules for a particular audio code. Only Bibles may have
+// more than one module with a particular audiocode (because those keys are
+// identical for modules of different scripts) so the script argument
+// prioritizes one script to appear the top of the module list. To test any
+// module to see if it supports the audiocode, pass it as testModule.
+export function modulesOfAudioCode(
+  audiocode: string,
+  script: 'Cyrl' | 'Latn' | 'Arab' | '' = '',
+  testModule = '',
+) {
+  const modules: string[] = [];
+  if (!audiocode) return modules;
+
+  Object.entries(G().Tab).forEach((e) => {
+    const [module, tab] = e;
+    if (testModule && module !== testModule) return;
+    if (module === audiocode || tab.audioCodes.includes(audiocode)) {
+      const { lang } = tab;
+      if (script && lang.endsWith(script)) {
+        modules.unshift(module);
+      } else {
+        modules.push(module);
+      }
+    }
+  });
+
+  return modules;
+}
+
 // Follow IBT's audio download API specification to convert a selection into
 // the necessary parameter values required by the API for the request. Returns
 // true if the selection could be converted, or false otherwise.
@@ -1977,9 +2013,10 @@ function IBTtemplateURL(
       else if (phs.XSPACKAGE === 'none' && chl > ch) return false;
     } else {
       let segs = keys[0].split(C.GBKSEP);
-      // IBT introduction requests are the parent without a following slash. 
-      // Ending with a slash means 'all children' rather than 'introduction'.
-      if (segs.at(-1)?.match(/^0(00 .*)?$/)) segs.pop();
+      // IBT introduction requests use the parent key without a following
+      // slash (ending with a slash means 'all children' rather than
+      // introduction).
+      if (segs.at(-1)?.match(/^(0|000)( .*)?$/)) segs.pop();
       segs = segs.map((seg) => {
         if (useOrd) return Number(seg).toString();
         return seg.replace(/^\d\d\d /, '');

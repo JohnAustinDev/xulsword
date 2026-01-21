@@ -15,6 +15,7 @@ import {
   stringHash,
   clone,
   localizeString,
+  audioConfStrings,
 } from '../common.ts';
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
@@ -50,6 +51,8 @@ import type {
   ModulesCache,
   TreeNodeInfoPref,
   AudioPath,
+  GenBookAudioConf,
+  VerseKeyAudioConf,
 } from '../type.ts';
 import type PrefsElectron from './app/prefs.ts';
 
@@ -1216,4 +1219,83 @@ export function normalizeZipEntry(entry: ZIP.IZipEntry): {
   entryName = entryName.replace(/[/\\]/g, path.posix.sep);
   name = name.replace(/^.*?([^/\\]+)$/, '$1');
   return { entryName, name };
+}
+
+// Scan the file system for audio files starting at the location pointed to by
+// repoPath/dataPath, and return the results.
+export function scanAudio(
+  repoPath: string,
+  dataPath: string,
+): GenBookAudioConf | VerseKeyAudioConf {
+  const scan = new LocalFile(repoPath);
+  if (scan.exists() && scan.isDirectory()) {
+    scan.append(dataPath);
+    if (scan.exists() && scan.isDirectory()) {
+      const subs = scan.directoryEntries;
+      const isVerseKey = subs.find((bk) =>
+        Object.values(C.SupportedBooks).find((bg: any) => bg.includes(bk)),
+      );
+      if (!isVerseKey) return recurseAudioDirectory(scan);
+      const r = {} as VerseKeyAudioConf;
+      scan.directoryEntries.forEach((bk) => {
+        if (
+          Object.values(C.SupportedBooks).find((bg: any) => bg.includes(bk))
+        ) {
+          const book = bk as OSISBookType;
+          const boolArray: boolean[] = [];
+          const scan2 = scan.clone().append(book);
+          if (scan2.isDirectory()) {
+            scan2.directoryEntries.forEach((chapter) => {
+              const audioFile = scan2.clone().append(chapter);
+              if (!audioFile.isDirectory()) {
+                const chn = Number(
+                  audioFile.leafName.replace(/^(\d+).*?$/, '$1'),
+                );
+                if (!Number.isNaN(chn)) boolArray[chn] = true;
+                else {
+                  log.warn(
+                    `Skipping audio file with name: ${audioFile.leafName}`,
+                  );
+                }
+              } else
+                log.warn(`Skipping audio chapter subdirectory: ${chapter}`);
+            });
+          }
+          for (let i = 0; i < boolArray.length; i += 1) {
+            boolArray[i] = !!boolArray[i];
+          }
+          r[book] = audioConfStrings(boolArray);
+        } else log.warn(`Skipping unrecognized audio subdirectory: ${bk}`);
+      });
+      return r;
+    }
+  }
+  return {};
+}
+
+function recurseAudioDirectory(
+  dir: LocalFile,
+  ancOrSelfx?: string[],
+  audiox?: GenBookAudioConf,
+): GenBookAudioConf {
+  const audio = audiox || {};
+  const ancOrSelf = ancOrSelfx?.slice() || [];
+  if (ancOrSelfx) ancOrSelf.push(dir.leafName);
+  const chs: number[] = [];
+  dir.directoryEntries.forEach((sub) => {
+    const subfile = dir.clone().append(sub);
+    if (/^(\d+)/.test(sub)) {
+      const m2 = subfile.leafName.match(/^(\d+)/);
+      if (subfile.isDirectory()) {
+        recurseAudioDirectory(subfile, ancOrSelf, audio);
+      } else if (m2) {
+        chs.push(Number(m2[1]));
+      }
+    } else log.warn(`Skipping non-number audio dir/file: ${dir.path}/${sub}`);
+  });
+  if (chs.length)
+    audio[
+      `${[...ancOrSelf.map((s) => decodeURIComponent(s))].join(C.GBKSEP)}/`
+    ] = audioConfStrings(chs);
+  return audio;
 }

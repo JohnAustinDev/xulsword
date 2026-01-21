@@ -6,7 +6,6 @@ import log from 'electron-log';
 import {
   clone,
   downloadKey,
-  audioConfStrings,
   isRepoLocal,
   JSON_stringify,
   randomID,
@@ -18,13 +17,16 @@ import {
 } from '../../../common.ts';
 import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
-import { CipherKeyModules, normalizeZipEntry } from '../../common.ts';
+import {
+  CipherKeyModules,
+  normalizeZipEntry,
+  scanAudio,
+} from '../../common.ts';
 import parseSwordConf from '../../parseSwordConf.ts';
 import DiskCache from '../../components/diskcache.ts';
 import LocalFile from '../../components/localFile.ts';
 import Dirs from '../../components/dirs.ts';
 import LibSword, { moduleUnsupported } from '../../components/libsword.ts';
-import Prefs from '../prefs.ts';
 import {
   getFile,
   getDir,
@@ -76,85 +78,6 @@ export function confModulePath(aDataPathx: string): string | null {
   if (subs.length === modDir) return subs.join(fpath.posix.sep);
   if (subs.length > modDir) return subs.slice(0, modDir).join(fpath.posix.sep);
   return null;
-}
-
-function recurseAudioDirectory(
-  dir: LocalFile,
-  ancOrSelfx?: string[],
-  audiox?: GenBookAudioConf,
-): GenBookAudioConf {
-  const audio = audiox || {};
-  const ancOrSelf = ancOrSelfx?.slice() || [];
-  if (ancOrSelfx) ancOrSelf.push(dir.leafName);
-  const chs: number[] = [];
-  dir.directoryEntries.forEach((sub) => {
-    const subfile = dir.clone().append(sub);
-    if (/^(\d+)/.test(sub)) {
-      const m2 = subfile.leafName.match(/^(\d+)/);
-      if (subfile.isDirectory()) {
-        recurseAudioDirectory(subfile, ancOrSelf, audio);
-      } else if (m2) {
-        chs.push(Number(m2[1]));
-      }
-    } else log.warn(`Skipping non-number audio dir/file: ${dir.path}/${sub}`);
-  });
-  if (chs.length)
-    audio[
-      `${[...ancOrSelf.map((s) => decodeURIComponent(s))].join(C.GBKSEP)}/`
-    ] = audioConfStrings(chs);
-  return audio;
-}
-
-// Scan the file system for audio files starting at the location pointed to by
-// repoPath/dataPath, and return the results.
-export function scanAudio(
-  repoPath: string,
-  dataPath: string,
-): GenBookAudioConf | VerseKeyAudioConf {
-  const scan = new LocalFile(repoPath);
-  if (scan.exists() && scan.isDirectory()) {
-    scan.append(dataPath);
-    if (scan.exists() && scan.isDirectory()) {
-      const subs = scan.directoryEntries;
-      const isVerseKey = subs.find((bk) =>
-        Object.values(C.SupportedBooks).find((bg: any) => bg.includes(bk)),
-      );
-      if (!isVerseKey) return recurseAudioDirectory(scan);
-      const r = {} as VerseKeyAudioConf;
-      scan.directoryEntries.forEach((bk) => {
-        if (
-          Object.values(C.SupportedBooks).find((bg: any) => bg.includes(bk))
-        ) {
-          const book = bk as OSISBookType;
-          const boolArray: boolean[] = [];
-          const scan2 = scan.clone().append(book);
-          if (scan2.isDirectory()) {
-            scan2.directoryEntries.forEach((chapter) => {
-              const audioFile = scan2.clone().append(chapter);
-              if (!audioFile.isDirectory()) {
-                const chn = Number(
-                  audioFile.leafName.replace(/^(\d+).*?$/, '$1'),
-                );
-                if (!Number.isNaN(chn)) boolArray[chn] = true;
-                else {
-                  log.warn(
-                    `Skipping audio file with name: ${audioFile.leafName}`,
-                  );
-                }
-              } else
-                log.warn(`Skipping audio chapter subdirectory: ${chapter}`);
-            });
-          }
-          for (let i = 0; i < boolArray.length; i += 1) {
-            boolArray[i] = !!boolArray[i];
-          }
-          r[book] = audioConfStrings(boolArray);
-        } else log.warn(`Skipping unrecognized audio subdirectory: ${bk}`);
-      });
-      return r;
-    }
-  }
-  return {};
 }
 
 // Move, remove or copy one or more SWORD modules. Returns true for each module
@@ -213,7 +136,7 @@ export function moveRemoveCopyModules(
   const confs = moddir.directoryEntries.map((c) => {
     const confFile = moddir.clone().append(c);
     if (!confFile.isDirectory() && confFile.path.endsWith('.conf')) {
-      return parseSwordConf(confFile, Prefs);
+      return parseSwordConf(confFile);
     }
     return null;
   });
@@ -366,7 +289,7 @@ export async function installZIPs(
         modsd.directoryEntries.forEach((confFile) => {
           const file = modsd.clone().append(confFile);
           if (!file.isDirectory && file.leafName.endsWith('.conf')) {
-            const conf = parseSwordConf(file, Prefs);
+            const conf = parseSwordConf(file);
             if (conf) {
               const { module, CipherKey } = conf;
               installed.push({
@@ -429,14 +352,11 @@ export async function installZIPs(
                     ? Dirs.path.xsAudio
                     : destdir,
                 );
-                const conf = parseSwordConf(
-                  {
-                    confString: confstr,
-                    filename: name,
-                    sourceRepository: dest.path,
-                  },
-                  Prefs,
-                );
+                const conf = parseSwordConf({
+                  confString: confstr,
+                  filename: name,
+                  sourceRepository: dest.path,
+                });
                 const modreports: NewModuleReportType[] = [];
                 if (conf) {
                   // Look for any problems with the module itself
@@ -488,7 +408,7 @@ export async function installZIPs(
                         confdest.remove();
                       } else {
                         // Remove any existing module having this name unless it would be downgraded.
-                        const existing = parseSwordConf(confdest, Prefs);
+                        const existing = parseSwordConf(confdest);
                         if (
                           existing &&
                           versionCompare(
@@ -644,20 +564,19 @@ export async function installZIPs(
                 // NOTES:
                 // - Deprecated directory and file names are 3 digit ordinal only, but
                 // new directory and file names are fully qualified paths.
-                // - Deprecated file indexes start at 1, but new indexes start at 0. For
-                // verse-key modules, 0 is the book introduction.
                 // - Deprecated system is detected if <lang-code> is present in the path.
-                // - Introduction audio files are now different between verse-key and
-                // general-book systems: a verse-key book introduction audio file is
-                // 000.mp3 as a child of the book directory, but general-book introduction
-                // audio is the nnn.mp3 sibling of the nnn parent directory.
-                //
                 // Converting from deprecated to new:
                 // - Verse-key systems are the same, just remove the lang-code.
                 // - General-book also needs lang-code removed from path, plus it needs a
                 // 000 root directory inserted, to match what is actually in Children's
                 // Bible SWORD modules (the only SWORD GenBook audio published so far).
-                // Finally, general-book indexes need 1 to be subtracted from each index.
+                //
+                // - Chapter indexes start at 1, with 0 being introduction, except for
+                //   genbk modules WITHOUT ChapterZeroIsIntro = true.
+                // - But for genbk modules WITHOUT ChapterZeroIsIntro = true,
+                //   introduction audio was supposed to be the nnn.mp3 sibling of the
+                //   nnn parent directory, but this has not been implented in xulsword
+                //   since all current audio repos use ChapterZeroIsIntro = true.
                 const audio = Dirs.xsAudio;
                 const pobj = fpath.posix.parse(
                   encodeWindowsNTFSPath(entryName, true),
@@ -718,7 +637,7 @@ export async function installZIPs(
                         `AudioChapters=${JSON_stringify(audioChapters)}`,
                       );
                       confFile.writeFile(str);
-                      const nconf = parseSwordConf(confFile, Prefs);
+                      const nconf = parseSwordConf(confFile);
                       if (nconf) {
                         const index = newmods.audio.findIndex(
                           (c) => c.module === nconf.module,
@@ -880,14 +799,11 @@ async function repoConfigs(
     if (header.name.endsWith('.conf')) {
       const strconf = buffer.toString('utf8');
       let rconf = null as DownloadRepoConfsType;
-      const conf = parseSwordConf(
-        {
-          confString: strconf,
-          filename: header.name.replace(/^.*?mods\.d[/\\]/, ''),
-          sourceRepository: manifest,
-        },
-        Prefs,
-      );
+      const conf = parseSwordConf({
+        confString: strconf,
+        filename: header.name.replace(/^.*?mods\.d[/\\]/, ''),
+        sourceRepository: manifest,
+      });
       if (conf) {
         const { module } = conf;
         rconf = { strconf, conf, module };
@@ -1002,7 +918,7 @@ const Module = {
                 modsd.directoryEntries.forEach((de) => {
                   const f = modsd.clone().append(de);
                   if (!f.isDirectory() && f.path.endsWith('.conf')) {
-                    const conf = parseSwordConf(f, Prefs);
+                    const conf = parseSwordConf(f);
                     if (conf) confs.push(conf);
                   }
                 });
@@ -1259,14 +1175,11 @@ const Module = {
           progress(0);
           const confbuf = await getFile(domain, confpath, downloadkey);
           ftpThrowIfCanceled(downloadkey);
-          const conf = parseSwordConf(
-            {
-              confString: confbuf.toString('utf8'),
-              filename: confname,
-              sourceRepository: download,
-            },
-            Prefs,
-          );
+          const conf = parseSwordConf({
+            confString: confbuf.toString('utf8'),
+            filename: confname,
+            sourceRepository: download,
+          });
           if (conf) {
             // Then download module contents
             const datapath = confModulePath(conf.DataPath);

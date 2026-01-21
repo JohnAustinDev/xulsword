@@ -22,9 +22,12 @@ import Subscription from '../../subscription.ts';
 import Cache from '../../cache.ts';
 import {
   clone,
+  isAudioVerseKey,
   JSON_parse,
+  JSON_stringify,
   keep,
   localizeString,
+  pad,
   validateModulePrefs,
 } from '../../common.ts';
 import C from '../../constant.ts';
@@ -34,6 +37,7 @@ import {
   getPanelChange,
   sortTabsByLocale,
 } from '../../viewport.ts';
+import parseSwordConf from '../parseSwordConf.ts';
 import handleGlobal from '../handleG.ts';
 import Dirs from '../components/dirs.ts';
 import Data from '../components/data.ts';
@@ -47,6 +51,8 @@ import {
   CipherKeyModules,
   getTabs,
   getSystemFonts,
+  getAudioConfs,
+  scanAudio,
 } from '../common.ts';
 import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu.ts';
 import contextMenu from './contextMenu.ts';
@@ -626,6 +632,60 @@ const init = async () => {
       }
     });
   });
+  // Genbk audio for version 4.0 until 4.2 did not have ChapterZeroIsIntro set
+  // to true, while new IBT audio does, so update any installed genbk audio.
+  // This code could safely be removed after all users have run their 4.2+
+  // xulsword once.
+  if (!Prefs.has('global.ChapterZeroIsIntro', 'boolean')) {
+    Prefs.setBoolPref('global.ChapterZeroIsIntro', true);
+    const update = (dir: LocalFile) => {
+      dir.directoryEntries.forEach((leafName) => {
+        const m = leafName.match(/^(\d\d\d)( .*)?$/);
+        if (m) {
+          const f = dir.clone().append(leafName);
+          f.rename(`${pad(Number(m[1]) + 1, 3, 0)}${m[2]}`);
+          if (f.isDirectory()) update(f);
+        }
+      });
+    };
+    const updated = Object.entries(getAudioConfs())
+      .map((e) => {
+        const [audiocode, conf] = e;
+        const { AudioChapters } = conf;
+        if (
+          AudioChapters &&
+          !isAudioVerseKey(AudioChapters) &&
+          !conf.ChapterZeroIsIntro
+        ) {
+          const confFile = Dirs.xsAudio.append('mods.d').append(conf.filename);
+          const moddir = Dirs.xsAudio.append('modules').append(audiocode);
+          if (confFile.exists() && moddir.exists()) {
+            const conf = parseSwordConf(confFile);
+            if (conf) {
+              update(moddir);
+              let str = confFile.readFile();
+              str = str.replace(/^ChapterZeroIsIntro\b.*$/m, '');
+              str += `\nChapterZeroIsIntro=true\n`;
+              const audioChapters = scanAudio(Dirs.xsAudio.path, conf.DataPath);
+              str = str.replace(
+                /^AudioChapters\b.*$/m,
+                `AudioChapters=${JSON_stringify(audioChapters)}`,
+              );
+              confFile.writeFile(str);
+              return conf.module;
+            }
+          }
+        }
+        return '';
+      })
+      .filter(Boolean);
+    if (updated.length) {
+      Cache.clear('getAudioConfs');
+      log.info(
+        `Updated ${updated.length} general book audio module(s) ChapterZeroIsIntro.`,
+      );
+    }
+  }
 };
 
 app.on('will-quit', () => {

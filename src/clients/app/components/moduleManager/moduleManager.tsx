@@ -827,6 +827,7 @@ export default class ModuleManager
         <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">
           {(vkAudioDialog || gbAudioDialog) && (
             <Dialog
+              className="audio-file-dialog"
               body={
                 <Groupbox
                   caption={

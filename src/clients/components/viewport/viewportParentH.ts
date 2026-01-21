@@ -417,7 +417,7 @@ export default function handler(
                 const { ilModules } = prevState;
                 const s = {
                   ilModules: ilModules.slice(),
-                  focusPanel: index,      // for genbkchooser scroll-to
+                  focusPanel: index, // for genbkchooser scroll-to
                   vpreset: Math.random(), // for genbkchooser scroll-to
                 };
                 if (!s.ilModules) s.ilModules = [];
@@ -429,7 +429,7 @@ export default function handler(
                 const { panels: pans, mtModules } = prevState;
                 const s = {
                   panels: pans.slice(),
-                  focusPanel: index,      // for genbkchooser scroll-to
+                  focusPanel: index, // for genbkchooser scroll-to
                   vpreset: Math.random(), // for genbkchooser scroll-to
                 } as XulswordState;
                 if (!s.panels) s.panels = [];

@@ -727,7 +727,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       log.verbose(`searchIndexBuild ${module} success=${success}`);
     } catch (er) {
       success = false;
-      log.verbose(`searchIndexBuild failed: ${unknown2String(er, ['message'])}`);
+      log.verbose(
+        `searchIndexBuild failed: ${unknown2String(er, ['message'])}`,
+      );
     }
     if (this.backgroundIndexerTO) {
       clearTimeout(this.backgroundIndexerTO);

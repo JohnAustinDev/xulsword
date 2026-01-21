@@ -30,10 +30,7 @@ import './printSettings.css';
 import type { ToastProps } from '@blueprintjs/core';
 import type { GType } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
-import type {
-  AnalyticsInfo,
-  BibleBrowserEventInfo,
-} from '../../analytics.ts';
+import type { AnalyticsInfo, BibleBrowserEventInfo } from '../../analytics.ts';
 import type { ControllerState, PrintOptionsType } from '../../controller.tsx';
 import type { XulProps } from '../libxul/xul.tsx';
 

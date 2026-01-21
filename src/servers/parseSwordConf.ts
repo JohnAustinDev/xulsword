@@ -31,15 +31,7 @@ export default function parseSwordConf(
         filename: string;
         sourceRepository: Repository | string;
       },
-  prefs?: GType['Prefs'],
 ): SwordConfType | null {
-  const Prefs: GType['Prefs'] | undefined = prefs
-    ? prefs
-    : Data.has('PrefsElectron')
-      ? Data.read('PrefsElectron')
-      : undefined;
-  if (Build.isElectronApp && !Prefs)
-    throw new Error(`Electron Prefs is not set.`);
   // Find and save sourceRepository and filename
   let confString: string;
   let filename: string;
@@ -67,14 +59,23 @@ export default function parseSwordConf(
     );
     if (srcrepo) sourceRepositoryOrPath = srcrepo;
   }
-  const sourceRepository =
-    typeof sourceRepositoryOrPath !== 'string'
-      ? sourceRepositoryOrPath
-      : {
-          name: (Prefs && localRepoName(sourceRepositoryOrPath, Prefs)) || '?',
-          domain: 'file://',
-          path: sourceRepositoryOrPath,
-        };
+  let sourceRepository: Repository;
+  if (typeof sourceRepositoryOrPath === 'string') {
+    // Then it must be a custom repository...
+    const prefs = Data.has('PrefsElectron')
+      ? Data.read('PrefsElectron')
+      : undefined;
+    const name =
+      (prefs
+        ? repoPrefName(sourceRepositoryOrPath, prefs)
+        : path.basename(sourceRepositoryOrPath)) ?? '?';
+    sourceRepository = {
+      name,
+      domain: 'file://',
+      path: sourceRepositoryOrPath,
+    };
+  } else sourceRepository = sourceRepositoryOrPath;
+
   const reports: NewModuleReportType[] = [];
   const lines = confString.split(/[\n\r]+/);
 
@@ -178,6 +179,9 @@ export default function parseSwordConf(
         } else if (C.SwordConf.integer.includes(entry as never)) {
           const ent = entry as (typeof C.SwordConf.integer)[number];
           r[ent] = Number(value);
+        } else if (C.SwordConf.boolean.includes(entry as never)) {
+          const ent = entry as (typeof C.SwordConf.boolean)[number];
+          r[ent] = value.toLocaleLowerCase() === 'true' || Number(value) === 1;
         } else if (C.SwordConf.localization.includes(entryBase as never)) {
           const ent = entryBase as (typeof C.SwordConf.localization)[number];
           const loc = entry.substring(entryBase.length + 1) || 'en';
@@ -243,7 +247,7 @@ export default function parseSwordConf(
 }
 
 // Given a local repository path, find its name from prefs.
-export function localRepoName(
+export function repoPrefName(
   path: string,
   Prefs: GType['Prefs'],
 ): string | undefined {

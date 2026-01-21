@@ -8,7 +8,7 @@ import {
   keep,
   versionCompare,
   audioConfNumbers,
-  gbPaths,
+  gbAudioPaths,
   localizeString,
   randomID,
   findTreeNodeOrder,
@@ -32,7 +32,6 @@ import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
   AudioPath,
   GenBookAudio,
-  GenBookAudioConf,
   AudioPlayerSelectionGB,
   GIType,
   GType,
@@ -744,8 +743,7 @@ export function audioSelections(
           !isAudioVerseKey(AudioChapters)
         ) {
           let { key } = selection;
-          const ac = AudioChapters as GenBookAudioConf;
-          const gbaudio = getGenBookAudio(ac, swordModule, renderPromise);
+          const gbaudio = getGenBookAudio(conf, swordModule, renderPromise);
           if (typeof key === 'undefined') [key] = Object.keys(gbaudio);
           if (key in gbaudio) {
             return {
@@ -812,35 +810,48 @@ export function audioGenBookNode(
 }
 
 // Returns the GenBookAudio object for a genbk module. It resolves a gbmod
-// AudioChapters config value to the full genbk key and AudioPath.
+// AudioChapters config value to a valid full genbk key and AudioPath.
 export function getGenBookAudio(
-  audio: GenBookAudioConf,
-  gbmod: string,
+  audioConfig: SwordConfType,
+  gbmodule: string,
   renderPromise?: RenderPromise,
 ): GenBookAudio {
-  if (gbmod && gbmod in G.Tab) {
-    const treeNodes = GI.genBookTreeNodes([], renderPromise, gbmod);
+  if (gbmodule && gbmodule in G.Tab) {
+    const treeNodes = GI.genBookTreeNodes([], renderPromise, gbmodule);
     if (treeNodes.length) {
-      if (!Cache.has('readGenBookAudioConf', gbmod)) {
-        const allGbKeys = gbPaths(treeNodes);
+      const cid = 'getGenBookAudio';
+      if (!Cache.has(cid, gbmodule)) {
         const r: GenBookAudio = {};
-        Object.entries(audio).forEach((entry) => {
-          const [pathx, ords] = entry;
-          const px = pathx.split(C.GBKSEP).filter(Boolean);
-          const parentPath: AudioPath = [];
-          px.forEach((p, i) => {
-            parentPath[i] = Number(p.replace(/^(\d+).*?$/, '$1'));
+        const { AudioChapters, ChapterZeroIsIntro } = audioConfig;
+        if (AudioChapters && !isAudioVerseKey(AudioChapters)) {
+          const audioPaths = gbAudioPaths(
+            treeNodes,
+            ChapterZeroIsIntro ?? false,
+          );
+          Object.entries(AudioChapters).forEach((entry) => {
+            const [pathx, ords] = entry;
+            const px = pathx.split(C.GBKSEP).filter(Boolean);
+            const parentPath: AudioPath = [];
+            px.forEach((p, i) => {
+              parentPath[i] = Number(p.replace(/^(\d+).*?$/, '$1'));
+            });
+            audioConfNumbers(ords).forEach((n) => {
+              const pp = parentPath.slice() as AudioPath;
+              pp.push(n);
+              // Look for each audio config chapter in the list of audio paths
+              // available for the sword module, and save the located audio
+              // keys and paths. These can then be used to quickly look up a
+              // possible audio path for any genbk key.
+              const kx = Object.entries(audioPaths).find(
+                (e) => !diff(pp, e[1]),
+              );
+              if (kx) r[kx[0]] = pp;
+            });
           });
-          audioConfNumbers(ords).forEach((n) => {
-            const pp = parentPath.slice() as AudioPath;
-            pp.push(n);
-            const kx = Object.entries(allGbKeys).find((e) => !diff(pp, e[1]));
-            if (kx) r[kx[0]] = pp;
-          });
-        });
-        Cache.write(r, 'readGenBookAudioConf', gbmod);
+          Cache.write(r, cid, gbmodule);
+        }
       }
-      return Cache.read('readGenBookAudioConf', gbmod);
+      return Cache.read(cid, gbmodule);
     }
   }
 

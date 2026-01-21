@@ -63,6 +63,10 @@
   display: none;
 }
 
+.audio-file-dialog .selector .select-child {
+  height: 250px;
+}
+
 .allowInternet-message {
   margin-top: 10px;
 }

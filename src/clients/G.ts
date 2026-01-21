@@ -14,13 +14,7 @@ import RenderPromise, { GCallsOrPromise } from './renderPromise.ts';
 import log from './log.ts';
 import CookiePrefs from './webapp/prefs.ts';
 
-import type {
-  GCallType,
-  GIType,
-  Gsafe,
-  GType,
-  PrefValue,
-} from '../type.ts';
+import type { GCallType, GIType, Gsafe, GType, PrefValue } from '../type.ts';
 
 // G and GI objects are used to seamlessly share complex data and functionality
 // between servers and clients. Methods and properties of these objects send

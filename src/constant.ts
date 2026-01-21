@@ -165,7 +165,7 @@ const C = {
     },
     BMManager: {
       searchResultBreakAfter: 128,
-    }
+    },
   },
 
   CompressibleCalls: {
@@ -450,6 +450,7 @@ const C = {
   SwordConf: {
     // default is string
     integer: ['DisplayLevel', 'InstallSize'],
+    boolean: ['ChapterZeroIsIntro'],
     localization: [
       'About',
       'Abbreviation',

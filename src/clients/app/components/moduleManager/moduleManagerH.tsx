@@ -17,9 +17,10 @@ import {
   diff,
   repositoryModuleKey,
   updateSelectedIndexes,
-  gbPaths,
+  gbAudioPaths,
   localizeString,
   findFirstLeafNode,
+  modulesOfAudioCode,
 } from '../../../../common.ts';
 import C from '../../../../constant.ts';
 import { GE as G } from '../../../G.ts';
@@ -1500,11 +1501,15 @@ async function promptAudioChapters(
             resolve(null);
             return;
           }
+          const [module] = modulesOfAudioCode(conf.module);
           const paths =
-            conf.module in G.Tab
-              ? gbPaths(G.genBookTreeNodes(conf.module))
+            module in G.Tab
+              ? gbAudioPaths(
+                  G.genBookTreeNodes(module),
+                  conf.ChapterZeroIsIntro ?? false,
+                )
               : {};
-          const nodes = genBookAudio2TreeNodes(ac, conf.module);
+          const nodes = genBookAudio2TreeNodes(ac, module);
           const firstNode = findFirstLeafNode(nodes, [])?.id.toString();
           dialog.selection = {
             otherMod: conf.module,

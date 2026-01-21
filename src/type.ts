@@ -402,6 +402,7 @@ export type XSMConfigEntries = {
   // XSM audio configs also have ModDrv as 'audio' and
   // DataPath as a URL value.
   AudioChapters?: VerseKeyAudio | GenBookAudioConf;
+  ChapterZeroIsIntro?: boolean;
 };
 
 export type SwordConfXulsword = {
