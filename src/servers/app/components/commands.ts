@@ -555,20 +555,18 @@ const Commands = {
               decodeURIComponent(p).replace(/^\d+ ?/, ''),
             );
             let em: [string, AudioPath] | undefined;
-            if (keys.every((k) => k)) {
-              // gb key lookup
-              const [kRedRoot] = Object.keys(genbkPaths);
-              let k = keys.join(C.GBKSEP);
-              if (prependGenbkRedRoot.key) k = kRedRoot + k;
+            // gb key lookup
+            const [kRedRoot] = Object.keys(genbkPaths);
+            let k = keys.join(C.GBKSEP);
+            if (prependGenbkRedRoot.key) k = kRedRoot + k;
+            em = Object.entries(genbkPaths).find(
+              (e) => e[0].normalize() === k.normalize(),
+            );
+            if (!em) {
               em = Object.entries(genbkPaths).find(
-                (e) => e[0].normalize() === k.normalize(),
+                (e) => e[0].normalize() === (kRedRoot + k).normalize(),
               );
-              if (!em) {
-                em = Object.entries(genbkPaths).find(
-                  (e) => e[0].normalize() === (kRedRoot + k).normalize(),
-                );
-                if (em) prependGenbkRedRoot.key = true;
-              }
+              if (em) prependGenbkRedRoot.key = true;
             }
             if (em) {
               gbQualifiedPath(em[0], genbkPaths)

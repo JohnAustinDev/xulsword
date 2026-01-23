@@ -1772,7 +1772,10 @@ export function gbQualifiedPath(key: string, gbAudio: GenBookAudio): string {
   if (key in gbAudio) {
     const ords = gbAudio[key] as number[];
     const keys = key.split(C.GBKSEP);
-    if (ords.length === keys.filter(Boolean).length) {
+    // For ChapterZeroIsIntro=false, intro is: keys=[a, b, ''] ords=[1,1]
+    // and qualified path is: '001 a/001 b'
+    if (keys.at(-1) === '' && keys.length - 1 === ords.length) keys.pop();
+    if (ords.length === keys.length) {
       return ords.map((o, i) => `${pad(o, 3, 0)} ${keys[i]}`).join(C.GBKSEP);
     }
   }
