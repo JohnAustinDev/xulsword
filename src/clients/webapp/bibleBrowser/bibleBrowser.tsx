@@ -138,7 +138,7 @@ socket.on('connect', () => {
         langcode && C.Locales.some((x) => x[0] === langcode) ? langcode : 'en';
       Prefs.setCharPref('global.locale', locale);
     }
-    const fallback = langcode === 'en' || langcode === 'ru' ? langcode : 'en';
+    const fallback = C.FallbackLanguage[locale];
     Prefs.setCharPref('global.fallbackLocale', fallback);
 
     // Determine the number of panels to show initially. If runtime is narrow
