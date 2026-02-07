@@ -304,11 +304,12 @@ function allowed(call: GCallType): boolean {
   return false;
 }
 
-// Web App i18n always requires that lng and fallbackLng options be specified.
+// The Web App getBooks and getBook calls always require a fallback argument,
+// so insure that here. Web App i18n always requires that lng and fallbackLng
+// options be specified.
 function prepCall(thecall: GCallType): GCallType {
   if (!Build.isWebApp) return thecall;
-  const [name, method] = thecall;
-  const [, , args] = thecall;
+  const [name, method, args] = thecall;
   if (name === 'callBatch' && args) {
     const calls = args[0].map((call: GCallType) => {
       return prepCall(call);
@@ -328,6 +329,12 @@ function prepCall(thecall: GCallType): GCallType {
       const newargs = clone(args);
       if (newargs.length) newargs[1] = options;
       return [name, method, newargs];
+    } else if (
+      ['getBook', 'getBooks'].includes(name) &&
+      !method &&
+      args?.length === 1
+    ) {
+      args.push(G.Prefs.getCharPref('global.locale'));
     }
   }
   return [name, method, args];

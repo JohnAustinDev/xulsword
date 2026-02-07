@@ -60,17 +60,43 @@ import type PrefsElectron from './app/prefs.ts';
 // module book order in lieu of locale book order or xulsword default order
 // (see C.SupportedBooks). Doing so provides a common order for book lists
 // etc., simpler data structures, and a better experience for the user.
-export function getBooks(locale: string): BookType[] {
-  if (!Cache.has('books', locale)) {
+export function getBooks(locale: string, fallback?: 'en' | 'ru'): BookType[] {
+  const fbloc = fallback ?? C.FallbackLanguage[locale];
+  if (!Cache.has('books', locale, fbloc)) {
+    const readLocale = (locale: string) => {
+      const stfile = path.join(
+        Dirs.path.xsAsset,
+        'locales',
+        locale,
+        'books.json',
+      );
+      const raw = fs.readFileSync(stfile);
+      let data: any;
+      if (raw?.length) {
+        const json = JSON_parse(raw.toString());
+        if (json && typeof json === 'object') {
+          data = json;
+        } else {
+          throw Error(`failed to parse books.json at ${stfile}`);
+        }
+      } else {
+        throw Error(`failed to read books.json at ${stfile}`);
+      }
+      return data;
+    };
     let books: BookType[] = [];
     let index = 0;
+    const fbdata = readLocale(fbloc);
     C.SupportedBookGroups.forEach(
       (bookGroup: (typeof C.SupportedBookGroups)[any]) => {
         C.SupportedBooks[bookGroup].forEach((code, bgi: number) => {
+          const name = (code in fbdata ? fbdata[code] : code) || code;
+          const longname =
+            (`Long${code}` in fbdata ? fbdata[`Long${code}`] : name) ?? name;
           books.push({
             code,
-            name: code,
-            longname: code,
+            name,
+            longname,
             bookGroup,
             index,
             indexInBookGroup: bgi,
@@ -79,24 +105,8 @@ export function getBooks(locale: string): BookType[] {
         });
       },
     );
-    const stfile = path.join(
-      Dirs.path.xsAsset,
-      'locales',
-      locale,
-      'books.json',
-    );
-    const raw = fs.readFileSync(stfile);
-    let data: any;
-    if (raw?.length) {
-      const json = JSON_parse(raw.toString());
-      if (json && typeof json === 'object') {
-        data = json;
-      } else {
-        throw Error(`failed to parse books.json at ${stfile}`);
-      }
-    } else {
-      throw Error(`failed to read books.json at ${stfile}`);
-    }
+
+    const data = readLocale(locale);
 
     const localeIndex = (book: BookType): number | null => {
       const key = `${book.code}i`;
@@ -124,15 +134,18 @@ export function getBooks(locale: string): BookType[] {
       }
     });
 
-    Cache.write(books, 'books', locale);
+    Cache.write(books, 'books', locale, fbloc);
   }
 
-  return Cache.read('books', locale);
+  return Cache.read('books', locale, fbloc);
 }
 
-export function getBook(locale: string): Record<OSISBookType, BookType> {
+export function getBook(
+  locale: string,
+  fallback?: 'en' | 'ru',
+): Record<OSISBookType, BookType> {
   const book = {} as ReturnType<typeof getBook>;
-  getBooks(locale).forEach((bk: BookType) => {
+  getBooks(locale, fallback).forEach((bk: BookType) => {
     book[bk.code] = bk;
   });
   return book;

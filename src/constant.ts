@@ -282,7 +282,7 @@ const C = {
     'tt-Cyrl': 'ru',
     'uz-Cyrl': 'ru',
     'uz-Latn': 'en',
-  } as Record<string, string>,
+  } as Record<string, 'en' | 'ru'>,
 
   // SupportedV11ns are the versification systems supported by libxulsword's
   // current SWORD engine.

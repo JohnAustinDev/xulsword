@@ -733,6 +733,8 @@ export type ParamShift<T extends unknown[]> = T extends [any, ...infer U]
   ? U
   : never;
 
+export type ParamPop<T extends any[]> = T extends [...infer U, any] ? U : never;
+
 export type MethodAddWindowId<M extends (...args: any[]) => any> = (
   ...args2: [...Parameters<M>, windowId: number]
 ) => ReturnType<M>;
