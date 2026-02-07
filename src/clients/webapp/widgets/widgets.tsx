@@ -42,8 +42,10 @@ if (widgets.length) {
       writeSettingsToPrefsStores({}, 'none'); // sets default prefs
       if (!locale || !C.Locales.some((x) => x[0] === locale)) locale = 'en';
       Prefs.setCharPref('global.locale', locale);
+      const fallback = locale === 'en' || locale === 'ru' ? locale : 'en';
+      Prefs.setCharPref('global.fallbackLocale', fallback);
 
-      cachePreload(locale, [['Full publication', { ns: 'widgets' }]])
+      cachePreload(locale, fallback, [['Full publication', { ns: 'widgets' }]])
         .then(() => {
           widgets.forEach((widget) => {
             const { id: compid } = widget;

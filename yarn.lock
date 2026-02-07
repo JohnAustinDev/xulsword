@@ -10240,8 +10240,8 @@ __metadata:
 
 "libxulsword@file:./libxulsword::locator=xulsword%40workspace%3A.":
   version: 1.5.6
-  resolution: "libxulsword@file:./libxulsword#./libxulsword::hash=55f86d&locator=xulsword%40workspace%3A."
-  checksum: 10c0/4f14e2e82774dd1d23c20a900a05ebd3244e3b99b0070ff831ea6f3c24e8ef8a61fb8a39aec7f7c7ab3ef1fa41e8c22c6acc87447bdfd13ef540500ad946cf95
+  resolution: "libxulsword@file:./libxulsword#./libxulsword::hash=7ba921&locator=xulsword%40workspace%3A."
+  checksum: 10c0/413532eab48876f654f2d03939cc7a9791c9c6998a80e9fb979c1796ee03f4426eab3fde9bde1d3f3c55807cbcb9cfe8389f6594fcdcb019757c71e81d2a759d
   languageName: node
   linkType: hard
 

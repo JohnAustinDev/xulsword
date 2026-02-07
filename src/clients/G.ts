@@ -334,7 +334,9 @@ function prepCall(thecall: GCallType): GCallType {
       !method &&
       args?.length === 1
     ) {
-      args.push(G.Prefs.getCharPref('global.locale'));
+      const fbl = G.Prefs.getCharPref('global.fallbackLocale');
+      const fallback = fbl === 'en' || fbl === 'ru' ? fbl : 'en';
+      args.push(fallback);
     }
   }
   return [name, method, args];

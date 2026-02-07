@@ -65,6 +65,7 @@ window.WebAppTextScroll = -1;
 // on first render, before another renderPromise dispatch.
 export async function cachePreload(
   locale: string,
+  fallback: 'en' | 'ru',
   i18nArgs?: Parameters<GType['i18n']['t']>[],
 ): Promise<void> {
   if (Build.isWebApp) {
@@ -73,7 +74,7 @@ export async function cachePreload(
       doUntilDone((renderPromise) => {
         GI.Tabs([], renderPromise);
         GI.getBooksLocalized({}, renderPromise, locale);
-        GI.getBooks([], renderPromise, locale);
+        GI.getBooks([], renderPromise, locale, fallback);
         GI.Config({}, renderPromise);
         GI.ModuleFonts([], renderPromise);
         GI.FeatureModules({} as FeatureMods, renderPromise);

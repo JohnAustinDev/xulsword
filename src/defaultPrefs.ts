@@ -97,6 +97,7 @@ const S = {
       InternetPermission: false as boolean,
       fontSize: 2 as 0 | 1 | 2 | 3 | 4,
       locale: '' as (typeof C.Locales)[number][0],
+      fallbackLocale: 'en',
       popup: {
         vklookup: {} as { [anyTypeModule: string]: string },
         feature: {} as {

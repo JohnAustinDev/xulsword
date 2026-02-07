@@ -403,7 +403,9 @@ function writeCallToCache(call: GCallType | null, result: any) {
           },
           {} as Record<string, BookType>,
         );
-        const nckey2 = GCacheKey(['getBook', null, [G.i18n.language]]);
+        const call2: GCallType = [...call];
+        call2[0] = 'getBook';
+        const nckey2 = GCacheKey(call2);
         if (!Cache.has(nckey2)) Cache.write(book, nckey2);
 
         // ModuleConfs
