@@ -232,7 +232,13 @@ export default class SelectVK
       .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
       .map((n) => (
         <option key={n} value={n}>
-          {n}
+          {n === 0
+            ? GI.i18n.t(
+                'Introduction',
+                this.renderPromise,
+                'introduction.label',
+              )
+            : n}
         </option>
       ));
   }

@@ -45,7 +45,10 @@ if (widgets.length) {
       const fallback = locale === 'en' || locale === 'ru' ? locale : 'en';
       Prefs.setCharPref('global.fallbackLocale', fallback);
 
-      cachePreload(locale, fallback, [['Full publication', { ns: 'widgets' }]])
+      cachePreload(locale, fallback, [
+        ['Full publication', { ns: 'widgets' }],
+        ['introduction.label', { ns: 'xulsword' }],
+      ])
         .then(() => {
           widgets.forEach((widget) => {
             const { id: compid } = widget;
