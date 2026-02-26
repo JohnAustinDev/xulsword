@@ -175,11 +175,13 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
                   scrollcn.style.top = `${top}px`;
                   scrollcn.style.left = `${left}px`;
                   img.style.width = `${img.naturalWidth}px`;
+                  img.style.maxWidth = 'unset';
                   img.style.cursor = 'zoom-out';
                 } else {
                   scrollcn.style.top = '0';
                   scrollcn.style.left = '0';
                   img.style.width = `${viewport.offsetWidth}px`;
+                  img.style.maxWidth = '';
                   img.style.cursor = 'zoom-in';
                 }
               } else img.style.cursor = '';

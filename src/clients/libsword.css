@@ -447,17 +447,16 @@ span.foreign {
   margin: 0px;
 }
 .image-viewport {
+  width: 100%;
   display: inline-flex;
   justify-content: center;
   flex-direction: row;
   margin: 20px 0px 20px 0px;
 }
-.image-viewport .scroll-container {
-  flex-grow: 1;
-  flex-basis: 10px;
-}
 .image-viewport .scroll-container img {
-  width: 100%;
+  max-width: 100%;
+  width: auto;
+  height: auto;
 }
 .image-viewport + .caption {
   margin-top: -20px;
