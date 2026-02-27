@@ -1,7 +1,7 @@
 import VerseKey from '../../../verseKey.ts';
 import { goToLocationVK } from '../../../commands.ts';
 import C from '../../../constant.ts';
-import { clone, escapeRE, ofClass } from '../../../common.ts';
+import { clone, escapeRE, ofClass, randomID } from '../../../common.ts';
 import { getElementData } from '../../htmlData.ts';
 import { G, GI } from '../../G.ts';
 import {
@@ -486,6 +486,7 @@ export default function handler(
                         selector: '#textTop',
                         behavior: 'smooth',
                         block: 'start',
+                        oneTimeID: randomID(),
                       }
                     : undefined,
                 );

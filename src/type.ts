@@ -184,6 +184,7 @@ export type ScrollType = {
 
 export type ScrollIntoViewArg = {
   selector: string;
+  oneTimeID: string;
 } & Partial<ScrollIntoViewOptions>;
 
 export type AudioPrefType = {

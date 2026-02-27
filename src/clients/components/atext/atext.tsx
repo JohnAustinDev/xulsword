@@ -103,6 +103,8 @@ export type AtextStateType = typeof stateWinPrefs &
 // reversion to initial state.
 const windowState: Array<Partial<AtextStateType>> = [];
 
+let ScrollOneTimeID = '';
+
 // XUL Atext
 class Atext
   extends React.Component<AtextProps, AtextStateType>
@@ -508,8 +510,14 @@ class Atext
           // SCROLL INTO VIEW
           if (Build.isWebApp && update) {
             const { scrollIntoView } = scroll ?? {};
-            const { selector } = scrollIntoView ?? {};
-            if (selector && scrollIntoView) {
+            const { selector, oneTimeID } = scrollIntoView ?? {};
+            if (
+              selector &&
+              scrollIntoView &&
+              oneTimeID &&
+              ScrollOneTimeID !== oneTimeID
+            ) {
+              ScrollOneTimeID = oneTimeID;
               setTimeout(
                 () =>
                   document
