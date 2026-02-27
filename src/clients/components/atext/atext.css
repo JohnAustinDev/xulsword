@@ -18,6 +18,19 @@
   text-align: center;
   justify-content: space-around;
 }
+/* Float the footer in the middle of
+multi-column general books
+------------------------------- */
+.atext.Genbks:not(.columns1) .sb {
+  margin-bottom: 38px;
+}
+.atext.Genbks:not(.columns1) .ft {
+  position: absolute;
+  bottom: 0px;
+  left: 50%;
+  transform: translate(-50%);
+}
+/* ---------------------------- */
 .atext .text-pin {
   transform: scaleX(-1);
   float: left;
@@ -104,9 +117,6 @@ html[dir='rtl'] .atext .origselect {
   .bibleBrowser .atext .sb {
     padding: 0 5px;
   }
-}
-.atext.Genbks:not(.columns1) .sb {
-  overflow: auto;
 }
 .atext .sbcontrols {
   position: absolute;

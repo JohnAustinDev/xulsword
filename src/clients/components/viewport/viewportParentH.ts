@@ -446,6 +446,27 @@ export default function handler(
         }
         case 'prevchaplink':
         case 'nextchaplink': {
+          const sb = atext?.querySelector('.sb');
+          if (atext && sb && sb.scrollWidth > sb.clientWidth) {
+            const isNext = type === 'nextchaplink';
+            const currentScroll = sb.scrollLeft;
+            const scrollDistance = sb.clientWidth + 20;
+            let newScroll: number;
+            if (isNext) {
+              newScroll = currentScroll + scrollDistance;
+            } else {
+              newScroll = currentScroll - scrollDistance;
+            }
+            newScroll = Math.max(0, newScroll);
+            newScroll = Math.min(sb.scrollWidth - sb.clientWidth, newScroll);
+            if (sb.scrollLeft !== newScroll) {
+              sb.scrollLeft = newScroll;
+              if (newScroll) atext.classList.remove('prev-disabled');
+              if (newScroll < sb.scrollWidth - sb.clientWidth)
+                atext.classList.remove('next-disabled');
+              break;
+            }
+          }
           doUntilDone((renderPromise2) => {
             if (atext && !renderPromise2?.waiting()) {
               setState(this, atext, (prevState: PinPropsType) => {

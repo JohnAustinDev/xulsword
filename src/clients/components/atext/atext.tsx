@@ -496,7 +496,8 @@ class Atext
                   if (!rp.waiting()) {
                     if (prev) atext.classList.remove('prev-disabled');
                     else atext.classList.add('prev-disabled');
-                    if (next) atext.classList.remove('next-disabled');
+                    if (next || sbe.scrollWidth > sbe.clientWidth)
+                      atext.classList.remove('next-disabled');
                     else atext.classList.add('next-disabled');
                   }
                 }
