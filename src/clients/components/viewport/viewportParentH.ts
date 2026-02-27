@@ -448,6 +448,7 @@ export default function handler(
         case 'nextchaplink': {
           const sb = atext?.querySelector('.sb');
           if (atext && sb && sb.scrollWidth > sb.clientWidth) {
+            // TODO: This does not work on RTL Genbk modules.
             const isNext = type === 'nextchaplink';
             const currentScroll = sb.scrollLeft;
             const scrollDistance = sb.clientWidth + 20;

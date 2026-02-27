@@ -19,12 +19,15 @@
   justify-content: space-around;
 }
 /* Float the footer in the middle of
-multi-column general books
+multi-column LTR general books
 ------------------------------- */
-.atext.Genbks:not(.columns1) .sb {
+.atext.Genbks:not(.columns1) .sb:not([dir='rtl'])  {
   margin-bottom: 38px;
 }
-.atext.Genbks:not(.columns1) .ft {
+.atext:not(.columns1) .sb[dir='rtl'] {
+  overflow: auto;
+}
+.atext.Genbks:not(.columns1):not(:has(.sb[dir='rtl'])) .ft {
   position: absolute;
   bottom: 0px;
   left: 50%;

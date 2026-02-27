@@ -680,7 +680,7 @@ class Atext
       : String.fromCharCode(8594);
     return (
       `
-    <div class="navlink">
+    <div class="navlink" dir="${appIsRTL ? 'rtl' : 'ltr'}">
       <a class="prevchaplink">
         <span class="navlink-span">${prevArrow}</span>
         ${GI.i18n.t('', renderPromise, 'PrevChaptext')}
