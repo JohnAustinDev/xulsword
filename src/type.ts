@@ -178,8 +178,13 @@ export type ModalType =
 // to other windows.
 export type ScrollType = {
   verseAt: 'top' | 'center' | 'bottom';
+  scrollIntoView?: ScrollIntoViewArg;
   skipWindowUpdate?: boolean;
 } | null;
+
+export type ScrollIntoViewArg = {
+  selector: string;
+} & Partial<ScrollIntoViewOptions>;
 
 export type AudioPrefType = {
   open: boolean;

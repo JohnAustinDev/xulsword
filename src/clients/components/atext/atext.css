@@ -21,7 +21,7 @@
 /* Float the footer in the middle of
 multi-column LTR general books
 ------------------------------- */
-.atext.Genbks:not(.columns1) .sb:not([dir='rtl'])  {
+.atext.Genbks:not(.columns1) .sb:not([dir='rtl']) {
   margin-bottom: 38px;
 }
 .atext:not(.columns1) .sb[dir='rtl'] {

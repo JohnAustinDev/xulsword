@@ -139,6 +139,7 @@ const S = {
       } as PlaceType,
 
       showChooser: true as boolean,
+      focusPanel: -1 as number | undefined,
       tabs: [[]] as Array<string[] | null>,
       panels: [''] as Array<string | null>,
       ilModules: [null] as Array<string | null>,

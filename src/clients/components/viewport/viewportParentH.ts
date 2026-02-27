@@ -40,6 +40,7 @@ export const vpWindowState = [
   'tabs',
   'panels',
   'keys',
+  'focusPanel',
   'history',
   'historyIndex',
   'scroll',
@@ -448,10 +449,14 @@ export default function handler(
         case 'nextchaplink': {
           const sb = atext?.querySelector('.sb');
           if (atext && sb && sb.scrollWidth > sb.clientWidth) {
-            // TODO: This does not work on RTL Genbk modules.
+            // TODO: This click-scrolling math does not currently work on RTL
+            // Genbk modules (so RTL click-scroll has been disabled in CSS).
             const isNext = type === 'nextchaplink';
             const currentScroll = sb.scrollLeft;
-            const scrollDistance = sb.clientWidth + 20;
+            // TODO: I don't know how to calculate this margin, but it is a
+            // fixed number for a given .sb layout.
+            const margin = window.innerWidth > C.UI.WebApp.mobileW ? 20 : 4;
+            const scrollDistance = sb.clientWidth + margin;
             let newScroll: number;
             if (isNext) {
               newScroll = currentScroll + scrollDistance;
@@ -476,6 +481,13 @@ export default function handler(
                   type === 'nextchaplink',
                   renderPromise2,
                   prevState,
+                  ofClass('ft', target)
+                    ? {
+                        selector: '#textTop',
+                        behavior: 'smooth',
+                        block: 'start',
+                      }
+                    : undefined,
                 );
               });
             }

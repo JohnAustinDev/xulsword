@@ -27,7 +27,12 @@ import {
 import { dictKeyToday, getDictEntryHTML } from './zdictionary.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { PinPropsType, PlaceType } from '../../../type.ts';
+import type {
+  PinPropsType,
+  PlaceType,
+  ScrollIntoViewArg,
+  ScrollType,
+} from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type RenderPromise from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
@@ -348,6 +353,7 @@ export function textChange(
   next: boolean,
   renderPromise: RenderPromise,
   prevState?: PinPropsType,
+  scrollIntoView?: ScrollIntoViewArg,
 ): PinPropsType | Partial<PinPropsType> | null {
   const { columns: cx, module } = atext.dataset;
   const columns = Number(cx);
@@ -408,17 +414,24 @@ export function textChange(
   }
   if (!prevState) return newPartialPinProps;
   const newPinProps = newPartialPinProps as PinPropsType;
-  newPinProps.scroll = null;
+
+  // Set scroll
+  let scroll: ScrollType = scrollIntoView
+    ? { verseAt: 'top', scrollIntoView }
+    : null;
   if (type === C.BIBLE && columns > 1) {
-    newPinProps.scroll = next
-      ? { verseAt: 'top' }
+    scroll = next
+      ? { ...(scroll ?? {}), verseAt: 'top' }
       : {
+          ...(scroll ?? {}),
           verseAt: 'bottom',
           skipWindowUpdate: true,
         };
   } else if (type === C.BIBLE || type === C.COMMENTARY) {
-    newPinProps.scroll = { verseAt: 'top' };
+    scroll = { ...(scroll ?? {}), verseAt: 'top' };
   }
+  newPinProps.scroll = scroll;
+
   if (type === C.BIBLE) {
     newPinProps.selection = null;
   }

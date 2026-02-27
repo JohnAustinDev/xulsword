@@ -231,6 +231,7 @@ export default class ViewportWin
       selection,
       audio,
       keys,
+      focusPanel,
       ilModules,
       mtModules,
       tabs,
@@ -267,6 +268,7 @@ export default class ViewportWin
             selection={selection}
             audio={audio}
             keys={keys}
+            focusPanel={focusPanel ?? -1}
             ilModules={ilModules}
             mtModules={mtModules}
             tabs={tabs}

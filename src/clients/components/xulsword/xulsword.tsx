@@ -56,7 +56,6 @@ export type XulswordProps = XulProps;
 // they written to Prefs.
 const notStatePrefDefault = {
   historyMenupopup: undefined as React.JSX.Element | undefined,
-  focusPanel: -1,
   bsreset: 0,
   vpreset: 0,
   searchDisabled: true,
@@ -647,39 +646,42 @@ export default class Xulsword
         )}
       >
         {Build.isWebApp && (
-          <Hbox id="controls" pack="center">
-            <Spacer flex="1" />
-            <Vbox id="control-rows">
-              <Hbox pack="center">
-                {historyComponent}
-                <Spacer flex="1" className="narrow-screen-hide" />
-              </Hbox>
-
-              <Hbox id="main-controlbar" pack="center" align="start">
-                {chooserMenuButton}
-
-                {vkMod && webappVKSelectorComponent}
-
-                {panels.find(
-                  (m) => m && m in G.Tab && G.Tab[m].tabType === 'Genbks',
-                ) && webappGenbkSelectorComponent}
-
-                <Spacer flex="1" />
-
-                <Hbox>{searchComponent}</Hbox>
-
-                <Hbox pack="center">{optionButtons}</Hbox>
-              </Hbox>
-
-              {audio.open && (
+          <>
+            <Hbox id="controls" pack="center">
+              <Spacer flex="1" />
+              <Vbox id="control-rows">
                 <Hbox pack="center">
-                  {audioComponent}
+                  {historyComponent}
                   <Spacer flex="1" className="narrow-screen-hide" />
                 </Hbox>
-              )}
-            </Vbox>
-            <Spacer flex="1" />
-          </Hbox>
+
+                <Hbox id="main-controlbar" pack="center" align="start">
+                  {chooserMenuButton}
+
+                  {vkMod && webappVKSelectorComponent}
+
+                  {panels.find(
+                    (m) => m && m in G.Tab && G.Tab[m].tabType === 'Genbks',
+                  ) && webappGenbkSelectorComponent}
+
+                  <Spacer flex="1" />
+
+                  <Hbox>{searchComponent}</Hbox>
+
+                  <Hbox pack="center">{optionButtons}</Hbox>
+                </Hbox>
+
+                {audio.open && (
+                  <Hbox pack="center">
+                    {audioComponent}
+                    <Spacer flex="1" className="narrow-screen-hide" />
+                  </Hbox>
+                )}
+              </Vbox>
+              <Spacer flex="1" />
+            </Hbox>
+            <div id="textTop"></div>
+          </>
         )}
 
         {Build.isElectronApp && (
@@ -719,7 +721,7 @@ export default class Xulsword
             show={show}
             place={place}
             keys={keys}
-            focusPanel={focusPanel}
+            focusPanel={focusPanel ?? -1}
             scroll={scroll}
             isPinned={isPinned}
             noteBoxHeight={noteBoxHeight}

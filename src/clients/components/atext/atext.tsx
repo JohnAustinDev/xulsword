@@ -103,8 +103,6 @@ export type AtextStateType = typeof stateWinPrefs &
 // reversion to initial state.
 const windowState: Array<Partial<AtextStateType>> = [];
 
-let InitialLoad = true;
-
 // XUL Atext
 class Atext
   extends React.Component<AtextProps, AtextStateType>
@@ -507,21 +505,19 @@ class Atext
             C.UI.Atext.prevNextDelay,
             'prevNextLinkUpdate',
           );
+          // SCROLL INTO VIEW
           if (Build.isWebApp && update) {
-            if (!InitialLoad) {
-              const isVerseKeyTop =
-                isVerseKey &&
-                scroll?.verseAt === 'top' &&
-                location?.verse === 1;
-              if (isVerseKeyTop || !isVerseKey)
-                setTimeout(
-                  () =>
-                    document
-                      .querySelector('#controls')
-                      ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
-                  100,
-                );
-            } else InitialLoad = false;
+            const { scrollIntoView } = scroll ?? {};
+            const { selector } = scrollIntoView ?? {};
+            if (selector && scrollIntoView) {
+              setTimeout(
+                () =>
+                  document
+                    .querySelector(selector)
+                    ?.scrollIntoView(scrollIntoView),
+                100,
+              );
+            }
           }
         }
       }
