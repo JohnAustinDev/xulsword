@@ -2,6 +2,19 @@
   --input-height: 32px;
 }
 
+html:not(.finished-loading):after {
+  content: '';
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  z-index: 9999;
+  background: url('../../images/loader.gif') 50% 50% no-repeat
+    rgb(249, 249, 249);
+  opacity: 0.8;
+}
+
 /* body height is the iframe's height and is scrollable */
 body {
   height: 100%;

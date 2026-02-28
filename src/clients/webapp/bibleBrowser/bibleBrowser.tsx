@@ -164,17 +164,11 @@ socket.on('connect', () => {
         setGlobalPanels(Prefs, numPanels);
         validateModulePrefs();
 
-        // Now cancel the Tarapro page loader overlay.
-        setTimeout(() => {
-          const win = frameElement?.ownerDocument.defaultView;
-          if (win && 'jQuery' in win) {
-            (win as any).bibleBrowserIsLoading = false;
-            (win as any).jQuery('.loader').fadeOut('slow');
-          }
-        }, 1);
-
         renderToRoot(<Xulsword onWheelCapture={wheelCapture} />, {
           htmlCssClass: 'bibleBrowser',
+          onload: () => {
+            document.querySelector('html')?.classList.add('finished-loading');
+          },
         }).catch((er) => {
           log.error(er);
         });
