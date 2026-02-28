@@ -29,6 +29,7 @@ multi-column LTR general books
 }
 .atext.Genbks:not(.columns1):not(:has(.sb[dir='rtl'])) .ft {
   position: absolute;
+  width: 100%;
   bottom: 0px;
   left: 50%;
   transform: translate(-50%);
