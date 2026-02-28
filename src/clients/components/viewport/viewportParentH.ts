@@ -465,7 +465,10 @@ export default function handler(
             }
             newScroll = Math.max(0, newScroll);
             newScroll = Math.min(sb.scrollWidth - sb.clientWidth, newScroll);
-            if (sb.scrollLeft !== newScroll) {
+            if (
+              (isNext && sb.scrollLeft < newScroll - 10) ||
+              (!isNext && sb.scrollLeft > newScroll + 10)
+            ) {
               sb.scrollLeft = newScroll;
               if (newScroll) atext.classList.remove('prev-disabled');
               if (newScroll < sb.scrollWidth - sb.clientWidth)
