@@ -31,6 +31,12 @@
   margin: 0;
 }
 
+/* Genbk multi-column prev/next clicks require these dummy columns */
+.viewport .sb .col-spacer {
+  break-before: column; /* Forces this element to start a new column */
+  height: 0;
+}
+
 @media (max-width: 767px) {
   .viewport {
     padding: 10px 5px;

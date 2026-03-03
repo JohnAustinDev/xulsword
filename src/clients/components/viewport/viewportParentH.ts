@@ -447,15 +447,39 @@ export default function handler(
         }
         case 'prevchaplink':
         case 'nextchaplink': {
-          const sb = atext?.querySelector('.sb');
+          const sb = atext?.querySelector('.sb') as HTMLElement | null;
           if (atext && sb && sb.scrollWidth > sb.clientWidth) {
             // TODO: This click-scrolling math does not currently work on RTL
             // Genbk modules (so RTL click-scroll has been disabled in CSS).
             const isNext = type === 'nextchaplink';
             const currentScroll = sb.scrollLeft;
-            // TODO: I don't know how to calculate this margin, but it is a
-            // fixed number for a given .sb layout.
+            // margin between pages used when scrolling
             const margin = window.innerWidth > C.UI.WebApp.mobileW ? 20 : 4;
+
+            // Prevent any previously-visible column(s) from lingering after a
+            // click, by determining a number of empty columns to append such
+            // that the total number of columns is always a multiple of the
+            // columns-per-page value specified by CSS.
+            let columnsPerPage = 1;
+            const computedStyle = window.getComputedStyle(sb);
+            const colCountStr = computedStyle.columnCount;
+            if (colCountStr && colCountStr !== 'auto') {
+              columnsPerPage = parseInt(colCountStr, 10) || 1;
+            }
+            const totalColumns = Math.round(
+              columnsPerPage * (sb.scrollWidth / sb.clientWidth),
+            );
+            const extraColumns = totalColumns % columnsPerPage;
+            if (extraColumns && !sb.querySelector('.col-spacer')) {
+              const addColumns = columnsPerPage - extraColumns;
+              for (let x = addColumns; x; x--) {
+                const spacer = document.createElement('div');
+                spacer.className = 'col-spacer';
+                spacer.innerHTML = '&nbsp;';
+                sb.firstChild?.appendChild(spacer);
+              }
+            }
+
             const scrollDistance = sb.clientWidth + margin;
             let newScroll: number;
             if (isNext) {
