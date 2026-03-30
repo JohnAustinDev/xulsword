@@ -25,8 +25,8 @@
 .genbook-chooser .scroll-parent:hover {
   max-width: 800px;
   filter: drop-shadow(10px 10px 2px #777777);
-  transition: 0.5s;
-  transition-delay: 1s;
+  transition: 0.25s;
+  transition-delay: 0.25s;
 }
 
 html[dir='rtl'] .genbook-chooser .scroll-parent {
