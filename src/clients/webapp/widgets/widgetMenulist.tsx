@@ -116,15 +116,25 @@ export default function WidgetMenulist(
           }
           case 'update_owl': {
             const domowl = jQuery('.owl-carousel');
-            if (domowl) {
+            if (
+              persist.components[compid].selectChanged &&
+              domowl &&
+              !domowl.hasClass('touched-owl')
+            ) {
               const { owlIndex } = selOption;
               if (typeof owlIndex !== 'undefined') {
                 delayHandler(
                   globalThis,
                   (domo, index) => {
                     const owl: any = domo?.data('owl.carousel');
-                    if (index[0] !== owl.relative(owl.current()))
+                    if (
+                      domo &&
+                      owl &&
+                      index[0] !== owl.relative(owl.current())
+                    ) {
                       domo.trigger('to.owl.carousel', index);
+                      domo.addClass(`touched-${compid}`);
+                    }
                   },
                   [domowl, owlIndex],
                   250,
