@@ -9,7 +9,8 @@ export type WidgetActions =
   | 'bible_audio_Play'
   | 'genbk_audio_Play'
   | 'update_url'
-  | 'update_owl';
+  | 'update_owl'
+  | 'update_ebook_selects';
 
 export type WidgetVKData = {
   component: 'selectVK';
@@ -43,6 +44,8 @@ export type WidgetMenulistData = {
       | { hr: string }
     )[];
   };
+  onChange?: (...args: any[]) => void;
+  setState?: (state: any) => void;
 };
 
 export type FileItem = {
@@ -52,6 +55,7 @@ export type FileItem = {
   size?: string;
   updateUrlLabel?: string;
   owlIndex?: [index: number, speed: number, animate: boolean];
+  scope?: string;
 };
 
 export type ZipData = [ch1: number, ch2: number, size: number];

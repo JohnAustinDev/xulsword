@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { diff, randomID } from '../../../common.ts';
+import { diff, drupalSetting, randomID } from '../../../common.ts';
 import log from '../../log.ts';
 import { functionalComponentRenderPromise } from '../../common.ts';
 import { Analytics } from '../../analytics.ts';
@@ -43,7 +43,7 @@ export default function WidgetMenulist(
   if (!(compid in persist.components))
     persist.components[compid] = { selectChanged: false };
 
-  const { renderPromise, loadingRef } = functionalComponentRenderPromise();
+  const { loadingRef } = functionalComponentRenderPromise();
   const [state, setState] = useState(() => {
     return getProps(props, {
       disabled: false,
@@ -54,15 +54,18 @@ export default function WidgetMenulist(
     });
   });
 
-  // Component state may be controlled externally by using this:
-  if (!('setMenulistWidgetState' in globalThis))
-    globalThis.setMenulistWidgetState = {};
-  globalThis.setMenulistWidgetState[compid] = (newState) => {
-    if (diff(state, newState)) {
-      animateSelection(compid, false);
-      setState(newState);
-    }
-  };
+  // Component state may be controlled by Drupal with this:
+  const drupalReactComp = drupalSetting(
+    `react.${compid}`,
+  ) as WidgetMenulistData;
+  if (drupalReactComp) {
+    drupalReactComp.setState = (newState) => {
+      if (diff(state, newState)) {
+        animateSelection(compid, false);
+        setState(newState);
+      }
+    };
+  }
 
   useEffect(() => {
     const { value } = state;
@@ -110,34 +113,6 @@ export default function WidgetMenulist(
                 ) {
                   anchor.click();
                 }
-                if (persist.components[compid].selectChanged)
-                  jQuery('.owl-carousel').addClass(`touched-${compid}`);
-              }
-            }
-            break;
-          }
-          case 'update_owl': {
-            const domowl = jQuery('.owl-carousel');
-            if (
-              persist.components[compid].selectChanged &&
-              domowl &&
-              !domowl.hasClass('touched-owl') &&
-              domowl.hasClass(`touched-${compid}`)
-            ) {
-              const { owlIndex } = selOption;
-              if (typeof owlIndex !== 'undefined') {
-                delayHandler(
-                  globalThis,
-                  (domo, index) => {
-                    const owl: any = domo?.data('owl.carousel');
-                    const currentIndex = owl?.relative(owl?.current());
-                    if (domo && index[0] !== currentIndex)
-                      domo.trigger('to.owl.carousel', index[0]);
-                  },
-                  [domowl, owlIndex],
-                  250,
-                  `update_owl`,
-                );
               }
             }
             break;
@@ -157,10 +132,23 @@ export default function WidgetMenulist(
   ): void {
     const select = e.target as HTMLSelectElement;
     if (diff(state, { value: select.value })) {
+      // Set new state
       animateSelection(compid, false);
       persist.components[compid].selectChanged = true;
       setState({ value: select.value });
       persist.noAutodownload = false;
+      // Call drupalSettings onChange with the new data
+      const { onChange } = settings;
+      const { items } = data;
+      const index = Number.isNaN(Number(select.value))
+        ? 0
+        : Number(select.value);
+      const item = items[index];
+      const fileItem =
+        'option' in item && typeof item.option !== 'string'
+          ? item.option
+          : null;
+      if (fileItem && onChange) onChange(e, fileItem);
     }
   }
 
