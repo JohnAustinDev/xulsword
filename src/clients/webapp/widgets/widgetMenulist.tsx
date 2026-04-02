@@ -110,6 +110,8 @@ export default function WidgetMenulist(
                 ) {
                   anchor.click();
                 }
+                if (persist.components[compid].selectChanged)
+                  jQuery('.owl-carousel').addClass(`touched-${compid}`);
               }
             }
             break;
@@ -119,7 +121,8 @@ export default function WidgetMenulist(
             if (
               persist.components[compid].selectChanged &&
               domowl &&
-              !domowl.hasClass('touched-owl')
+              !domowl.hasClass('touched-owl') &&
+              domowl.hasClass(`touched-${compid}`)
             ) {
               const { owlIndex } = selOption;
               if (typeof owlIndex !== 'undefined') {
@@ -127,14 +130,9 @@ export default function WidgetMenulist(
                   globalThis,
                   (domo, index) => {
                     const owl: any = domo?.data('owl.carousel');
-                    if (
-                      domo &&
-                      owl &&
-                      index[0] !== owl.relative(owl.current())
-                    ) {
-                      domo.trigger('to.owl.carousel', index);
-                      domo.addClass(`touched-${compid}`);
-                    }
+                    const currentIndex = owl?.relative(owl?.current());
+                    if (domo && index[0] !== currentIndex)
+                      domo.trigger('to.owl.carousel', index[0]);
                   },
                   [domowl, owlIndex],
                   250,
