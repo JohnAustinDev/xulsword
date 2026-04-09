@@ -20,8 +20,9 @@ import type { TabChangeOptions } from './viewport.ts';
 import type RenderPromise from './clients/renderPromise.ts';
 import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
 
-// Update the visible tabs of a viewport, and return the new values the
-// related state props.
+// Update the visible tabs of a viewport, and return the new values of the
+// related state props. But if options.whichTab is null, no changes of any kind
+// are made, only the current xulsword state values are returned.
 export function setXulswordTabs(
   options: Partial<TabChangeOptions> & {
     skipCallbacks?: boolean;
@@ -32,9 +33,10 @@ export function setXulswordTabs(
   callback?: (xulsword: typeof S.prefs.xulsword) => void,
 ): Pick<typeof S.prefs.xulsword, 'panels' | 'mtModules' | 'tabs' | 'location'> {
   const id = windowID ?? -1;
-  const { skipCallbacks, clearRendererCaches } = {
+  const { skipCallbacks, clearRendererCaches, whichTab } = {
     skipCallbacks: false,
     clearRendererCaches: true,
+    whichTab: null,
     ...options,
   };
 
@@ -55,29 +57,31 @@ export function setXulswordTabs(
         id,
       ) as typeof S.prefs.xulsword);
 
-  getTabChange(options, xulsword, renderPromise);
+  if (whichTab) getTabChange(options, xulsword, renderPromise);
   const result = keep(xulsword, ['panels', 'mtModules', 'tabs', 'location']);
 
-  if (isViewportWin) {
-    isViewportWin.setComplexValue('xulswordState', xulsword, id);
-    isViewportWin.reset('all', 'self', id);
-  } else {
-    (G().Prefs as GAddWindowId['Prefs']).mergeValue(
-      'xulsword',
-      result,
-      'prefs',
-      skipCallbacks,
-      clearRendererCaches,
-      id,
-    );
-    // The previous prefs mergeValue will not reset the calling window to
-    // prevent cycling (usually the calling window updates itself). In this
-    // case the calling window needs an explicit reset to apply the new pref
-    // values.
-    if (Build.isElectronApp) (G() as GType).Window.reset('all', { id });
-  }
+  if (whichTab) {
+    if (isViewportWin) {
+      isViewportWin.setComplexValue('xulswordState', xulsword, id);
+      isViewportWin.reset('all', 'self', id);
+    } else {
+      (G().Prefs as GAddWindowId['Prefs']).mergeValue(
+        'xulsword',
+        result,
+        'prefs',
+        skipCallbacks,
+        clearRendererCaches,
+        id,
+      );
+      // The previous prefs mergeValue will not reset the calling window to
+      // prevent cycling (usually the calling window updates itself). In this
+      // case the calling window needs an explicit reset to apply the new pref
+      // values.
+      if (Build.isElectronApp) (G() as GType).Window.reset('all', { id });
+    }
 
-  if (callback) callback(xulsword);
+    if (callback) callback(xulsword);
+  }
 
   return result;
 }

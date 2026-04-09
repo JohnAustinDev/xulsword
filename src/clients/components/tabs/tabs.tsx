@@ -288,6 +288,18 @@ class Tabs
     if (isPinned) cls += ' pinned';
     if (multiTabMenupopup) cls += ' open';
 
+    // Just read current tab settings (no changes)
+    const xs = setXulswordTabs(
+      { panelIndex },
+      renderPromise,
+      windowArguments().id,
+    );
+    const prefixes: Parameters<typeof ModuleMenu>[0]['prefixes'] = {};
+    const tbs = xs.tabs[panelIndex];
+    G.Tabs.forEach((t) => {
+      prefixes[t.module] = tbs && tbs.includes(t.module) ? '- ' : '+ ';
+    });
+
     return (
       <div
         ref={loadingRef}
@@ -308,6 +320,7 @@ class Tabs
             <div className="border">
               <ModuleMenu
                 value={''}
+                prefixes={prefixes}
                 language
                 description
                 onChange={toggleTab}

@@ -17,8 +17,9 @@ import type { XulProps } from './xul.tsx';
 // list and it will be initially selected.
 type ModuleMenuProps = {
   value: string;
-  language?: boolean; // show language or not
-  description?: boolean; // show description as tooltip or not
+  language?: boolean; // show module language or not
+  description?: boolean; // show module description as tooltip or not
+  prefixes?: { [modname: string]: string };
   sortByLabel?: boolean; // sort options alphabetically by label
   disabled?: boolean;
   allowNotInstalled?: boolean;
@@ -30,6 +31,7 @@ type ModuleMenuProps = {
 export default function ModuleMenu({
   language = false,
   description = false,
+  prefixes = {},
   sortByLabel = true,
   disabled = false,
   allowNotInstalled = false,
@@ -55,6 +57,9 @@ export default function ModuleMenu({
     if (language && t.lang) {
       labels[t.module] =
         `${getLangReadable(t.lang, renderPromise)}: ${labels[t.module]}`;
+    }
+    if (prefixes && t.module in prefixes) {
+      labels[t.module] = `${prefixes[t.module]}${labels[t.module]}`;
     }
   });
 

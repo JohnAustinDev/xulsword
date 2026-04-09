@@ -17,7 +17,7 @@ import type RenderPromise from './clients/renderPromise.ts';
 
 export type TabChangeOptions = {
   panelIndex: number; // which panel(s) (-1 is all)
-  whichTab: string | string[] | TabTypes | 'all'; // which tabs in the panel(s)
+  whichTab: string | string[] | TabTypes | 'all' | null; // which tabs in the panel(s)
   doWhat: 'show' | 'hide' | 'toggle';
 };
 
