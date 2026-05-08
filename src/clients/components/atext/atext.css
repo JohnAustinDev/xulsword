@@ -251,10 +251,11 @@ html[dir='rtl'] .notebox-maximizer {
 .sb[dir='rtl'] .chaptitle {
   float: right;
 }
+/* Do NOT use nowrap. Doing so breaks the entire viewport for long book names!
 .chapbk,
 .chapch {
   white-space: nowrap;
-}
+}*/
 .chapbk {
   display: none;
 }
