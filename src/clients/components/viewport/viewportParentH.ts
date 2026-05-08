@@ -205,7 +205,7 @@ export default function handler(
   const isps = atext ? atext.dataset.ispinned : tabs?.dataset.ispinned;
   const isPinned = isps === 'true';
   const panel = panels[index];
-  const type = panel ? G.Tab[panel].type : null;
+  const modType = panel ? G.Tab[panel].type : null;
   switch (e.type) {
     case 'pointerdown': {
       const targ = ofClass(
@@ -448,7 +448,12 @@ export default function handler(
         case 'prevchaplink':
         case 'nextchaplink': {
           const sb = atext?.querySelector('.sb') as HTMLElement | null;
-          if (atext && sb && sb.scrollWidth > sb.clientWidth) {
+          if (
+            modType === C.GENBOOK &&
+            atext &&
+            sb &&
+            sb.scrollWidth > sb.clientWidth
+          ) {
             // TODO: This click-scrolling math does not currently work on RTL
             // Genbk modules (so RTL click-scroll has been disabled in CSS).
             const isNext = type === 'nextchaplink';
@@ -627,10 +632,10 @@ export default function handler(
 
     case 'wheel': {
       const ew = e as React.WheelEvent;
-      if (!isPinned && atext && type && !ofClass(['nbc'], target)) {
-        if ([C.BIBLE, C.COMMENTARY].includes(type)) {
+      if (!isPinned && atext && modType && !ofClass(['nbc'], target)) {
+        if ([C.BIBLE, C.COMMENTARY].includes(modType)) {
           aTextWheelScroll(ew, atext, this);
-        } else if (type === C.GENBOOK) {
+        } else if (modType === C.GENBOOK) {
           const sb = atext.getElementsByClassName('sb');
           if (sb.length) {
             sb[0].scrollLeft += ew.deltaY;
