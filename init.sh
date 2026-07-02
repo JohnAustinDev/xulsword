@@ -122,8 +122,8 @@ if [[ "$LIBXULSWORD_ONLY" == "no" ]]; then
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-  nvm install 22.2.0
-  nvm use 22.2.0
+  nvm install v24.18.0
+  nvm use 24.18.0
   corepack enable
   yarn set version stable
   yarn install

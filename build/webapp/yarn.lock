@@ -2,13 +2,13 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 8
+  version: 10
   cacheKey: 10c0
 
 "libxulsword@file:../../libxulsword::locator=xulsword-web-app%40workspace%3A.":
   version: 1.5.6
-  resolution: "libxulsword@file:../../libxulsword#../../libxulsword::hash=7ba921&locator=xulsword-web-app%40workspace%3A."
-  checksum: 10c0/413532eab48876f654f2d03939cc7a9791c9c6998a80e9fb979c1796ee03f4426eab3fde9bde1d3f3c55807cbcb9cfe8389f6594fcdcb019757c71e81d2a759d
+  resolution: "libxulsword@file:../../libxulsword#../../libxulsword::hash=1d9c33&locator=xulsword-web-app%40workspace%3A."
+  checksum: 10c0/4d7e132d97188296ede94c8528fb94e62a0fccac1d98a86e9bae5c0277eda36b8d2c78efb7b0b47f444dd348d278951e860c0d2b953ff816f3d83debdad507d4
   languageName: node
   linkType: hard
 
