@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { diff, drupalSetting, randomID } from '../../../common.ts';
-import log from '../../log.ts';
 import { functionalComponentRenderPromise } from '../../common.ts';
 import { Analytics } from '../../analytics.ts';
 import Menulist from '../../components/libxul/menulist.tsx';
@@ -12,8 +11,8 @@ import type { MenulistProps } from '../../components/libxul/menulist.tsx';
 import type { FileItem, WidgetMenulistData } from './defaultSettings.ts';
 
 // A React component widget for selection from a set of options, such as a set
-// of eBook files. When the selection is changed these actions may be run
-// depending on component settings: update_url, update_owl.
+// of eBook files. When the selection is changed the update_url action may be
+// run depending on component settings.
 
 export type WidgetMenulistProps = {
   compid: string;
@@ -116,9 +115,6 @@ export default function WidgetMenulist(
               }
             }
             break;
-          }
-          default: {
-            log.error(`Unknown selectMenulist action: '${actions}'`);
           }
         }
       });

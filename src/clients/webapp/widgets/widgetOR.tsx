@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { findTreeNode } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { Analytics } from '../../analytics.ts';
-import log from '../../log.ts';
 import { createNodeList, getProps, updateLinks } from '../common.ts';
 import SelectOR from '../../components/libxul/selectOR.tsx';
 
@@ -70,9 +69,6 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
           case 'update_url': {
             updateLinksOR(selection);
             break;
-          }
-          default: {
-            log.error(`Unknown selectOR action: '${actions}'`);
           }
         }
       });

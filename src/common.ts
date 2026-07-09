@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import C from './constant.ts';
 import S, { completePanelPrefDefaultArrays } from './defaultPrefs.ts';
 import Cache from './cache.ts';
+import VerseKey from './verseKey.ts';
 
 import type { Logger } from 'electron-log';
 import type { TreeNodeInfo } from '@blueprintjs/core';
@@ -51,7 +52,6 @@ import type RenderPromise from './clients/renderPromise.ts';
 import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
 import type { BibleBrowserControllerGlobal } from './clients/webapp/bibleBrowser/bibleBrowser.tsx';
 import type Window from './servers/app/components/window.ts';
-import VerseKey from './verseKey.ts';
 
 // This file contains functions that are used in common with both xulsword
 // clients and servers. However functions here which call G() or GI() have

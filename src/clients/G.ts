@@ -262,13 +262,17 @@ function syncRequest(call: GCallType) {
   const cacheable = isCallCacheable(GBuilder, call);
   if (cacheable && Cache.has(ckey)) return Cache.read(ckey);
   if (Build.isWebApp) {
+    const render = new Error().stack?.replace(
+      /^.*?(at \w+\.render[^\n]+).*$/s,
+      '$1',
+    );
     if (cacheable)
       throw new Error(
-        `Cache must be preloaded in browser context: ${JSON_stringify(call)} at ${new Error().stack}`,
+        `Cache must be preloaded in browser context: ${JSON_stringify(call)} ${render}`,
       );
     else
       throw new Error(
-        `This uncacheable call requires GI in browser context: ${JSON_stringify(call)} at ${new Error().stack}`,
+        `This uncacheable call requires GI in browser context: ${JSON_stringify(call)} ${render}`,
       );
   }
   log.silly(

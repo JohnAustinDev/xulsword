@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { diff } from '../../../common.ts';
 import { Analytics } from '../../analytics.ts';
-import log from '../../log.ts';
 import { getProps, updateLinks } from '../common.ts';
 import SelectVK from '../../components/libxul/selectVK.tsx';
 
@@ -73,9 +72,6 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
               case 'update_url': {
                 updateLinksVK(selection);
                 break;
-              }
-              default: {
-                log.error(`Unknown selectVK action: '${actions}'`);
               }
             }
           });
