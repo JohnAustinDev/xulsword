@@ -370,11 +370,6 @@ span.foreign {
   text-indent: 1.5em;
 }
 
-.osis2mod.x-right + .dtl {
-  float: right;
-  clear: both;
-}
-
 /*.x-lg,*/
 .x-list {
   text-indent: 0px;
@@ -401,16 +396,26 @@ span.foreign {
 .item {
   margin-bottom: 1em;
 }
+.x-navmenu {
+  width: 100%;
+  font-size: 1rem;
+}
 .x-navmenu .item {
-  margin-bottom: 0;
+  display: flow-root;
+  margin: 5px;
+  white-space: nowrap;
+}
+.x-navmenu .item .x-right + span {
+  float: right;
+  clear: right;
+}
+.x-navmenu .item .x-right:has(+ span) {
+  width: unset;
 }
 /*
-.x-list.x-navmenu > div {
-  height: 1em;
-}
-*/
 .x-PM {
 }
+*/
 .verse-per-line .vs > .p-end,
 .verse-per-line .vs > .lg-end,
 .verse-per-line .vs > .list-end,
@@ -469,6 +474,10 @@ span.foreign {
 }
 
 /* CLASSES FROM OSIS-CONVERTER-MADE SWORD MODULES */
+.x-navmenu-all-letters > span {
+  white-space: nowrap;
+  margin-inline-end: 5px;
+}
 .x-text-image {
   float: right; /* inline-end is invalid (why?) */
   margin-inline-end: 10px;

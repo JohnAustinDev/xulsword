@@ -159,13 +159,6 @@ html:not(.is-vagrant) .popup-fail.reason,
   .chapterhead {
     padding: 0 10px;
   }
-  .x-navmenu {
-    font-size: 1rem;
-  }
-  .x-navmenu span,
-  .x-navmenu div {
-    margin: 5px;
-  }
   .dictkey {
     margin-bottom: 0.5em;
   }
