@@ -403,7 +403,6 @@ span.foreign {
 .x-navmenu .item {
   display: flow-root;
   margin: 5px;
-  white-space: nowrap;
 }
 .x-navmenu .item .x-right + span {
   float: right;
