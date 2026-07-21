@@ -12,6 +12,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "libxulsword": "file:../../libxulsword"
+    "libxulsword": "portal:../../libxulsword"
   }
 }

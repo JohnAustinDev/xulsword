@@ -10238,12 +10238,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"libxulsword@file:./libxulsword::locator=xulsword%40workspace%3A.":
-  version: 1.5.6
-  resolution: "libxulsword@file:./libxulsword#./libxulsword::hash=1d9c33&locator=xulsword%40workspace%3A."
-  checksum: 10c0/4d7e132d97188296ede94c8528fb94e62a0fccac1d98a86e9bae5c0277eda36b8d2c78efb7b0b47f444dd348d278951e860c0d2b953ff816f3d83debdad507d4
+"libxulsword@portal:./libxulsword::locator=xulsword%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "libxulsword@portal:./libxulsword::locator=xulsword%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "lie@npm:~3.3.0":
   version: 3.3.0
@@ -15775,7 +15774,7 @@ __metadata:
     i18next-fs-backend: "npm:^2.6.0"
     identity-obj-proxy: "npm:^3.0.0"
     jest: "npm:^30.0.5"
-    libxulsword: "file:./libxulsword"
+    libxulsword: "portal:./libxulsword"
     memorystore: "npm:^1.6.7"
     mini-css-extract-plugin: "npm:^1.6.0"
     prettier: "npm:^3.6.2"

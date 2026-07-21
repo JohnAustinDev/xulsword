@@ -5,17 +5,16 @@ __metadata:
   version: 10
   cacheKey: 10c0
 
-"libxulsword@file:../../libxulsword::locator=xulsword%40workspace%3A.":
-  version: 1.5.6
-  resolution: "libxulsword@file:../../libxulsword#../../libxulsword::hash=1d9c33&locator=xulsword%40workspace%3A."
-  checksum: 10c0/4d7e132d97188296ede94c8528fb94e62a0fccac1d98a86e9bae5c0277eda36b8d2c78efb7b0b47f444dd348d278951e860c0d2b953ff816f3d83debdad507d4
+"libxulsword@portal:../../libxulsword::locator=xulsword%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "libxulsword@portal:../../libxulsword::locator=xulsword%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "xulsword@workspace:.":
   version: 0.0.0-use.local
   resolution: "xulsword@workspace:."
   dependencies:
-    libxulsword: "file:../../libxulsword"
+    libxulsword: "portal:../../libxulsword"
   languageName: unknown
   linkType: soft
