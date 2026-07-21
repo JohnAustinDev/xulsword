@@ -49,6 +49,10 @@
 
 # export LOGLEVEL='error'
 
+export NODE_VERSION=24
+nvm install "$NODE_VERSION"
+nvm use "$NODE_VERSION"
+
 ###############################################################################
 # libxulsword Cpp build environment variables:
 ###############################################################################
