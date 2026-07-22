@@ -49,8 +49,10 @@
 
 # export LOGLEVEL='error'
 
+export XULSWORD=$(dirname $(realpath -s "${BASH_SOURCE[0]}"))
+
 export NODE_VERSION=24.18.0
-export NVM_DIR="$(realpath -s "$0" | cut -d'/' -f1-3)/.nvm"
+export NVM_DIR="$(printf "$XULSWORD" | cut -d'/' -f1-3)/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 nvm install "$NODE_VERSION"
 nvm use "$NODE_VERSION"
@@ -68,7 +70,6 @@ if [[ -z "$LIBXULSWORD_ONLY" ]]; then
 fi
 
 if [ -e /vagrant ]; then export CONTEXT="guest"; else export CONTEXT="host"; fi
-export XULSWORD="$( pwd -P )"
 export CPP="$XULSWORD/Cpp"
 export LIBXULSWORD="$XULSWORD/build/app/node_modules/libxulsword"
 
