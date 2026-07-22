@@ -14,4 +14,4 @@ cd "$( dirname "${BASH_SOURCE[0]}" )/../../../"
 
 export LD_LIBRARY_PATH='./Cpp/lib'
 
-"$NODE_EXE" ./build/webapp
+"$NODE_EXE" --preserve-symlinks ./build/webapp
