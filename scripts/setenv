@@ -49,7 +49,9 @@
 
 # export LOGLEVEL='error'
 
-export NODE_VERSION=24
+export NODE_VERSION=24.18.0
+export NVM_DIR="$(realpath -s "$0" | cut -d'/' -f1-3)/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 nvm install "$NODE_VERSION"
 nvm use "$NODE_VERSION"
 
