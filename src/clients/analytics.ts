@@ -48,6 +48,7 @@ type AnalyticsActions = (typeof analyticsEventActionMap)[AnalyticsEvents];
 export type AnalyticsInfoFinal = AnalyticsInfo & {
   origin: string;
   webapp: boolean;
+  tag: boolean;
 };
 
 // One of these AnalyticsInfo types is required to generate a standardized
@@ -314,13 +315,13 @@ export class Analytics {
       .catch((er) => this.error(er));
   }
 
-  // Send qualifying AnalyticsInfo to the server, where it will be completed to
-  // become an AnalyticsObject and logged in the server's event log. That
-  // AnalyticsObject is then returned from the server and returned by this
-  // function, where it may then be handled by tags as needed. NOTE: The
-  // AnalyticsInfo will be ignored if it has already been recorded during this
-  // session, or if recordingStopped is true, in which case undefined will be
-  // returned by this function.
+  // Send qualifying AnalyticsInfo to the server, where it will be logged in
+  // the server log and returned as a completed AnalyticsObject. That
+  // AnalyticsObject is returned by this function (where it may be reported
+  // with the analytics tag). NOTE: To qualify for server logging or reporting,
+  // the AnalyticsInfo MUST BE UNIQUE during this page load (according to
+  // stringHash comparison) and recordingStopped must not be set, otherwise
+  // this function does nothing and returns undefined.
   async logAnalytics(
     info: AnalyticsInfo,
   ): Promise<AnalyticsObject | undefined> {
@@ -363,6 +364,7 @@ export class Analytics {
       action: analyticsEventActionMap[event],
       webapp: Build.isWebApp,
       origin,
+      tag: typeof this.tag === 'function',
     };
     Object.entries(send).forEach((entry) => {
       if (typeof entry[1] === 'undefined') delete (send as any)[entry[0]];
