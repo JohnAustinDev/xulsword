@@ -1125,7 +1125,7 @@ const Module = {
             result = `Could not create tmp directory '${tmpdir.path}'.`;
           }
           const dlfile = await getFileHTTP(
-            resolveTemplateURL(http, data, 'zip', '1'),
+            resolveTemplateURL(http, data, 'zip', '1', true),
             tmpdir.append(randomID()),
             downloadkey,
             (p: number) => {

@@ -985,6 +985,7 @@ export function inlineFile(
     pdf: 'application/pdf',
     mp3: 'audio/mpeg',
     ogg: 'audio/ogg',
+    txt: 'text/plain',
   } as any;
   const contentType =
     // eslint-disable-next-line no-useless-escape
@@ -1001,7 +1002,7 @@ export function inlineFile(
 // a local file.
 export function inlineAudioFile(
   audio: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
-): string {
+): { audio: string; timing: string } {
   if (audio) {
     const { path, audioModule } = audio;
     if (path && audioModule) {
@@ -1013,7 +1014,10 @@ export function inlineAudioFile(
         const [, conf] = confe;
         const { DataPath } = conf;
         if (DataPath.startsWith('http')) {
-          return resolveTemplateURL(DataPath, audio, 'none', '1');
+          return {
+            audio: resolveTemplateURL(DataPath, audio, 'none', '1'),
+            timing: resolveTemplateURL(DataPath, audio, 'none', '1', true),
+          };
         } else if (DataPath.startsWith('.')) {
           file.append(DataPath);
           const findAudio = (
@@ -1054,12 +1058,22 @@ export function inlineAudioFile(
             return result;
           };
           const audioFile = findAudio(file, path);
-          if (audioFile) return inlineFile(audioFile.path);
+          if (audioFile) {
+            const timingFile = audioFile.parent.append(
+              audioFile.leafName.replace(/\.[^.]+$/, '') + '.txt',
+            );
+            return {
+              audio: inlineFile(audioFile.path),
+              timing: timingFile.exists()
+                ? inlineFile(timingFile.path, 'ascii', true)
+                : '',
+            };
+          }
         }
       }
     }
   }
-  return '';
+  return { audio: '', timing: '' };
 }
 
 export function getLanguageName(code: string): { en: string; local: string } {

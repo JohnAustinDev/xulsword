@@ -198,6 +198,10 @@ html[dir='rtl'] .notebox-maximizer {
   }
 }
 
+.nowreading {
+  background-color: yellow !important;
+}
+
 /* Header Links */
 .navlink {
   color: var(--color-primary);

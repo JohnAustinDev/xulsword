@@ -579,6 +579,7 @@ const C = {
     'Biblical Texts': [
       'location',
       'module',
+      'audio',
       'show',
       'place',
       'columns',
@@ -587,7 +588,7 @@ const C = {
     ],
     Commentaries: ['location', 'module', 'show', 'place'],
     'Lexicons / Dictionaries': ['module', 'modkey', 'show'],
-    'Generic Books': ['module', 'modkey', 'show'],
+    'Generic Books': ['module', 'modkey', 'audio', 'show'],
     XSM_audio: [],
   } as const,
 

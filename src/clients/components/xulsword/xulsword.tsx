@@ -339,6 +339,7 @@ export default class Xulsword
             audio={audio}
             audioHandler={handler}
             renderPromise={renderPromise}
+            xulswordState={xulswordStateHandler}
           />
         </Vbox>
         <Button

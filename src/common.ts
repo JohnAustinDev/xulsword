@@ -18,7 +18,6 @@ import type {
   SwordConfType,
   RowSelection,
   HTTPDownload,
-  QuerablePromise,
   GType,
   VerseKeyAudioConf,
   GenBookAudioConf,
@@ -2056,6 +2055,7 @@ export function resolveTemplateURL(
   // 'auto' becomes 'none' for one file, or 'zip' for multiple files.
   XSPACKAGE: 'none' | 'zip' | 'auto',
   XSREDIRECT: '0' | '1', // redirect to the file's absolute url?
+  timing = false, // include or get timing file(s)
 ) {
   // Supported replacements
   const phs = {
@@ -2078,6 +2078,10 @@ export function resolveTemplateURL(
         url2 = url2.replaceAll(ph, value.toString());
     });
 
+  // Timing is a similar situation as XSREDIRECT, but to add XSTIMING to the
+  // server URL would instantly break existing xulsword installations (because
+  // their unreplaced URLs would be invalid). So going forward, it makes sense
+  // for new boolean flags to simply be appended (TODO!!).
   return url2;
 }
 

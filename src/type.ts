@@ -56,6 +56,7 @@ import type {
 import type LibSword from './servers/components/libsword.ts';
 import type { canRedo, canUndo } from './servers/components/bookmarks.ts';
 import type { CallBatch } from './servers/handleG.ts';
+import type { parseTimingFile } from './clients/audioTiming.ts';
 import type { AtextPropsType } from './clients/components/atext/atext.tsx';
 import type RenderPromise from './clients/renderPromise.ts';
 import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
@@ -191,6 +192,7 @@ export type AudioPrefType = {
   open: boolean;
   file: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null;
   defaults?: { [swordModule: string]: string };
+  timing?: ReturnType<typeof parseTimingFile>;
 };
 
 export type PinPropsType = Pick<AtextPropsType, (typeof C.PinProps)[number]>;

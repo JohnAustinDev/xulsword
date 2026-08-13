@@ -33,6 +33,7 @@ import {
   trimNotes,
   findVerseElement,
 } from './zversekey.ts';
+import { addTimingSpans } from '../../audioTiming.ts';
 import handlerH from './atextH.ts';
 import audioIcon from '../audioIcon/audioIcon.tsx';
 import '../../libsword.css';
@@ -57,7 +58,7 @@ import type { popupParentHandler } from '../popup/popupParentH.ts';
 
 export type AtextPropsType = Pick<
   typeof S.prefs.xulsword,
-  'location' | 'selection' | 'scroll' | 'show' | 'place'
+  'location' | 'selection' | 'scroll' | 'show' | 'place' | 'audio'
 > & {
   modkey: string | null;
 
@@ -548,6 +549,7 @@ class Atext
       | 'ilModuleOption'
       | 'location'
       | 'modkey'
+      | 'audio'
       | 'place'
       | 'show'
       | 'columns'
@@ -614,6 +616,8 @@ class Atext
           if (module && (typeof columns === 'undefined' || columns === 1))
             sb += `<div class="ft">${navlinks(module, renderPromise)}</div>`;
           sanitizeHTML(sbe, sb);
+          if (libswordProps.audio?.timing)
+            addTimingSpans(sbe, libswordProps.audio.timing);
           libswordImgSrc(sbe);
           this.hoverLinks(sbe);
         }

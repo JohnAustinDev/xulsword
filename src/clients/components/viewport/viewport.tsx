@@ -157,6 +157,7 @@ export default class Viewport
       selection,
       keys,
       focusPanel,
+      audio,
       show,
       place,
       tabs,
@@ -425,6 +426,7 @@ export default class Viewport
             ilModule={ilModules[i]}
             ilModuleOption={ilModuleOptions[i]}
             columns={column}
+            audio={audio}
             show={show}
             place={place}
             scroll={scroll}

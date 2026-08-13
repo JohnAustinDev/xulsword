@@ -3,9 +3,7 @@ import Subscription from '../../../subscription.ts';
 import {
   cleanDoubleClickSelection,
   clone,
-  getCSS,
   ofClass,
-  pad,
   randomID,
   sanitizeHTML,
 } from '../../../common.ts';
@@ -21,6 +19,7 @@ import {
 } from '../../common.ts';
 import log from '../../log.ts';
 import { getElementData } from '../../htmlData.ts';
+import { onClick as onVerseSyncClick } from '../../audioTiming.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { aTextWheelScroll, getScrollVerse } from './zversekey.ts';
 
@@ -58,6 +57,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           'versePerLineButton',
           'image-viewport',
           'dictkeyinput',
+          'verse-sync',
         ],
         target,
       );
@@ -193,6 +193,11 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
         case 'dictkeyinput': {
           const input = elem as HTMLInputElement;
           input.select();
+          break;
+        }
+
+        case 'verse-sync': {
+          onVerseSyncClick(elem);
           break;
         }
 
