@@ -80,5 +80,6 @@
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "cmake.sourceDirectory": "${workspaceFolder}/Cpp",
   "emmet.excludeLanguages": ["typescriptreact"],
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "claudeCode.usePythonEnvironment": false
 }

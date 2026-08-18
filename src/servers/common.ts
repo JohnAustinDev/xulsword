@@ -1065,7 +1065,7 @@ export function inlineAudioFile(
             return {
               audio: inlineFile(audioFile.path),
               timing: timingFile.exists()
-                ? inlineFile(timingFile.path, 'ascii', true)
+                ? inlineFile(timingFile.path, 'utf8', true)
                 : '',
             };
           }

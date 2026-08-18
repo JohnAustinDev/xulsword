@@ -57,7 +57,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           'versePerLineButton',
           'image-viewport',
           'dictkeyinput',
-          'verse-sync',
+          'versenum',
         ],
         target,
       );
@@ -196,8 +196,10 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           break;
         }
 
-        case 'verse-sync': {
-          onVerseSyncClick(elem);
+        case 'versenum': {
+          const sync: HTMLElement | null =
+            elem.parentElement?.querySelector('.verse-sync') ?? null;
+          if (sync) onVerseSyncClick(sync);
           break;
         }
 

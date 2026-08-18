@@ -198,8 +198,26 @@ html[dir='rtl'] .notebox-maximizer {
   }
 }
 
+/* Fallback for browsers that can't do the moving bar below. */
 .nowreading {
   background-color: yellow !important;
+}
+
+/* Moving highlight bar: audioTiming.ts times a background-position
+transition to sweep from timing.start to timing.end. Requires both
+transitionable background-position and box-decoration-break (so multi-line
+spans get one continuous sweep instead of a repeat per line); browsers
+lacking either keep the solid-block fallback above. */
+@supports (transition-property: background-position) and
+  ((box-decoration-break: slice) or (-webkit-box-decoration-break: slice)) {
+  .nowreading {
+    background-color: transparent !important;
+    background-image: linear-gradient(yellow, yellow);
+    background-repeat: no-repeat;
+    background-size: 30px 100%;
+    box-decoration-break: slice;
+    -webkit-box-decoration-break: slice;
+  }
 }
 
 /* Header Links */

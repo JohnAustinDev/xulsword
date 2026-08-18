@@ -22,6 +22,52 @@ type TextMap = {
 
 const CurrentActiveIds = new Set<string>();
 
+// Stops and removes the moving highlight bar from a span.
+function clearHighlightSweep(id: string) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.remove('nowreading');
+    el.style.transition = '';
+    el.style.backgroundPosition = '';
+  }
+}
+
+// Animates a highlight bar across a 'nowreading' span's text, from
+// inline-start to inline-end, timed to land exactly on item.end. A CSS
+// transition (rather than per-frame JS updates) drives the motion, so the
+// browser keeps it smooth; background-position's own percentage formula
+// (offset = (boxSize - imageSize) * pct) naturally accounts for the bar's
+// width, so 0%/100% land it flush with each edge.
+function startHighlightSweep(
+  el: HTMLElement,
+  item: TimingEntry,
+  currentTime: number,
+) {
+  el.classList.add('nowreading');
+
+  const duration = item.end - item.start;
+  const elapsedFraction =
+    duration > 0
+      ? Math.min(1, Math.max(0, (currentTime - item.start) / duration))
+      : 0;
+  const remaining = Math.max(0, item.end - currentTime);
+
+  // Reading direction determines which edge is "inline-start": the span
+  // inherits dir/direction from its module (see zversekey RTL handling).
+  const rtl = getComputedStyle(el).direction === 'rtl';
+  const startPct = rtl ? (1 - elapsedFraction) * 100 : elapsedFraction * 100;
+  const endPct = rtl ? 0 : 100;
+
+  // Snap to the correct starting position with no transition, then force
+  // layout so the browser registers it before the animated move begins.
+  el.style.transition = 'none';
+  el.style.backgroundPosition = `${startPct}% 0`;
+  void el.offsetWidth;
+
+  el.style.transition = `background-position ${remaining}s linear`;
+  el.style.backgroundPosition = `${endPct}% 0`;
+}
+
 export function onTimeUpdate(
   audio: AudioPrefType,
   audioDOM: React.RefObject<HTMLAudioElement>,
@@ -43,7 +89,7 @@ export function onTimeUpdate(
         // Clear previous highlights
         CurrentActiveIds.forEach((id) => {
           if (!activeItems.find((i) => i.id === id)) {
-            document.getElementById(id)?.classList.remove('nowreading');
+            clearHighlightSweep(id);
           }
           CurrentActiveIds.delete(id);
         });
@@ -52,7 +98,7 @@ export function onTimeUpdate(
           if (CurrentActiveIds.has(item.id)) return;
           const currentElement = document.getElementById(item.id);
           if (currentElement) {
-            currentElement.classList.add('nowreading');
+            startHighlightSweep(currentElement, item, currentTime);
             // Optional: Smoothly scroll long text into view
             currentElement.scrollIntoView({
               behavior: 'smooth',
@@ -64,7 +110,7 @@ export function onTimeUpdate(
       } else {
         // Clear highlight if audio moves outside covered timing windows
         CurrentActiveIds.forEach((id) => {
-          document.getElementById(id)?.classList.remove('nowreading');
+          clearHighlightSweep(id);
           CurrentActiveIds.delete(id);
         });
       }
@@ -102,13 +148,21 @@ export function addTimingSpans(
 
   let timingIndex = 0;
 
+  if (zones.length) {
+    const style = document.createElement('style');
+    style.innerHTML = '.versenum:hover { cursor: pointer; }';
+    divElement.prepend(style);
+  }
+
   zones.forEach((zone) => {
     if (timingIndex >= times.length) return;
+
+    const zoneSeparators: string[] = separators.split('');
 
     const zoneID =
       zone.querySelector(':scope > .versenum')?.textContent.trim() ?? '';
 
-    let { zoneid, phrase, word } = parseTimingID(times[timingIndex].id);
+    let { zoneid } = parseTimingID(times[timingIndex].id);
     if (zoneid && zoneid !== zoneID) {
       const zoneVerseStart = Number(zoneID.replace(/^(\d+).*?$/, '$1'));
       const zoneVerseEnd = Number(zoneID.replace(/^.*?(\d+)$/, '$1'));
@@ -116,7 +170,7 @@ export function addTimingSpans(
       while (zoneVerseStart > Number(zoneid?.replace(/^.*?(\d+)$/, '$1'))) {
         timingIndex++;
         if (timingIndex >= times.length) return;
-        ({ zoneid, phrase, word } = parseTimingID(times[timingIndex].id));
+        ({ zoneid } = parseTimingID(times[timingIndex].id));
       }
     }
 
@@ -162,20 +216,60 @@ export function addTimingSpans(
     // claimed so later segments in this zone leave them alone.
     const claimedContainers = new Set<Node>();
 
+    // Tracks where the current phrase begins in flatText. A timing id's word
+    // number marks where THAT entry's own audio starts within its phrase
+    // (eg. word 3 means "starts right after the 3rd word"), which is exactly
+    // where the PRECEDING entry's span must end. So each span's end boundary
+    // is found by looking ahead at the next timing id, not from its own id.
+    let currentPhrase: number | null = null;
+    let phraseStart = segmentStart;
+
     // Match segments within this zone block
     while (
       segmentStart < flatText.length &&
       timingIndex < times.length &&
       zoneID === parseTimingID(times[timingIndex].id).zoneid
     ) {
-      // TODO!!: Support word ids
-      // Determine boundaries using punctuation rules
-      const punc: string = `${separators}${times[timingIndex].additionalSeparators}`;
-      const re = new RegExp(`[^${punc}]+[${punc}]+`);
-      const match = flatText.substring(segmentStart).match(re);
-      if (!match) break;
+      const { phrase } = parseTimingID(times[timingIndex].id);
 
-      const segmentEnd = segmentStart + (match?.index ?? 0) + match[0].length;
+      if (phrase !== currentPhrase) {
+        currentPhrase = phrase;
+        phraseStart = segmentStart;
+      }
+
+      const next =
+        timingIndex + 1 < times.length
+          ? parseTimingID(times[timingIndex + 1].id)
+          : null;
+
+      let segmentEnd: number;
+      if (
+        next &&
+        next.zoneid === zoneID &&
+        next.phrase === phrase &&
+        next.word !== -1
+      ) {
+        // The next entry continues this same phrase and marks where its own
+        // audio starts; that is exactly where this span ends.
+        const wordEnd = findNthWordEnd(flatText, phraseStart, next.word);
+        if (wordEnd === null || wordEnd <= segmentStart) break;
+        segmentEnd = wordEnd;
+      } else {
+        // According to the timing file specification, an additional separator
+        // may be suffixed to the initial verse id and it applies to all
+        // following phrases of the verse, as well as the initial phrase. Here,
+        // the suffix as allowed on any phrase, not just the first.
+        times[timingIndex].additionalSeparators.split('').forEach((c) => {
+          if (!zoneSeparators.includes(c)) zoneSeparators.push(c);
+        });
+
+        // Last entry of the phrase: end at the phrase's punctuation boundary.
+        const punc: string = zoneSeparators.join('');
+        const re = new RegExp(`[^${punc}]+[${punc}]+`);
+        const match = flatText.substring(segmentStart).match(re);
+        if (!match) break;
+        segmentEnd = segmentStart + (match.index ?? 0) + match[0].length;
+      }
 
       // Wrap this segment in a synchronization span
       wrapTextRange(
@@ -227,8 +321,33 @@ function parseTimingID(id: string) {
     level,
     zoneid,
     phrase: phraseToNumber(phrase ?? 'a'),
-    word: Number(word ?? 1),
+    word: Number(word ?? -1),
   };
+}
+
+/**
+ * Finds the index immediately following the wordCount-th word (1-based),
+ * counting words from fromIdx in text. Words are runs of non-whitespace
+ * characters; each word's leading whitespace is included with that word, so
+ * consecutive boundaries partition the text with no gaps. Returns null if
+ * text does not contain that many words starting at fromIdx.
+ */
+function findNthWordEnd(
+  text: string,
+  fromIdx: number,
+  wordCount: number,
+): number | null {
+  const re = /\s*\S+/g;
+  const substring = text.slice(fromIdx);
+  let match: RegExpExecArray | null;
+  let count = 0;
+  while ((match = re.exec(substring))) {
+    count++;
+    if (count === wordCount) {
+      return fromIdx + match.index + match[0].length;
+    }
+  }
+  return null;
 }
 
 /**
@@ -370,63 +489,61 @@ export function parseTimingFile(timing: string): {
   let lastZoneID = '';
   let lastPhrase = '';
 
-  const times: (TimingEntry | null)[] = lines
-    .map((line) => {
-      if (line.startsWith('\\')) return null;
+  const times: (TimingEntry | null)[] = lines.filter(Boolean).map((line) => {
+    if (line.startsWith('\\')) return null;
 
-      const parts = line.trim().split(/\s+/);
+    const parts = line.trim().split(/\s+/);
 
-      // Ensure the line has at least start and end times
-      if (parts.length < 2) {
-        log.error(`Timing file unhandled line (columns): ${line}`);
-        return null;
+    // Ensure the line has at least start and end times
+    if (parts.length < 2) {
+      log.error(`Timing file unhandled line (columns): ${line}`);
+      return null;
+    }
+
+    // Ensure first two columns are numbers
+    const start = parseFloat(parts[0]);
+    const end = parseFloat(parts[1]);
+    if (Number.isNaN(start) || Number.isNaN(end)) {
+      log.error(`Timing file unhandled line (numbers): ${line}`);
+      return null;
+    }
+
+    // TODO!!: Support Titles
+    // Get the xulsword timing id. The xulsword timing id is different than
+    // the id in the timing file, but easier to use. Based on SIL timing file
+    // documentation, we must support all expected possibilities
+    let zoneid = '';
+    let phrase = '';
+    let word = '';
+    let additionalSeparators = ''; // ids may include additional separators
+    if (parts.length === 2) {
+      // New verse timing file entries may not all have ids, meaning use an
+      // incremented phrase number for previous verse (if any).
+      lastPhrase = numberToPhrase(phraseToNumber(lastPhrase) + 1);
+      return {
+        start,
+        end,
+        id: [level, lastZoneID, lastPhrase].filter(Boolean).join('_'),
+        additionalSeparators,
+      };
+    } else {
+      const m1 = parts[2].match(/^([\d-]+)?([A-Za-z]*)(_(\d+))?(.*?)$/);
+      if (m1) [, zoneid, phrase, , word, additionalSeparators] = m1;
+      else {
+        log.error(`Timing file unhandled line (parse): ${line}`);
       }
+      lastZoneID = zoneid;
+      if (!phrase) phrase = 'a';
+      lastPhrase = phrase;
 
-      // Ensure first two columns are numbers
-      const start = parseFloat(parts[0]);
-      const end = parseFloat(parts[1]);
-      if (Number.isNaN(start) || Number.isNaN(end)) {
-        log.error(`Timing file unhandled line (numbers): ${line}`);
-        return null;
-      }
-
-      // TODO!!: Support Titles
-      // Get the xulsword timing id. The xulsword timing id is different than
-      // the id in the timing file, but easier to use. Based on SIL timing file
-      // documentation, we must support all expected possibilities
-      let zoneid = '';
-      let phrase = '';
-      let word = '';
-      let additionalSeparators = ''; // ids may include additional separators
-      if (parts.length === 2) {
-        // New verse timing file entries may not all have ids, meaning use an
-        // incremented phrase number for previous verse (if any).
-        lastPhrase = numberToPhrase(phraseToNumber(lastPhrase) + 1);
-        return {
-          start,
-          end,
-          id: [level, lastZoneID, lastPhrase].filter(Boolean).join('_'),
-          additionalSeparators,
-        };
-      } else {
-        const m1 = parts[2].match(/^([\d-]+)?([A-Za-z]*)(_(\d+))?(.*?)$/);
-        if (m1) [, zoneid, phrase, , word, additionalSeparators] = m1;
-        else {
-          log.error(`Timing file unhandled line (parse): ${line}`);
-        }
-        lastZoneID = zoneid;
-        if (!phrase) phrase = 'a';
-        lastPhrase = phrase;
-
-        return {
-          start,
-          end,
-          id: [level, zoneid, phrase, word].filter(Boolean).join('_'),
-          additionalSeparators,
-        };
-      }
-    })
-    .flat();
+      return {
+        start,
+        end,
+        id: [level, zoneid, phrase, word].filter(Boolean).join('_'),
+        additionalSeparators,
+      };
+    }
+  });
 
   return { times: times.filter(Boolean) as TimingEntry[], settings };
 }
