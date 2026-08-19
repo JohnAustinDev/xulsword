@@ -102,7 +102,7 @@ export function onTimeUpdate(
             // Optional: Smoothly scroll long text into view
             currentElement.scrollIntoView({
               behavior: 'smooth',
-              block: 'center',
+              block: 'nearest',
             });
             CurrentActiveIds.add(item.id);
           }
