@@ -148,7 +148,7 @@ export function addTimingSpans(
 
   let timingIndex = 0;
 
-  if (zones.length) {
+  if (timing.times.length && zones.length) {
     const style = document.createElement('style');
     style.innerHTML = '.versenum:hover { cursor: pointer; }';
     divElement.prepend(style);
@@ -578,30 +578,18 @@ function numberToPhrase(num: number): string {
   return result;
 }
 
-/*
-async function fetchTextFile(url) {
+export async function getTimingFile(url: string): Promise<string> {
   try {
-    // 1. Fetch the resource from the network
     const response = await fetch(url);
-
-    // 2. Check if the response status is OK (200-299)
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      log.error(`Failed to get timing file: ${url}`);
+    } else {
+      const fileContent = await response.text();
+      return fileContent;
     }
-
-    // 3. Read the response body stream as text and store it in a variable
-    const fileContent = await response.text();
-
-    // 4. Use your variable
-    console.log(fileContent);
-    return fileContent;
-
   } catch (error) {
-    console.error("Failed to download file:", error);
+    log.error(`Error getting timing file: ${error}`);
   }
-}
 
-// Example usage:
-const fileUrl = 'https://example.com';
-fetchTextFile(fileUrl);
-*/
+  return '';
+}

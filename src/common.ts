@@ -2081,8 +2081,8 @@ export function resolveTemplateURL(
   // Timing is a similar situation as XSREDIRECT, but to add XSTIMING to the
   // server URL would instantly break existing xulsword installations (because
   // their unreplaced URLs would be invalid). So going forward, it makes sense
-  // for new boolean flags to simply be appended (TODO!!).
-  return url2;
+  // for new boolean flags to simply be appended.
+  return `${url2}${timing ? '&timing=1' : ''}`;
 }
 
 // Compare \d.\d.\d type version numbers (like SWORD modules).

@@ -1,7 +1,7 @@
 import React, { createRef, useEffect } from 'react';
 import { clone, diff } from '../../../common.ts';
 import { audioSelections } from '../../common.ts';
-import { onTimeUpdate, parseTimingFile } from '../../audioTiming.ts';
+import { getTimingFile, onTimeUpdate, parseTimingFile } from '../../audioTiming.ts';
 import { GI } from '../../G.ts';
 import Menulist from '../libxul/menulist.tsx';
 import { htmlAttribs } from '../libxul/xul.tsx';
@@ -14,6 +14,7 @@ import type {
 } from '../../../type.ts';
 import type RenderPromise from '../../renderPromise.ts';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
+import log from '../../log.ts';
 
 export default function AudioPlayer(props: {
   audio: AudioPrefType;
@@ -51,7 +52,21 @@ export default function AudioPlayer(props: {
 
   useEffect(() => {
     const { timing } = audio;
-    if (srctim) {
+    // If srctim is a URL, then fetch it and apply it.
+    if (srctim?.startsWith('http')) {
+      getTimingFile(srctim).then((tt) => {
+        const t = parseTimingFile(tt);
+        if (tt && t && diff(timing, t)) {
+        xulswordState((prevState) => {
+          const { audio: a } = prevState;
+          const audio = clone(a);
+          audio.timing = t;
+          return { audio };
+        });
+      }
+      }).catch((er) => log.error(er));
+    } else if (srctim) {
+      // Otherwise srctim is already here so apply it.
       const t = parseTimingFile(srctim);
       if (diff(timing, t)) {
         xulswordState((prevState) => {
@@ -64,7 +79,7 @@ export default function AudioPlayer(props: {
     }
   });
 
-  const audioDOM = createRef() as React.RefObject<HTMLAudioElement>
+  const audioDOM = createRef() as React.RefObject<HTMLAudioElement>;
 
   return (
     <div {...htmlAttribs('audioplayer', props)}>
