@@ -229,7 +229,7 @@ export default class DynamicStyleSheet {
         if (url2) {
           const rule = `@font-face {font-family:${normalizeFontFamily(
             fontFamily,
-          )}; src:url("${url2}");}`;
+          )}; src:url("${url2}"); font-display: swap;}`;
           sheet.insertRule(rule, sheet.cssRules.length);
         }
       });
