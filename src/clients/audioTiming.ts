@@ -90,8 +90,8 @@ export function onTimeUpdate(
         CurrentActiveIds.forEach((id) => {
           if (!activeItems.find((i) => i.id === id)) {
             clearHighlightSweep(id);
+            CurrentActiveIds.delete(id);
           }
-          CurrentActiveIds.delete(id);
         });
         // Add new highlights
         activeItems.forEach((item) => {
@@ -102,7 +102,7 @@ export function onTimeUpdate(
             // Optional: Smoothly scroll long text into view
             currentElement.scrollIntoView({
               behavior: 'smooth',
-              block: 'nearest',
+              block: 'center',
             });
             CurrentActiveIds.add(item.id);
           }
