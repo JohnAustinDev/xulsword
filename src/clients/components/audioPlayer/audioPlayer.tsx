@@ -1,7 +1,11 @@
 import React, { createRef, useEffect } from 'react';
 import { clone, diff } from '../../../common.ts';
 import { audioSelections } from '../../common.ts';
-import { getTimingFile, onTimeUpdate, parseTimingFile } from '../../audioTiming.ts';
+import {
+  getTimingFile,
+  onTimeUpdate,
+  parseTimingFile,
+} from '../../audioTiming.ts';
 import { GI } from '../../G.ts';
 import Menulist from '../libxul/menulist.tsx';
 import { htmlAttribs } from '../libxul/xul.tsx';
@@ -15,6 +19,10 @@ import type {
 import type RenderPromise from '../../renderPromise.ts';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
 import log from '../../log.ts';
+
+const TimingFetched: {
+  [url: string]: ReturnType<typeof parseTimingFile> | null;
+} = {};
 
 export default function AudioPlayer(props: {
   audio: AudioPrefType;
@@ -32,7 +40,7 @@ export default function AudioPlayer(props: {
   if (sels.length && defaults && swordModule && swordModule in defaults)
     index = sels.findIndex((a) => a.conf.module === defaults[swordModule]);
   if (index < 0) index = 0;
-  const { audio: src, timing: srctim } = sels.length
+  const { audio: src, timing: iafTiming } = sels.length
     ? GI.inlineAudioFile(
         { audio: '', timing: '' },
         renderPromise,
@@ -52,30 +60,41 @@ export default function AudioPlayer(props: {
 
   useEffect(() => {
     const { timing } = audio;
-    // If srctim is a URL, then fetch it and apply it.
-    if (srctim?.startsWith('http')) {
-      getTimingFile(srctim).then((tt) => {
-        const t = parseTimingFile(tt);
-        if (tt && t && diff(timing, t)) {
-        xulswordState((prevState) => {
-          const { audio: a } = prevState;
-          const audio = clone(a);
-          audio.timing = t;
-          return { audio };
-        });
-      }
-      }).catch((er) => log.error(er));
-    } else if (srctim) {
-      // Otherwise srctim is already here so apply it.
-      const t = parseTimingFile(srctim);
-      if (diff(timing, t)) {
-        xulswordState((prevState) => {
-          const { audio: a } = prevState;
-          const audio = clone(a);
-          audio.timing = t;
-          return { audio };
-        });
-      }
+    // iafTiming from inlineAudioFile may be a URL, in which case the raw
+    // timing must be fetched from the server, or it may be the raw timing
+    // itself. If it is a URL, the raw timing should be fetched only once from
+    // the server, and the response reused.
+    let times: ReturnType<typeof parseTimingFile> | null = null;
+    // If iafTiming is a URL, then fetch raw timing (and apply it if needed).
+    if (iafTiming?.startsWith('http')) {
+      if (!Object.hasOwn(TimingFetched, iafTiming)) {
+        TimingFetched[iafTiming] = null;
+        getTimingFile(iafTiming)
+          .then((rawTiming) => {
+            const t = parseTimingFile(rawTiming);
+            TimingFetched[iafTiming] = t;
+            if (rawTiming && diff(timing, t)) {
+              xulswordState((prevState) => {
+                const { audio: a } = prevState;
+                const audio = clone(a);
+                audio.timing = t;
+                return { audio };
+              });
+            }
+          })
+          .catch((er) => log.error(er));
+      } else times = TimingFetched[iafTiming];
+    } else if (iafTiming) {
+      // Otherwise iafTiming is the raw timing.
+      times = parseTimingFile(iafTiming);
+    }
+    if (times && diff(timing, times)) {
+      xulswordState((prevState) => {
+        const { audio: a } = prevState;
+        const audio = clone(a);
+        audio.timing = times;
+        return { audio };
+      });
     }
   });
 

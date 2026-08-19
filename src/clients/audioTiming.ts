@@ -585,7 +585,8 @@ export async function getTimingFile(url: string): Promise<string> {
       log.error(`Failed to get timing file: ${url}`);
     } else {
       const fileContent = await response.text();
-      return fileContent;
+      const tt = fileContent.trim();
+      return tt !== 'no-timing-file' ? tt : '';
     }
   } catch (error) {
     log.error(`Error getting timing file: ${error}`);
