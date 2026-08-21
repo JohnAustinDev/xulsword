@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Intent, Menu, MenuDivider, MenuItem } from '@blueprintjs/core';
+import { Intent, Menu, MenuDivider, MenuItem } from '@blueprintjs/core';
 import {
   Cell,
   Column,
@@ -11,6 +11,7 @@ import {
 } from '@blueprintjs/table';
 import { clone, localizeString, ofClass } from '../../../common.ts';
 import { addClass, topHandle } from './xul.tsx';
+import Icon from './icon.tsx';
 import { Box } from './boxes.tsx';
 import '@blueprintjs/table/lib/css/table.css';
 import './table.css';
@@ -250,7 +251,7 @@ export default class Table
         items.push([
           <MenuItem
             key={['sort-asc', dataColIndex].join('.')}
-            icon="sort-asc"
+            icon={<Icon icon="sort-asc"/>}
             onPointerDown={(e: React.PointerEvent) =>
               onRowsReordered('ascending', dataColIndex, e)
             }
@@ -258,7 +259,7 @@ export default class Table
           />,
           <MenuItem
             key={['sort-desc', dataColIndex].join('.')}
-            icon="sort-desc"
+            icon={<Icon icon="sort-desc"/>}
             onPointerDown={(e: React.PointerEvent) =>
               onRowsReordered('descending', dataColIndex, e)
             }
@@ -277,7 +278,7 @@ export default class Table
           items.push([
             <MenuItem
               key={['delete', dataColIndex].join('.')}
-              icon="delete"
+              icon={<Icon icon="delete"/>}
               text={heading}
               onPointerDown={() => {
                 columnHide(tableColIndex, tableColIndex);
@@ -301,7 +302,7 @@ export default class Table
             hideableItems.push(
               <MenuItem
                 key={['add', heading].join('.')}
-                icon={icon}
+                icon={<Icon icon={icon}/>}
                 text={text}
                 onPointerDown={() => {
                   columnHide(tcol, tableColIndex);

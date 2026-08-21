@@ -33,7 +33,6 @@ import Textbox from './components/libxul/textbox.tsx';
 
 // Global CSS imports
 import 'normalize.css/normalize.css';
-import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import './global-htm.css';
 

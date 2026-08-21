@@ -2,10 +2,14 @@ import React from 'react';
 import { Button as BPButton } from '@blueprintjs/core';
 import { keep } from '../../../common.ts';
 import { htmlAttribs } from './xul.tsx';
+import Icon from './icon.tsx';
 import './button.css';
 
-import type { ButtonProps as BPButtonProps } from '@blueprintjs/core';
+import type {
+  ButtonProps as BPButtonProps,
+} from '@blueprintjs/core';
 import type { XulProps } from './xul.tsx';
+import { IconOwnProps } from '@blueprintjs/core/lib/esm/components/icon/icon.js';
 
 // XUL button
 type ButtonProps = Omit<XulProps, 'align' | 'orient' | 'pack'> &
@@ -16,7 +20,7 @@ type ButtonProps = Omit<XulProps, 'align' | 'orient' | 'pack'> &
   };
 
 export default function Button(props: ButtonProps) {
-  const { checked, children, disabled, dlgType, fill } = props;
+  const { checked, children, disabled, dlgType, fill, icon, rightIcon } = props;
   const cls: string[] = ['button', checked !== false ? 'on' : 'off'];
   if (dlgType) cls.push(dlgType);
   if (fill) cls.push(`fill-${fill}`);
@@ -35,6 +39,13 @@ export default function Button(props: ButtonProps) {
     'text',
     'type',
   ] as const;
+  const renderForcedIcon = (iconProp: IconOwnProps['icon'] | undefined) => {
+    if (!iconProp) return undefined;
+    if (typeof iconProp === 'string') {
+      return <Icon icon={iconProp} size={20} />;
+    }
+    return iconProp;
+  };
   return (
     <div
       {...htmlAttribs(cls.join(' '), props)}
@@ -43,7 +54,12 @@ export default function Button(props: ButtonProps) {
         : {})}
     >
       <div className="button-box">
-        <BPButton {...keep(props, bpprops)} fill={!!fill}>
+        <BPButton
+          {...keep(props, bpprops)}
+          icon={renderForcedIcon(icon)}
+          rightIcon={renderForcedIcon(rightIcon)}
+          fill={!!fill}
+        >
           {children}
         </BPButton>
       </div>

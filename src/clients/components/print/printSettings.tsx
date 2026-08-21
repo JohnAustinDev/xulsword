@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Icon, Intent } from '@blueprintjs/core';
+import { Intent } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
 import analytics from '../../analytics.ts';
 import { clone, randomID } from '../../../common.ts';
@@ -17,6 +17,7 @@ import {
   doUntilDone,
 } from '../../common.ts';
 import log from '../../log.ts';
+import Icon from '../libxul/icon.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button.tsx';
 import Spacer from '../libxul/spacer.tsx';
@@ -763,7 +764,7 @@ export default class PrintSettings extends React.Component<
             </Hbox>
             <Vbox className="margins" pack="center" align="center">
               <Hbox align="center" pack="start">
-                <Icon icon="bring-data" />
+                <Icon icon="bring-data"/>
                 <Textbox
                   id="margins.top"
                   value={margins.top.toString()}
@@ -777,7 +778,7 @@ export default class PrintSettings extends React.Component<
               </Hbox>
               <Hbox>
                 <Hbox align="center" pack="start">
-                  <Icon icon="bring-data" />
+                  <Icon icon="bring-data"/>
                   <Textbox
                     id="margins.left"
                     value={margins.left.toString()}

@@ -1,0 +1,162 @@
+// Webpack aliases the bare '@blueprintjs/icons' specifier to this file (see
+// webpack.config.mjs). @blueprintjs/icons' own default entry point re-exports
+// its entire generated icon set (~680 icons, both the 16px and 20px path
+// data) via `export *` barrels that webpack cannot tree-shake, so importing
+// it at all - even for a single icon - pulls every icon of both sizes into
+// the bundle. This shim instead re-exports, from their own individual
+// modules, only the identifiers that @blueprintjs/core, @blueprintjs/table
+// and @blueprintjs/select actually import from '@blueprintjs/icons'.
+//
+// If a Blueprint upgrade adds a new such import elsewhere, webpack will warn
+// "export 'X' was not found in '@blueprintjs/icons'" and it needs to be
+// added below.
+
+export { IconSize } from '@blueprintjs/icons/lib/esm/iconTypes.js';
+export { SVGIconContainer } from '@blueprintjs/icons/lib/esm/svgIconContainer.js';
+export { Icons } from '@blueprintjs/icons/lib/esm/iconLoader.js';
+export { IconNames } from '@blueprintjs/icons/lib/esm/iconNames.js';
+export { BlueprintIcons_20 } from '@blueprintjs/icons/lib/esm/generated/20px/blueprint-icons-20.js';
+
+export { Add } from '@blueprintjs/icons/lib/esm/generated/components/add.js';
+export { AddColumnRight } from '@blueprintjs/icons/lib/esm/generated/components/add-column-right.js';
+export { Annotation } from '@blueprintjs/icons/lib/esm/generated/components/annotation.js';
+export { ArrowDown } from '@blueprintjs/icons/lib/esm/generated/components/arrow-down.js';
+export { ArrowLeft } from '@blueprintjs/icons/lib/esm/generated/components/arrow-left.js';
+export { ArrowRight } from '@blueprintjs/icons/lib/esm/generated/components/arrow-right.js';
+export { ArrowUp } from '@blueprintjs/icons/lib/esm/generated/components/arrow-up.js';
+export { Asterisk } from '@blueprintjs/icons/lib/esm/generated/components/asterisk.js';
+export { BringData } from '@blueprintjs/icons/lib/esm/generated/components/bring-data.js';
+export { Calendar } from '@blueprintjs/icons/lib/esm/generated/components/calendar.js';
+export { CaretDown } from '@blueprintjs/icons/lib/esm/generated/components/caret-down.js';
+export { CaretRight } from '@blueprintjs/icons/lib/esm/generated/components/caret-right.js';
+export { ChevronDown } from '@blueprintjs/icons/lib/esm/generated/components/chevron-down.js';
+export { ChevronLeft } from '@blueprintjs/icons/lib/esm/generated/components/chevron-left.js';
+export { ChevronRight } from '@blueprintjs/icons/lib/esm/generated/components/chevron-right.js';
+export { ChevronUp } from '@blueprintjs/icons/lib/esm/generated/components/chevron-up.js';
+export { Clipboard } from '@blueprintjs/icons/lib/esm/generated/components/clipboard.js';
+export { CloudDownload } from '@blueprintjs/icons/lib/esm/generated/components/cloud-download.js';
+export { Confirm } from '@blueprintjs/icons/lib/esm/generated/components/confirm.js';
+export { Cross } from '@blueprintjs/icons/lib/esm/generated/components/cross.js';
+export { Cut } from '@blueprintjs/icons/lib/esm/generated/components/cut.js';
+export { Delete } from '@blueprintjs/icons/lib/esm/generated/components/delete.js';
+export { Document } from '@blueprintjs/icons/lib/esm/generated/components/document.js';
+export { DoubleCaretVertical } from '@blueprintjs/icons/lib/esm/generated/components/double-caret-vertical.js';
+export { DoubleChevronDown } from '@blueprintjs/icons/lib/esm/generated/components/double-chevron-down.js';
+export { DoubleChevronLeft } from '@blueprintjs/icons/lib/esm/generated/components/double-chevron-left.js';
+export { DoubleChevronRight } from '@blueprintjs/icons/lib/esm/generated/components/double-chevron-right.js';
+export { DoubleChevronUp } from '@blueprintjs/icons/lib/esm/generated/components/double-chevron-up.js';
+export { DragHandleHorizontal } from '@blueprintjs/icons/lib/esm/generated/components/drag-handle-horizontal.js';
+export { DragHandleVertical } from '@blueprintjs/icons/lib/esm/generated/components/drag-handle-vertical.js';
+export { DrawerLeft } from '@blueprintjs/icons/lib/esm/generated/components/drawer-left.js';
+export { Duplicate } from '@blueprintjs/icons/lib/esm/generated/components/duplicate.js';
+export { Error } from '@blueprintjs/icons/lib/esm/generated/components/error.js';
+export { Export } from '@blueprintjs/icons/lib/esm/generated/components/export.js';
+export { FolderNew } from '@blueprintjs/icons/lib/esm/generated/components/folder-new.js';
+export { FolderOpen } from '@blueprintjs/icons/lib/esm/generated/components/folder-open.js';
+export { FolderShared } from '@blueprintjs/icons/lib/esm/generated/components/folder-shared.js';
+export { Font } from '@blueprintjs/icons/lib/esm/generated/components/font.js';
+export { Help } from '@blueprintjs/icons/lib/esm/generated/components/help.js';
+export { Import } from '@blueprintjs/icons/lib/esm/generated/components/import.js';
+export { InfoSign } from '@blueprintjs/icons/lib/esm/generated/components/info-sign.js';
+export { KeyCommand } from '@blueprintjs/icons/lib/esm/generated/components/key-command.js';
+export { KeyControl } from '@blueprintjs/icons/lib/esm/generated/components/key-control.js';
+export { KeyDelete } from '@blueprintjs/icons/lib/esm/generated/components/key-delete.js';
+export { KeyEnter } from '@blueprintjs/icons/lib/esm/generated/components/key-enter.js';
+export { KeyOption } from '@blueprintjs/icons/lib/esm/generated/components/key-option.js';
+export { KeyShift } from '@blueprintjs/icons/lib/esm/generated/components/key-shift.js';
+export { Link } from '@blueprintjs/icons/lib/esm/generated/components/link.js';
+export { Manual } from '@blueprintjs/icons/lib/esm/generated/components/manual.js';
+export { MenuClosed } from '@blueprintjs/icons/lib/esm/generated/components/menu-closed.js';
+export { MenuOpen } from '@blueprintjs/icons/lib/esm/generated/components/menu-open.js';
+export { More } from '@blueprintjs/icons/lib/esm/generated/components/more.js';
+export { OneColumn } from '@blueprintjs/icons/lib/esm/generated/components/one-column.js';
+export { OpenApplication } from '@blueprintjs/icons/lib/esm/generated/components/open-application.js';
+export { Plus } from '@blueprintjs/icons/lib/esm/generated/components/plus.js';
+export { Print } from '@blueprintjs/icons/lib/esm/generated/components/print.js';
+export { Properties } from '@blueprintjs/icons/lib/esm/generated/components/properties.js';
+export { Redo } from '@blueprintjs/icons/lib/esm/generated/components/redo.js';
+export { RemoveColumnRight } from '@blueprintjs/icons/lib/esm/generated/components/remove-column-right.js';
+export { Search } from '@blueprintjs/icons/lib/esm/generated/components/search.js';
+export { SmallCross } from '@blueprintjs/icons/lib/esm/generated/components/small-cross.js';
+export { SmallTick } from '@blueprintjs/icons/lib/esm/generated/components/small-tick.js';
+export { SortAsc } from '@blueprintjs/icons/lib/esm/generated/components/sort-asc.js';
+export { SortDesc } from '@blueprintjs/icons/lib/esm/generated/components/sort-desc.js';
+export { SymbolCross } from '@blueprintjs/icons/lib/esm/generated/components/symbol-cross.js';
+export { Tick } from '@blueprintjs/icons/lib/esm/generated/components/tick.js';
+export { TwoColumns } from '@blueprintjs/icons/lib/esm/generated/components/two-columns.js';
+export { Undo } from '@blueprintjs/icons/lib/esm/generated/components/undo.js';
+export { VolumeUp } from '@blueprintjs/icons/lib/esm/generated/components/volume-up.js';
+export { WarningSign } from '@blueprintjs/icons/lib/esm/generated/components/warning-sign.js';
+export { WidgetHeader } from '@blueprintjs/icons/lib/esm/generated/components/widget-header.js';
+
+export { default as AddPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/add.js';
+export { default as AddColumnRightPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/add-column-right.js';
+export { default as AnnotationPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/annotation.js';
+export { default as ArrowDownPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/arrow-down.js';
+export { default as ArrowLeftPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/arrow-left.js';
+export { default as ArrowRightPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/arrow-right.js';
+export { default as ArrowUpPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/arrow-up.js';
+export { default as AsteriskPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/asterisk.js';
+export { default as BringDataPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/bring-data.js';
+export { default as CalendarPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/calendar.js';
+export { default as CaretDownPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/caret-down.js';
+export { default as CaretRightPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/caret-right.js';
+export { default as ChevronDownPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/chevron-down.js';
+export { default as ChevronLeftPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/chevron-left.js';
+export { default as ChevronRightPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/chevron-right.js';
+export { default as ChevronUpPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/chevron-up.js';
+export { default as ClipboardPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/clipboard.js';
+export { default as CloudDownloadPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/cloud-download.js';
+export { default as ConfirmPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/confirm.js';
+export { default as CrossPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/cross.js';
+export { default as CutPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/cut.js';
+export { default as DeletePath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/delete.js';
+export { default as DocumentPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/document.js';
+export { default as DoubleCaretVerticalPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/double-caret-vertical.js';
+export { default as DoubleChevronDownPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/double-chevron-down.js';
+export { default as DoubleChevronLeftPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/double-chevron-left.js';
+export { default as DoubleChevronRightPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/double-chevron-right.js';
+export { default as DoubleChevronUpPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/double-chevron-up.js';
+export { default as DragHandleHorizontalPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/drag-handle-horizontal.js';
+export { default as DragHandleVerticalPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/drag-handle-vertical.js';
+export { default as DrawerLeftPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/drawer-left.js';
+export { default as DuplicatePath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/duplicate.js';
+export { default as ErrorPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/error.js';
+export { default as ExportPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/export.js';
+export { default as FolderNewPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/folder-new.js';
+export { default as FolderOpenPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/folder-open.js';
+export { default as FolderSharedPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/folder-shared.js';
+export { default as FontPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/font.js';
+export { default as HelpPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/help.js';
+export { default as ImportPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/import.js';
+export { default as InfoSignPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/info-sign.js';
+export { default as KeyCommandPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/key-command.js';
+export { default as KeyControlPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/key-control.js';
+export { default as KeyDeletePath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/key-delete.js';
+export { default as KeyEnterPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/key-enter.js';
+export { default as KeyOptionPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/key-option.js';
+export { default as KeyShiftPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/key-shift.js';
+export { default as LinkPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/link.js';
+export { default as ManualPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/manual.js';
+export { default as MenuClosedPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/menu-closed.js';
+export { default as MenuOpenPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/menu-open.js';
+export { default as MorePath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/more.js';
+export { default as OneColumnPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/one-column.js';
+export { default as OpenApplicationPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/open-application.js';
+export { default as PlusPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/plus.js';
+export { default as PrintPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/print.js';
+export { default as PropertiesPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/properties.js';
+export { default as RedoPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/redo.js';
+export { default as RemoveColumnRightPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/remove-column-right.js';
+export { default as SearchPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/search.js';
+export { default as SmallCrossPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/small-cross.js';
+export { default as SmallTickPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/small-tick.js';
+export { default as SortAscPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/sort-asc.js';
+export { default as SortDescPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/sort-desc.js';
+export { default as SymbolCrossPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/symbol-cross.js';
+export { default as TickPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/tick.js';
+export { default as TwoColumnsPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/two-columns.js';
+export { default as UndoPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/undo.js';
+export { default as VolumeUpPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/volume-up.js';
+export { default as WarningSignPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/warning-sign.js';
+export { default as WidgetHeaderPath } from '@blueprintjs/icons/lib/esm/generated/20px/paths/widget-header.js';

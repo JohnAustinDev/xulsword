@@ -1,5 +1,4 @@
 import React from 'react';
-import { Icon } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
 import { clone, stringHash, dString } from '../../../common.ts';
 import C from '../../../constant.ts';
@@ -24,6 +23,7 @@ import Spacer from '../libxul/spacer.tsx';
 import Textbox from '../libxul/textbox.tsx';
 import SelectOR from '../libxul/selectOR.tsx';
 import SelectVK from '../libxul/selectVK.tsx';
+import Icon from '../libxul/icon.tsx';
 import AudioPlayer from '../audioPlayer/audioPlayer.tsx';
 import Viewport from '../viewport/viewport.tsx';
 import viewportParentH, {
@@ -423,7 +423,7 @@ export default class Xulsword
             <Button
               id="addcolumn"
               disabled={panels.length >= (window as any).browserMaxPanels}
-              icon={<Icon icon="add-column-right" />}
+              icon="add-column-right"
               onPointerDown={handler}
               title={GI.i18n.t(
                 '',
@@ -435,7 +435,7 @@ export default class Xulsword
             <Button
               id="removecolumn"
               disabled={panels.length <= 1}
-              icon={<Icon icon="remove-column-right" />}
+              icon="remove-column-right"
               onPointerDown={handler}
               title={GI.i18n.t('', renderPromise, 'Remove a column of text.', {
                 ns: 'bibleBrowser',
@@ -446,7 +446,7 @@ export default class Xulsword
         <Button
           id="headings"
           checked={show.headings}
-          icon={<Icon icon="widget-header" />}
+          icon="widget-header"
           onPointerDown={handler}
           title={GI.i18n.t('', renderPromise, 'headingsButton.tooltip')}
           disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
@@ -454,7 +454,7 @@ export default class Xulsword
         <Button
           id="dictlinks"
           checked={show.dictlinks}
-          icon={<Icon icon="link" />}
+          icon="link"
           onPointerDown={handler}
           title={GI.i18n.t('', renderPromise, 'dictButton.tooltip')}
           disabled={
@@ -466,7 +466,7 @@ export default class Xulsword
         <Button
           id="footnotes"
           checked={show.footnotes}
-          icon={<Icon icon="asterisk" />}
+          icon="asterisk"
           onPointerDown={handler}
           title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
           disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
@@ -475,7 +475,7 @@ export default class Xulsword
           <Button
             id="crossrefs"
             checked={show.crossrefs}
-            icon={<Icon icon="symbol-cross" />}
+            icon="symbol-cross"
             onPointerDown={handler}
             title={GI.i18n.t('', renderPromise, 'crossrefsButton.tooltip')}
             disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}

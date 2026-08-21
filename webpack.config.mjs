@@ -225,6 +225,20 @@ export default function (opts) {
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
         modules: [srcPath, 'node_modules'],
         fallback: { path: false },
+        alias: {
+          // @blueprintjs/icons' default entry point (its package.json "main"
+          // and "module" fields) resolves to a generated barrel that
+          // `export *`s its entire icon set for both the 16px and 20px icon
+          // grids. Those barrel re-exports can't be tree-shaken, so anything
+          // that imports from bare '@blueprintjs/icons' - including
+          // @blueprintjs/core itself - pulls every icon of both sizes into
+          // the bundle. Redirect it to a hand-written shim that re-exports
+          // only what's actually used, each from its own small module.
+          '@blueprintjs/icons$': path.join(
+            srcPath,
+            'clients/components/libxul/blueprintIconsShim.ts',
+          ),
+        },
       },
 
       optimization: {
@@ -375,6 +389,25 @@ export default function (opts) {
               contextRegExp: /adm-zip/,
             })
           : null,
+
+        // @blueprintjs/core components that render an icon from a raw name
+        // string (Tag, Alert, Toast, etc.) rather than through our own Icon
+        // (./src/clients/components/libxul/icon.tsx) bypass the
+        // '@blueprintjs/icons' alias above entirely: they call that
+        // package's Icons.load(), whose default loader dynamically imports
+        // the *entire* generated 16px or 20px icon path barrel (~680 icons
+        // each, un-tree-shakeable) depending on the requested icon size.
+        // Redirect both barrels to a shim that re-exports only the icons
+        // already curated in blueprintIconsShim.ts, so neither full barrel
+        // ends up in the bundle. This app only ships the 20px grid, so 16px
+        // requests are served the same path data as 20px ones.
+        new webpack.NormalModuleReplacementPlugin(
+          /@blueprintjs[\\/]icons[\\/]lib[\\/]esm[\\/]generated[\\/](?:16|20)px[\\/]paths(?:[\\/]index\.js)?$/,
+          path.join(
+            srcPath,
+            'clients/components/libxul/blueprintIconPathsShim.ts',
+          ),
+        ),
 
         // Note: you can't analyze a preload file.
         build !== 'preload'
