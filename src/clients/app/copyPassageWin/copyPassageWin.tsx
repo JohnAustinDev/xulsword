@@ -1,5 +1,5 @@
 import React from 'react';
-import { Intent } from '@blueprintjs/core';
+import { Intent, OverlayToaster, Position } from '@blueprintjs/core';
 import VerseKey from '../../../verseKey.ts';
 import { sanitizeHTML } from '../../../common.ts';
 import { GE as G, GI } from '../../G.ts';
@@ -11,7 +11,6 @@ import {
   getMaxVerse,
   getStatePref,
   setStatePref,
-  topToaster,
 } from '../../common.ts';
 import RenderPromise, {
   RenderPromiseComponent,
@@ -113,7 +112,12 @@ export default class CopyPassageWin
   }
 
   async addToast(message: ToastProps) {
-    (await topToaster).show(message);
+    (
+      await OverlayToaster.create({
+        canEscapeKeyClear: true,
+        position: Position.TOP,
+      })
+    ).show(message);
   }
 
   passageToClipboard() {

@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Intent } from '@blueprintjs/core';
+import { Intent, OverlayToaster, Position } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
 import analytics from '../../analytics.ts';
 import { clone, randomID } from '../../../common.ts';
@@ -12,7 +12,6 @@ import {
   rootRenderPromise,
   setStatePref,
   windowArguments,
-  topToaster,
   iframeAutoHeight,
   doUntilDone,
 } from '../../common.ts';
@@ -563,7 +562,12 @@ export default class PrintSettings extends React.Component<
   }
 
   async addToast(message: ToastProps) {
-    (await topToaster).show(message);
+    (
+      await OverlayToaster.create({
+        canEscapeKeyClear: true,
+        position: Position.TOP,
+      })
+    ).show(message);
   }
 
   scrollToPage(page?: number) {
@@ -764,7 +768,7 @@ export default class PrintSettings extends React.Component<
             </Hbox>
             <Vbox className="margins" pack="center" align="center">
               <Hbox align="center" pack="start">
-                <Icon icon="bring-data"/>
+                <Icon icon="bring-data" />
                 <Textbox
                   id="margins.top"
                   value={margins.top.toString()}
@@ -778,7 +782,7 @@ export default class PrintSettings extends React.Component<
               </Hbox>
               <Hbox>
                 <Hbox align="center" pack="start">
-                  <Icon icon="bring-data"/>
+                  <Icon icon="bring-data" />
                   <Textbox
                     id="margins.left"
                     value={margins.left.toString()}

@@ -1,5 +1,10 @@
 import React from 'react';
-import { Intent, ProgressBar } from '@blueprintjs/core';
+import {
+  Intent,
+  OverlayToaster,
+  Position,
+  ProgressBar,
+} from '@blueprintjs/core';
 import {
   downloadKey,
   isRepoLocal,
@@ -17,7 +22,6 @@ import {
   getLangReadable,
   setStatePref,
   windowArguments,
-  topToaster,
 } from '../../../common.ts';
 import { addClass } from '../../../components/libxul/xul.tsx';
 import Button from '../../../components/libxul/button.tsx';
@@ -717,7 +721,12 @@ export default class ModuleManager
   }
 
   async addToast(message: ToastProps) {
-    (await topToaster).show(message);
+    (
+      await OverlayToaster.create({
+        canEscapeKeyClear: true,
+        position: Position.TOP,
+      })
+    ).show(message);
   }
 
   render() {
