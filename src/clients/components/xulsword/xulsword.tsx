@@ -286,6 +286,9 @@ export default class Xulsword
         ? 'left'
         : 'right';
 
+    const webAppIconSize = Build.isWebApp ? 28
+     : C.UI.BluePrint.IconSize.LARGE;
+
     const historyComponent = (
       <Hbox id="historyButtons" pack="start" align="center">
         <Box
@@ -384,9 +387,8 @@ export default class Xulsword
       <Button
         id="choosermenu"
         checked={showChooser}
-        icon={
-          <Icon icon={showChooser ? 'menu-closed' : 'menu-open'} size={28} />
-        }
+        icon={showChooser ? 'menu-closed' : 'menu-open'}
+        iconSize={webAppIconSize}
         onPointerDown={handler}
         title={GI.i18n.t(
           '',
@@ -403,7 +405,8 @@ export default class Xulsword
           <Button
             id="printPassage"
             disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
-            icon={<Icon icon="print" />}
+            icon="print"
+            iconSize={webAppIconSize}
             onPointerDown={() => {
               setStatePref('prefs', 'printPassage', null, {
                 chapters: { ...location, vkMod },
@@ -424,6 +427,7 @@ export default class Xulsword
               id="addcolumn"
               disabled={panels.length >= (window as any).browserMaxPanels}
               icon="add-column-right"
+              iconSize={webAppIconSize}
               onPointerDown={handler}
               title={GI.i18n.t(
                 '',
@@ -436,6 +440,7 @@ export default class Xulsword
               id="removecolumn"
               disabled={panels.length <= 1}
               icon="remove-column-right"
+              iconSize={webAppIconSize}
               onPointerDown={handler}
               title={GI.i18n.t('', renderPromise, 'Remove a column of text.', {
                 ns: 'bibleBrowser',
@@ -447,6 +452,7 @@ export default class Xulsword
           id="headings"
           checked={show.headings}
           icon="widget-header"
+          iconSize={webAppIconSize}
           onPointerDown={handler}
           title={GI.i18n.t('', renderPromise, 'headingsButton.tooltip')}
           disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
@@ -455,6 +461,7 @@ export default class Xulsword
           id="dictlinks"
           checked={show.dictlinks}
           icon="link"
+          iconSize={webAppIconSize}
           onPointerDown={handler}
           title={GI.i18n.t('', renderPromise, 'dictButton.tooltip')}
           disabled={
@@ -467,6 +474,7 @@ export default class Xulsword
           id="footnotes"
           checked={show.footnotes}
           icon="asterisk"
+          iconSize={webAppIconSize}
           onPointerDown={handler}
           title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
           disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
@@ -476,6 +484,7 @@ export default class Xulsword
             id="crossrefs"
             checked={show.crossrefs}
             icon="symbol-cross"
+            iconSize={webAppIconSize}
             onPointerDown={handler}
             title={GI.i18n.t('', renderPromise, 'crossrefsButton.tooltip')}
             disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}

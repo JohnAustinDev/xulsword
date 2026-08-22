@@ -75,6 +75,9 @@ const C = {
 
   // xulsword UI constants
   UI: {
+    BluePrint: {
+      IconSize: { LARGE: 20, SMALL: 16 },
+    },
     WebApp: {
       narrowW: 300, // px up to which is considered narrow screen
       mobileW: 767, // px up to which is considered mobile

@@ -1,26 +1,36 @@
 import React from 'react';
 import { Button as BPButton } from '@blueprintjs/core';
 import { keep } from '../../../common.ts';
+import C from '../../../constant.ts';
 import { htmlAttribs } from './xul.tsx';
 import Icon from './icon.tsx';
 import './button.css';
 
-import type {
-  ButtonProps as BPButtonProps,
-} from '@blueprintjs/core';
+import type { ButtonProps as BPButtonProps } from '@blueprintjs/core';
+import type { BlueprintIcons_20Id } from '@blueprintjs/icons/lib/esm/generated/20px/blueprint-icons-20.d.ts';
 import type { XulProps } from './xul.tsx';
-import { IconOwnProps } from '@blueprintjs/core/lib/esm/components/icon/icon.js';
 
 // XUL button
 type ButtonProps = Omit<XulProps, 'align' | 'orient' | 'pack'> &
-  Omit<BPButtonProps, 'fill'> & {
+  Omit<BPButtonProps, 'fill' | 'icon'> & {
+    icon?: BlueprintIcons_20Id;
+    iconSize?: number; // icon size in px
     fill?: 'xy' | 'x' | 'y'; // to fill container in x, y or both directions
     checked?: boolean; // only does button CSS styling
     dlgType?: string; // only does button CSS styling
   };
 
 export default function Button(props: ButtonProps) {
-  const { checked, children, disabled, dlgType, fill, icon, rightIcon } = props;
+  const {
+    checked,
+    children,
+    disabled,
+    dlgType,
+    fill,
+    icon,
+    rightIcon,
+    iconSize,
+  } = props;
   const cls: string[] = ['button', checked !== false ? 'on' : 'off'];
   if (dlgType) cls.push(dlgType);
   if (fill) cls.push(`fill-${fill}`);
@@ -39,13 +49,8 @@ export default function Button(props: ButtonProps) {
     'text',
     'type',
   ] as const;
-  const renderForcedIcon = (iconProp: IconOwnProps['icon'] | undefined) => {
-    if (!iconProp) return undefined;
-    if (typeof iconProp === 'string') {
-      return <Icon icon={iconProp} size={20} />;
-    }
-    return iconProp;
-  };
+  const size = iconSize ?? C.UI.BluePrint.IconSize.LARGE;
+
   return (
     <div
       {...htmlAttribs(cls.join(' '), props)}
@@ -56,8 +61,8 @@ export default function Button(props: ButtonProps) {
       <div className="button-box">
         <BPButton
           {...keep(props, bpprops)}
-          icon={renderForcedIcon(icon)}
-          rightIcon={renderForcedIcon(rightIcon)}
+          icon={icon && <Icon icon={icon} size={size} />}
+          rightIcon={rightIcon && <Icon icon={rightIcon} size={size} />}
           fill={!!fill}
         >
           {children}

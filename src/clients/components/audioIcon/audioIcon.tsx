@@ -1,4 +1,5 @@
 import React from 'react';
+import C from '../../../constant.ts';
 import Icon from '../libxul/icon.tsx';
 import { audioSelections } from '../../common.ts';
 import { G } from '../../G.ts';
@@ -20,6 +21,7 @@ export default function audioIcon(
     e: React.SyntheticEvent,
   ) => void,
   renderPromise: RenderPromise,
+  size = C.UI.BluePrint.IconSize.LARGE
 ): JSX.Element | null {
   if (swordModule && swordModule in G.Tab) {
     const selections = audioSelections(
@@ -44,7 +46,7 @@ export default function audioIcon(
             audioHandler(selections[0]?.selection ?? null, e);
           }}
         >
-          <Icon icon="volume-up" />
+          <Icon icon="volume-up" size={size}/>
         </div>
       );
     }
