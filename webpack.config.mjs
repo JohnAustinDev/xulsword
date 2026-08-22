@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import * as sass from 'sass';
 import CompressionPlugin from 'compression-webpack-plugin';
 import projectPaths from './scripts/projectPaths.mjs';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
@@ -238,6 +239,24 @@ export default function (opts) {
             srcPath,
             'clients/components/libxul/blueprintIconsShim.ts',
           ),
+          // bibleBrowser.tsx and widgets.tsx (via controller.tsx) only render
+          // a small subset of Blueprint's components, but the compiled
+          // '@blueprintjs/core/lib/css/blueprint.css' bundles every
+          // component's styles as one static file with no way to tree-shake
+          // it. Redirect that import, for the webappClients build only, to a
+          // hand-curated Sass file that assembles just the component
+          // partials actually used (see blueprintSubset.scss for how that
+          // set was determined and how to keep it up to date). The
+          // appClients (Electron) build keeps the full compiled CSS since
+          // its windows use many more Blueprint components.
+          ...(build === 'webappClients'
+            ? {
+                '@blueprintjs/core/lib/css/blueprint.css$': path.join(
+                  srcPath,
+                  'clients/webapp/blueprintSubset.scss',
+                ),
+              }
+            : {}),
         },
       },
 
@@ -340,6 +359,14 @@ export default function (opts) {
             sideEffects: false,
           },
           { test: /\.css$/, use: [MiniCssExtractPlugin.loader, 'css-loader'] },
+          {
+            test: /\.scss$/,
+            use: [
+              MiniCssExtractPlugin.loader,
+              'css-loader',
+              { loader: 'sass-loader', options: { implementation: sass } },
+            ],
+          },
           ...useFileLoader.map((ext) => {
             return { test: new RegExp(`\\.${ext}$`), use: 'file-loader' };
           }),

@@ -1,0 +1,43 @@
+// Replaces the full @blueprintjs/core/lib/css/blueprint.css (~520KB) for the
+// webappClients build. That compiled stylesheet includes every Blueprint
+// component (menus, popovers, tags, tables, sliders, tabs, etc.), but
+// bibleBrowser.tsx and widgets.tsx only render a small subset of them.
+// Blueprint's classnames (e.g. "bp6-button") are assembled at runtime from a
+// namespace variable rather than ever appearing as literal strings in source
+// or compiled JS, so a content-scanning tool (PurgeCSS and similar) cannot
+// determine which selectors are actually used - it would delete all of them.
+// This file is curated by hand instead, verified against the components that
+// actually survive tree-shaking in the webappClients bundle (confirmed with
+// webpack-bundle-analyzer's report.html for that build). If bibleBrowser or
+// widgets start using another Blueprint component, its partial needs to be
+// added below or that component's styling will silently be missing.
+@import '@blueprintjs/colors/lib/scss/colors';
+@import '@blueprintjs/core/src/common/variables';
+@import '@blueprintjs/core/src/common/variables-extended';
+@import '@blueprintjs/core/src/common/mixins';
+
+@import '@blueprintjs/core/src/reset';
+
+// typography.scss extends %html-table (from the HtmlTable component's
+// partial, not imported here since HtmlTable isn't used) to style bare
+// <table> elements inside a ".bp6-running-text" container. That class is
+// never applied anywhere in this app, so the extend target only needs to
+// exist to satisfy Sass - stub it empty rather than pulling in the unused
+// html-table styles.
+%html-table {
+}
+@import '@blueprintjs/core/src/typography';
+@import '@blueprintjs/core/src/accessibility/focus-states';
+@import '@blueprintjs/core/src/dark-theme';
+
+@import '@blueprintjs/core/src/components/button/button';
+@import '@blueprintjs/core/src/components/button/button-group';
+@import '@blueprintjs/core/src/components/collapse/collapse';
+@import '@blueprintjs/core/src/components/dialog/dialog';
+@import '@blueprintjs/core/src/components/icon/icon';
+@import '@blueprintjs/core/src/components/overlay/overlay';
+@import '@blueprintjs/core/src/components/portal/portal';
+@import '@blueprintjs/core/src/components/progress-bar/progress-bar';
+@import '@blueprintjs/core/src/components/spinner/spinner';
+@import '@blueprintjs/core/src/components/toast/toast';
+@import '@blueprintjs/core/src/components/tree/tree';
