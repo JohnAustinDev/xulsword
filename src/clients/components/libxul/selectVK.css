@@ -15,7 +15,7 @@
 .selectvk .vk-verse select,
 .selectvk .vk-lastchapter select,
 .selectvk .vk-lastverse select {
-  width: calc(3em + 4px);
+  min-width: calc(3em + 4px);
 }
 
 .selectvk > *:not(:first-child) {
