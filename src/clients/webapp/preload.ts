@@ -8,11 +8,11 @@ import type { Socket } from 'socket.io-client';
 // Electron's ipcRenderer module must be replaced by a custom Inter Process
 // Communication object, which uses socket.io instead.
 window.IPC = getIPC({
-  send: function(channel: string, ...args: unknown[]) {
+  send: function (channel: string, ...args: unknown[]) {
     if (socket) socket.emit(channel, args, () => {});
     else throw new Error('No socket connection.');
   },
-  invoke: async function(channel: string, ...args: unknown[]) {
+  invoke: async function (channel: string, ...args: unknown[]) {
     return await new Promise((resolve, reject) => {
       if (socket)
         socket.timeout(10000).emit(channel, args, (er: any, resp: any) => {
@@ -26,10 +26,10 @@ window.IPC = getIPC({
   // thread should never be blocked for any length of time. Therefore data
   // must either be preloaded into the cache, or else asynchronous calls
   // must be used.
-  sendSync: function(_channel: string, ..._args: unknown[]): null {
+  sendSync: function (_channel: string, ..._args: unknown[]): null {
     return null;
   },
-  on: function(channel: string, strippedfunc: (...args: any[]) => unknown) {
+  on: function (channel: string, strippedfunc: (...args: any[]) => unknown) {
     if (socket) socket.on(channel, strippedfunc);
     else throw new Error('No socket connection.');
     return undefined as unknown as Electron.IpcRenderer;
@@ -43,7 +43,7 @@ window.IPC = getIPC({
     } else throw new Error('No socket connection.');
     return undefined as unknown as Electron.IpcRenderer;
   },
-  removeListener: function(
+  removeListener: function (
     channel: string,
     strippedfunc: (...args: any[]) => unknown,
   ) {

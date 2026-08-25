@@ -251,7 +251,7 @@ export default class Table
         items.push([
           <MenuItem
             key={['sort-asc', dataColIndex].join('.')}
-            icon={<Icon icon="sort-asc"/>}
+            icon={<Icon icon="sort-asc" />}
             onPointerDown={(e: React.PointerEvent) =>
               onRowsReordered('ascending', dataColIndex, e)
             }
@@ -259,7 +259,7 @@ export default class Table
           />,
           <MenuItem
             key={['sort-desc', dataColIndex].join('.')}
-            icon={<Icon icon="sort-desc"/>}
+            icon={<Icon icon="sort-desc" />}
             onPointerDown={(e: React.PointerEvent) =>
               onRowsReordered('descending', dataColIndex, e)
             }
@@ -278,7 +278,7 @@ export default class Table
           items.push([
             <MenuItem
               key={['delete', dataColIndex].join('.')}
-              icon={<Icon icon="delete"/>}
+              icon={<Icon icon="delete" />}
               text={heading}
               onPointerDown={() => {
                 columnHide(tableColIndex, tableColIndex);
@@ -302,7 +302,7 @@ export default class Table
             hideableItems.push(
               <MenuItem
                 key={['add', heading].join('.')}
-                icon={<Icon icon={icon}/>}
+                icon={<Icon icon={icon} />}
                 text={text}
                 onPointerDown={() => {
                   columnHide(tcol, tableColIndex);

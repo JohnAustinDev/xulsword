@@ -21,7 +21,7 @@ export default function audioIcon(
     e: React.SyntheticEvent,
   ) => void,
   renderPromise: RenderPromise,
-  size = C.UI.BluePrint.IconSize.LARGE
+  size = C.UI.BluePrint.IconSize.LARGE,
 ): JSX.Element | null {
   if (swordModule && swordModule in G.Tab) {
     const selections = audioSelections(
@@ -46,7 +46,7 @@ export default function audioIcon(
             audioHandler(selections[0]?.selection ?? null, e);
           }}
         >
-          <Icon icon="volume-up" size={size}/>
+          <Icon icon="volume-up" size={size} />
         </div>
       );
     }

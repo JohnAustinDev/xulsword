@@ -286,8 +286,7 @@ export default class Xulsword
         ? 'left'
         : 'right';
 
-    const webAppIconSize = Build.isWebApp ? 28
-     : C.UI.BluePrint.IconSize.LARGE;
+    const webAppIconSize = Build.isWebApp ? 28 : C.UI.BluePrint.IconSize.LARGE;
 
     const historyComponent = (
       <Hbox id="historyButtons" pack="start" align="center">

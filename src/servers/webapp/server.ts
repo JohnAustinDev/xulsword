@@ -9,6 +9,7 @@ import log from 'electron-log';
 import i18nBackendMain from 'i18next-fs-backend';
 import https from 'https';
 import http from 'http';
+import crypto from 'node:crypto';
 import fs from 'fs';
 import { GI } from './G.ts';
 import {
@@ -29,7 +30,7 @@ import type { Socket } from 'socket.io';
 import type { LogLevel } from 'electron-log';
 import type { GCallType, ServerWait } from '../../type.ts';
 
-// A NodeJS server that provides responses for xulsword web apps.
+// A NodeJS server that uses socket.io to communicate with xulsword web apps.
 
 Dirs.init();
 
@@ -104,6 +105,8 @@ setInterval(() => {
   }
 }, 5000);
 
+// Create the HTTP server, or both the HTTPS and HTTP3 servers (for web-
+// transport connections)
 const sslkey = process.env.SERVER_KEY_PEM;
 const sslcrt = process.env.SERVER_CRT_PEM;
 let server;
@@ -113,13 +116,17 @@ if (sslkey && sslcrt) {
     cert: fs.readFileSync(sslcrt),
     enableTrace: false, // set to true to debug connection
   });
+  log.info(`Initialized SSL server.`);
 } else {
   server = http.createServer();
+  log.info(`Initialized HTTP server (insecure).`);
 }
 
 let origin: string | string[] = process.env.WEBAPP_CORS_ORIGIN || '';
 if (typeof origin === 'string' && origin.includes(','))
   origin = origin.split(/\s*,\s*/);
+
+// Instantiate the socket.io server
 const io = new Server(server, {
   serveClient: false,
   cors: {
@@ -132,7 +139,8 @@ const MemoryStore = memorystore(session);
 io.engine.use(helmet());
 io.engine.use(
   session({
-    secret: 'fk95DSfgj7fUkldf',
+    secret:
+      process.env.IOSESSION_SECRET || crypto.randomBytes(32).toString('hex'),
     name: 'ibtxulsword',
     resave: false,
     saveUninitialized: false,

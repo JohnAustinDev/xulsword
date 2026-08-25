@@ -469,7 +469,7 @@ function BookGroupItem(
           undefined,
           onAudioClick,
           renderPromise,
-          C.UI.BluePrint.IconSize.SMALL
+          C.UI.BluePrint.IconSize.SMALL,
         )}
 
       <div key="charrow" className="charrow" />
@@ -546,7 +546,7 @@ function ChapterMenu(props: {
                 ch,
                 onAudioClick,
                 renderPromise,
-                C.UI.BluePrint.IconSize.SMALL
+                C.UI.BluePrint.IconSize.SMALL,
               )}
           </div>,
         );

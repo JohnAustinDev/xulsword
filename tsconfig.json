@@ -13,6 +13,7 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "nodenext",
+    "moduleResolution": "nodenext",
     "declaration": true,
     "declarationMap": true,
     "jsx": "react",
