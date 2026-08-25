@@ -482,7 +482,7 @@ export function parseTimingFile(timing: string): {
     separators:
       lines
         .find((l) => l.startsWith('\\separators'))
-        ?.replace(/^\\separators\s+(\S+)\s*$/, '$1') ?? '.?!:,',
+        ?.replace(/^\\separators[ ]+(.*?)[ ]*$/, '$1') ?? '.?!:,',
   };
   const { level } = settings;
 
@@ -492,7 +492,7 @@ export function parseTimingFile(timing: string): {
   const times: (TimingEntry | null)[] = lines.filter(Boolean).map((line) => {
     if (line.startsWith('\\')) return null;
 
-    const parts = line.trim().split(/\s+/);
+    const parts = line.trim().split(/[ \t]+/);
 
     // Ensure the line has at least start and end times
     if (parts.length < 2) {

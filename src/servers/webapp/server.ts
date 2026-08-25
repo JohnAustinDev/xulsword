@@ -116,6 +116,11 @@ if (sslkey && sslcrt) {
     cert: fs.readFileSync(sslcrt),
     enableTrace: false, // set to true to debug connection
   });
+  // NOTE: The possibility of adding web-transport protocol was examined
+  // carefully but is unnecessary for data with small file transfers, plus
+  // would require difficult configuration with compilation from source. Even
+  // then it would perform WITHOUT the few web-transport benefits, since
+  // socket.io WILL NOT utilize them (concurrent threads, non-blocking etc.).
   log.info(`Initialized SSL server.`);
 } else {
   server = http.createServer();

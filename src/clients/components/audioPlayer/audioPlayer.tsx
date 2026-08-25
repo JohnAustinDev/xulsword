@@ -86,7 +86,11 @@ export default function AudioPlayer(props: {
       } else times = TimingFetched[iafTiming];
     } else if (iafTiming) {
       // Otherwise iafTiming is the raw timing.
-      times = parseTimingFile(iafTiming);
+      times =
+        iafTiming in TimingFetched && TimingFetched[iafTiming]
+          ? TimingFetched[iafTiming]
+          : parseTimingFile(iafTiming);
+      TimingFetched[iafTiming] = times;
     }
     if (times && diff(timing, times)) {
       xulswordState((prevState) => {
