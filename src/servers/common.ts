@@ -46,8 +46,8 @@ import type {
   SwordFeatureMods,
   XulswordFeatureMods,
   BookGroupType,
-  AudioPlayerSelectionVK,
-  AudioPlayerSelectionGB,
+  AudioPlayerFileVK,
+  AudioPlayerFileGB,
   ModulesCache,
   TreeNodeInfoPref,
   AudioPath,
@@ -1001,7 +1001,7 @@ export function inlineFile(
 // be retreived from the audioModule conf DataPath, which may be http(s) or
 // a local file.
 export function inlineAudioFile(
-  audio: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+  audio: AudioPlayerFileVK | AudioPlayerFileGB | null,
 ): { audio: string; timing: string } {
   if (audio) {
     const { path, audioModule } = audio;

@@ -12,7 +12,7 @@ import type {
   LocationVKCommType,
   LocationVKType,
   ScrollType,
-  AudioPrefType,
+  AudioPlayerType,
   GAddWindowId,
   GType,
 } from './type.ts';
@@ -209,7 +209,7 @@ export function setXulswordPanels(
   return result;
 }
 
-export async function playAudio(audio: AudioPrefType) {
+export async function playAudio(audio: AudioPlayerType) {
   let xulsword: Partial<typeof S.prefs.xulsword> | undefined;
   const { file: selection, defaults } = audio;
   if (selection) {

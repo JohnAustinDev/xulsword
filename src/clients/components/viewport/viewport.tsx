@@ -20,9 +20,9 @@ import './viewport.css';
 
 import type { SyntheticEvent } from 'react';
 import type {
-  AudioPlayerSelectionGB,
+  AudioPlayerFileGB,
   LocationVKType,
-  AudioPlayerSelectionVK,
+  AudioPlayerFileVK,
   V11nType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
@@ -118,15 +118,15 @@ export default class Viewport
   }
 
   audioHandler(
-    selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    selection: AudioPlayerFileVK | AudioPlayerFileGB | null,
     e: React.SyntheticEvent,
   ) {
     const { audio } = this.props;
     const { open, defaults } = audio;
     const atextClick = !!ofClass(['textarea'], e.target)?.element;
     let file:
-      | AudioPlayerSelectionVK
-      | AudioPlayerSelectionGB
+      | AudioPlayerFileVK
+      | AudioPlayerFileGB
       | null
       | undefined;
     if (selection && (!atextClick || !audio.open)) file = selection;

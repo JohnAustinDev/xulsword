@@ -18,10 +18,10 @@ import './chooser.css';
 
 import type {
   BookGroupType,
-  AudioPlayerSelectionGB,
+  AudioPlayerFileGB,
   OSISBookType,
   V11nType,
-  AudioPlayerSelectionVK,
+  AudioPlayerFileVK,
 } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
@@ -38,7 +38,7 @@ export type ChooserProps = {
   v11n: V11nType;
   viewportParentHandler: Xulsword['viewportParentHandler'];
   onAudioClick: (
-    audio: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    audio: AudioPlayerFileVK | AudioPlayerFileGB | null,
     e: React.SyntheticEvent,
   ) => void;
 } & XulProps;
@@ -369,7 +369,7 @@ function BookGroupList(
     hideUnavailableBooks?: boolean;
     handler?: (e: React.SyntheticEvent) => void;
     onAudioClick?: (
-      selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+      selection: AudioPlayerFileVK | AudioPlayerFileGB | null,
       e: SyntheticEvent<Element, Event>,
     ) => void;
     chooserRef: React.Component;
@@ -433,7 +433,7 @@ function BookGroupItem(
     v11n: V11nType;
     handler?: (e: React.SyntheticEvent) => void;
     onAudioClick?: (
-      selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+      selection: AudioPlayerFileVK | AudioPlayerFileGB | null,
       e: SyntheticEvent<Element, Event>,
     ) => void;
     chooserRef: React.Component;
@@ -494,7 +494,7 @@ function ChapterMenu(props: {
   v11n: V11nType;
   handler?: (e: React.SyntheticEvent) => void;
   onAudioClick?: (
-    selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    selection: AudioPlayerFileVK | AudioPlayerFileGB | null,
     e: SyntheticEvent<Element, Event>,
   ) => void;
   chooserRef: React.Component;

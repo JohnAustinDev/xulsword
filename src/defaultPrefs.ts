@@ -8,7 +8,7 @@ import type {
   TableRowSortState,
 } from './clients/components/libxul/table.tsx';
 import type {
-  AudioPrefType,
+  AudioPlayerType,
   BookmarkFolderType,
   FeatureMods,
   HistoryVKType,
@@ -115,7 +115,7 @@ const S = {
 
       keys: [null] as Array<string | null>,
 
-      audio: { open: false, file: null, defaults: {} } as AudioPrefType,
+      audio: { open: false, file: null, defaults: {} } as AudioPlayerType,
       history: [] as HistoryVKType[],
       historyIndex: 0 as number,
 

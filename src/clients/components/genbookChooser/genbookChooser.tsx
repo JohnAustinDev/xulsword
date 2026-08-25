@@ -22,8 +22,8 @@ import '../chooser/chooser.css';
 import './genbookChooser.css';
 
 import type {
-  AudioPlayerSelectionGB,
-  AudioPlayerSelectionVK,
+  AudioPlayerFileGB,
+  AudioPlayerFileVK,
 } from '../../../type.ts';
 import type { Tree, TreeNodeInfo } from '@blueprintjs/core';
 import type {
@@ -45,7 +45,7 @@ export type GenbookChooserProps = {
   keys?: Array<string | null>;
   focusPanel?: number | null;
   onAudioClick: (
-    selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    selection: AudioPlayerFileVK | AudioPlayerFileGB | null,
     e: React.SyntheticEvent,
   ) => void;
   xulswordStateHandler: React.Component<any, XulswordState>['setState'];
@@ -194,7 +194,7 @@ export default class GenbookChooser
       node.nodeData &&
       !ofClass('bp6-tree-node-label', e.target)
     ) {
-      onAudioClick(node.nodeData as AudioPlayerSelectionGB | null, e);
+      onAudioClick(node.nodeData as AudioPlayerFileGB | null, e);
       e.stopPropagation();
     }
   }

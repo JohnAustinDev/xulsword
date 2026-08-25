@@ -1,6 +1,6 @@
 import log from './log.ts';
 
-import type { AudioPrefType } from '../type.ts';
+import type { AudioPlayerType } from '../type.ts';
 
 type TimingEntry = {
   start: number;
@@ -69,51 +69,50 @@ function startHighlightSweep(
 }
 
 export function onTimeUpdate(
-  audio: AudioPrefType,
+  audio: AudioPlayerType,
   audioDOM: React.RefObject<HTMLAudioElement>,
 ) {
-  const { timing } = audio;
+  const { file } = audio;
+  const { timing } = file ?? {};
   const { current: player } = audioDOM;
   if (timing && player) {
     const { times } = timing;
-    if (player) {
-      const { currentTime } = player;
+    const { currentTime } = player;
 
-      // Find the item(s) matching the current playback time
-      const activeItems = times.filter(
-        (item) => currentTime >= item.start && currentTime < item.end,
-      );
+    // Find any item(s) matching the current playback time
+    const activeItems = times.filter(
+      (item) => currentTime >= item.start && currentTime < item.end,
+    );
 
-      // Only update the DOM if the active verse has actually changed
-      if (activeItems.length) {
-        // Clear previous highlights
-        CurrentActiveIds.forEach((id) => {
-          if (!activeItems.find((i) => i.id === id)) {
-            clearHighlightSweep(id);
-            CurrentActiveIds.delete(id);
-          }
-        });
-        // Add new highlights
-        activeItems.forEach((item) => {
-          if (CurrentActiveIds.has(item.id)) return;
-          const currentElement = document.getElementById(item.id);
-          if (currentElement) {
-            startHighlightSweep(currentElement, item, currentTime);
-            // Optional: Smoothly scroll long text into view
-            currentElement.scrollIntoView({
-              behavior: 'smooth',
-              block: 'nearest',
-            });
-            CurrentActiveIds.add(item.id);
-          }
-        });
-      } else {
-        // Clear highlight if audio moves outside covered timing windows
-        CurrentActiveIds.forEach((id) => {
+    // Only update the DOM if the active verse has actually changed
+    if (activeItems.length) {
+      // Clear previous highlights
+      CurrentActiveIds.forEach((id) => {
+        if (!activeItems.find((i) => i.id === id)) {
           clearHighlightSweep(id);
           CurrentActiveIds.delete(id);
-        });
-      }
+        }
+      });
+      // Add new highlights
+      activeItems.forEach((item) => {
+        if (CurrentActiveIds.has(item.id)) return;
+        const currentElement = document.getElementById(item.id);
+        if (currentElement) {
+          startHighlightSweep(currentElement, item, currentTime);
+          // Optional: Smoothly scroll long text into view
+          currentElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+          });
+          CurrentActiveIds.add(item.id);
+        }
+      });
+    } else {
+      // Clear highlight if audio moves outside covered timing windows
+      CurrentActiveIds.forEach((id) => {
+        clearHighlightSweep(id);
+        CurrentActiveIds.delete(id);
+      });
     }
   }
 }

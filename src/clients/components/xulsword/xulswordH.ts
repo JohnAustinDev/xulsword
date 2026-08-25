@@ -18,12 +18,12 @@ import { genbookChange } from '../atext/ztext.ts';
 
 import type React from 'react';
 import type {
-  AudioPlayerSelectionGB,
+  AudioPlayerFileGB,
   OSISBookType,
   SearchType,
   ShowType,
-  AudioPlayerSelectionVK,
-  AudioPrefType,
+  AudioPlayerFileVK,
+  AudioPlayerType,
   GType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
@@ -348,7 +348,7 @@ export default function handler(
                         sels.sort((a) =>
                           a.conf.module === defaults[swordModule] ? -1 : 0,
                         );
-                      const audio: AudioPrefType = {
+                      const audio: AudioPlayerType = {
                         open,
                         defaults,
                         file: sels[0]?.selection ?? null,
@@ -416,8 +416,8 @@ export default function handler(
           const { swordModule } = file;
           if (swordModule && swordModule in G.Tab) {
             let selection:
-              | AudioPlayerSelectionVK
-              | AudioPlayerSelectionGB
+              | AudioPlayerFileVK
+              | AudioPlayerFileGB
               | null = null;
             if ('book' in file) {
               const { book, chapter } = file;

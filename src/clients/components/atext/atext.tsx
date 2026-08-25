@@ -40,9 +40,9 @@ import '../../libsword.css';
 import './atext.css';
 
 import type {
-  AudioPlayerSelectionGB,
+  AudioPlayerFileGB,
   PinPropsType,
-  AudioPlayerSelectionVK,
+  AudioPlayerFileVK,
   GType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
@@ -79,7 +79,7 @@ export type AtextPropsType = Pick<
   xulswordState: React.Component<any, XulswordState>['setState'];
 
   onAudioClick: (
-    selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    selection: AudioPlayerFileVK | AudioPlayerFileGB | null,
     e: React.SyntheticEvent,
   ) => void;
   bbDragEnd: (e: PointerEvent, value: any) => void;
@@ -616,8 +616,14 @@ class Atext
           if (module && (typeof columns === 'undefined' || columns === 1))
             sb += `<div class="ft">${navlinks(module, renderPromise)}</div>`;
           sanitizeHTML(sbe, sb);
-          if (libswordProps.audio?.timing)
-            addTimingSpans(sbe, libswordProps.audio.timing);
+          const { audioModule } = libswordProps.audio.file ?? {};
+          if (
+            libswordProps.audio.file?.timing &&
+            module &&
+            audioModule &&
+            G.Tab[module].audioCodes.includes(audioModule)
+          )
+            addTimingSpans(sbe, libswordProps.audio.file.timing);
           libswordImgSrc(sbe);
           this.hoverLinks(sbe);
         }

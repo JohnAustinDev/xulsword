@@ -31,7 +31,7 @@ import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
   AudioPath,
   GenBookAudio,
-  AudioPlayerSelectionGB,
+  AudioPlayerFileGB,
   GIType,
   GType,
   LocationVKType,
@@ -47,7 +47,7 @@ import type {
   TextVKType,
   V11nType,
   VerseKeyAudio,
-  AudioPlayerSelectionVK,
+  AudioPlayerFileVK,
   WindowDescriptorPrefType,
   FeatureMods,
   ConfigType,
@@ -679,12 +679,12 @@ export function audioConfigs(
 // Code, path and possibly book, chapter or key. This is done by checking each
 // of the selection's swordModule AudioCodes for audio. If book, chapter or key
 // of the input selection is undefined, the first applicable audio file will be
-// chosen and the returned book and chapter will be updated accordingly.
+// used to update book and chapter accordingly.
 export function audioSelections(
-  selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+  selection: AudioPlayerFileVK | AudioPlayerFileGB | null,
   renderPromise?: RenderPromise,
 ): Array<{
-  selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB;
+  selection: AudioPlayerFileVK | AudioPlayerFileGB;
   conf: SwordConfType;
 }> {
   if (selection) {

@@ -366,7 +366,7 @@ export default function handler(
 
     default:
       if (Build.isDevelopment)
-        log.warn(`Unhandled popup event type: '${ep.type}`);
+        log.verbose(`Unhandled popup event type: '${ep.type}`);
       return;
   }
 

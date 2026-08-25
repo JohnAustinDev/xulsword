@@ -7,9 +7,9 @@ import RenderPromise from '../../renderPromise.ts';
 import './audioIcon.css';
 
 import type {
-  AudioPlayerSelectionGB,
+  AudioPlayerFileGB,
   OSISBookType,
-  AudioPlayerSelectionVK,
+  AudioPlayerFileVK,
 } from '../../../type.ts';
 
 export default function audioIcon(
@@ -17,7 +17,7 @@ export default function audioIcon(
   bookOrKey: OSISBookType | string,
   chapter: number | undefined,
   audioHandler: (
-    selection: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null,
+    selection: AudioPlayerFileVK | AudioPlayerFileGB | null,
     e: React.SyntheticEvent,
   ) => void,
   renderPromise: RenderPromise,

@@ -39,8 +39,8 @@ import type {
   ModTypes,
   ShowType,
   PrefRoot,
-  AudioPlayerSelectionVK,
-  AudioPlayerSelectionGB,
+  AudioPlayerFileVK,
+  AudioPlayerFileGB,
   GIType,
   Gsafe,
 } from './type.ts';
@@ -1937,8 +1937,8 @@ function IBTtemplateURL(
   selection:
     | SelectVKType
     | SelectORMType
-    | AudioPlayerSelectionVK
-    | AudioPlayerSelectionGB,
+    | AudioPlayerFileVK
+    | AudioPlayerFileGB,
   phs: {
     XSKEY: string;
     XSPARENT: string;
@@ -2050,8 +2050,8 @@ export function resolveTemplateURL(
   selection:
     | SelectVKType
     | SelectORMType
-    | AudioPlayerSelectionVK
-    | AudioPlayerSelectionGB,
+    | AudioPlayerFileVK
+    | AudioPlayerFileGB,
   // 'auto' becomes 'none' for one file, or 'zip' for multiple files.
   XSPACKAGE: 'none' | 'zip' | 'auto',
   XSREDIRECT: '0' | '1', // redirect to the file's absolute url?

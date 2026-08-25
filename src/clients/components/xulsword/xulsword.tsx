@@ -130,7 +130,7 @@ export default class Xulsword
 
   componentDidUpdate(_prevProps: XulswordProps, prevState: XulswordState) {
     const { state, renderPromise } = this;
-    const { scroll } = state;
+    const { scroll, audio, location, keys } = state;
 
     if (Build.isWebApp) {
       doUntilDone((renderPromise2) => {
@@ -158,7 +158,6 @@ export default class Xulsword
       const statex = clone({ ...state, historyMenupopup: undefined });
       setStatePref('prefs', 'xulsword', prevState, statex);
       // Add page to history after a short delay
-      const { location } = state;
       if (location) {
         delayHandler(
           this,
@@ -169,6 +168,38 @@ export default class Xulsword
         );
       }
     }
+
+    // Update audio player if it's open and the context chapter has
+    // changed.
+    if (audio && location) {
+      const a = clone(audio);
+      const { open, file } = a;
+      if (open && file) {
+        if ('book' in file) {
+          const { book, chapter } = file;
+          if (
+            book &&
+            chapter &&
+            (book !== location?.book || chapter !== location.chapter)
+          ) {
+            file.book = location.book;
+            file.chapter = location.chapter;
+            file.timing = undefined;
+            this.setState({ audio: a });
+          }
+        } else if ('key' in file) {
+          const { key } = file;
+          if (
+            key && !keys.includes(key)
+          ) {
+            a.file = null;
+            a.open = false;
+            this.setState({ audio: a });
+          }
+        }
+      }
+    }
+
     renderPromise.dispatch();
   }
 

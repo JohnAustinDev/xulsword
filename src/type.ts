@@ -188,11 +188,10 @@ export type ScrollIntoViewArg = {
   oneTimeID: string;
 } & Partial<ScrollIntoViewOptions>;
 
-export type AudioPrefType = {
+export type AudioPlayerType = {
   open: boolean;
-  file: AudioPlayerSelectionVK | AudioPlayerSelectionGB | null;
+  file: AudioPlayerFileVK | AudioPlayerFileGB | null;
   defaults?: { [swordModule: string]: string };
-  timing?: ReturnType<typeof parseTimingFile>;
 };
 
 export type PinPropsType = Pick<AtextPropsType, (typeof C.PinProps)[number]>;
@@ -577,19 +576,21 @@ export type DeprecatedAudioChaptersConf = {
   ch2: number;
 };
 
-export type AudioPlayerSelectionVK = {
+export type AudioPlayerFileVK = {
   swordModule: string;
   book?: OSISBookType;
   chapter?: number;
   audioModule?: string;
   path?: AudioPath;
+  timing?: ReturnType<typeof parseTimingFile>;
 };
 
-export type AudioPlayerSelectionGB = {
+export type AudioPlayerFileGB = {
   swordModule: string;
   key?: string;
   audioModule?: string;
   path?: AudioPath;
+  timing?: ReturnType<typeof parseTimingFile>;
 };
 
 export type RowSelection = Array<{ rows: [number, number] }>;
