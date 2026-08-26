@@ -38,8 +38,10 @@
 }
 
 @media (max-width: 767px) {
+  .isWebApp .viewport {
+    padding: 28px 5px;
+  }
   .viewport {
-    padding: 10px 5px;
     margin: 0;
   }
 }

@@ -463,14 +463,12 @@ function BookGroupItem(
 
       {headingsModule &&
         onAudioClick &&
-        audioIcon(
-          headingsModule,
-          sName,
-          undefined,
-          onAudioClick,
+        audioIcon({
+          swordModule: headingsModule,
+          bookOrKey: sName,
+          audioHandler: onAudioClick,
           renderPromise,
-          C.UI.BluePrint.IconSize.SMALL,
-        )}
+        })}
 
       <div key="charrow" className="charrow" />
       {!classes?.includes('disabled') && (
@@ -540,14 +538,13 @@ function ChapterMenu(props: {
             {dString(ch)}
             {headingsModule &&
               onAudioClick &&
-              audioIcon(
-                headingsModule,
-                bkcode,
-                ch,
-                onAudioClick,
+              audioIcon({
+                swordModule: headingsModule,
+                bookOrKey: bkcode,
+                chapter: ch,
+                audioHandler: onAudioClick,
                 renderPromise,
-                C.UI.BluePrint.IconSize.SMALL,
-              )}
+              })}
           </div>,
         );
       } else {

@@ -402,9 +402,7 @@ export default function handler(
         .getElementById('player')
         ?.getElementsByTagName('audio')[0];
       if (player)
-        player.play().catch((er) => {
-          log.error(er);
-        });
+        player.play().catch(() => {});
       break;
     }
 

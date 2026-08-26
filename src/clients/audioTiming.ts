@@ -24,12 +24,12 @@ const CurrentActiveIds = new Set<string>();
 
 // Stops and removes the moving highlight bar from a span.
 function clearHighlightSweep(id: string) {
-  const el = document.getElementById(id);
-  if (el) {
+  document.querySelectorAll(`div.sb span[data-id="${id}"]`).forEach((e) => {
+    const el = e as HTMLElement;
     el.classList.remove('nowreading');
     el.style.transition = '';
     el.style.backgroundPosition = '';
-  }
+  });
 }
 
 // Animates a highlight bar across a 'nowreading' span's text, from
@@ -95,17 +95,18 @@ export function onTimeUpdate(
       });
       // Add new highlights
       activeItems.forEach((item) => {
-        if (CurrentActiveIds.has(item.id)) return;
-        const currentElement = document.getElementById(item.id);
-        if (currentElement) {
-          startHighlightSweep(currentElement, item, currentTime);
-          // Optional: Smoothly scroll long text into view
-          currentElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
+        document
+          .querySelectorAll(`div.sb span[data-id="${item.id}"]`)
+          .forEach((e) => {
+            const el = e as HTMLElement;
+            startHighlightSweep(el, item, currentTime);
+            // Optional: Smoothly scroll long text into view
+            el.scrollIntoView({
+              behavior: 'smooth',
+              block: 'nearest',
+            });
+            CurrentActiveIds.add(item.id);
           });
-          CurrentActiveIds.add(item.id);
-        }
       });
     } else {
       // Clear highlight if audio moves outside covered timing windows
@@ -125,9 +126,7 @@ export function onClick(elem: HTMLElement) {
     const startTime = parseFloat(elem.getAttribute('data-start') ?? '');
     if (!Number.isNaN(startTime)) {
       player.currentTime = startTime; // Cue audio to the timestamp
-      player.play().catch((er) => {
-        log.error(er);
-      });
+      player.play().catch(() => {});
     }
   }
 }
@@ -377,9 +376,9 @@ function wrapTextRange(
 ) {
   const doc = zone.ownerDocument;
   const span = doc.createElement('span');
-  span.id = timingItem.id;
   span.className = 'verse-sync';
   span.setAttribute('data-start', timingItem.start.toString());
+  span.setAttribute('data-id', timingItem.id);
 
   let firstInserted = false;
 

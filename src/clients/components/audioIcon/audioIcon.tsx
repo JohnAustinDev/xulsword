@@ -2,8 +2,8 @@ import React from 'react';
 import C from '../../../constant.ts';
 import Icon from '../libxul/icon.tsx';
 import { audioSelections } from '../../common.ts';
-import { G } from '../../G.ts';
-import RenderPromise from '../../renderPromise.ts';
+import { G, GI } from '../../G.ts';
+import Button from '../libxul/button.tsx';
 import './audioIcon.css';
 
 import type {
@@ -11,18 +11,31 @@ import type {
   OSISBookType,
   AudioPlayerFileVK,
 } from '../../../type.ts';
+import type RenderPromise from '../../renderPromise.ts';
 
-export default function audioIcon(
-  swordModule: string,
-  bookOrKey: OSISBookType | string,
-  chapter: number | undefined,
+export type AudioIconProps = {
+  swordModule: string;
+  bookOrKey: string;
+  chapter?: number;
   audioHandler: (
     selection: AudioPlayerFileVK | AudioPlayerFileGB | null,
     e: React.SyntheticEvent,
-  ) => void,
-  renderPromise: RenderPromise,
-  size = C.UI.BluePrint.IconSize.LARGE,
-): JSX.Element | null {
+  ) => void;
+  renderPromise: RenderPromise;
+  button?: boolean;
+  checked?: boolean;
+};
+
+export default function audioIcon(props: AudioIconProps): JSX.Element | null {
+  const {
+    swordModule,
+    bookOrKey,
+    chapter,
+    audioHandler,
+    renderPromise,
+    button,
+    checked,
+  } = props;
   if (swordModule && swordModule in G.Tab) {
     const selections = audioSelections(
       G.Tab[swordModule].isVerseKey
@@ -38,6 +51,19 @@ export default function audioIcon(
       renderPromise,
     );
     if (!renderPromise.waiting() && selections.length) {
+      if (button) {
+        return (
+          <Button
+            checked={checked}
+            icon="volume-up"
+            onPointerDown={(e: React.SyntheticEvent) => {
+              e.stopPropagation();
+              audioHandler(selections[0]?.selection ?? null, e);
+            }}
+            title={GI.i18n.t('', renderPromise, 'audio.label')}
+          />
+        );
+      }
       return (
         <div
           className="audio-icon"
@@ -46,7 +72,7 @@ export default function audioIcon(
             audioHandler(selections[0]?.selection ?? null, e);
           }}
         >
-          <Icon icon="volume-up" size={size} />
+          <Icon icon="volume-up" size={C.UI.BluePrint.IconSize.SMALL} />
         </div>
       );
     }

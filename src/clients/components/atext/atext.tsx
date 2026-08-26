@@ -560,7 +560,7 @@ class Atext
     renderPromise: RenderPromise,
   ) {
     const { sbref, nbref, navlinks } = this;
-    const { module } = libswordProps;
+    const { module, audio } = libswordProps;
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
     if (sbe && nbe) {
@@ -605,25 +605,48 @@ class Atext
           nb = `<div class="fntable">${nb}</div>`;
         }
         if (sb !== undefined) {
+          // Write nav-links to header
           const pes = sbe.parentElement?.querySelector(
             '.hd',
           ) as HTMLElement | null;
-          if (module && pes) {
+          if (module && pes && sbe.parentElement) {
             sanitizeHTML(pes, `${navlinks(module, renderPromise, true)}`);
             this.hoverLinks(pes);
+            // Adjust nav-links downward if they encroach on the controls
+            const sbc = sbe.parentElement?.querySelector(
+              '.sbcontrols',
+            ) as HTMLElement | null;
+            if (
+              sbc &&
+              sbe.parentElement.offsetWidth -
+                2 * sbc.clientWidth -
+                (pes.firstElementChild?.clientWidth ?? 0) <
+                10
+            ) {
+              pes.style.marginTop = '2.5em';
+            } else pes.style.marginTop = '';
           }
+          // Write nav-links to footer
           const { columns } = libswordProps;
           if (module && (typeof columns === 'undefined' || columns === 1))
             sb += `<div class="ft">${navlinks(module, renderPromise)}</div>`;
+          // Write text to scripture box
           sanitizeHTML(sbe, sb);
-          const { audioModule } = libswordProps.audio.file ?? {};
-          if (
-            libswordProps.audio.file?.timing &&
-            module &&
-            audioModule &&
-            G.Tab[module].audioCodes.includes(audioModule)
-          )
-            addTimingSpans(sbe, libswordProps.audio.file.timing);
+          // Insert audio timing break spans when needed
+          if (audio) {
+            const { file } = audio;
+            if (file) {
+              const { audioModule, timing } = file;
+              if (
+                timing &&
+                module &&
+                audioModule &&
+                G.Tab[module].audioCodes.includes(audioModule)
+              )
+                addTimingSpans(sbe, timing);
+            }
+          }
+          // Update all image paths
           libswordImgSrc(sbe);
           this.hoverLinks(sbe);
         }
@@ -695,12 +718,9 @@ class Atext
     return (
       `
     <div class="navlink" dir="${appIsRTL ? 'rtl' : 'ltr'}">
-      <a class="prevchaplink">
-        <span class="navlink-span">${prevArrow}</span>
-        ${GI.i18n.t('', renderPromise, 'PrevChaptext')}
-      </a>` +
+      <span class="prevchaplink">${prevArrow}</span>` +
       (showAboutLink
-        ? ` |
+        ? `
       <span class="aboutlink" data-data=${JSON_attrib_stringify({
         type: 'aboutlink',
         context: module,
@@ -709,11 +729,7 @@ class Atext
         ${GI.i18n.t('', renderPromise, 'About this text', { ns: 'bibleBrowser' })}
       </span>`
         : '') +
-      ` |
-      <a class="nextchaplink">
-        ${GI.i18n.t('', renderPromise, 'NextChaptext')}
-        <span class="navlink-span">${nextArrow}</span>
-      </a>
+      `<span class="nextchaplink">${nextArrow}</span>
     </div>`
     );
   }
@@ -728,6 +744,7 @@ class Atext
       module,
       modkey,
       panelIndex,
+      audio,
       ownWindow,
       noteBoxHeight,
       maximizeNoteBox,
@@ -803,14 +820,20 @@ class Atext
       >
         <Hbox className="sbcontrols">
           {isVerseKey && <div className="text-pin" />}
+          {module &&
+            audioIcon({
+              swordModule: module,
+              bookOrKey: isVerseKey ? (location?.book ?? '') : (modkey ?? ''),
+              chapter: location?.chapter,
+              audioHandler: onAudioClick,
+              renderPromise,
+              button: true,
+              checked: audio.open,
+            })}
           {!ownWindow && Build.isElectronApp && (
             <Button className="towindow" icon="open-application" />
           )}
-        </Hbox>
-
-        <Box className="hd" />
-
-        {showSelect && (
+          {showSelect && (
           <Hbox className="origselect" pack="end">
             <select defaultValue={ilModule} onPointerDown={handler}>
               {ilModuleOption.map((m) => {
@@ -827,15 +850,9 @@ class Atext
             </select>
           </Hbox>
         )}
+        </Hbox>
 
-        {module &&
-          audioIcon(
-            module,
-            isVerseKey ? (location?.book ?? '') : (modkey ?? ''),
-            location?.chapter,
-            onAudioClick,
-            renderPromise,
-          )}
+        <Box className="hd" />
 
         <Vbox
           className="sb"

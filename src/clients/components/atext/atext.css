@@ -12,6 +12,9 @@
 .atext.pinned {
   background-color: var(--bg-text-pinned);
 }
+.atext > div {
+  cursor: default;
+}
 
 .atext .hd,
 .atext .ft {
@@ -72,23 +75,12 @@ html[dir='rtl'] .atext .towindow {
 }
 
 .atext .origselect {
-  position: absolute;
-  top: 32px;
-  right: 20px;
+  margin: 5px;
 }
 
 html[dir='rtl'] .atext .origselect {
   right: unset;
   left: 12px;
-}
-
-.atext .audio-icon {
-  margin-top: 10px;
-  margin-inline-start: 30px;
-  margin-bottom: 5px;
-}
-.atext .audio-icon + .sb > .chapterhead:first-child {
-  padding-top: 5px;
 }
 
 .atext .sb {
@@ -219,24 +211,28 @@ lacking either keep the solid-block fallback above. */
 /* Header Links */
 .navlink {
   color: var(--color-primary);
-  margin: 10px;
-  cursor: default;
+  margin: 2px 10px 10px 10px;
 }
-.navlink > a,
 .aboutlink {
   text-decoration: underline;
   cursor: pointer;
   white-space: nowrap;
 }
+.prevchaplink,
+.nextchaplink {
+  cursor: pointer;
+  font-size: 24px;
+}
 .atext.prev-disabled .prevchaplink,
 .atext.next-disabled .nextchaplink {
   color: grey;
-  text-decoration: none;
   cursor: default;
 }
-.atext.prev-disabled .prevchaplink:hover,
-.atext.next-disabled .nextchaplink:hover {
-  text-decoration: none;
+.prevchaplink {
+  margin-inline-end: 10px;
+}
+.nextchaplink {
+  margin-inline-start: 10px;
 }
 
 /* Bible & Commentary chapter/page header */

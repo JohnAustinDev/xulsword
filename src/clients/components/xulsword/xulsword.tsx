@@ -23,7 +23,6 @@ import Spacer from '../libxul/spacer.tsx';
 import Textbox from '../libxul/textbox.tsx';
 import SelectOR from '../libxul/selectOR.tsx';
 import SelectVK from '../libxul/selectVK.tsx';
-import Icon from '../libxul/icon.tsx';
 import AudioPlayer from '../audioPlayer/audioPlayer.tsx';
 import Viewport from '../viewport/viewport.tsx';
 import viewportParentH, {

@@ -72,16 +72,18 @@ export default function AudioPlayer(props: {
           TimingFetched[iafTiming] = null;
           getTimingFile(iafTiming)
             .then((rawTiming) => {
-              const t = parseTimingFile(rawTiming);
-              TimingFetched[iafTiming] = t;
-              if (rawTiming && diff(timing, t)) {
-                xulswordState((prevState) => {
-                  const { audio: a } = prevState;
-                  const audio = clone(a);
-                  audio.file = file;
-                  audio.file.timing = t;
-                  return { audio };
-                });
+              if (rawTiming) {
+                const t = parseTimingFile(rawTiming);
+                TimingFetched[iafTiming] = t;
+                if (diff(timing, t)) {
+                  xulswordState((prevState) => {
+                    const { audio: a } = prevState;
+                    const audio = clone(a);
+                    audio.file = file;
+                    audio.file.timing = t;
+                    return { audio };
+                  });
+                }
               }
             })
             .catch((er) => log.error(er));
