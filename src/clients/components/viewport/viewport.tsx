@@ -124,11 +124,7 @@ export default class Viewport
     const { audio } = this.props;
     const { open, defaults } = audio;
     const atextClick = !!ofClass(['textarea'], e.target)?.element;
-    let file:
-      | AudioPlayerFileVK
-      | AudioPlayerFileGB
-      | null
-      | undefined;
+    let file: AudioPlayerFileVK | AudioPlayerFileGB | null | undefined;
     if (selection && (!atextClick || !audio.open)) file = selection;
     if (!selection || (atextClick && audio.open)) file = null;
     if (typeof file !== 'undefined') {

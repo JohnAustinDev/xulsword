@@ -546,24 +546,53 @@ export function onPointerLong(
   };
 }
 
-export const Events = {
-  blocked: false,
-  lastPointerEvent: null as PointerEvent | null,
-};
+let EventsAreBlocked = false;
+let PreviousPointerEvent: PointerEvent | null = null;
+let UnblockEventsTO: NodeJS.Timeout | null = null;
 
-export function isBlocked(e: React.SyntheticEvent | Event): boolean {
-  if (Events.blocked) {
+export function doBlockEvents() {
+  EventsAreBlocked = true;
+  // Never allow events to be blocked longer than maxBlockTime. There were
+  // complex interactions with Developer Tools and possibly other things
+  // that rarely caused events to be permanently blocked, so this fixes it.
+  if (!UnblockEventsTO)
+    UnblockEventsTO = setInterval(
+      () => unBlockEvents(),
+      C.UI.Events.maxBlockTime,
+    );
+  if (Build.isDevelopment)
+    document
+      .querySelectorAll(`.atext`)
+      .forEach((el) => ((el as HTMLDivElement).style.border = `2px solid red`));
+}
+
+export function isBlockedEvent(e: React.SyntheticEvent | Event): boolean {
+  if (EventsAreBlocked) {
     e.stopPropagation();
     return true;
   }
   return false;
 }
 
+export function unBlockEvents() {
+  EventsAreBlocked = false;
+  if (UnblockEventsTO) clearInterval(UnblockEventsTO);
+  UnblockEventsTO = null;
+  if (Build.isDevelopment)
+    document
+      .querySelectorAll(`.atext`)
+      .forEach((el) => ((el as HTMLDivElement).style.border = ''));
+}
+
 export function eventHandled(e: React.SyntheticEvent | Event) {
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
-  if (ep) Events.lastPointerEvent = ep;
+  if (ep) PreviousPointerEvent = ep;
   e.stopPropagation();
+}
+
+export function getLastPointerEvent() {
+  return PreviousPointerEvent;
 }
 
 // React does not support pointerover or pointerout, so this function

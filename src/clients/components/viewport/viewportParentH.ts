@@ -7,7 +7,7 @@ import { G, GI } from '../../G.ts';
 import {
   doUntilDone,
   eventHandled,
-  isBlocked,
+  isBlockedEvent,
   onPointerLong,
   safeScrollIntoView,
   windowArguments,
@@ -191,7 +191,7 @@ export default function handler(
   this: Xulsword | ViewportWin,
   e: React.SyntheticEvent | PointerEvent,
 ) {
-  if (isBlocked(e)) return;
+  if (isBlockedEvent(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const _ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { state } = this;

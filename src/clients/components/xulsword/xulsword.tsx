@@ -188,9 +188,7 @@ export default class Xulsword
           }
         } else if ('key' in file) {
           const { key } = file;
-          if (
-            key && !keys.includes(key)
-          ) {
+          if (key && !keys.includes(key)) {
             a.file = null;
             a.open = false;
             this.setState({ audio: a });

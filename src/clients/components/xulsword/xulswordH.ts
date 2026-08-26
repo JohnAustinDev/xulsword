@@ -10,7 +10,7 @@ import {
   doUntilDone,
   audioSelections,
   eventHandled,
-  isBlocked,
+  isBlockedEvent,
 } from '../../common.ts';
 import log from '../../log.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
@@ -35,7 +35,7 @@ export default function handler(
   this: Xulsword,
   e: React.SyntheticEvent | PointerEvent,
 ) {
-  if (isBlocked(e)) return;
+  if (isBlockedEvent(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const _ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { state } = this;
@@ -401,8 +401,7 @@ export default function handler(
       const player: HTMLAudioElement | undefined = document
         .getElementById('player')
         ?.getElementsByTagName('audio')[0];
-      if (player)
-        player.play().catch(() => {});
+      if (player) player.play().catch(() => {});
       break;
     }
 
@@ -413,10 +412,7 @@ export default function handler(
         if (rp && file) {
           const { swordModule } = file;
           if (swordModule && swordModule in G.Tab) {
-            let selection:
-              | AudioPlayerFileVK
-              | AudioPlayerFileGB
-              | null = null;
+            let selection: AudioPlayerFileVK | AudioPlayerFileGB | null = null;
             if ('book' in file) {
               const { book, chapter } = file;
               if (

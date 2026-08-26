@@ -21,10 +21,7 @@ import TreeView, { forEachNode } from '../libxul/treeview.tsx';
 import '../chooser/chooser.css';
 import './genbookChooser.css';
 
-import type {
-  AudioPlayerFileGB,
-  AudioPlayerFileVK,
-} from '../../../type.ts';
+import type { AudioPlayerFileGB, AudioPlayerFileVK } from '../../../type.ts';
 import type { Tree, TreeNodeInfo } from '@blueprintjs/core';
 import type {
   RenderPromiseComponent,

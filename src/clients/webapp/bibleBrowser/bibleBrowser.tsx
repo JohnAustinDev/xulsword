@@ -34,13 +34,13 @@ const socket = socketConnect(
   process.env.WEBAPP_DOMAIN,
 );
 
-// Wheel scroll is confusing in desktop Browser, so disable it.
-const wheelCapture = (e: React.SyntheticEvent<any>): boolean => {
-  if (window.innerWidth > C.UI.WebApp.mobileW) {
-    e.stopPropagation();
-    return true;
-  }
-  return false;
+// Without wheelCapture the web-app could see either 'wheel' or 'scroll' (or
+// both) React Synthetic Events, depending on the client. So for simplicity,
+// the web-app will only see 'scroll' events and Electron will only see 'wheel'
+// events (because wheel events use Javascript to scroll, and this does not
+// trigger the 'scroll' events).
+const wheelCapture = (e: React.SyntheticEvent<any>): void => {
+  if (Build.isWebApp) e.stopPropagation();
 };
 
 // connect is called even on reconnect, so only initialize once.

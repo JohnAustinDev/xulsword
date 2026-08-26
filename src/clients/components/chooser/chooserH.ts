@@ -2,7 +2,13 @@ import type React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { GI } from '../../G.ts';
-import { doUntilDone, eventHandled, Events, isBlocked } from '../../common.ts';
+import {
+  doBlockEvents,
+  doUntilDone,
+  eventHandled,
+  isBlockedEvent,
+  unBlockEvents,
+} from '../../common.ts';
 import log from '../../log.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 
@@ -13,7 +19,7 @@ export default function handler(
   this: Chooser,
   e: React.SyntheticEvent | PointerEvent,
 ): void {
-  if (isBlocked(e)) return;
+  if (isBlockedEvent(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { pointerType } = ep ?? {};
@@ -154,7 +160,7 @@ export default function handler(
               } else if (pointerType !== 'mouse') {
                 // Touch followon events were blocked (below) and no menu items
                 // exist, so unblock and handle with viewportParentHandler.
-                Events.blocked = false;
+                unBlockEvents();
                 return viewportParentHandler(e);
               }
             }
@@ -162,7 +168,7 @@ export default function handler(
           // Touch followon events were blocked (below) but headingmenu
           // pointerdown should be handled, so unblock now for that.
           if (type === 'headingmenu') {
-            Events.blocked = false;
+            unBlockEvents();
             return;
           }
           break;
@@ -172,14 +178,11 @@ export default function handler(
             log.warn(`Unhandled chooserH mouseover on: '${type}'`);
           return;
       }
-      // On touch, we've handled pointerover, so ignore followon events, until
+      // We've handled pointerover, so ignore followon events, until
       // the user points again another time.
       if (pointerType !== 'mouse') {
-        Events.blocked = true;
-        setTimeout(
-          () => (Events.blocked = false),
-          C.UI.Chooser.bookgroupHoverDelay,
-        );
+        doBlockEvents();
+        setTimeout(() => unBlockEvents(), C.UI.Chooser.bookgroupHoverDelay);
       }
       break;
     }

@@ -8,11 +8,12 @@ import { G } from '../../G.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import {
   cancelStrongsHiLights,
+  doBlockEvents,
   eventHandled,
-  Events,
-  isBlocked,
+  isBlockedEvent,
   onPointerLong,
   safeScrollIntoView,
+  unBlockEvents,
   windowArguments,
 } from '../../common.ts';
 import log from '../../log.ts';
@@ -60,7 +61,7 @@ export function popupParentHandler(
   e: React.SyntheticEvent | PointerEvent,
   module?: string,
 ) {
-  if (isBlocked(e)) return;
+  if (isBlockedEvent(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { pointerType } = ep ?? {};
@@ -200,8 +201,7 @@ export function popupParentHandler(
     case 'wheel': {
       // Block popup for a time when mouse-wheel is turned, and then
       // wait until the mouse moves again before re-enabling the popup.
-      if (pointerType === 'mouse')
-        blockpopup(this, C.UI.Popup.wheelDeadTime, true);
+      blockpopup(this, C.UI.Events.wheelBlockTime, true);
       break;
     }
 
@@ -219,7 +219,7 @@ export function popupHandler(
   this: PopupParent,
   e: React.SyntheticEvent | PointerEvent,
 ) {
-  if (isBlocked(e)) return;
+  if (isBlockedEvent(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { pointerType } = ep ?? {};
@@ -361,7 +361,7 @@ export function popupHandler(
             this.setState({ popupParent: null });
             // Multiple events may fire, and if the popup closes, ignore
             // them all, as the context is now different.
-            blockpopup(this, C.UI.Popup.closeDeadTime, false);
+            blockpopup(this, C.UI.Events.popupBlockTime, false);
           }
           break;
         }
@@ -463,7 +463,7 @@ export function popupHandler(
       ) {
         this.setState({ popupParent: null });
         if (!ofClass('search', e.target)) cancelStrongsHiLights();
-        blockpopup(this, C.UI.Popup.closeDeadTime, false);
+        blockpopup(this, C.UI.Events.popupBlockTime, false);
       }
       break;
     }
@@ -531,11 +531,11 @@ function blockpopup(
 ) {
   if (xthis.popupDelayTO) clearTimeout(xthis.popupDelayTO);
   xthis.popupDelayTO = null; // blocks the popup
-  Events.blocked = true;
+  doBlockEvents();
   delayHandler(
     xthis,
     () => {
-      Events.blocked = false;
+      unBlockEvents();
       // Hoverable re-enables after the mouse moves, otherwise re-enable now.
       if (!thenWaitUntilMouseMoves) xthis.popupDelayTO = undefined;
     },
@@ -568,7 +568,7 @@ export function popupClickClose(this: any, e: React.PointerEvent) {
       !ofClass('npopupTX', target, 'ancestor-or-self')
     ) {
       this.setState({ popupParent: null });
-      blockpopup(this, C.UI.Popup.closeDeadTime, false);
+      blockpopup(this, C.UI.Events.popupBlockTime, false);
     }
   }
 }

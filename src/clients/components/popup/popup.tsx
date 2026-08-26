@@ -9,7 +9,7 @@ import C from '../../../constant.ts';
 import { G } from '../../G.ts';
 import {
   addHoverLinks,
-  Events,
+  getLastPointerEvent,
   libswordImgSrc,
   windowArguments,
 } from '../../common.ts';
@@ -250,7 +250,7 @@ class Popup
             this.positionPopup();
             pt.dataset.infokey = infokey;
             // Scroll to the top of the newly written popup.
-            const { pointerType } = Events.lastPointerEvent ?? {};
+            const { pointerType } = getLastPointerEvent() ?? {};
             if (Build.isWebApp && pointerType && pointerType !== 'mouse')
               setTimeout(
                 () =>
@@ -341,7 +341,7 @@ class Popup
     let cls = 'cs-locale';
     if (isWindow) cls += ` ownWindow viewport`;
 
-    const { pointerType } = Events.lastPointerEvent ?? {};
+    const { pointerType } = getLastPointerEvent() ?? {};
 
     return (
       <div

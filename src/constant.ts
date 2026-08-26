@@ -117,13 +117,16 @@ const C = {
       mouseScrollMargin: 40, // px inward from top or bottom border
       headingMenuOpenDelay: 400, // ms until BIble heading menu opens
     },
+    Events: {
+      wheelBlockTime: 1000, // ms of dead-time after wheel-scroll
+      popupBlockTime: 500, // ms events are blocked after popup close
+      maxBlockTime: 1000,
+    },
     Popup: {
       openGap: 0, // open popup px below target element
       strongsOpenGap: 80, // px
       openDelay: 100, // ms between hover and popup opening
       strongsOpenDelay: 550, // ms
-      wheelDeadTime: 1000, // ms of dead-time after wheel-scroll
-      closeDeadTime: 500, // ms events are blocked after popup close
     },
     Atext: {
       fontSize: 14, // px nominal font-size

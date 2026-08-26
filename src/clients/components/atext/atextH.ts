@@ -13,7 +13,7 @@ import {
   doUntilDone,
   eventHandled,
   getExtRefHTML,
-  isBlocked,
+  isBlockedEvent,
   cancelStrongsHiLights,
   strongsHilights,
 } from '../../common.ts';
@@ -42,7 +42,7 @@ function scroll2Note(atext: HTMLElement, id: string) {
 
 // Event handler for a text pane's content.
 export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
-  if (isBlocked(e)) return;
+  if (isBlockedEvent(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
   const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { pointerType } = ep ?? {};
@@ -356,7 +356,8 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           aTextWheelScroll(ew, atext, this);
         }
       }
-      break;
+      // Return rather than call eventHandled, for other wheel handlers.
+      return;
     }
 
     // Note: scroll events don't bubble!

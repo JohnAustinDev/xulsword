@@ -834,22 +834,22 @@ class Atext
             <Button className="towindow" icon="open-application" />
           )}
           {showSelect && (
-          <Hbox className="origselect" pack="end">
-            <select defaultValue={ilModule} onPointerDown={handler}>
-              {ilModuleOption.map((m) => {
-                return (
-                  <option
-                    key={m}
-                    className={`origoption ${G.Tab[m].labelClass}`}
-                    value={m}
-                  >
-                    {G.Tab[m].label}
-                  </option>
-                );
-              })}
-            </select>
-          </Hbox>
-        )}
+            <Hbox className="origselect" pack="end">
+              <select defaultValue={ilModule} onPointerDown={handler}>
+                {ilModuleOption.map((m) => {
+                  return (
+                    <option
+                      key={m}
+                      className={`origoption ${G.Tab[m].labelClass}`}
+                      value={m}
+                    >
+                      {G.Tab[m].label}
+                    </option>
+                  );
+                })}
+              </select>
+            </Hbox>
+          )}
         </Hbox>
 
         <Box className="hd" />
