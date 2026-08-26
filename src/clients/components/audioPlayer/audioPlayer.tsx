@@ -131,7 +131,7 @@ export default function AudioPlayer(props: {
         onEnded={audioHandler}
         onCanPlay={audioHandler}
         onPlay={audioHandler}
-        onTimeUpdate={() => onTimeUpdate(audio, audioDOM)}
+        onTimeUpdate={() => onTimeUpdate(audio, audioDOM, xulswordState)}
         autoPlay={!!Build.isWebApp}
         src={src}
         ref={audioDOM}

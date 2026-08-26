@@ -37,8 +37,7 @@ const socket = socketConnect(
 // Without wheelCapture the web-app could see either 'wheel' or 'scroll' (or
 // both) React Synthetic Events, depending on the client. So for simplicity,
 // the web-app will only see 'scroll' events and Electron will only see 'wheel'
-// events (because wheel events use Javascript to scroll, and this does not
-// trigger the 'scroll' events).
+// events ('scroll' in atextH.ts is only handled if isWebApp is true).
 const wheelCapture = (e: React.SyntheticEvent<any>): void => {
   if (Build.isWebApp) e.stopPropagation();
 };

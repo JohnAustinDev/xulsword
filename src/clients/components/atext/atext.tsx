@@ -549,6 +549,7 @@ class Atext
       | 'ilModuleOption'
       | 'location'
       | 'modkey'
+      | 'isPinned'
       | 'audio'
       | 'place'
       | 'show'
@@ -560,7 +561,7 @@ class Atext
     renderPromise: RenderPromise,
   ) {
     const { sbref, nbref, navlinks } = this;
-    const { module, audio } = libswordProps;
+    const { module, audio, isPinned } = libswordProps;
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
     if (sbe && nbe) {
@@ -633,7 +634,7 @@ class Atext
           // Write text to scripture box
           sanitizeHTML(sbe, sb);
           // Insert audio timing break spans when needed
-          if (audio) {
+          if (audio && !isPinned) {
             const { file } = audio;
             if (file) {
               const { audioModule, timing } = file;
@@ -724,8 +725,8 @@ class Atext
       <span class="aboutlink" data-data=${JSON_attrib_stringify({
         type: 'aboutlink',
         context: module,
-      })}
-    >
+        })}
+      >
         ${GI.i18n.t('', renderPromise, 'About this text', { ns: 'bibleBrowser' })}
       </span>`
         : '') +

@@ -89,6 +89,7 @@ html:not(.popupWin) .npopupTX {
 }
 .popup-mod-select {
   text-align: center;
+  max-width: 33%;
 }
 
 /* footnote styles */

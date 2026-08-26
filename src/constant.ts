@@ -587,6 +587,7 @@ const C = {
       'module',
       'audio',
       'show',
+      'isPinned',
       'place',
       'columns',
       'ilModule',

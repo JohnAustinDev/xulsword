@@ -1,6 +1,9 @@
+import { ofClass } from '../common.ts';
 import log from './log.ts';
+import { getElementData } from './htmlData.ts';
 
 import type { AudioPlayerType } from '../type.ts';
+import type { XulswordState } from './components/xulsword/xulsword.tsx';
 
 type TimingEntry = {
   start: number;
@@ -20,57 +23,91 @@ type TextMap = {
   endIdx: number;
 };
 
+const Highlight = {
+  verse: true,  // blue highlight and verse center scroll
+  phrase: true, // yellow highlight and scrollIntoView nearest
+  word: false,  // yellow sweep and scrollIntoView nearest
+};
+
 const CurrentActiveIds = new Set<string>();
 
 // Stops and removes the moving highlight bar from a span.
-function clearHighlightSweep(id: string) {
+function unHighlight(id: string) {
   document.querySelectorAll(`div.sb span[data-id="${id}"]`).forEach((e) => {
     const el = e as HTMLElement;
     el.classList.remove('nowreading');
+    el.classList.remove('nowreading-sweep');
     el.style.transition = '';
     el.style.backgroundPosition = '';
   });
 }
 
-// Animates a highlight bar across a 'nowreading' span's text, from
+// Animates a highlight bar across a 'nowreading-sweep' span's text, from
 // inline-start to inline-end, timed to land exactly on item.end. A CSS
 // transition (rather than per-frame JS updates) drives the motion, so the
 // browser keeps it smooth; background-position's own percentage formula
 // (offset = (boxSize - imageSize) * pct) naturally accounts for the bar's
 // width, so 0%/100% land it flush with each edge.
-function startHighlightSweep(
+function doHighlight(
   el: HTMLElement,
   item: TimingEntry,
   currentTime: number,
+  xulswordState: React.Component<any, XulswordState>['setState'],
 ) {
-  el.classList.add('nowreading');
+  if (Highlight.verse) {
+    const verse = Array.from(CurrentActiveIds).reduce((p, c) => {
+      const { zoneid } = parseTimingID(c);
+      const v = Number(zoneid?.replace(/^.*?(\d+)$/, '$1') ?? 0);
+      return Math.max(p, v);
+    }, 0);
+    const atext = ofClass(['atext'], el);
+    if (atext && verse) {
+      const data = getElementData(atext.element);
+      const { location } = data;
+      if (location) {
+        const { verse: v } = location;
+        if (v && verse > v) {
+          location.verse = verse;
+          xulswordState({
+            location,
+            selection: location,
+            scroll: { verseAt: 'center' },
+          });
+        }
+      }
+    }
+  }
+  if (Highlight.phrase) el.classList.add('nowreading');
+  if (Highlight.word) {
+    el.classList.add('nowreading-sweep');
+    const duration = item.end - item.start;
+    const elapsedFraction =
+      duration > 0
+        ? Math.min(1, Math.max(0, (currentTime - item.start) / duration))
+        : 0;
+    const remaining = Math.max(0, item.end - currentTime);
 
-  const duration = item.end - item.start;
-  const elapsedFraction =
-    duration > 0
-      ? Math.min(1, Math.max(0, (currentTime - item.start) / duration))
-      : 0;
-  const remaining = Math.max(0, item.end - currentTime);
+    // Reading direction determines which edge is "inline-start": the span
+    // inherits dir/direction from its module (see zversekey RTL handling).
+    const rtl = getComputedStyle(el).direction === 'rtl';
+    const startPct = rtl ? (1 - elapsedFraction) * 100 : elapsedFraction * 100;
+    const endPct = rtl ? 0 : 100;
 
-  // Reading direction determines which edge is "inline-start": the span
-  // inherits dir/direction from its module (see zversekey RTL handling).
-  const rtl = getComputedStyle(el).direction === 'rtl';
-  const startPct = rtl ? (1 - elapsedFraction) * 100 : elapsedFraction * 100;
-  const endPct = rtl ? 0 : 100;
+    // Snap to the correct starting position with no transition, then force
+    // layout so the browser registers it before the animated move begins.
+    el.style.transition = 'none';
+    el.style.backgroundPosition = `${startPct}% 0`;
+    void el.offsetWidth;
 
-  // Snap to the correct starting position with no transition, then force
-  // layout so the browser registers it before the animated move begins.
-  el.style.transition = 'none';
-  el.style.backgroundPosition = `${startPct}% 0`;
-  void el.offsetWidth;
-
-  el.style.transition = `background-position ${remaining}s linear`;
-  el.style.backgroundPosition = `${endPct}% 0`;
+    el.style.transition = `background-position ${remaining}s linear`;
+    el.style.backgroundPosition = `${endPct}% 0`;
+  }
 }
 
 export function onTimeUpdate(
   audio: AudioPlayerType,
   audioDOM: React.RefObject<HTMLAudioElement>,
+  xulswordState: React.Component<any, XulswordState>['setState'],
 ) {
   const { file } = audio;
   const { timing } = file ?? {};
@@ -89,7 +126,7 @@ export function onTimeUpdate(
       // Clear previous highlights
       CurrentActiveIds.forEach((id) => {
         if (!activeItems.find((i) => i.id === id)) {
-          clearHighlightSweep(id);
+          unHighlight(id);
           CurrentActiveIds.delete(id);
         }
       });
@@ -99,7 +136,7 @@ export function onTimeUpdate(
           .querySelectorAll(`div.sb span[data-id="${item.id}"]`)
           .forEach((e) => {
             const el = e as HTMLElement;
-            startHighlightSweep(el, item, currentTime);
+            doHighlight(el, item, currentTime, xulswordState);
             // Optional: Smoothly scroll long text into view
             el.scrollIntoView({
               behavior: 'smooth',
@@ -111,7 +148,7 @@ export function onTimeUpdate(
     } else {
       // Clear highlight if audio moves outside covered timing windows
       CurrentActiveIds.forEach((id) => {
-        clearHighlightSweep(id);
+        unHighlight(id);
         CurrentActiveIds.delete(id);
       });
     }

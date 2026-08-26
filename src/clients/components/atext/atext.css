@@ -188,7 +188,7 @@ html[dir='rtl'] .notebox-maximizer {
 
 /* Fallback for browsers that can't do the moving bar below. */
 .nowreading {
-  background-color: yellow !important;
+  background-color: rgba(255, 255, 0, 0.5);
 }
 
 /* Moving highlight bar: audioTiming.ts times a background-position
@@ -198,9 +198,8 @@ spans get one continuous sweep instead of a repeat per line); browsers
 lacking either keep the solid-block fallback above. */
 @supports (transition-property: background-position) and
   ((box-decoration-break: slice) or (-webkit-box-decoration-break: slice)) {
-  .nowreading {
-    background-color: transparent !important;
-    background-image: linear-gradient(yellow, yellow);
+  .nowreading-sweep {
+    background-image: linear-gradient(rgb(255, 255, 0), rgb(255, 255, 0));
     background-repeat: no-repeat;
     background-size: 30px 100%;
     box-decoration-break: slice;
