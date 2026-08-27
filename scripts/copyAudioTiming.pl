@@ -38,10 +38,10 @@ use HTML::Entities qw(decode_entities);
 
 my $TimingDir = shift;
 my $AudioModuleDir = shift;
-my $ConfigArg = shift;
+my $ConfigArg = shift || '\separators &#x200B;';
 
 if (!defined($TimingDir) || !defined($AudioModuleDir) || !defined($ConfigArg) || !length($ConfigArg)) {
-  die "usage: $0 <timingSourceDir> <audioModuleDir> <configString|\@configFile>\n";
+  die "usage: $0 <timingSourceDir> <audioModuleDir> [<configString|\@configFile>|\\separators &#x200B;]\n";
 }
 $TimingDir =~ s/\/+$//;
 $AudioModuleDir =~ s/\/+$//;
