@@ -862,6 +862,7 @@ const Module = {
       .toString('utf8')
       .split(/[\n\r]+/)
       .filter((str) => !str.startsWith('#'));
+    log.verbose(`masterRepoList.conf:\n${entry.join("\n")}`);
     entry.forEach((mx: string) => {
       const m = mx.match(/FTPSource=([^|]+)\|([^|]+)\|([^|]+)\s*/);
       if (m) {

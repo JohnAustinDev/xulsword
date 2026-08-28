@@ -360,10 +360,12 @@ function forgetConnection(c: FTP, domain: string) {
 // NOTE: Any connection operation must be aborted before the connection
 // is destroyed, or else 'Failure writing network stream' unhandled
 // errors will result.
+type TryConnectionType = FTP | 'too-many-connections' | 'no secure connection';
 async function createActiveConnection(
   domain: string,
+  secure: boolean,
   cancelkey: string,
-): Promise<FTP | 'too-many-connections'> {
+): Promise<TryConnectionType> {
   return await new Promise((resolve, reject) => {
     let c: FTP | undefined;
     let id: string;
@@ -377,11 +379,14 @@ async function createActiveConnection(
           .flat().length < max
       ) {
         id = ftpThrowIfCanceled(cancelkey);
-        log.verbose(`Connecting: ${domain}`);
+        log.silly(
+          `Connecting: ${domain} (${secure ? 'secure' : 'not secure'})`,
+        );
         c = new FTP();
         activeConnections[domain].push(c);
         c.connect({
           host: domain,
+          secure,
           user: 'anonymous',
           password: C.FTPPassword,
           connTimeout: C.FTPConnectTimeout,
@@ -404,19 +409,22 @@ async function createActiveConnection(
 
     if (c) {
       const cc = c;
+      let finished = false;
       cc.on('error', (er: Error) => {
-        log.verbose(`ftp connect on-error ${domain}: '${er.toString()}'.`);
+        if (finished) return;
+        finished = true;
         abortP(cc)
           .then(() => {
             cc.destroy();
           })
-          .catch((err) => {
-            log.verbose(err);
-          });
+          .catch(() => {}); // Original error is reported already
         if (er.message.includes('too many connections')) {
           MaxDomainConnections[domain] = activeConnections[domain].length;
           resolve('too-many-connections');
+        } else if (er.message === 'Unable to secure connection(s)') {
+          resolve('no secure connection');
         } else {
+          log.verbose(`ftp connect on-error ${domain}: '${er.toString()}'.`);
           reject(er);
         }
       });
@@ -431,7 +439,9 @@ async function createActiveConnection(
         log.silly(`ftp connect on-greeting ${domain}: '${msg}'.`);
       });
       cc.on('ready', () => {
-        log.silly(`ftp connect on-ready ${domain}.`);
+        log.verbose(
+          `Connected: ${domain} (${secure ? 'secure' : 'not secure'})`,
+        );
         if (id) ftpCancelableOperation(cancelkey, id);
         resolve(cc);
       });
@@ -441,6 +451,7 @@ async function createActiveConnection(
 
 const activeConnections: Record<string, FTP[]> = {};
 const waitingConnections: Record<string, FTP[]> = {};
+const noSecureConnections: Set<string> = new Set();
 async function getActiveConnection(
   domain: string,
   cancelkey: string,
@@ -450,9 +461,10 @@ async function getActiveConnection(
     waitingConnections[domain] = [];
   }
 
-  const activeConnection = async (): Promise<FTP | 'too-many-connections'> => {
-    let c: FTP | null | 'too-many-connections' =
-      waitingConnections[domain][0] || null;
+  const activeConnection = async (
+    secure: boolean,
+  ): Promise<TryConnectionType> => {
+    let c: TryConnectionType | null = waitingConnections[domain][0] || null;
     if (c) {
       log.silly(`ftp connect on-ready-free ${domain}.`);
       waitingConnections[domain].shift();
@@ -460,7 +472,7 @@ async function getActiveConnection(
       return c;
     }
     try {
-      c = await createActiveConnection(domain, cancelkey);
+      c = await createActiveConnection(domain, secure, cancelkey);
     } catch (er: unknown) {
       const cause: Error | 'canceled' | undefined =
         (er as Error | 'canceled') ?? undefined;
@@ -475,12 +487,14 @@ async function getActiveConnection(
     return c;
   };
 
-  let c: FTP | 'too-many-connections';
+  let c: TryConnectionType;
   const cint = 10000;
   let cmsg = cint;
+  let secure = !noSecureConnections.has(domain);
+  // Keep looping until we get a working connection...
   for (;;) {
     try {
-      c = await activeConnection();
+      c = await activeConnection(secure);
     } catch (er: unknown) {
       const cause: Error | 'canceled' | undefined =
         (er as Error | 'canceled') ?? undefined;
@@ -492,7 +506,11 @@ async function getActiveConnection(
     } catch (er) {
       return await Promise.reject(er);
     }
-    if (c === 'too-many-connections') {
+    if (c === 'no secure connection') {
+      secure = false;
+      noSecureConnections.add(domain);
+      log.verbose(`FTP fell back to insecure connection at: ${domain}`);
+    } else if (c === 'too-many-connections') {
       cmsg -= 100;
       if (cmsg < 0) {
         log.silly(`Waiting for a free connection to ${domain}.`);
