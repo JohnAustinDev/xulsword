@@ -10,6 +10,7 @@ import type {
   AudioPlayerFileGB,
   OSISBookType,
   AudioPlayerFileVK,
+  AudioPlayerType,
 } from '../../../type.ts';
 import type RenderPromise from '../../renderPromise.ts';
 
@@ -23,7 +24,8 @@ export type AudioIconProps = {
   ) => void;
   renderPromise: RenderPromise;
   button?: boolean;
-  checked?: boolean;
+  audio?: AudioPlayerType;
+  disableIfNoAudio?: boolean; // default is hide if no audio
 };
 
 export default function audioIcon(props: AudioIconProps): JSX.Element | null {
@@ -34,7 +36,8 @@ export default function audioIcon(props: AudioIconProps): JSX.Element | null {
     audioHandler,
     renderPromise,
     button,
-    checked,
+    audio,
+    disableIfNoAudio,
   } = props;
   if (swordModule && swordModule in G.Tab) {
     const selections = audioSelections(
@@ -50,11 +53,12 @@ export default function audioIcon(props: AudioIconProps): JSX.Element | null {
           },
       renderPromise,
     );
-    if (!renderPromise.waiting() && selections.length) {
+    if (disableIfNoAudio || (!renderPromise.waiting() && selections.length)) {
       if (button) {
         return (
           <Button
-            checked={checked}
+            checked={audio?.open ?? true}
+            disabled={!(!renderPromise.waiting() && selections.length)}
             icon="volume-up"
             onPointerDown={(e: React.SyntheticEvent) => {
               e.stopPropagation();

@@ -826,10 +826,11 @@ class Atext
               swordModule: module,
               bookOrKey: isVerseKey ? (location?.book ?? '') : (modkey ?? ''),
               chapter: location?.chapter,
+              audio,
               audioHandler: onAudioClick,
               renderPromise,
               button: true,
-              checked: audio.open,
+              // disableIfNoAudio: true
             })}
           {!ownWindow && Build.isElectronApp && (
             <Button className="towindow" icon="open-application" />

@@ -24,9 +24,9 @@ type TextMap = {
 };
 
 const Highlight = {
-  verse: true,  // blue highlight and verse center scroll
+  verse: true, // blue highlight and verse center scroll
   phrase: true, // yellow highlight and scrollIntoView nearest
-  word: false,  // yellow sweep and scrollIntoView nearest
+  word: false, // yellow sweep and scrollIntoView nearest
 };
 
 const CurrentActiveIds = new Set<string>();
@@ -175,14 +175,17 @@ export function addTimingSpans(
   const { times, settings } = timing;
   const { level, separators } = settings;
 
-  // Identify and isolate container zones (verses and titles).
+  // Text having these classes is ignored during phrase splitting.
+  const skipClass = ['versenum', 'cr', 'fn', 'un'];
+
+  // Identify and isolate container zones (currently verses).
   // TODO!! Support more than just Bible text.
   // TODO!! Support titles
   const zones = divElement.querySelectorAll(':scope > .vs');
-  const skipClass = ['versenum', 'cr', 'fn'];
 
   let timingIndex = 0;
 
+  // Timing makes versenum clickable, so add pointer cursor to them.
   if (timing.times.length && zones.length) {
     const style = document.createElement('style');
     style.innerHTML = '.versenum:hover { cursor: pointer; }';
@@ -194,8 +197,12 @@ export function addTimingSpans(
 
     const zoneSeparators: string[] = separators.split('');
 
-    const zoneID =
-      zone.querySelector(':scope > .versenum')?.textContent.trim() ?? '';
+    // The verse number is normally a direct child of the zone, but poetry
+    // lines (eg. rendered from OSIS <l>/<lg> markup as <div class="line">)
+    // wrap the zone's content in their own divs, pushing it down to a
+    // grandchild or deeper. Search all descendants rather than assuming a
+    // fixed depth.
+    const zoneID = zone.querySelector('.versenum')?.textContent.trim() ?? '';
 
     let { zoneid } = parseTimingID(times[timingIndex].id);
     if (zoneid && zoneid !== zoneID) {
@@ -320,7 +327,7 @@ export function addTimingSpans(
       timingIndex++;
     }
 
-    // Catch any remaining text in the zone if punctuation didn't trail the end
+    // Wrap any remaining text in the zone if break ended the zone loop.
     if (
       segmentStart < flatText.length &&
       timingIndex < times.length &&
@@ -337,27 +344,6 @@ export function addTimingSpans(
       timingIndex++;
     }
   });
-}
-
-function parseTimingID(id: string) {
-  const idParts = id.split('_');
-  const level = idParts.shift();
-  let zoneid = idParts.shift();
-  let phrase;
-  if (/^[A-Za-z]+$/.test(zoneid ?? '')) {
-    phrase = zoneid;
-    zoneid = '';
-  } else {
-    phrase = idParts.shift();
-  }
-  const word = idParts.shift();
-
-  return {
-    level,
-    zoneid,
-    phrase: phraseToNumber(phrase ?? 'a'),
-    word: Number(word ?? -1),
-  };
 }
 
 /**
@@ -400,8 +386,25 @@ function moveUnclaimedSiblings(span: HTMLElement, target: Node) {
 }
 
 /**
+ * Finds the nearest div container of a node: either the zone itself,
+ * or the closest ancestor <div> (eg. a poetry stanza rendered from an OSIS
+ * <div> milestone, which is a descendant of the zone but wraps a whole run
+ * of lines/text). Text nodes are split into sync spans relative to this
+ * container, the same way they would be relative to the zone, so that a
+ * div's text is not swallowed whole by a single timing entry.
+ */
+function nearestBlockAncestor(parent: Node, zone: Element): Element {
+  let node: Node | null = parent;
+  while (node && node !== zone) {
+    if (node instanceof HTMLElement && node.tagName === 'DIV') return node;
+    node = node.parentNode;
+  }
+  return zone;
+}
+
+/**
  * Mutates the DOM elements within a specific text character span
- * while cleanly keeping note nodes intact and untouched.
+ * while cleanly keeping skipClass nodes intact and untouched.
  */
 function wrapTextRange(
   zone: Element,
@@ -412,36 +415,61 @@ function wrapTextRange(
   claimedContainers: Set<Node>,
 ) {
   const doc = zone.ownerDocument;
-  const span = doc.createElement('span');
-  span.className = 'verse-sync';
-  span.setAttribute('data-start', timingItem.start.toString());
-  span.setAttribute('data-id', timingItem.id);
 
-  let firstInserted = false;
+  // A single timing segment's text may cross more than one block container
+  // (eg. from the end of one poetry-line div into the next), since segment
+  // boundaries are computed from the zone's flat text without regard to div
+  // boundaries. A DOM node can only live in one parent, so each block
+  // container touched by this segment gets its own sync span (all sharing
+  // the same data-id/data-start; the highlighting code already matches on
+  // all spans with a given data-id).
+  const spans = new Map<
+    Element,
+    { span: HTMLElement; firstInserted: boolean }
+  >();
+  function spanFor(container: Element) {
+    let entry = spans.get(container);
+    if (!entry) {
+      const span = doc.createElement('span');
+      span.className = 'verse-sync';
+      span.setAttribute('data-start', timingItem.start.toString());
+      span.setAttribute('data-id', timingItem.id);
+      entry = { span, firstInserted: false };
+      spans.set(container, entry);
+    }
+    return entry;
+  }
 
   textMap.forEach((map) => {
     // Determine if this text node overlaps with our phrase boundaries
     const overlapStart = Math.max(startIdx, map.startIdx);
     const overlapEnd = Math.min(endIdx, map.endIdx);
+    if (overlapStart >= overlapEnd) return;
 
     const parent = map.node.parentNode;
+    if (!parent) return;
 
-    if (parent && parent !== zone && overlapStart < overlapEnd) {
-      // This text node lives inside a child element (eg. inline markup)
-      // rather than directly in the zone. That element must remain
-      // untouched, so move it whole into the first span that claims any
-      // of its text instead of slicing its text node.
+    const blockAncestor = nearestBlockAncestor(parent, zone);
+    const entry = spanFor(blockAncestor);
+    const { span } = entry;
+
+    if (parent !== blockAncestor) {
+      // This text node lives inside inline markup (eg. <hi>, notes) nested
+      // within the block container rather than directly in it. That element
+      // must remain untouched, so move it whole into the first span (within
+      // this container) that claims any of its text instead of slicing its
+      // text node.
       let container: Node = map.node;
-      while (container.parentNode && container.parentNode !== zone) {
+      while (container.parentNode && container.parentNode !== blockAncestor) {
         container = container.parentNode;
       }
 
       if (claimedContainers.has(container)) return;
       claimedContainers.add(container);
 
-      if (!firstInserted) {
-        zone.replaceChild(span, container);
-        firstInserted = true;
+      if (!entry.firstInserted) {
+        blockAncestor.replaceChild(span, container);
+        entry.firstInserted = true;
       } else {
         moveUnclaimedSiblings(span, container);
       }
@@ -449,56 +477,75 @@ function wrapTextRange(
       return;
     }
 
-    if (parent && overlapStart < overlapEnd) {
-      const localStart = overlapStart - map.startIdx;
-      const localEnd = overlapEnd - map.startIdx;
+    const localStart = overlapStart - map.startIdx;
+    const localEnd = overlapEnd - map.startIdx;
 
-      const fullText = map.node.nodeValue ?? '';
+    const fullText = map.node.nodeValue ?? '';
 
-      const segmentText = fullText.substring(localStart, localEnd);
-      const textNode = doc.createTextNode(segmentText);
+    const segmentText = fullText.substring(localStart, localEnd);
+    const textNode = doc.createTextNode(segmentText);
 
-      if (firstInserted) {
-        moveUnclaimedSiblings(span, map.node);
-      }
-      span.appendChild(textNode);
+    if (entry.firstInserted) {
+      moveUnclaimedSiblings(span, map.node);
+    }
+    span.appendChild(textNode);
 
-      // Mutate the original node to remove the sliced-out phrase text
-      if (localStart === 0 && localEnd === fullText.length) {
-        // If the entire text node is consumed, prepare to substitute it
-        if (!firstInserted) {
-          parent.replaceChild(span, map.node);
-          firstInserted = true;
-        } else {
-          parent.removeChild(map.node);
-        }
+    // Mutate the original node to remove the sliced-out phrase text
+    if (localStart === 0 && localEnd === fullText.length) {
+      // If the entire text node is consumed, prepare to substitute it
+      if (!entry.firstInserted) {
+        parent.replaceChild(span, map.node);
+        entry.firstInserted = true;
       } else {
-        // If it's a partial node slice, adjust lengths cleanly
-        const remainderText = fullText.substring(localEnd);
-        map.node.nodeValue = fullText.substring(0, localStart);
+        parent.removeChild(map.node);
+      }
+    } else {
+      // If it's a partial node slice, adjust lengths cleanly
+      const remainderText = fullText.substring(localEnd);
+      map.node.nodeValue = fullText.substring(0, localStart);
 
-        if (!firstInserted) {
-          if (map.node.nextSibling) {
-            parent.insertBefore(span, map.node.nextSibling);
-          } else {
-            parent.appendChild(span);
-          }
-          firstInserted = true;
+      if (!entry.firstInserted) {
+        if (map.node.nextSibling) {
+          parent.insertBefore(span, map.node.nextSibling);
+        } else {
+          parent.appendChild(span);
         }
+        entry.firstInserted = true;
+      }
 
-        if (remainderText) {
-          const remainderNode = doc.createTextNode(remainderText);
-          parent.insertBefore(remainderNode, span.nextSibling);
+      if (remainderText) {
+        const remainderNode = doc.createTextNode(remainderText);
+        parent.insertBefore(remainderNode, span.nextSibling);
 
-          // Keep the text map in sync with the DOM: later segments in this
-          // zone must continue reading from this remainder node (using
-          // offsets relative to it), not the now-truncated original node.
-          map.node = remainderNode;
-          map.startIdx = overlapEnd;
-        }
+        // Keep the text map in sync with the DOM: later segments in this
+        // zone must continue reading from this remainder node (using
+        // offsets relative to it), not the now-truncated original node.
+        map.node = remainderNode;
+        map.startIdx = overlapEnd;
       }
     }
   });
+}
+
+function parseTimingID(id: string) {
+  const idParts = id.split('_');
+  const level = idParts.shift();
+  let zoneid = idParts.shift();
+  let phrase;
+  if (/^[A-Za-z]+$/.test(zoneid ?? '')) {
+    phrase = zoneid;
+    zoneid = '';
+  } else {
+    phrase = idParts.shift();
+  }
+  const word = idParts.shift();
+
+  return {
+    level,
+    zoneid,
+    phrase: phraseToNumber(phrase ?? 'a'),
+    word: Number(word ?? -1),
+  };
 }
 
 export function parseTimingFile(timing: string): {
