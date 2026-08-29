@@ -16,6 +16,7 @@ import analytics from '../../analytics.ts';
 import { getDictEntryHTML, getLemmaHTML } from '../atext/zdictionary.ts';
 import { getIntroductions, getNoteHTML } from '../atext/zversekey.ts';
 
+import type { SwordConfType } from '../../../type.ts';
 import type { HTMLData } from '../../htmlData.ts';
 import type RenderPromise from '../../renderPromise.ts';
 import type Popup from './popup.tsx';
@@ -62,6 +63,7 @@ export function getFailReasonHTML(
 // the reason.
 export function getPopupHTML(
   data: HTMLData,
+  element: HTMLElement,
   renderPromise: RenderPromise,
   testonly?: boolean, // is elem renderable as a popup?
 ): string {
@@ -231,14 +233,24 @@ export function getPopupHTML(
 
     case 'aboutlink': {
       if (context) {
-        const conf = GI.getModuleConf(null, renderPromise, context);
-        if (conf) {
-          html = moduleInfoHTML([conf], renderPromise);
-          analytics.record({
-            event: 'glossary',
-            module: context,
-            locationky: 'aboutlink',
-          });
+        const confs: (SwordConfType | null)[] = [
+          GI.getModuleConf(null, renderPromise, context),
+        ];
+        const atext = ofClass('atext', element);
+        const ilmodule = atext?.element ? atext.element.dataset.ilmodule : '';
+        if (ilmodule)
+          confs.push(GI.getModuleConf(null, renderPromise, ilmodule));
+        if (confs.filter(Boolean).length) {
+          if (testonly) {
+            html = 'yes';
+          } else {
+            html = moduleInfoHTML(confs as SwordConfType[], renderPromise);
+            analytics.record({
+              event: 'glossary',
+              module: context,
+              locationky: 'aboutlink',
+            });
+          }
         }
       }
       break;
@@ -307,7 +319,12 @@ export default function handler(
       if (!element) return;
       if (type === 'npopup') return;
       if (
-        !getPopupHTML(getElementData(element), this.renderPromise, true) &&
+        !getPopupHTML(
+          getElementData(element),
+          element,
+          this.renderPromise,
+          true,
+        ) &&
         !this.renderPromise.waiting()
       ) {
         element.classList.add('empty');

@@ -220,3 +220,7 @@ html:not(.popupWin) .npopupTX {
 .bibleBrowser .popup-fail.requires .button-box {
   display: none;
 }
+
+.npopup .module-info .separator {
+  border-top: 2px solid var(--border-dark);
+}

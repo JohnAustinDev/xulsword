@@ -817,6 +817,7 @@ class Atext
         data-module={module}
         data-columns={columns}
         data-ispinned={isPinned}
+        data-ilmodule={ilModule}
         data-data={JSON_attrib_stringify(data)}
       >
         <Hbox className="sbcontrols">

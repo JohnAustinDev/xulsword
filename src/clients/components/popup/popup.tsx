@@ -215,7 +215,7 @@ class Popup
       }
       if (infokey) {
         if (!pt.dataset.infokey || pt.dataset.infokey !== infokey) {
-          const html = getPopupHTML(data, renderPromise, false);
+          const html = getPopupHTML(data, pt, renderPromise, false);
           if (!renderPromise.waiting()) {
             sanitizeHTML(pt, html);
             libswordImgSrc(pt);
