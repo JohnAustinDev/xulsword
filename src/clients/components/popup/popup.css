@@ -221,6 +221,13 @@ html:not(.popupWin) .npopupTX {
   display: none;
 }
 
-.npopup .module-info .separator {
+/* Styles for aboutlink popup of module info */
+.aboutlink .module-info .moduleType {
+  display: none;
+}
+.aboutlink .module-info .sourceRepository {
+  visibility: hidden; /* leave as blank line */
+}
+.aboutlink .module-info .separator {
   border-top: 2px solid var(--border-dark);
 }

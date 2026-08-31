@@ -1158,7 +1158,12 @@ export function getLangReadable(
     code,
   );
   let name = '';
-  if (G.i18n.language.split('-').shift() === 'en') {
+  // Prefer the English language name IF xulsword-language is English or the
+  // code-language is Hebrew or Greek.
+  if (
+    G.i18n.language.split('-').shift() === 'en' ||
+    ['he', 'grc'].includes(code)
+  ) {
     name = langName.en || langName.local;
   } else {
     name = langName.local || langName.en;

@@ -97,9 +97,6 @@ html:not(.is-vagrant) .popup-fail.reason,
 /* genbknav shouldn't show single-option selects */
 #genbknav:not(:has(> div:nth-child(2))) .menulist:has(> select[disabled]),
 #genbknav:not(:has(> div:nth-child(2))) .menulist:not(:has(:nth-child(2))),
-.module-info .sourceRepository {
-  display: none;
-}
 
 .cs-OSMHB {
   font-size: 20px;

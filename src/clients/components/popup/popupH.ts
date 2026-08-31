@@ -232,15 +232,17 @@ export function getPopupHTML(
     }
 
     case 'aboutlink': {
-      if (context) {
-        const confs: (SwordConfType | null)[] = [
-          GI.getModuleConf(null, renderPromise, context),
-        ];
+      if (context && context in G.Tab) {
+        const confs: SwordConfType[] = [];
+        const cConf = GI.getModuleConf(null, renderPromise, context);
+        if (cConf) confs.push(cConf);
         const atext = ofClass('atext', element);
         const ilmodule = atext?.element ? atext.element.dataset.ilmodule : '';
-        if (ilmodule)
-          confs.push(GI.getModuleConf(null, renderPromise, ilmodule));
-        if (confs.filter(Boolean).length) {
+        if (ilmodule && ilmodule in G.Tab) {
+          const ilConf = GI.getModuleConf(null, renderPromise, ilmodule);
+          if (ilConf) confs.push(ilConf);
+        }
+        if (confs.length) {
           if (testonly) {
             html = 'yes';
           } else {
