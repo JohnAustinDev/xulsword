@@ -5,42 +5,42 @@
 }
 
 .vbox,
-.orient-vertical {
+.xs-orient-vertical {
   flex-direction: column;
   justify-content: space-around;
 }
 
 .hbox,
-.orient-horizontal {
+.xs-orient-horizontal {
   flex-direction: row;
 }
 
-.pack-start {
+.xs-pack-start {
   justify-content: flex-start;
 }
-.pack-center {
+.xs-pack-center {
   justify-content: center;
 }
-.pack-end {
+.xs-pack-end {
   justify-content: flex-end;
 }
 
-.align-start {
+.xs-align-start {
   align-items: flex-start;
 }
-.align-center {
+.xs-align-center {
   align-items: center;
 }
-.align-end {
+.xs-align-end {
   align-items: flex-end;
 }
-.align-stretch {
+.xs-align-stretch {
   align-items: stretch;
 }
-.align-baseline {
+.xs-align-baseline {
   align-items: baseline;
 }
 
-.xuldir-reverse {
+.xs-xuldir-reverse {
   flex-direction: row-reverse;
 }

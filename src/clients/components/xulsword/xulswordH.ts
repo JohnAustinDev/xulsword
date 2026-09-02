@@ -191,7 +191,7 @@ export default function handler(
           });
           break;
         }
-        case 'choosermenu': {
+        case 'chooserButton': {
           this.setState((prevState) => {
             let { showChooser } = prevState;
             showChooser = !showChooser;

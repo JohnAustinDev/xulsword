@@ -6,7 +6,6 @@
   width: 100%;
   position: relative;
 }
-
 .viewport .genbook-chooser {
   margin-top: 25px;
 }
@@ -38,9 +37,6 @@
 }
 
 @media (max-width: 767px) {
-  .isWebApp .viewport {
-    padding: 28px 5px;
-  }
   .viewport {
     margin: 0;
   }

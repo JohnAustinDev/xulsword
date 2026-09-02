@@ -44,66 +44,108 @@ body {
   flex-basis: 100%;
   overflow-y: hidden;
 }
-
-#controls {
-  display: block;
+#root .viewport {
+  padding: 28px 5px;
 }
+
+/* Default Bible Browser Web-App controls are in a VBOX */
 #control-rows {
   padding: 0 10px;
   flex-basis: 0;
   max-width: 100vw;
-}
-#main-controlbar {
   flex-wrap: wrap;
 }
-#choosermenu {
+#chooserButton {
   margin-right: 10px;
-}
-#historyButtons {
-  width: 100%;
-}
-#historyButtons .button-box,
-#historyButtons .button,
-#historyButtons button {
-  width: 100%;
-}
-#historyButtons > .box {
-  max-width: 150px;
-}
-#textnav {
-  width: 100%;
 }
 #textnav .vk-book {
   flex-basis: 100%;
 }
-#textnav .vk-book select {
-  width: 100%;
-}
-#player {
-  margin: 5px 5px 0 5px;
-}
-#genbknav .menulist,
-#genbknav .menulist select {
-  width: 100%;
-}
-#search-tool {
-  margin-left: 5px;
-  margin-right: 5px;
-}
 #search-tool > .vbox {
   flex-direction: row;
+  flex-grow: 1;
 }
+#xsSearchText {
+  margin-right: 10px;
+}
+#player {
+  margin-top: 5px;
+}
+#control-rows > div,
+#historyButtons,
+#historyButtons .button,
+#historyButtons .button-box,
+#historyButtons button,
+#textnav,
+#textnav .vk-book select,
+#genbknav .menulist,
+#genbknav .menulist select,
+#player,
+audio
+{
+  width: 100%;
+}
+#back,
+#chooserButton,
+#textnav .selectvk,
+#textnav .vk-book,
+#genbknav > .box,
+#genbknav > .box > .box,
+#search-tool,
+#xsSearchText,
+#player {
+  margin-left: 0;
+}
+#forward,
+#textnav .selectvk,
+#genbknav > .box,
+#genbknav > .box > .box,
+#search-tool,
+#player {
+  margin-right: 0;
+}
+/* Wide display Bible Browser Webb-App controls become like HBOX */
+@media (min-width: 768px) {
+  #controls {
+    display: block;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  #control-rows {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  /* These three rows are given width ~ 1/3 * 768 so that they will fit on the
+  same display row until the UI mobile switchpoint plus margin. */
+  #control-rows > .box:has(#chooserButton),
+  #control-rows > .box:has(#genbknav), #genbknav,
+  #control-rows > .box:has(#search-tool), #search-tool {
+    max-width: 230px;
+  }
+  #textnav {
+    /* 186 = 230 - 44 to allow for chooserButton width */
+    max-width: 186px;
+  }
+  /* These need width constraint, but 230px is too small, so use 300px. */
+  #historyButtons,
+  #player {
+    max-width: 300px;
+  }
+}
+
 .chooser .fadetop {
   height: 25px;
 }
 
 html:not(.is-vagrant) .popup-fail.reason,
-#genbknav,
-/* don't show text pin without multiple texts */
-.textrow:not(:has(.atext:nth-child(2))) .text-pin,
+/* don't show text pin without multiple texts, unless audio is tracking text. */
+.textarea:not(:has(.verse-sync)) .textrow:not(:has(.atext:nth-child(2))) .text-pin,
 /* genbknav shouldn't show single-option selects */
 #genbknav:not(:has(> div:nth-child(2))) .menulist:has(> select[disabled]),
-#genbknav:not(:has(> div:nth-child(2))) .menulist:not(:has(:nth-child(2))),
+#genbknav:not(:has(> div:nth-child(2))) .menulist:not(:has(:nth-child(2))) {
+  display: none;
+}
+
 .cs-OSMHB {
   font-size: 20px;
 }
@@ -126,40 +168,11 @@ html:not(.is-vagrant) .popup-fail.reason,
 }
 
 @media (max-width: 767px) {
-  #controls {
-    display: flex;
-  }
-  #main-controlbar > div {
-    width: 100%;
-    justify-content: space-around;
-  }
-  audio {
-    max-width: calc(100vw - 2px);
-  }
   .textarea.single-panel .sb {
     height: fit-content;
   }
-  #genbknav {
-    display: flex;
-  }
-  #back,
-  #textnav .selectvk,
-  #genbknav > .box,
-  #genbknav > .box > .box,
-  #search-tool,
-  #xsSearchText {
-    margin-left: 0;
-  }
-  #forward,
-  #textnav .selectvk,
-  #genbknav > .box,
-  #genbknav > .box > .box,
-  #search-tool {
-    margin-right: 0;
-  }
   .chooser,
-  #choosermenu,
-  .narrow-screen-hide {
+  #chooserButton {
     display: none;
   }
   /* Make sure mts-tab drop down menu remains on-screen */
@@ -180,10 +193,23 @@ html:not(.is-vagrant) .popup-fail.reason,
   .dictkey {
     margin-bottom: 0.5em;
   }
-
   .cr:after,
   .fn:after,
   .un:after {
     font-size: larger;
+  }
+}
+
+/* Hide some control buttons for very narrow screens */
+@media (max-width: 276px) {
+  #back,
+  #forward,
+  #addcolumn {
+    display: none;
+  }
+}
+@media (max-width: 228px) {
+  #printPassage {
+    display: none;
   }
 }

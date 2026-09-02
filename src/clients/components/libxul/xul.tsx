@@ -117,8 +117,10 @@ export function xulClass(
 ) {
   const c1 = Array.isArray(classes) ? classes : classes.split(/\s+/);
   const c2 = props.className ? (props.className as string).split(/\s+/) : [];
+  // Add xs- CSS prefix to prevent class collision in the webapp environment
+  // for classes such as align-center.
   const c3 = enums.map((c) =>
-    props[c] ? `${c}-${props[c] as string | number}` : '',
+    props[c] ? `xs-${c}-${props[c] as string | number}` : '',
   );
   const c4 = bools.map((c) => {
     const v = props[c] as boolean | string;

@@ -15,9 +15,6 @@
   width: 100%;
   max-width: calc(100vw - 87px);
 }
-.printControls .vk-book {
-  margin-inline-start: 0;
-}
 .printControls .bp6-progress-bar {
   position: absolute;
   bottom: 2px;

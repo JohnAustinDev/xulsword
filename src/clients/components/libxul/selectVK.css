@@ -21,21 +21,11 @@
 .selectvk > *:not(:first-child) {
   display: inline-block;
 }
-
-.selectvk > .modulemenu:first-child,
-.selectvk > .menulist:first-child {
-  margin-inline-start: 0;
-}
-.selectvk > .modulemenu:not(:last-child),
-.selectvk > .menulist:not(:last-child) {
-  margin-inline-end: 10px;
-}
-.selectvk > .label {
-  margin-inline-end: 5px;
-}
-.selectvk > .modulemenu:last-child,
-.selectvk > .menulist:last-child {
+html .selectvk > * {
   margin-inline-end: 0;
+}
+html .selectvk > * + * {
+  margin-inline-start: 10px;
 }
 
 .selectvk .label label {
