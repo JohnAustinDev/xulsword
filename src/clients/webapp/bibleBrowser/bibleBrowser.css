@@ -86,6 +86,13 @@ body {
 #genbknav .menulist select {
   width: 100%;
 }
+#search-tool {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+#search-tool > .vbox {
+  flex-direction: row;
+}
 .chooser .fadetop {
   height: 25px;
 }
@@ -97,7 +104,6 @@ html:not(.is-vagrant) .popup-fail.reason,
 /* genbknav shouldn't show single-option selects */
 #genbknav:not(:has(> div:nth-child(2))) .menulist:has(> select[disabled]),
 #genbknav:not(:has(> div:nth-child(2))) .menulist:not(:has(:nth-child(2))),
-
 .cs-OSMHB {
   font-size: 20px;
 }
@@ -135,6 +141,21 @@ html:not(.is-vagrant) .popup-fail.reason,
   }
   #genbknav {
     display: flex;
+  }
+  #back,
+  #textnav .selectvk,
+  #genbknav > .box,
+  #genbknav > .box > .box,
+  #search-tool,
+  #xsSearchText {
+    margin-left: 0;
+  }
+  #forward,
+  #textnav .selectvk,
+  #genbknav > .box,
+  #genbknav > .box > .box,
+  #search-tool {
+    margin-right: 0;
   }
   .chooser,
   #choosermenu,

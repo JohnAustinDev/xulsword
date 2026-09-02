@@ -9,6 +9,11 @@
 .selector .menulist {
   margin-top: 0;
 }
-.selector .menulist:not(.hide) + .menulist {
+
+.selector .menulist:not(.hide) ~ .menulist {
   margin-top: 5px;
+}
+
+.selector .menulist:last-of-type {
+  margin-bottom: 0;
 }

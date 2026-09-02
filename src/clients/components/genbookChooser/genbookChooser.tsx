@@ -244,7 +244,11 @@ export default class GenbookChooser
     });
 
     return (
-      <Vbox domref={loadingRef} {...addClass(`chooser genbook-chooser`, props)}>
+      <Vbox
+        pack="start"
+        domref={loadingRef}
+        {...addClass(`chooser genbook-chooser`, props)}
+      >
         <Hbox className="fadetop" />
 
         <Hbox className="chooser-container" flex="20">

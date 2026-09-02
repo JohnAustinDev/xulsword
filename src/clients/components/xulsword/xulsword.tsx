@@ -383,31 +383,33 @@ export default class Xulsword
     );
 
     const searchComponent = (
-      <>
-        <Textbox
-          id="xsSearchText"
-          type="search"
-          maxLength="24"
-          onChange={handler}
-          onKeyUp={(e: React.KeyboardEvent) => {
-            if (e.key === 'Enter') {
-              const b = document.getElementById('xsSearchButton');
-              if (b) b.click();
-            }
-          }}
-          title={GI.i18n.t('', renderPromise, 'searchbox.tooltip')}
-        />
-        <Box title={GI.i18n.t('', renderPromise, 'search.tooltip')}>
-          <Button
-            id="xsSearchButton"
-            icon="search"
-            disabled={searchDisabled}
-            onPointerDown={handler}
-          >
-            {GI.i18n.t('', renderPromise, 'menu.search')}
-          </Button>
-        </Box>
-      </>
+      <Hbox id="search-tool">
+        <Vbox pack="start" align="center">
+          <Textbox
+            id="xsSearchText"
+            type="search"
+            maxLength="24"
+            onChange={handler}
+            onKeyUp={(e: React.KeyboardEvent) => {
+              if (e.key === 'Enter') {
+                const b = document.getElementById('xsSearchButton');
+                if (b) b.click();
+              }
+            }}
+            title={GI.i18n.t('', renderPromise, 'searchbox.tooltip')}
+          />
+          <Box title={GI.i18n.t('', renderPromise, 'search.tooltip')}>
+            <Button
+              id="xsSearchButton"
+              icon="search"
+              disabled={searchDisabled}
+              onPointerDown={handler}
+            >
+              {GI.i18n.t('', renderPromise, 'menu.search')}
+            </Button>
+          </Box>
+        </Vbox>
+      </Hbox>
     );
 
     const chooserMenuButton = (
@@ -654,13 +656,7 @@ export default class Xulsword
     const appSearchTool = (
       <>
         {audio.open && audioComponent}
-        {!audio.open && (
-          <Hbox id="search-tool">
-            <Vbox pack="start" align="center">
-              {searchComponent}
-            </Vbox>
-          </Hbox>
-        )}
+        {!audio.open && searchComponent}
       </>
     );
 
@@ -703,7 +699,7 @@ export default class Xulsword
 
                   <Spacer flex="1" />
 
-                  <Hbox>{searchComponent}</Hbox>
+                  {searchComponent}
 
                   <Hbox pack="center">{optionButtons}</Hbox>
                 </Hbox>

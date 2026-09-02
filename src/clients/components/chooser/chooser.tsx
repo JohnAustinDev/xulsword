@@ -270,6 +270,7 @@ class Chooser
     return (
       <Vbox
         domref={loadingRef}
+        pack="start"
         {...addClass(`chooser verse-chooser`, props)}
         onPointerLeave={handler}
       >

@@ -10,6 +10,7 @@
 .xulswordWin #closeplayer {
   margin-inline-start: 10px !important;
 }
+.xulswordWin #search-tool .vbox > div,
 .xulswordWin .controlbar .button,
 .xulswordWin .controlbar .button > div,
 .xulswordWin .controlbar button {
@@ -17,9 +18,6 @@
 }
 .xulswordWin .controlbar .textbox {
   font-size: 15px;
-}
-.xulswordWin .controlbar #search-tool .vbox > div {
-  width: 100%;
 }
 .xulswordWin .controlbar #historymenu {
   position: relative;
