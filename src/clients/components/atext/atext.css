@@ -215,7 +215,6 @@ lacking either keep the solid-block fallback above. */
 .aboutlink {
   text-decoration: underline;
   cursor: pointer;
-  white-space: nowrap;
 }
 .prevchaplink,
 .nextchaplink {

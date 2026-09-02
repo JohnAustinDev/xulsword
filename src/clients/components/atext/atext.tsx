@@ -613,7 +613,7 @@ class Atext
           if (module && pes && sbe.parentElement) {
             sanitizeHTML(pes, `${navlinks(module, renderPromise, true)}`);
             this.hoverLinks(pes);
-            // Adjust nav-links downward if they encroach on the controls
+            // UI TWEAK: Adjust nav-links down if they encroach on the controls
             const sbc = sbe.parentElement?.querySelector(
               '.sbcontrols',
             ) as HTMLElement | null;
@@ -626,6 +626,12 @@ class Atext
             ) {
               pes.style.marginTop = '2.5em';
             } else pes.style.marginTop = '';
+            // UI TWEAK: Remove pesky arrows if atext is very narrow.
+            if (sbe.parentElement?.offsetWidth < 210) {
+              Array.from(
+                pes.querySelectorAll('.prevchaplink, .nextchaplink'),
+              ).forEach((e) => ((e as HTMLElement).style.display = 'none'));
+            }
           }
           // Write nav-links to footer
           const { columns } = libswordProps;
@@ -725,7 +731,7 @@ class Atext
       <span class="aboutlink" data-data=${JSON_attrib_stringify({
         type: 'aboutlink',
         context: module,
-        })}
+      })}
       >
         ${GI.i18n.t('', renderPromise, 'About this text', { ns: 'bibleBrowser' })}
       </span>`
