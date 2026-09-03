@@ -44,11 +44,20 @@ body {
   flex-basis: 100%;
   overflow-y: hidden;
 }
+
 #root .viewport {
-  padding: 28px 5px;
+  margin: 0px 10px 10px 10px;
 }
 
-/* Default Bible Browser Web-App controls are in a VBOX */
+#controlButtons {
+  margin-left: 10px;
+  width: fit-content;
+}
+
+/* Bible Browser Web-App controls are in a VBOX */
+#controls #control-rows:has(:first-child) {
+  margin-bottom: 10px;
+}
 #control-rows {
   padding: 0 10px;
   flex-basis: 0;
@@ -70,6 +79,7 @@ body {
 }
 #player {
   margin-top: 5px;
+  margin-bottom: 5px;
 }
 #control-rows > div,
 #historyButtons,
@@ -104,32 +114,12 @@ audio
 #player {
   margin-right: 0;
 }
-/* Wide display Bible Browser Webb-App controls become like HBOX */
-@media (min-width: 768px) {
-  #controls {
-    display: block;
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-  #control-rows {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-  /* These three rows are given width ~ 1/3 * 768 so that they will fit on the
-  same display row until the UI mobile switchpoint plus margin. */
-  #control-rows > .box:has(#chooserButton),
-  #control-rows > .box:has(#genbknav), #genbknav,
-  #control-rows > .box:has(#search-tool), #search-tool {
-    max-width: 230px;
-  }
-  #textnav {
-    /* 186 = 230 - 44 to allow for chooserButton width */
-    max-width: 186px;
-  }
-  /* These need width constraint, but 230px is too small, so use 300px. */
-  #historyButtons,
-  #player {
-    max-width: 300px;
+#control-rows:not(:has(#optionButtons)) > div:has(#player) {
+  width: 270px;
+}
+@media (max-width: 290px) {
+  #control-rows:not(:has(#optionButtons)) > div:has(#player) {
+    width: calc(100vw - 20px);
   }
 }
 
@@ -201,14 +191,14 @@ html:not(.is-vagrant) .popup-fail.reason,
 }
 
 /* Hide some control buttons for very narrow screens */
-@media (max-width: 276px) {
+@media (max-width: 300px) {
   #back,
   #forward,
   #addcolumn {
     display: none;
   }
 }
-@media (max-width: 228px) {
+@media (max-width: 245px) {
   #printPassage {
     display: none;
   }

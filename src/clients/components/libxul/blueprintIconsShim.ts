@@ -35,6 +35,7 @@ export { ChevronRight } from '@blueprintjs/icons/lib/esm/generated/components/ch
 export { ChevronUp } from '@blueprintjs/icons/lib/esm/generated/components/chevron-up.js';
 export { Clipboard } from '@blueprintjs/icons/lib/esm/generated/components/clipboard.js';
 export { CloudDownload } from '@blueprintjs/icons/lib/esm/generated/components/cloud-download.js';
+export { Cog } from '@blueprintjs/icons/lib/esm/generated/components/cog.js';
 export { Confirm } from '@blueprintjs/icons/lib/esm/generated/components/confirm.js';
 export { Cross } from '@blueprintjs/icons/lib/esm/generated/components/cross.js';
 export { Cut } from '@blueprintjs/icons/lib/esm/generated/components/cut.js';

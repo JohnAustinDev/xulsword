@@ -13,7 +13,6 @@ import {
   syncChildrensBibles,
   doUntilDone,
   isIBTChildrensBible,
-  chooserGenbks,
 } from '../../common.ts';
 import { addClass, delayHandler, topHandle } from '../libxul/xul.tsx';
 import Button, { AnchorButton } from '../libxul/button.tsx';
@@ -58,6 +57,7 @@ const notStatePrefDefault = {
   bsreset: 0,
   vpreset: 0,
   searchDisabled: true,
+  showControls: false,
 };
 
 export type XulswordState = typeof notStatePrefDefault &
@@ -268,6 +268,7 @@ export default class Xulsword
       noteBoxHeight,
       maximizeNoteBox,
       showChooser,
+      showControls,
       bsreset,
       vpreset,
       audio,
@@ -373,10 +374,7 @@ export default class Xulsword
           />
         </Vbox>
         {Build.isElectronApp && (
-          <Button
-            id="closeplayer"
-            onPointerDown={handler}
-          >
+          <Button id="closeplayer" onPointerDown={handler}>
             {GI.i18n.t('', renderPromise, 'close.label')}
           </Button>
         )}
@@ -523,42 +521,32 @@ export default class Xulsword
       </Hbox>
     );
 
-    // On the Web-App a selector is shown for each genbk tab. This prevents the
-    // UI from switching when tab selections change.
-    const genbkTabs = tabs.reduce((p: string[], c) => {
-      const genbk =
-        c?.filter((m) => m && m in G.Tab && G.Tab[m].tabType === 'Genbks') ??
-        [];
-      return p.concat(...genbk) ?? [];
-    }, []);
-
     const gbselects: Set<string> = new Set();
     const webappGenbkSelectorComponent = (
       <Hbox pack="center">
         <Vbox id="genbknav" pack="center">
-          {genbkTabs.map((m) => {
-            // Find the module's display panel, or else its first tab panel.
-            let i = panels.findIndex((p) => p === m);
-            if (i === -1) i = tabs.findIndex((tb) => tb?.includes(m));
-            // All Children's Bibles track together, so only one select should
-            // ever be shown, and then all will be controlled by it.
-            const mm = isIBTChildrensBible(m, renderPromise) ? 'cb' : m;
-            if (!gbselects.has(mm)) {
-              gbselects.add(mm);
-              return (
-                <SelectOR
-                  flex="1"
-                  key={[m, keys[i]].join('.')}
-                  otherMods={[m]}
-                  initialORM={{
-                    otherMod: m,
-                    keys: [keys[i] || ''],
-                  }}
-                  enableMultipleSelection={false}
-                  enableParentSelection={mm !== 'cb'} // CB's don't have introductions
-                  onSelection={selectionGenbk}
-                />
-              );
+          {panels.map((m, i) => {
+            if (m && m in G.Tab && G.Tab[m].tabType === 'Genbks') {
+              // All Children's Bibles track together, so only one select should
+              // ever be shown, and then all will be controlled by it.
+              const mm = isIBTChildrensBible(m, renderPromise) ? 'cb' : m;
+              if (!gbselects.has(mm)) {
+                gbselects.add(mm);
+                return (
+                  <SelectOR
+                    flex="1"
+                    key={[m, keys[i]].join('.')}
+                    otherMods={[m]}
+                    initialORM={{
+                      otherMod: m,
+                      keys: [keys[i] || ''],
+                    }}
+                    enableMultipleSelection={false}
+                    enableParentSelection={mm !== 'cb'} // CB's don't have introductions
+                    onSelection={selectionGenbk}
+                  />
+                );
+              }
             }
             return null;
           })}
@@ -566,14 +554,6 @@ export default class Xulsword
       </Hbox>
     );
 
-    // For the Web-App the VK selector is visible if any tab is a bible tab.
-    const bibleTabs = tabs.reduce((p: string[], c) => {
-      const genbk =
-        c?.filter((m) => m && m in G.Tab && G.Tab[m].tabType === 'Texts') ?? [];
-      return p?.concat(...genbk) ?? [];
-    }, []);
-
-    const bbselect = vkMod ?? bibleTabs[0] ?? '';
     const webappVKSelectorComponent = (
       <Hbox flex="1" pack="start">
         <Hbox id="textnav">
@@ -584,15 +564,15 @@ export default class Xulsword
               verses: [],
               lastchapters: [],
               lastverses: [],
-              vkMods: bbselect ? [bbselect] : undefined,
+              vkMods: vkMod ? [vkMod] : undefined,
             }}
             initialVK={{
               ...(location || { book: 'Gen', chapter: 1, v11n: 'KJV' }),
-              vkMod: bbselect,
+              vkMod,
             }}
             disabled={location === null}
             onSelection={selectionVK}
-            key={[stringHash(location), bbselect, bsreset].join('.')}
+            key={[stringHash(location), vkMod, bsreset].join('.')}
           />
         </Hbox>
       </Hbox>
@@ -694,22 +674,34 @@ export default class Xulsword
       >
         {Build.isWebApp && (
           <>
-            <Hbox id="controls" pack="center">
+            <Hbox id="controlButtons">
+              {chooserMenuButton}
+              <Button
+                id="showControls"
+                icon="cog"
+                onPointerDown={handler}
+                checked={showControls}
+              />
+            </Hbox>
+            <Hbox id="controls" pack="start">
               <Vbox id="control-rows" align="start">
-                <Hbox pack="center">{historyComponent}</Hbox>
+                {showControls && (
+                  <>
+                    <Hbox pack="center">{historyComponent}</Hbox>
 
-                <Hbox pack="start">
-                  {chooserMenuButton}
-                  {!!bibleTabs.length && webappVKSelectorComponent}
-                </Hbox>
+                    <Hbox pack="start">
+                      {vkMod && webappVKSelectorComponent}
+                    </Hbox>
 
-                {!!genbkTabs.length && webappGenbkSelectorComponent}
+                    {!!gbselects.size && webappGenbkSelectorComponent}
 
-                <Hbox>{searchComponent}</Hbox>
+                    <Hbox>{searchComponent}</Hbox>
 
-                <Hbox pack="center">{optionButtons}</Hbox>
+                    <Hbox pack="center">{optionButtons}</Hbox>
+                  </>
+                )}
 
-                {audio.open && <Hbox pack="center">{audioComponent}</Hbox>}
+                {audio.open && <Hbox pack="start">{audioComponent}</Hbox>}
               </Vbox>
             </Hbox>
             <div id="textTop"></div>

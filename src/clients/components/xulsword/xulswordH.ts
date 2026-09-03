@@ -199,6 +199,14 @@ export default function handler(
           });
           break;
         }
+        case 'showControls': {
+          this.setState((prevState) => {
+            let { showControls } = prevState;
+            showControls = !showControls;
+            return { showControls };
+          });
+          break;
+        }
         case 'addcolumn': {
           setGlobalPanels(G.Prefs, 0, 1);
           // Set newly added panel to a StrongsNumbers module if such a tab is
