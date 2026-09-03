@@ -107,6 +107,14 @@ html[dir='rtl'] .atext .origselect {
     margin-inline-end: 5px;
   }
   .bibleBrowser .atext .sb {
+    padding: 0 15px;
+  }
+  .bibleBrowser .versePerLineButton {
+    display: none;
+  }
+}
+@media (max-width: 350px) {
+  .bibleBrowser .atext .sb {
     padding: 0 5px;
   }
 }
