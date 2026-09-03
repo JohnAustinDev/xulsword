@@ -49,8 +49,13 @@ body {
   margin: 0 10px 10px 10px;
 }
 
+/* don't show the pin for a single text pane, unless there is audio for the text. */
+.viewport:not(:has(.audio-icon)) .textrow:not(:has(.atext:nth-child(2))) .text-pin {
+  display: none;
+}
+
 #controlButtons {
-  margin-left: 10px;
+  margin-left: 5px;
   width: fit-content;
 }
 
@@ -61,11 +66,8 @@ body {
 #control-rows {
   padding: 0 10px;
   flex-basis: 0;
-  max-width: 100vw;
+  max-width: 350px;
   flex-wrap: wrap;
-}
-#chooserButton {
-  margin-right: 10px;
 }
 #textnav .vk-book {
   flex-basis: 100%;
@@ -81,22 +83,23 @@ body {
   margin-top: 5px;
   margin-bottom: 5px;
 }
-#control-rows > div,
-#historyButtons,
+#player .audioplayer {
+  flex-grow: 3;
+  flex-shrink: 3;
+}
+#control-rows > div {
+  width: calc(100% - 10px);
+}
 #historyButtons .button,
 #historyButtons .button-box,
 #historyButtons button,
-#textnav,
 #textnav .vk-book select,
 #genbknav .menulist,
 #genbknav .menulist select,
-#player,
-audio
-{
+audio {
   width: 100%;
 }
 #back,
-#chooserButton,
 #textnav .selectvk,
 #textnav .vk-book,
 #genbknav > .box,
@@ -114,26 +117,22 @@ audio
 #player {
   margin-right: 0;
 }
-#control-rows:not(:has(#optionButtons)) > div:has(#player) {
-  width: 270px;
+/* If only one genbk select is shown, then it shouldn't show disabled or single-option selects */
+#genbknav:not(:has(> div:nth-child(2))) .menulist:has(> select[disabled]),
+#genbknav:not(:has(> div:nth-child(2))) .menulist:not(:has(:nth-child(2))) {
+  display: none;
 }
-@media (max-width: 290px) {
-  #control-rows:not(:has(#optionButtons)) > div:has(#player) {
-    width: calc(100vw - 20px);
-  }
+#genbknav:not(:has(> div:nth-child(2))) .menulist:has(> select[disabled]) + .menulist,
+#genbknav:not(:has(> div:nth-child(2))) .menulist:not(:has(:nth-child(2))) + .menulist {
+  margin-top: 0;
+}
+
+html:not(.is-vagrant) .popup-fail.reason {
+  display: none;
 }
 
 .chooser .fadetop {
   height: 25px;
-}
-
-html:not(.is-vagrant) .popup-fail.reason,
-/* don't show text pin without multiple texts, unless audio is tracking text. */
-.textarea:not(:has(.verse-sync)) .textrow:not(:has(.atext:nth-child(2))) .text-pin,
-/* genbknav shouldn't show single-option selects */
-#genbknav:not(:has(> div:nth-child(2))) .menulist:has(> select[disabled]),
-#genbknav:not(:has(> div:nth-child(2))) .menulist:not(:has(:nth-child(2))) {
-  display: none;
 }
 
 .cs-OSMHB {
@@ -149,12 +148,6 @@ html:not(.is-vagrant) .popup-fail.reason,
   z-index: 8;
   margin: 0;
   padding: 20px;
-}
-
-@media (max-width: 300px) {
-  .close-card-button {
-    padding: 0;
-  }
 }
 
 @media (max-width: 767px) {
@@ -197,11 +190,7 @@ html:not(.is-vagrant) .popup-fail.reason,
 @media (max-width: 300px) {
   #back,
   #forward,
-  #addcolumn {
-    display: none;
-  }
-}
-@media (max-width: 245px) {
+  #addcolumn,
   #printPassage {
     display: none;
   }

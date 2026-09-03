@@ -57,6 +57,7 @@ export default function audioIcon(props: AudioIconProps): JSX.Element | null {
       if (button) {
         return (
           <Button
+            className="audio-icon"
             checked={audio?.open ?? true}
             disabled={!(!renderPromise.waiting() && selections.length)}
             icon="volume-up"

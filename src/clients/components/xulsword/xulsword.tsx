@@ -317,7 +317,7 @@ export default class Xulsword
     const webAppIconSize = Build.isWebApp ? 28 : C.UI.BluePrint.IconSize.LARGE;
 
     const historyComponent = (
-      <Hbox id="historyButtons" pack="start" align="center">
+      <Hbox id="historyButtons" flex="1" pack="start" align="center">
         <Box
           flex="1"
           title={GI.i18n.t('', renderPromise, 'history.back.tooltip')}
@@ -363,15 +363,13 @@ export default class Xulsword
     );
 
     const audioComponent = (
-      <Hbox id="player" pack="start" align="center">
-        <Vbox flex="3">
+      <Hbox id="player" flex="1" pack="start" align="center">
           <AudioPlayer
             audio={audio}
             audioHandler={handler}
             renderPromise={renderPromise}
             xulswordState={xulswordStateHandler}
           />
-        </Vbox>
         {Build.isElectronApp && (
           <Button id="closeplayer" onPointerDown={handler}>
             {GI.i18n.t('', renderPromise, 'close.label')}
@@ -381,12 +379,13 @@ export default class Xulsword
     );
 
     const searchComponent = (
-      <Hbox id="search-tool">
+      <Hbox id="search-tool" flex="1">
         <Vbox pack="start" align="center">
           <Textbox
             id="xsSearchText"
             type="search"
             maxLength="24"
+            flex="1"
             onChange={handler}
             onKeyUp={(e: React.KeyboardEvent) => {
               if (e.key === 'Enter') {
@@ -427,7 +426,7 @@ export default class Xulsword
     );
 
     const optionButtons = (
-      <Hbox id="optionButtons" align="start">
+      <Hbox id="optionButtons" pack="center" align="start">
         {Build.isWebApp && (
           <Button
             id="printPassage"
@@ -555,7 +554,7 @@ export default class Xulsword
 
     const webappVKSelectorComponent = (
       <Hbox flex="1" pack="start">
-        <Hbox id="textnav">
+        <Hbox flex="1" id="textnav">
           <SelectVK
             id="book"
             flex="1"
@@ -683,24 +682,21 @@ export default class Xulsword
               />
             </Hbox>
             <Hbox id="controls" pack="start">
-              <Vbox id="control-rows" align="start">
+              <Vbox id="control-rows" align="start" flex="2">
                 {showControls && (
                   <>
-                    <Hbox pack="center">{historyComponent}</Hbox>
+                    {historyComponent}
 
-                    <Hbox pack="start">
-                      {vkMod && webappVKSelectorComponent}
-                    </Hbox>
+                    {vkMod && webappVKSelectorComponent}
 
                     {!!gbselects.size && webappGenbkSelectorComponent}
 
-                    <Hbox>{searchComponent}</Hbox>
+                    {searchComponent}
 
-                    <Hbox pack="center">{optionButtons}</Hbox>
+                    {optionButtons}
                   </>
                 )}
-
-                {audio.open && <Hbox pack="start">{audioComponent}</Hbox>}
+                {audio.open && audioComponent}
               </Vbox>
             </Hbox>
             <div id="textTop"></div>

@@ -102,7 +102,7 @@ export function xulStyle(
 
   // flex
   if (typeof flex === 'string' || typeof flex === 'number') {
-    s.flexGrow = flex.toString().replace(/\D/, '');
+    s.flexGrow = flex.toString().replace(/[^\d.-]/, '');
     s.flexShrink = s.flexGrow;
   }
 

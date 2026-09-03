@@ -8,7 +8,7 @@ import {
 } from '../../audioTiming.ts';
 import { GI } from '../../G.ts';
 import Menulist from '../libxul/menulist.tsx';
-import { htmlAttribs } from '../libxul/xul.tsx';
+import { htmlAttribs, XulProps } from '../libxul/xul.tsx';
 import './audioPlayer.css';
 
 import type {
@@ -29,7 +29,7 @@ export default function AudioPlayer(props: {
   renderPromise: RenderPromise;
   audioHandler: (e: React.SyntheticEvent<any>) => void;
   xulswordState: React.Component<any, XulswordState>['setState'];
-}): JSX.Element {
+} & XulProps): JSX.Element {
   const { audio, renderPromise, audioHandler, xulswordState } = props;
   const { file, defaults } = audio;
   const { timing } = file ?? {};

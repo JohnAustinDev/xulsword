@@ -16,6 +16,9 @@
 .xulswordWin .controlbar button {
   width: 100%;
 }
+.xulswordWin .controlbar #closeplayer {
+  width: unset;
+}
 .xulswordWin .controlbar .textbox {
   font-size: 15px;
 }

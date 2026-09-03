@@ -1,7 +1,7 @@
 .audio-icon {
   width: fit-content;
 }
-.audio-icon .bp6-icon {
+.audio-icon:not(.off) .bp6-icon {
   color: var(--color-primary);
 }
 .audio-icon span {
