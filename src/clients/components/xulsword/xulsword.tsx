@@ -57,7 +57,6 @@ const notStatePrefDefault = {
   bsreset: 0,
   vpreset: 0,
   searchDisabled: true,
-  showControls: false,
 };
 
 export type XulswordState = typeof notStatePrefDefault &
@@ -680,7 +679,7 @@ export default class Xulsword
                 id="showControls"
                 icon="cog"
                 onPointerDown={handler}
-                checked={showControls}
+                checked={showControls ?? false}
               />
             </Hbox>
             <Hbox id="controls" pack="start">
