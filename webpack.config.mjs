@@ -112,6 +112,7 @@ const defaultEnvironment = {
   WEBAPP_MAX_CACHE_RAMMB: 250,
   WEBAPP_SEARCH_BAN: 2000,
   LOGLEVEL: 'info',
+  NODE_VERSION: '24.18.0',
 };
 const env = (k) =>
   (k in process.env && process.env[k]) || defaultEnvironment[k];
@@ -355,7 +356,7 @@ export default function (opts) {
                     '@babel/preset-env',
                     {
                       targets: ['appSrv', 'webappSrv'].includes(build)
-                        ? { node: '22' }
+                        ? { node: env('NODE_VERSION') }
                         : ['webappClients', 'library'].includes(build)
                           ? webappClientsBrowserslist
                           : '> 0.25%, not dead',
