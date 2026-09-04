@@ -72,6 +72,16 @@ const builds = {
   ]
 };
 
+// webappClients (bibleBrowser, widgets) and library (analytics.ts, loaded
+// alongside them) are embedded in third-party pages and viewed on whatever
+// mobile browser a visitor happens to have, so their babel target reaches
+// back to ~2018 devices rather than following '> 0.25%, not dead' (which
+// tracks current evergreen browsers and is fine for the Electron-only
+// appClients/appSrv/preload builds, always run on a bundled modern
+// Chromium).
+const webappClientsBrowserslist =
+  'ios_saf >= 11, chrome >= 63, and_chr >= 63, samsung >= 8, firefox >= 58, and_ff >= 58, not dead';
+
 const defaultEnvironment = {
   WEBAPP_DOMAIN: 'http://localhost:1212',
   WEBAPP_CORS_ORIGIN: 'http://localhost:1212',
@@ -271,7 +281,12 @@ export default function (opts) {
                   vendor: {
                     test: (m) =>
                       /[\\/]node_modules[\\/]/.test(m.resource) &&
-                      !/blueprint/i.test(m.resource),
+                      !/blueprint/i.test(m.resource) &&
+                      // Dynamically imported so only browsers lacking a
+                      // native ResizeObserver fetch it (see tabs.tsx); keep
+                      // it out of the eagerly-loaded vendors chunk so it
+                      // stays its own on-demand chunk.
+                      !/resize-observer-polyfill/i.test(m.resource),
                     name: 'vendors',
                     chunks: 'all',
                   },
@@ -341,7 +356,9 @@ export default function (opts) {
                     {
                       targets: ['appSrv', 'webappSrv'].includes(build)
                         ? { node: '22' }
-                        : '> 0.25%, not dead',
+                        : ['webappClients', 'library'].includes(build)
+                          ? webappClientsBrowserslist
+                          : '> 0.25%, not dead',
                     },
                   ],
                   ['appClients', 'webappClients'].includes(build)

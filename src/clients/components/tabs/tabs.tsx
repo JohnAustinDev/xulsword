@@ -5,7 +5,11 @@ import { htmlAttribs } from '../libxul/xul.tsx';
 import { AnchorButton } from '../libxul/button.tsx';
 import Menupopup from '../libxul/menupopup.tsx';
 import ModuleMenu from '../libxul/modulemenu.tsx';
-import { doUntilDone, windowArguments } from '../../common.ts';
+import {
+  createResizeObserver,
+  doUntilDone,
+  windowArguments,
+} from '../../common.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import './tabs.css';
@@ -62,7 +66,7 @@ class Tabs
 
     this.loadingRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
-    this.resizeObserver = new ResizeObserver(() =>
+    this.resizeObserver = createResizeObserver(() =>
       this.setState({ multiTabs: [] }),
     );
   }

@@ -407,6 +407,50 @@ export function containerScrollTo(
   return false;
 }
 
+type ResizeObserverCtor = new (
+  callback: ConstructorParameters<typeof ResizeObserver>[0],
+) => ResizeObserver;
+
+// ResizeObserver is unavailable on mobile browsers from before ~2020 (see
+// webappClientsBrowserslist in webpack.config.mjs). Rather than a no-op on
+// those browsers, lazily load a polyfill so callers keep working. The
+// polyfill is only fetched when the native API is missing, so browsers that
+// already support it never pay for it.
+export function createResizeObserver(
+  callback: ConstructorParameters<typeof ResizeObserver>[0],
+): ResizeObserver {
+  if (typeof ResizeObserver !== 'undefined') return new ResizeObserver(callback);
+
+  let real: ResizeObserver | undefined;
+  let pending: Element | undefined;
+  import('resize-observer-polyfill')
+    .then((mod) => {
+      // The polyfill is a CommonJS module; its dynamic-import default
+      // isn't typed as constructable, so go through unknown to build it.
+      const Polyfill = (
+        'default' in mod ? mod.default : mod
+      ) as unknown as ResizeObserverCtor;
+      real = new Polyfill(callback);
+      if (pending) real.observe(pending);
+    })
+    .catch((er) => log.error(er));
+
+  return {
+    observe: (target: Element) => {
+      pending = target;
+      real?.observe(target);
+    },
+    unobserve: (target: Element) => {
+      pending = undefined;
+      real?.unobserve(target);
+    },
+    disconnect: () => {
+      pending = undefined;
+      real?.disconnect();
+    },
+  } as ResizeObserver;
+}
+
 // Watch a selected div and report its height to the iframe parent whenever the
 // height changes, such as during a CSS transition, or as images and fonts
 // load. The sync() function must be called after mount, and again whenever the
@@ -419,7 +463,7 @@ export function iframeAutoHeightObserver(selector: string): {
   if (!Build.isWebApp) return { sync: () => {}, disconnect: () => {} };
   let observed: Element | null = null;
   let lastHeight = NaN;
-  const observer = new ResizeObserver(() => {
+  const observer = createResizeObserver(() => {
     // Only report actual height changes, to avoid both message spam and
     // ResizeObserver loop warnings.
     const height = observed ? observed.clientHeight : NaN;
