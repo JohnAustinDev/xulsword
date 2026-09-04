@@ -486,6 +486,37 @@ export default class Search
       </Button>
     );
 
+    // Fetch all UI together to prevent server calls and delays each time UI
+    // events require new UI strings.
+    const moreLabel = GI.i18n.t('', renderPromise, 'more.label');
+    const lessLabel = GI.i18n.t('', renderPromise, 'less.label');
+    const indexingLabel = GI.i18n.t('', renderPromise, 'buildingIndex.label');
+    const searchLabel = GI.i18n.t('', renderPromise, 'searchtext.label');
+    const searchboxTooltip = GI.i18n.t('', renderPromise, 'searchbox.tooltip');
+    const searchButtonLabel = GI.i18n.t('', renderPromise, 'menu.search');
+    const searchTypeLabel = GI.i18n.t('', renderPromise, 'searchType.label');
+    const searchTypeLabels = searchTypes.reduce(
+      (acc, st) => {
+        acc[st] = {
+          label: GI.i18n.t('', renderPromise, `${st}.label`),
+          description: GI.i18n.t('', renderPromise, `${st}.description`),
+        };
+        return acc;
+      },
+      {} as Record<SearchType['type'], { label: string; description: string }>,
+    );
+    const createIndexLabel = GI.i18n.t('', renderPromise, 'createIndex.label');
+    const searchScopeLabel = GI.i18n.t('', renderPromise, 'searchScope.label');
+    const scopeAllLabel = GI.i18n.t('', renderPromise, 'search.all');
+    const scopeCurrentBookLabel = GI.i18n.t(
+      '',
+      renderPromise,
+      'search.currentBook',
+    );
+    const scopeOtLabel = GI.i18n.t('', renderPromise, 'search.ot');
+    const scopeNtLabel = GI.i18n.t('', renderPromise, 'search.nt');
+    const scopeGroupsLabel = GI.i18n.t('', renderPromise, 'search.groups');
+
     return (
       (showHelp && helpButton) || (
         <Vbox
@@ -500,7 +531,7 @@ export default class Search
               body={
                 <Vbox pack="center" align="center">
                   <Label
-                    value={GI.i18n.t('', renderPromise, 'buildingIndex.label')}
+                    value={indexingLabel}
                   />
                 </Vbox>
               }
@@ -543,7 +574,7 @@ export default class Search
                     <Hbox className="searchtextLabel" align="center">
                       <Label
                         control="searchtext"
-                        value={`${GI.i18n.t('', renderPromise, 'searchtext.label')}:`}
+                        value={`${searchLabel}:`}
                       />
                     </Hbox>
 
@@ -551,11 +582,7 @@ export default class Search
                       <Textbox
                         id="searchtext"
                         value={searchtext}
-                        title={GI.i18n.t(
-                          '',
-                          renderPromise,
-                          'searchbox.tooltip',
-                        )}
+                        title={searchboxTooltip}
                         maxLength="60"
                         onChange={handler}
                       />
@@ -576,18 +603,18 @@ export default class Search
                         disabled={progress !== -1 || !module}
                         onPointerDown={handler}
                       >
-                        {GI.i18n.t('', renderPromise, 'menu.search')}
+                        {searchButtonLabel}
                       </Button>
                       {!showHelp && helpButton}
                       <Button id="moreLess" onPointerDown={handler}>
                         {!moreLess && (
                           <Label
-                            value={GI.i18n.t('', renderPromise, 'more.label')}
+                            value={moreLabel}
                           />
                         )}
                         {moreLess && (
                           <Label
-                            value={GI.i18n.t('', renderPromise, 'less.label')}
+                            value={lessLabel}
                           />
                         )}
                       </Button>
@@ -602,7 +629,7 @@ export default class Search
                   >
                     <Groupbox
                       id="searchtype"
-                      caption={GI.i18n.t('', renderPromise, 'searchType.label')}
+                      caption={searchTypeLabel}
                       orient="vertical"
                       onChange={handler}
                     >
@@ -616,12 +643,8 @@ export default class Search
                             name="type"
                             checked={searchtype === st}
                             value={st}
-                            label={GI.i18n.t('', renderPromise, `${st}.label`)}
-                            title={GI.i18n.t(
-                              '',
-                              renderPromise,
-                              `${st}.description`,
-                            )}
+                            label={searchTypeLabels[st].label}
+                            title={searchTypeLabels[st].description}
                           />
                         ))}
                     </Groupbox>
@@ -634,7 +657,7 @@ export default class Search
                             disabled={Build.isWebApp || progress !== -1}
                             onPointerDown={handler}
                           >
-                            {GI.i18n.t('', renderPromise, 'createIndex.label')}
+                            {createIndexLabel}
                           </Button>
                         </Vbox>
                       </>
@@ -642,7 +665,7 @@ export default class Search
                   </Stack>
                   <Groupbox
                     id="scoperadio"
-                    caption={GI.i18n.t('', renderPromise, 'searchScope.label')}
+                    caption={searchScopeLabel}
                     onChange={handler}
                   >
                     <Grid>
@@ -656,17 +679,13 @@ export default class Search
                             name="scope"
                             checked={scoperadio === 'all'}
                             value="all"
-                            label={GI.i18n.t('', renderPromise, 'search.all')}
+                            label={scopeAllLabel}
                           />
                           <Radio
                             name="scope"
                             checked={scoperadio === 'book'}
                             value="book"
-                            label={GI.i18n.t(
-                              '',
-                              renderPromise,
-                              'search.currentBook',
-                            )}
+                            label={scopeCurrentBookLabel}
                             disabled={!location?.book}
                           />
                         </Row>
@@ -675,13 +694,13 @@ export default class Search
                             name="scope"
                             checked={scoperadio === 'ot'}
                             value="ot"
-                            label={GI.i18n.t('', renderPromise, 'search.ot')}
+                            label={scopeOtLabel}
                           />
                           <Radio
                             name="scope"
                             checked={scoperadio === 'nt'}
                             value="nt"
-                            label={GI.i18n.t('', renderPromise, 'search.nt')}
+                            label={scopeNtLabel}
                           />
                         </Row>
                         <Row>
@@ -690,7 +709,7 @@ export default class Search
                               name="scope"
                               checked={scoperadio === 'other'}
                               value="other"
-                              label={`${GI.i18n.t('', renderPromise, 'search.groups')}:`}
+                              label={`${scopeGroupsLabel}:`}
                             />
                             <Menulist
                               id="scopeselect"
