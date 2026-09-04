@@ -16,7 +16,6 @@ import {
   clearPending,
   doUntilDone,
   getMaxChapter,
-  iframeAutoHeight,
   libswordImgSrc,
   safeScrollIntoView,
 } from '../../common.ts';
@@ -530,8 +529,6 @@ class Atext
           }
         }
       }
-      // ADJUST WEB-APP PARENT IFRAME HEIGHT
-      iframeAutoHeight('.xulsword', false, sbe);
     }
     const d = diff(state, newState);
     if (Object.keys(newState).length && d) {

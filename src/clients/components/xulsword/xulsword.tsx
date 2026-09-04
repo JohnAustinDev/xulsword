@@ -13,6 +13,7 @@ import {
   syncChildrensBibles,
   doUntilDone,
   isIBTChildrensBible,
+  iframeAutoHeightObserver,
 } from '../../common.ts';
 import { addClass, delayHandler, topHandle } from '../libxul/xul.tsx';
 import Button, { AnchorButton } from '../libxul/button.tsx';
@@ -93,6 +94,11 @@ export default class Xulsword
 
   loadingRef: React.RefObject<HTMLElement>;
 
+  // Web-app parent iframe height must follow the xulsword div height, which
+  // changes both on re-render and afterward (LibSword text written directly
+  // to the DOM, images loading, CSS transitions etc.).
+  xulswordHeightObserver: ReturnType<typeof iframeAutoHeightObserver>;
+
   constructor(props: XulswordProps) {
     super(props);
 
@@ -118,11 +124,13 @@ export default class Xulsword
 
     this.loadingRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
+    this.xulswordHeightObserver = iframeAutoHeightObserver('.xulsword');
   }
 
   componentDidMount() {
     const { renderPromise } = this;
     this.destroy.push(registerUpdateStateFromPref('prefs', 'xulsword', this));
+    this.xulswordHeightObserver.sync();
     renderPromise.dispatch();
   }
 
@@ -196,10 +204,12 @@ export default class Xulsword
       }
     }
 
+    this.xulswordHeightObserver.sync();
     renderPromise.dispatch();
   }
 
   componentWillUnmount() {
+    this.xulswordHeightObserver.disconnect();
     clearPending(this, ['historyTO', 'dictkeydownTO', 'wheelScrollTO']);
     this.destroy.forEach((func) => {
       func();
@@ -293,10 +303,10 @@ export default class Xulsword
 
     const navdisabled = !location || isPinned.every((p, i) => p || !panels[i]);
 
-    const viewportReset: string[] = [
-      vpreset.toString(),
-      showChooser.toString(),
-    ];
+    const viewportReset: string[] = [vpreset.toString()];
+    // Web-app chooser is determined solely by screen width while CSS does the
+    // hiding and animated transition.
+    if (!Build.isWebApp) viewportReset.push(showChooser.toString());
     panels.forEach((m) => {
       if (m === null) viewportReset.push('null');
       else if (!m) viewportReset.push('und');
@@ -363,13 +373,19 @@ export default class Xulsword
     );
 
     const audioComponent = (
-      <Hbox id="player" flex="1" pack="start" align="center">
-          <AudioPlayer
-            audio={audio}
-            audioHandler={handler}
-            renderPromise={renderPromise}
-            xulswordState={xulswordStateHandler}
-          />
+      <Hbox
+        className={`player-animation${audio.open ? '' : ' hide'}`}
+        id="player"
+        flex="1"
+        pack="start"
+        align="center"
+      >
+        <AudioPlayer
+          audio={audio}
+          audioHandler={handler}
+          renderPromise={renderPromise}
+          xulswordState={xulswordStateHandler}
+        />
         {Build.isElectronApp && (
           <Button id="closeplayer" onPointerDown={handler}>
             {GI.i18n.t('', renderPromise, 'close.label')}
@@ -673,7 +689,7 @@ export default class Xulsword
         {Build.isWebApp && (
           <>
             <Hbox id="controlButtons">
-              {chooserMenuButton}
+              {window.innerWidth > C.UI.WebApp.mobileW && chooserMenuButton}
               <Button
                 id="showControls"
                 icon="cog"
@@ -683,20 +699,21 @@ export default class Xulsword
             </Hbox>
             <Hbox id="controls" pack="start">
               <Vbox id="control-rows" align="start" flex="2">
-                {showControls && (
-                  <>
-                    {historyComponent}
+                <div
+                  className={`controls-animation${showControls ? '' : ' hide'}`}
+                >
+                  {historyComponent}
 
-                    {vkMod && webappVKSelectorComponent}
+                  {vkMod && webappVKSelectorComponent}
 
-                    {!!gbselects.size && webappGenbkSelectorComponent}
+                  {!!gbselects.size && webappGenbkSelectorComponent}
 
-                    {searchComponent}
+                  {searchComponent}
 
-                    {optionButtons}
-                  </>
-                )}
-                {audio.open && audioComponent}
+                  {optionButtons}
+                </div>
+
+                {audioComponent}
               </Vbox>
             </Hbox>
             <div id="textTop"></div>

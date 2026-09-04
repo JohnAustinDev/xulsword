@@ -12,7 +12,7 @@ import {
   rootRenderPromise,
   setStatePref,
   windowArguments,
-  iframeAutoHeight,
+  iframeAutoHeightObserver,
   doUntilDone,
 } from '../../common.ts';
 import log from '../../log.ts';
@@ -115,6 +115,10 @@ export default class PrintSettings extends React.Component<
 
   resetTO: NodeJS.Timeout | null;
 
+  // Print height is not constrained, and changes after render as the page view
+  // is sized by Javascript, so the parent iframe must follow every change.
+  printHeightObserver: ReturnType<typeof iframeAutoHeightObserver>;
+
   constructor(props: PrintSettingsProps) {
     super(props);
 
@@ -147,6 +151,7 @@ export default class PrintSettings extends React.Component<
     this.pageScrollW = 0;
     this.pagebuttons = React.createRef();
     this.iframe = React.createRef();
+    this.printHeightObserver = iframeAutoHeightObserver('.print');
 
     this.resetTO = null;
   }
@@ -154,14 +159,19 @@ export default class PrintSettings extends React.Component<
   componentDidMount() {
     this.forceUpdate(); // to re-render now with print.settings
     setTimeout(() => this.setPages(), 1);
+    this.printHeightObserver.sync();
   }
 
   componentDidUpdate(
     _prevProps: PrintSettingsProps,
     prevState: PrintSettingsState,
   ) {
-    iframeAutoHeight('.print'); // print height is not constrained
+    this.printHeightObserver.sync();
     setStatePref('prefs', 'print', prevState, this.state);
+  }
+
+  componentWillUnmount() {
+    this.printHeightObserver.disconnect();
   }
 
   handler(e: React.SyntheticEvent<any, any>) {

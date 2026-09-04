@@ -332,9 +332,14 @@ export default class Viewport
       ? 'genbook'
       : 'bible';
 
-    const showingChooser =
-      showChooser ||
-      (ownWindow && Build.isElectronApp && chooser === 'genbook');
+    // Web-app always shows the chooser unless width <= mobileW in which case
+    // it is never shown: the showChooser prop adds a CSS class by which it is
+    // hidden. Also Electron xulswordWin showing genbk must always show the
+    // chooser or else it cannot be controlled in any way.
+    const showingChooser = Build.isWebApp
+      ? window.innerWidth > C.UI.WebApp.mobileW
+      : showChooser ||
+        (ownWindow && Build.isElectronApp && chooser === 'genbook');
 
     const chooserV11n =
       panels.reduce(
@@ -469,6 +474,7 @@ export default class Viewport
       >
         {chooser === 'bible' && showingChooser && (
           <Chooser
+            className={`chooser-animation${showChooser ? '' : ' hide'}`}
             key={[reset, location?.book].join('.')}
             selection={location?.book || ''}
             v11n={chooserV11n as V11nType}
@@ -481,6 +487,7 @@ export default class Viewport
         )}
         {chooser === 'genbook' && showingChooser && (
           <GenbookChooser
+            className={`chooser-animation${showChooser ? '' : ' hide'}`}
             key={reset}
             panels={panels}
             keys={keys}

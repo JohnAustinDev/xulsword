@@ -47,6 +47,7 @@ body {
 
 #root .viewport {
   margin: 0 10px 10px 10px;
+  min-height: 600px;
 }
 
 /* don't show the pin for a single text pane, unless there is audio for the text. */
@@ -60,6 +61,19 @@ body {
 }
 
 /* Bible Browser Web-App controls are in a VBOX */
+.controls-animation {
+  height: auto;
+  overflow: hidden;
+  transition: height 0.3s ease-out, opacity 0.3s ease-out;
+  opacity: 1;
+}
+.controls-animation.hide {
+  height: 0;
+  opacity: 0;
+}
+body:has(.controls-animation:not(.hide)) {
+  animation: hold-body-overflow 0.4s;
+}
 #controls #control-rows:has(:first-child) {
   margin-bottom: 10px;
 }
@@ -87,9 +101,20 @@ body {
   flex-grow: 3;
   flex-shrink: 3;
 }
-#control-rows > div {
-  width: calc(100% - 10px);
+.player-animation {
+  height: auto;
+  overflow: hidden;
+  transition: height 0.3s ease-out, opacity 0.3s ease-out;
+  opacity: 1;
 }
+.player-animation.hide {
+  height: 0;
+  opacity: 0;
+}
+body:has(.player-animation:not(.hide)) {
+  animation: hold-body-overflow 0.4s;
+}
+#control-rows > div,
 #historyButtons .button,
 #historyButtons .button-box,
 #historyButtons button,
@@ -135,6 +160,18 @@ html:not(.is-vagrant) .popup-fail.reason {
   height: 25px;
 }
 
+.chooser-animation {
+  height: 100%;
+  width: auto;
+  white-space: nowrap;
+  transition: width 0.3s ease-out, opacity 0.3s ease-out;
+  opacity: 1;
+}
+.chooser-animation.hide {
+  width: 0;
+  opacity: 0;
+}
+
 .cs-OSMHB {
   font-size: 20px;
 }
@@ -156,10 +193,6 @@ html:not(.is-vagrant) .popup-fail.reason {
   }
   #root .viewport {
     margin: 0 0 10px 0;
-  }
-  .chooser,
-  #chooserButton {
-    display: none;
   }
   /* Make sure mts-tab drop down menu remains on-screen */
   .tabs .mts-tab {

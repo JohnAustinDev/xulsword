@@ -407,37 +407,53 @@ export function containerScrollTo(
   return false;
 }
 
-// Send a message to the iframe parent with the clientHeight of a selected div.
-// If elem is provided, any images it contains will be loaded before the height
-// is reported. If clear is set then -1 is sent.
-export function iframeAutoHeight(
-  selector: string,
-  clear?: boolean,
-  elem?: HTMLElement,
-) {
-  if (Build.isWebApp) {
-    if (!clear) {
+// Watch a selected div and report its height to the iframe parent whenever the
+// height changes, such as during a CSS transition, or as images and fonts
+// load. The sync() function must be called after mount, and again whenever the
+// element matching the selector may have been replaced (such as after a re-
+// render). Call disconnect() before unmount.
+export function iframeAutoHeightObserver(selector: string): {
+  sync: () => void;
+  disconnect: () => void;
+} {
+  if (!Build.isWebApp) return { sync: () => {}, disconnect: () => {} };
+  let observed: Element | null = null;
+  let lastHeight = NaN;
+  const observer = new ResizeObserver(() => {
+    // Only report actual height changes, to avoid both message spam and
+    // ResizeObserver loop warnings.
+    const height = observed ? observed.clientHeight : NaN;
+    if (height !== lastHeight) {
+      lastHeight = height;
       const so = document.querySelector(selector);
-      const resize = () => {
-        if (so) {
-          window.parent.postMessage(
-            {
-              type: 'iframeHeight',
-              height: so.clientHeight,
-            },
-            '*',
-          );
-        }
-      };
-      if (elem) {
-        const imgs = elem.querySelectorAll('img');
-        if (imgs.length) imgs.forEach((img) => (img.onload = resize));
+      if (so) {
+        window.parent.postMessage(
+          {
+            type: 'iframeHeight',
+            height: so.clientHeight,
+          },
+          '*',
+        );
       }
-      resize();
-    } else {
-      window.parent.postMessage({ type: 'iframeHeight', height: -1 }, '*');
     }
-  }
+  });
+  return {
+    sync: () => {
+      const elem = document.querySelector(selector);
+      if (elem !== observed) {
+        observer.disconnect();
+        observed = elem;
+        lastHeight = NaN;
+        // Observing fires the callback immediately with the current height.
+        if (elem) observer.observe(elem);
+      }
+    },
+    disconnect: () => {
+      observer.disconnect();
+      observed = null;
+      lastHeight = NaN;
+    },
+  };
 }
 
 const Hilight = {

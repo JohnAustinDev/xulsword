@@ -16,7 +16,7 @@ import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
 import {
   i18nApplyOpts,
-  iframeAutoHeight,
+  iframeAutoHeightObserver,
   moduleIncludesStrongs,
   windowArguments,
   getStatePref,
@@ -161,6 +161,10 @@ export default class Search
 
   popupRef: React.RefObject<Popup>;
 
+  // Card height is not constrained, and changes over time (the more/less
+  // transition), so the iframe parent must follow every height change.
+  cardHeightObserver: ReturnType<typeof iframeAutoHeightObserver>;
+
   constructor(props: SearchProps) {
     super(props);
 
@@ -210,6 +214,7 @@ export default class Search
     this.resref = React.createRef();
     this.lexref = React.createRef();
     this.popupRef = React.createRef();
+    this.cardHeightObserver = iframeAutoHeightObserver('.card');
     this.destroy = [];
   }
 
@@ -234,6 +239,7 @@ export default class Search
         'afterMountSearch',
       );
     }
+    this.cardHeightObserver.sync();
     renderPromise.dispatch();
   }
 
@@ -282,11 +288,12 @@ export default class Search
     }
 
     this.updateResults();
-    iframeAutoHeight('.card'); // card height is not constrained
+    this.cardHeightObserver.sync();
     renderPromise.dispatch();
   }
 
   componentWillUnmount() {
+    this.cardHeightObserver.disconnect();
     this.destroy.forEach((d) => {
       d();
     });

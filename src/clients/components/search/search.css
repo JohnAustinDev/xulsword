@@ -5,15 +5,21 @@
 .search-grid {
   position: relative;
   overflow: hidden;
+  align-items: stretch;
   gap: 10px 10px;
 }
 .search-grid > .grid-row-cell:not(:first-child) {
-  max-height: 400px;
-  transition: max-height 0.5s;
+  height: auto;
+  opacity: 1;
+  transition: height 0.3s ease-out, opacity 0.3s ease-out;
 }
 .search-grid.less > .grid-row-cell:not(:first-child) {
-  max-height: 0px;
+  height: 0;
+  opacity: 0;
   overflow: hidden;
+}
+body:has(.search-grid.more) {
+  animation: hold-body-overflow 0.4s;
 }
 .search-grid .groupbox {
   margin: 0 0 0 0;

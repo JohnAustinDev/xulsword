@@ -29,6 +29,23 @@
   --input-height: 28px;
 }
 
+/* Used for height and width animations */
+:root {
+  interpolate-size: allow-keywords;
+}
+
+/* While the controls animate open, the content grows a frame ahead of the
+ parent iframe, whose height is updated by an asynchronous message, and so the
+ body scrollbar would appear for the length of the animation. Overflow is a
+ discrete property, so this animation simply holds the body scrollbar back
+ until the transition, and the parent iframe height, have caught up. */
+@keyframes hold-body-overflow {
+  from,
+  to {
+    overflow-y: hidden;
+  }
+}
+
 /* By default layouts should fill their windows without scrollbars */
 html,
 body,
