@@ -305,7 +305,7 @@ export default class PrintPassage
       // Tag spans wrapping a heading so print.css can avoid breaking inside
       // them without a :has() selector (this is raw SWORD-rendered HTML).
       div.querySelectorAll<HTMLElement>('span').forEach((el) => {
-        if (el.querySelector(':is(h1, h2, h3, h4)')) {
+        if (el.querySelector('h1, h2, h3, h4')) {
           el.classList.add('has-heading');
         }
       });

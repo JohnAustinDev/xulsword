@@ -50,7 +50,10 @@
   text-decoration: none !important;
 }
 
-.printContainer :is(h1, h2, h3, h4),
+.printContainer h1,
+.printContainer h2,
+.printContainer h3,
+.printContainer h4,
 .printContainer span.has-heading,
 .printContainer .chapterhead {
   break-after: avoid;
