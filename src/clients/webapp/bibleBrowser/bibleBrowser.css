@@ -21,8 +21,8 @@ body {
   overflow-y: auto;
 }
 /* root is --min-height for multi-panel, otherwise it's unset */
-#root:has(.textarea.multi-panel) {
-  height: var(--min-height);
+#root .viewport:has(.textarea.multi-panel) {
+  height: calc(var(--min-height) - 76px);
 }
 #root {
   height: unset;
