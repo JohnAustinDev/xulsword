@@ -133,7 +133,7 @@ export default function AudioPlayer(props: {
         onPlay={audioHandler}
         onTimeUpdate={() => onTimeUpdate(audio, audioDOM, xulswordState)}
         autoPlay={!!Build.isWebApp}
-        src={src}
+        src={audio.open ? src : undefined}
         ref={audioDOM}
       />
     </div>
