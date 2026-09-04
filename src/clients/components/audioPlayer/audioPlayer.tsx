@@ -24,12 +24,14 @@ const TimingFetched: {
   [url: string]: ReturnType<typeof parseTimingFile> | null;
 } = {};
 
-export default function AudioPlayer(props: {
-  audio: AudioPlayerType;
-  renderPromise: RenderPromise;
-  audioHandler: (e: React.SyntheticEvent<any>) => void;
-  xulswordState: React.Component<any, XulswordState>['setState'];
-} & XulProps): JSX.Element {
+export default function AudioPlayer(
+  props: {
+    audio: AudioPlayerType;
+    renderPromise: RenderPromise;
+    audioHandler: (e: React.SyntheticEvent<any>) => void;
+    xulswordState: React.Component<any, XulswordState>['setState'];
+  } & XulProps,
+): JSX.Element {
   const { audio, renderPromise, audioHandler, xulswordState } = props;
   const { file, defaults } = audio;
   const { timing } = file ?? {};
@@ -126,16 +128,18 @@ export default function AudioPlayer(props: {
           })}
         />
       )}
-      <audio
-        controls
-        onEnded={audioHandler}
-        onCanPlay={audioHandler}
-        onPlay={audioHandler}
-        onTimeUpdate={() => onTimeUpdate(audio, audioDOM, xulswordState)}
-        autoPlay={!!Build.isWebApp}
-        src={audio.open ? src : undefined}
-        ref={audioDOM}
-      />
+      {audio.open && (
+        <audio
+          controls
+          onEnded={audioHandler}
+          onCanPlay={audioHandler}
+          onPlay={audioHandler}
+          onTimeUpdate={() => onTimeUpdate(audio, audioDOM, xulswordState)}
+          autoPlay={!!Build.isWebApp}
+          src={src}
+          ref={audioDOM}
+        />
+      )}
     </div>
   );
 }
