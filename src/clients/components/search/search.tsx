@@ -240,12 +240,15 @@ export default class Search
       );
     }
     this.cardHeightObserver.sync();
+    this.syncGlobalClasses();
     renderPromise.dispatch();
   }
 
   componentDidUpdate(_prevProps: any, prevState: SearchState) {
     const { props, state, renderPromise } = this;
     const { descriptor } = props;
+
+    this.syncGlobalClasses();
     if (Build.isElectronApp) {
       reMountState = clone({
         ...state,
@@ -297,6 +300,18 @@ export default class Search
     this.destroy.forEach((d) => {
       d();
     });
+    document.body.classList.remove('search-expanded');
+    document.getElementById('root')?.classList.remove('help-open');
+  }
+
+  // Mirrors the search-grid expand/help-card state onto body/#root so
+  // bibleBrowser.css and search.css can react to it without :has().
+  syncGlobalClasses() {
+    const { moreLess, showHelp } = this.state;
+    document.body.classList.toggle('search-expanded', !!moreLess);
+    document
+      .getElementById('root')
+      ?.classList.toggle('help-open', !!showHelp);
   }
 
   updateResults() {

@@ -51,7 +51,7 @@
 }
 
 .printContainer :is(h1, h2, h3, h4),
-.printContainer span:has(:is(h1, h2, h3, h4)),
+.printContainer span.has-heading,
 .printContainer .chapterhead {
   break-after: avoid;
   break-inside: avoid;

@@ -18,7 +18,7 @@
   opacity: 0;
   overflow: hidden;
 }
-body:has(.search-grid.more) {
+body.search-expanded {
   animation: hold-body-overflow 0.4s;
 }
 .search-grid .groupbox {
@@ -61,7 +61,7 @@ body:has(.search-grid.more) {
   margin-right: 0;
 }
 
-#root:has(#helpButton.open) .close-card-button {
+#root.help-open .close-card-button {
   display: none;
 }
 #helpButton.open {

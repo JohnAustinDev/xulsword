@@ -30,7 +30,7 @@ multi-column LTR general books
 .atext:not(.columns1) .sb[dir='rtl'] {
   overflow: auto;
 }
-.atext.Genbks:not(.columns1):not(:has(.sb[dir='rtl'])) .ft {
+.atext.Genbks:not(.columns1):not(.rtl) .ft {
   position: absolute;
   width: 100%;
   bottom: 0px;
@@ -179,7 +179,7 @@ html[dir='rtl'] .notebox-maximizer {
   border-radius: 8px;
   padding: 0px 5px 0px 5px;
 }
-.atext .nb:has(.npopup) {
+.atext .nb.popup-open {
   position: unset; /* required for popup placement to work! */
 }
 @media (max-width: 767px) {

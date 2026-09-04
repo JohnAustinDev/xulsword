@@ -302,6 +302,13 @@ export default class PrintPassage
       log.verbose(`${renderkey} Loading chapter to DOM: ${chapter}`);
       div.innerHTML += sanitizeHTML(r);
       libswordImgSrc(div);
+      // Tag spans wrapping a heading so print.css can avoid breaking inside
+      // them without a :has() selector (this is raw SWORD-rendered HTML).
+      div.querySelectorAll<HTMLElement>('span').forEach((el) => {
+        if (el.querySelector(':is(h1, h2, h3, h4)')) {
+          el.classList.add('has-heading');
+        }
+      });
       if (Math.floor(div.scrollWidth / div.clientWidth) > C.UI.Print.maxPages) {
         log.info(
           `${renderkey} Stopping chapter rendering at ${chIndex}/${renderChaps.length} chapters.`,

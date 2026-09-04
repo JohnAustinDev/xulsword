@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Subscription from '../../../subscription.ts';
 import { b64toBlob } from '../../../common.ts';
 import C from '../../../constant.ts';
@@ -35,6 +35,16 @@ export default function Print(props: PrintProps) {
   const { pageViewRef } = printRefs;
   const { pageable, direction, iframeFilePath } = print;
   const { renderPromise, loadingRef } = functionalComponentRenderPromise();
+
+  // Mirrors whether the .print element (vs. the PDF preview) is showing onto
+  // #root, so print.css can react to it without a :has() selector.
+  useEffect(() => {
+    const root = document.getElementById('root');
+    root?.classList.toggle('printing', !iframeFilePath);
+    return () => {
+      root?.classList.remove('printing');
+    };
+  }, [iframeFilePath]);
 
   const backHandler = () => {
     Subscription.publish.setControllerState(

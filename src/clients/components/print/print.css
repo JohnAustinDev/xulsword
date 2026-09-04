@@ -30,7 +30,7 @@ controls appear below the print container. */
   .print {
     height: unset;
   }
-  #root:has(> .print) {
+  #root.printing {
     height: 100%;
     overflow-y: auto;
   }

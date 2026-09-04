@@ -131,12 +131,15 @@ export default class Xulsword
     const { renderPromise } = this;
     this.destroy.push(registerUpdateStateFromPref('prefs', 'xulsword', this));
     this.xulswordHeightObserver.sync();
+    this.syncBodyClasses();
     renderPromise.dispatch();
   }
 
   componentDidUpdate(_prevProps: XulswordProps, prevState: XulswordState) {
     const { state, renderPromise } = this;
     const { scroll, audio, location, keys } = state;
+
+    this.syncBodyClasses();
 
     if (Build.isWebApp) {
       doUntilDone((renderPromise2) => {
@@ -215,6 +218,15 @@ export default class Xulsword
       func();
     });
     this.destroy = [];
+    document.body.classList.remove('controls-visible', 'player-visible');
+  }
+
+  // Mirrors the controls/player show-hide animation state onto document.body
+  // so bibleBrowser.css can react to it without a :has() selector.
+  syncBodyClasses() {
+    const { showControls, audio } = this.state;
+    document.body.classList.toggle('controls-visible', !!showControls);
+    document.body.classList.toggle('player-visible', !!audio.open);
   }
 
   selectionGenbk(selection: SelectORMType | undefined, _id?: string): void {
@@ -536,34 +548,39 @@ export default class Xulsword
     );
 
     const gbselects: Set<string> = new Set();
+    const genbkSelectElements = panels.map((m, i) => {
+      if (m && m in G.Tab && G.Tab[m].tabType === 'Genbks') {
+        // All Children's Bibles track together, so only one select should
+        // ever be shown, and then all will be controlled by it.
+        const mm = isIBTChildrensBible(m, renderPromise) ? 'cb' : m;
+        if (!gbselects.has(mm)) {
+          gbselects.add(mm);
+          return (
+            <SelectOR
+              flex="1"
+              key={[m, keys[i]].join('.')}
+              otherMods={[m]}
+              initialORM={{
+                otherMod: m,
+                keys: [keys[i] || ''],
+              }}
+              enableMultipleSelection={false}
+              enableParentSelection={mm !== 'cb'} // CB's don't have introductions
+              onSelection={selectionGenbk}
+            />
+          );
+        }
+      }
+      return null;
+    });
     const webappGenbkSelectorComponent = (
       <Hbox pack="center">
-        <Vbox id="genbknav" pack="center">
-          {panels.map((m, i) => {
-            if (m && m in G.Tab && G.Tab[m].tabType === 'Genbks') {
-              // All Children's Bibles track together, so only one select should
-              // ever be shown, and then all will be controlled by it.
-              const mm = isIBTChildrensBible(m, renderPromise) ? 'cb' : m;
-              if (!gbselects.has(mm)) {
-                gbselects.add(mm);
-                return (
-                  <SelectOR
-                    flex="1"
-                    key={[m, keys[i]].join('.')}
-                    otherMods={[m]}
-                    initialORM={{
-                      otherMod: m,
-                      keys: [keys[i] || ''],
-                    }}
-                    enableMultipleSelection={false}
-                    enableParentSelection={mm !== 'cb'} // CB's don't have introductions
-                    onSelection={selectionGenbk}
-                  />
-                );
-              }
-            }
-            return null;
-          })}
+        <Vbox
+          id="genbknav"
+          className={gbselects.size <= 1 ? 'single-level' : ''}
+          pack="center"
+        >
+          {genbkSelectElements}
         </Vbox>
       </Hbox>
     );

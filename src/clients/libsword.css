@@ -408,7 +408,7 @@ span.foreign {
   float: right;
   clear: right;
 }
-.x-navmenu .item .x-right:has(+ span) {
+.x-navmenu .item .x-right.has-next-span {
   width: unset;
 }
 /*
@@ -528,7 +528,7 @@ span.foreign {
 .sb .hl .wordsOfJesus {
   color: unset;
 }
-.sb .hl:not(:has(.verse-sync)) {
+.sb .hl.no-sync {
   color: var(--color-primary);
 }
 .cr,

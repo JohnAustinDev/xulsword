@@ -38,8 +38,18 @@ export default function Menulist({
   else if (Array.isArray(val) && typeof val[0] === 'number')
     value = val.map((v) => String(v));
   else value = val as string | string[];
+  const optionCount =
+    (props.options?.length ?? 0) + React.Children.count(props.children);
+  const classes = [
+    'menulist xsinput',
+    multiple && 'multiple',
+    disabled && 'disabled',
+    optionCount <= 1 && 'single-option',
+  ]
+    .filter(Boolean)
+    .join(' ');
   return (
-    <Box {...addClass('menulist xsinput', props)}>
+    <Box {...addClass(classes, props)}>
       <select
         id={props.id ? `${props.id}__select` : randomID()}
         disabled={disabled}

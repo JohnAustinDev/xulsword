@@ -101,6 +101,10 @@ export default class Viewport
     this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
+  componentDidMount() {
+    this.syncClasses();
+  }
+
   componentDidUpdate() {
     const { state, renderPromise } = this;
     const { popupParent, elemdata } = state;
@@ -110,11 +114,36 @@ export default class Viewport
       // Do the fade in effect
       popupParent.getElementsByClassName('npopup')[0]?.classList.remove('hide');
     }
+    this.syncClasses();
     renderPromise.dispatch();
   }
 
   componentWillUnmount() {
     clearPending(this, ['popupDelayTO', 'popupUnblockTO']);
+    document.getElementById('root')?.classList.remove('multi-panel');
+  }
+
+  // Mirrors DOM state that CSS would otherwise need :has() to react to:
+  // - #root.multi-panel follows the .textarea element's own multi/single
+  //   panel class (computed in render()).
+  // - .viewport.has-audio follows whether any .audio-icon was rendered
+  //   anywhere in the viewport (panels or the chooser).
+  // - .nb.popup-open marks whichever notebox (if any) the open note popup
+  //   portal is currently nested in, since the portal target is an
+  //   imperatively-tracked hover target, not a render-time prop.
+  syncClasses() {
+    const viewportEl = this.loadingRef.current;
+    if (!viewportEl) return;
+    const isMultiPanel = !!viewportEl.querySelector('.textarea.multi-panel');
+    document.getElementById('root')?.classList.toggle('multi-panel', isMultiPanel);
+    viewportEl.classList.toggle(
+      'has-audio',
+      !!viewportEl.querySelector('.audio-icon'),
+    );
+    viewportEl
+      .querySelectorAll('.nb.popup-open')
+      .forEach((nb) => nb.classList.remove('popup-open'));
+    this.state.popupParent?.closest('.nb')?.classList.add('popup-open');
   }
 
   audioHandler(
@@ -509,7 +538,12 @@ export default class Viewport
         >
           <div className="tabrow">{tabBankElements}</div>
 
-          <Hbox className="textrow userFontBase" flex="1">
+          <Hbox
+            className={`textrow userFontBase${
+              panelElements.filter(Boolean).length === 1 ? ' single-atext' : ''
+            }`}
+            flex="1"
+          >
             {popupParent &&
               elemdata?.length &&
               ReactDOM.createPortal(

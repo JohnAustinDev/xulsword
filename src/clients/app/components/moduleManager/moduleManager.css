@@ -59,7 +59,7 @@
   margin-bottom: 20px;
 }
 
-.moduleManagerWin .menulist:has(select[disabled]) {
+.moduleManagerWin .menulist.disabled {
   display: none;
 }
 

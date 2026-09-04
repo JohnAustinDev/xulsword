@@ -21,15 +21,15 @@ body {
   overflow-y: auto;
 }
 /* root is --min-height for multi-panel, otherwise it's unset */
-#root .viewport:has(.textarea.multi-panel) {
+#root.multi-panel .viewport {
   height: calc(var(--min-height) - 76px);
 }
 #root {
   height: unset;
 }
 /* root descendent containers are 100% height for multi-panel, otherwise unset */
-#root > #reset:has(.textarea.multi-panel),
-#root > #reset > .xulsword:has(.textarea.multi-panel) {
+#root.multi-panel > #reset,
+#root.multi-panel > #reset > .xulsword {
   height: 100%;
   width: 100%;
 }
@@ -50,8 +50,8 @@ body {
   min-height: 600px;
 }
 
-/* don't show the pin for a single text pane, unless there is audio for the text. */
-.viewport:not(:has(.audio-icon)) .textrow:not(:has(.atext:nth-child(2))) .text-pin {
+/* don't show the pin for a single atext element, unless there is audio for the text. */
+.viewport:not(.has-audio) .textrow.single-atext .text-pin {
   display: none;
 }
 
@@ -71,10 +71,10 @@ body {
   height: 0;
   opacity: 0;
 }
-body:has(.controls-animation:not(.hide)) {
+body.controls-visible {
   animation: hold-body-overflow 0.4s;
 }
-#controls #control-rows:has(:first-child) {
+#controls #control-rows {
   margin-bottom: 10px;
 }
 #control-rows {
@@ -111,7 +111,7 @@ body:has(.controls-animation:not(.hide)) {
   height: 0;
   opacity: 0;
 }
-body:has(.player-animation:not(.hide)) {
+body.player-visible {
   animation: hold-body-overflow 0.4s;
 }
 #control-rows > div,
@@ -143,12 +143,12 @@ audio {
   margin-right: 0;
 }
 /* If only one genbk select is shown, then it shouldn't show disabled or single-option selects */
-#genbknav:not(:has(> div:nth-child(2))) .menulist:has(> select[disabled]),
-#genbknav:not(:has(> div:nth-child(2))) .menulist:not(:has(:nth-child(2))) {
+#genbknav.single-level .menulist.disabled,
+#genbknav.single-level .menulist.single-option {
   display: none;
 }
-#genbknav:not(:has(> div:nth-child(2))) .menulist:has(> select[disabled]) + .menulist,
-#genbknav:not(:has(> div:nth-child(2))) .menulist:not(:has(:nth-child(2))) + .menulist {
+#genbknav.single-level .menulist.disabled + .menulist,
+#genbknav.single-level .menulist.single-option + .menulist {
   margin-top: 0;
 }
 

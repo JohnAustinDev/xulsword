@@ -650,6 +650,18 @@ class Atext
                 addTimingSpans(sbe, timing);
             }
           }
+          // Tag elements that CSS would otherwise need :has() to match,
+          // since this content is raw HTML from the SWORD engine, not JSX.
+          sbe.querySelectorAll<HTMLElement>('.x-navmenu .item .x-right').forEach(
+            (el) => {
+              if (el.nextElementSibling?.tagName === 'SPAN') {
+                el.classList.add('has-next-span');
+              }
+            },
+          );
+          sbe.querySelectorAll<HTMLElement>('.hl').forEach((el) => {
+            el.classList.toggle('no-sync', !el.querySelector('.verse-sync'));
+          });
           // Update all image paths
           libswordImgSrc(sbe);
           this.hoverLinks(sbe);
@@ -783,6 +795,7 @@ class Atext
       'next-disabled',
     ];
     if (module) classes.push(`${G.Tab[module].tabType}`);
+    if (module && G.Tab[module].direction === 'rtl') classes.push('rtl');
     if (isPinned) classes.push('pinned');
     if (doMaximizeNB) classes.push('noteboxMaximized');
     if (versePerLine || moduleAlwaysVersePerLine) {
