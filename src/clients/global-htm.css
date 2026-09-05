@@ -11,7 +11,7 @@
   --bg-disabled: rgb(211, 216, 222);
   --bg-text-light: #ffffff;
   --bg-text-dark: #f2ede9; /*hsl(from var(--bg-text-light) h calc(s - 75) calc(l + 5));*/
-  --bg-text-pinned: #ededed;
+  --bg-text-pinned: #edededf4;
 
   --border-light: #dbdbd3;
   --border-dark: #bbbbbb;

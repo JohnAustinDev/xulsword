@@ -5,6 +5,7 @@ import {
   dString,
   getSwordOptions,
   JSON_attrib_stringify,
+  ofClass,
 } from '../../../common.ts';
 import parseExtendedVKRef from '../../../extrefParser.ts';
 import { getElementData } from '../../htmlData.ts';
@@ -669,10 +670,20 @@ export function highlight(
   });
 
   if (selection) {
-    const { book, chapter, verse, lastverse } = new VerseKey(
-      selection,
-      renderPromise,
-    ).location();
+    let { book, chapter, verse, lastverse } = selection;
+    const atext = ofClass('atext', sbe);
+    if (atext) {
+      const { module } = atext.element.dataset;
+      if (module) {
+        const { v11n } = G.Tab[module];
+        if (v11n) {
+          ({ book, chapter, verse, lastverse } = new VerseKey(
+            selection,
+            renderPromise,
+          ).location(v11n));
+        }
+      }
+    }
     if (!renderPromise?.waiting()) {
       let sv = '';
       if (Build.isWebApp) {
@@ -715,11 +726,7 @@ export function highlight(
                     ScrollOneTimeID !== oneTimeID
                   ) {
                     ScrollOneTimeID = oneTimeID;
-                    setTimeout(
-                      () =>
-                        elem.scrollIntoView(scrollIntoView),
-                      100,
-                    );
+                    setTimeout(() => elem.scrollIntoView(scrollIntoView), 100);
                   }
                 }
                 sv = '';
