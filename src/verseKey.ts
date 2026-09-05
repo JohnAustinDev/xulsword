@@ -201,21 +201,18 @@ export default class VerseKey {
     if (!tov11n || !this.#loc.v11n) return this.#loc;
     if (this.#loc.v11n === tov11n) return this.#loc;
     if (!this.#allowConvertLocation(tov11n)) return this.#loc;
-    const loc = GICall(this.#loc.v11n, this.#renderPromise, [
+    const fromRef = [
+      this.#loc.book,
+      this.#loc.chapter,
+      this.#loc.verse,
+      this.#loc.lastverse,
+    ]
+      .filter(Boolean)
+      .join('.');
+    const loc = GICall(fromRef, this.#renderPromise, [
       'LibSword',
       'convertLocation',
-      [
-        this.#loc.v11n,
-        [
-          this.#loc.book,
-          this.#loc.chapter,
-          this.#loc.verse,
-          this.#loc.lastverse,
-        ]
-          .filter(Boolean)
-          .join('.'),
-        tov11n,
-      ],
+      [this.#loc.v11n, fromRef, tov11n],
     ]);
     const parsed = this.parseLocation(loc, tov11n);
     if (parsed.book) return parsed as LocationVKType;
