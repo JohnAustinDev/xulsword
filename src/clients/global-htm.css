@@ -11,7 +11,12 @@
   --bg-disabled: rgb(211, 216, 222);
   --bg-text-light: #ffffff;
   --bg-text-dark: #f2ede9; /*hsl(from var(--bg-text-light) h calc(s - 75) calc(l + 5));*/
-  --bg-text-pinned: #edededf4;
+  /* Low-opacity dark tint layered (as a background-image, not a
+  background-color) over every visual surface of a pinned text panel, so
+  each keeps its own background color but the panel as a whole reads as
+  uniformly darkened. Applied by .atext.pinned in atext.css, .tabs.pinned
+  in tabs.css and .atext.pinned .npopupTX in popup.css. */
+  --overlay-text-pinned: rgba(0, 0, 0, 0.04);
 
   --border-light: #dbdbd3;
   --border-dark: #bbbbbb;

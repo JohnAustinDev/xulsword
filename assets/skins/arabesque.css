@@ -10,7 +10,8 @@
 
   --bg-text-light: rgb(255, 243, 255);
   --bg-text-dark: rgb(245, 220, 255);
-  --bg-text-pinned: white;
+  /* No --overlay-text-pinned override: this skin's text surfaces are all
+  near-white, so the default dark tint reads correctly on them. */
 
   --border-light: rgb(200, 170, 205);
 

@@ -31,6 +31,12 @@ html[dir='rtl'] .npopup {
   cursor: default;
   resize: both;
 }
+.atext.pinned .npopupTX {
+  background-image: linear-gradient(
+    var(--overlay-text-pinned),
+    var(--overlay-text-pinned)
+  );
+}
 html:not(.popupWin) .npopupTX {
   max-height: 50vh;
 }

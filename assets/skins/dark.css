@@ -13,7 +13,10 @@ expects the BluePrintJS class 'bp6-dark' to be added to top container.*/
   --bg-disabled: #7d7d7d;
   --bg-text-light: black;
   --bg-text-dark: #363636;
-  --bg-text-pinned: #404040;
+  /* Lightens rather than darkens: the pinned tint is composited over
+  surfaces that are already black or near-black here, so a dark tint
+  would be invisible. Raise or lower the alpha to taste. */
+  --overlay-text-pinned: rgba(255, 255, 255, 0.15);
 
   --font-heading-color: white;
 

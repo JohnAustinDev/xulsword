@@ -9,8 +9,25 @@
 .atext:not(:last-child) {
   margin-inline-end: 10px;
 }
-.atext.pinned {
-  background-color: var(--bg-text-pinned);
+/* A pinned panel is darkened by layering a translucent tint over it as a
+background-image, rather than by replacing background-color. Each surface
+keeps its own color underneath (the notebox is deliberately not the same
+color as the text box) and simply reads darker.
+
+Tinting .atext covers every descendant that has no background of its own
+(hd, sb, ft, sbcontrols and all LibSword-rendered content). Descendants
+that paint an opaque background hide that tint, so each must be listed
+here to be tinted itself. Do NOT list a transparent descendant: it would
+be tinted twice, once by its own layer and once by the panel showing
+through. The popup is tinted in popup.css and the tab in tabs.css. */
+.atext.pinned,
+.atext.pinned .nbc,
+.atext.pinned .nb,
+.atext.pinned .fnselected .fncol5 {
+  background-image: linear-gradient(
+    var(--overlay-text-pinned),
+    var(--overlay-text-pinned)
+  );
 }
 .atext > div {
   cursor: default;
@@ -453,9 +470,6 @@ html[dir='rtl'] .fncol3 {
 }
 .fnselected .fncol5 {
   border: 1px outset yellow;
-  background-color: var(--bg-text-light);
-}
-.pinned .fnselected .fncol5 {
   background-color: var(--bg-text-light);
 }
 .crref {

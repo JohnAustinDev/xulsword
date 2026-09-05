@@ -112,9 +112,11 @@ a.anchorbutton .tab:hover {
   color: lightgray;
 }
 .tabs.pinned .tab.active {
-  /* same as atext.css .atext.pinned */
-  background-color: var(--bg-text-pinned);
-  border-bottom-color: var(--bg-text-pinned);
+  background-image: linear-gradient(
+    var(--overlay-text-pinned),
+    var(--overlay-text-pinned)
+  );
+  border-bottom-color: transparent;
 }
 .tabs .tabTexts {
   border-top-color: var(--color-primary);
