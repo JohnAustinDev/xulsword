@@ -247,6 +247,7 @@ export async function playAudio(audio: AudioPlayerType) {
   } else {
     xulsword = {
       audio: { open: false, file: null, defaults },
+      selection: null,
     };
   }
   (G().Prefs as GAddWindowId['Prefs']).mergeValue(

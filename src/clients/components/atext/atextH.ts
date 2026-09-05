@@ -360,9 +360,13 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
       return;
     }
 
-    // Note: scroll events don't bubble!
+    // This handler is only intended for web-app user scrolling of atext, NOT
+    // programmatic scrolling of any kind. Also it should never effect the 
+    // atext element which the user scrolled, only the others. Note: scroll 
+    // events don't bubble!
     case 'scroll': {
-      if (Build.isWebApp && window.WebAppTextScroll === -1) {
+      const { userScrolled, scriptScrolled } = window.WebAppTextScroll;
+      if (Build.isWebApp && userScrolled === -1 && !scriptScrolled) {
         const { isPinned, module, location, panelIndex, xulswordState } =
           this.props;
         if (!isPinned && module && location) {
@@ -397,8 +401,11 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
                         newloc &&
                         oldloc.verse !== newloc.verse
                       ) {
-                        window.WebAppTextScroll = panelIndex;
-                        setTimeout(() => (window.WebAppTextScroll = -1), 1000);
+                        window.WebAppTextScroll.userScrolled = panelIndex;
+                        setTimeout(
+                          () => (window.WebAppTextScroll.userScrolled = -1),
+                          1000,
+                        );
                         xulswordState({
                           location: newloc,
                           scroll: { verseAt: 'top' },

@@ -531,7 +531,7 @@ span.foreign {
 .sb .hl {
   color: var(--color-primary);
 }
-.sb .hl.has-sync {
+.sb.has-sync .hl {
   color: unset;
 }
 .cr,

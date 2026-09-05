@@ -659,7 +659,7 @@ export function getScrollVerse(
 let ScrollOneTimeID = '';
 export function highlight(
   sbe: HTMLElement,
-  selection: LocationVKType,
+  selection: LocationVKType | null,
   scroll: ScrollType,
   renderPromise: RenderPromise,
 ) {

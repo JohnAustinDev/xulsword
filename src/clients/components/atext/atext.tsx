@@ -149,10 +149,6 @@ class Atext
     renderPromise.dispatch();
   }
 
-  shouldComponentUpdate(nextProps: AtextProps): boolean {
-    return window.WebAppTextScroll !== nextProps.panelIndex;
-  }
-
   componentDidUpdate(_prevProps: AtextProps, prevState: AtextStateType) {
     const { props, state, renderPromise } = this;
     const { panelIndex } = props;
@@ -229,7 +225,7 @@ class Atext
       );
       const { scroll } = scrollProps;
       const { location, modkey } = libswordProps;
-      const highlightkey = stringHash(location);
+      const highlightkey = stringHash(selection);
       const libswordKey = this.libswordKey(libswordProps, panelIndex);
       const skipUpdate =
         scroll?.verseAt === 'bottom' && (columns === 1 || type !== C.BIBLE);
@@ -436,18 +432,20 @@ class Atext
                 }
               }
             } else if (!renderPromise.waiting()) {
-              // versekeyScroll sets sbe.scrollTop, which fires a native
-              // 'scroll' event on sbe. Guard WebAppTextScroll around the
-              // call so the atextH.ts scroll handler (which drives
-              // WebApp verse-sync from user-initiated scrolling) does not
-              // mistake this programmatic scroll for one made by the user.
               if (Build.isWebApp) {
-                const restore = window.WebAppTextScroll;
-                window.WebAppTextScroll = panelIndex;
-                versekeyScroll(sbe, scrollProps);
-                requestAnimationFrame(() => {
-                  window.WebAppTextScroll = restore;
-                });
+                const { userScrolled } = window.WebAppTextScroll;
+                // If we got here because the user scrolled, don't update the
+                // text that was scrolled.
+                if (userScrolled !== panelIndex) {
+                  // versekeyScroll will set sbe.scrollTop, which will fire a
+                  // native 'scroll' event on sbe. Guard re-handling with
+                  // WebAppTextScroll until that event is finished.
+                  window.WebAppTextScroll.scriptScrolled = true;
+                  versekeyScroll(sbe, scrollProps);
+                  requestAnimationFrame(() => {
+                    window.WebAppTextScroll.scriptScrolled = false;
+                  });
+                }
               } else {
                 versekeyScroll(sbe, scrollProps);
               }
@@ -480,7 +478,6 @@ class Atext
           if (
             (update || highlightkey !== sbe.dataset.highlightkey) &&
             !isPinned &&
-            selection &&
             type === C.BIBLE
           ) {
             doUntilDone((rp) => {
@@ -664,18 +661,15 @@ class Atext
                 addTimingSpans(sbe, timing);
             }
           }
-          // Tag elements that CSS would otherwise need :has() to match,
-          // since this content is raw HTML from the SWORD engine, not JSX.
-          sbe.querySelectorAll<HTMLElement>('.x-navmenu .item .x-right').forEach(
-            (el) => {
+          // Tag elements that CSS would otherwise need :has() to match.
+          sbe
+            .querySelectorAll<HTMLElement>('.x-navmenu .item .x-right')
+            .forEach((el) => {
               if (el.nextElementSibling?.tagName === 'SPAN') {
                 el.classList.add('has-next-span');
               }
-            },
-          );
-          sbe.querySelectorAll<HTMLElement>('.hl').forEach((el) => {
-            el.classList.toggle('has-sync', !!el.querySelector('.verse-sync'));
-          });
+            });
+          sbe.classList.toggle('has-sync', !!sbe.querySelector('.verse-sync'));
           // Update all image paths
           libswordImgSrc(sbe);
           this.hoverLinks(sbe);
@@ -781,6 +775,7 @@ class Atext
       ilModuleOption,
       ilModule,
       show,
+      selection,
       onAudioClick,
       bbDragEnd,
     } = props;
@@ -848,6 +843,7 @@ class Atext
         data-columns={columns}
         data-ispinned={isPinned}
         data-ilmodule={ilModule}
+        data-verse={selection?.verse ?? ''}
         data-data={JSON_attrib_stringify(data)}
       >
         <Hbox className="sbcontrols">

@@ -70,7 +70,10 @@ declare global {
     IPC: ReturnType<typeof getIPC>;
     ProcessInfo: ReturnType<typeof getProcessInfo>;
     WebAppClient: 'BibleBrowser' | 'Widgets';
-    WebAppTextScroll: number;
+    WebAppTextScroll: {
+      userScrolled: number;
+      scriptScrolled: boolean;
+    };
     RenderPromises: readonly RenderPromise[];
   }
 

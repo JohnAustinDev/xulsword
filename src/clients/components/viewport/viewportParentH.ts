@@ -82,15 +82,18 @@ export function bbDragEnd(
   const target = e.target as HTMLElement;
   const atext = ofClass(['atext'], target)?.element;
   const index = Number(atext?.dataset.index);
+
   if (atext && !Number.isNaN(Number(index))) {
-    let { noteBoxHeight, maximizeNoteBox } = this.state;
-    noteBoxHeight = noteBoxHeight.slice();
-    maximizeNoteBox = maximizeNoteBox.slice();
-    maximizeNoteBox[index] = value.isMinMax === true;
-    noteBoxHeight[index] = value.sizerPos;
-    (this as Xulsword).setState({
-      noteBoxHeight,
-      maximizeNoteBox,
+    (this as Xulsword).setState((prevState) => {
+      let { noteBoxHeight, maximizeNoteBox } = prevState;
+      noteBoxHeight = noteBoxHeight.slice();
+      maximizeNoteBox = maximizeNoteBox.slice();
+      maximizeNoteBox[index] = value.isMinMax === true;
+      noteBoxHeight[index] = value.sizerPos;
+      return {
+        noteBoxHeight,
+        maximizeNoteBox,
+      };
     });
   }
 }

@@ -1,11 +1,8 @@
-import { ofClass } from '../common.ts';
+import { clone, ofClass } from '../common.ts';
 import log from './log.ts';
-import { getElementData } from './htmlData.ts';
 
 import type { AudioPlayerType } from '../type.ts';
 import type { XulswordState } from './components/xulsword/xulsword.tsx';
-import { scrollIntoViewIfNeeded } from './common.ts';
-import { delayHandler } from './components/libxul/xul.tsx';
 
 type TimingEntry = {
   start: number;
@@ -26,9 +23,9 @@ type TextMap = {
 };
 
 const Highlight = {
-  verse: true, // blue highlight and verse center scroll
-  phrase: true, // yellow highlight and scrollIntoView nearest
-  word: false, // yellow sweep and scrollIntoView nearest
+  verse: true, // blue highlight
+  phrase: true, // yellow highlight
+  word: false, // yellow sweep
 };
 
 const CurrentActiveIds = new Set<string>();
@@ -44,12 +41,6 @@ function unHighlight(id: string) {
   });
 }
 
-// Animates a highlight bar across a 'nowreading-sweep' span's text, from
-// inline-start to inline-end, timed to land exactly on item.end. A CSS
-// transition (rather than per-frame JS updates) drives the motion, so the
-// browser keeps it smooth; background-position's own percentage formula
-// (offset = (boxSize - imageSize) * pct) naturally accounts for the bar's
-// width, so 0%/100% land it flush with each edge.
 function doHighlight(
   el: HTMLElement,
   item: TimingEntry,
@@ -57,38 +48,51 @@ function doHighlight(
   xulswordState: React.Component<any, XulswordState>['setState'],
 ) {
   if (Highlight.verse) {
-    const verse = Array.from(CurrentActiveIds).reduce((p, c) => {
+    // Get the total verse range of all active zones.
+    const { verse, lastverse } = Array.from(CurrentActiveIds).reduce((p, c) => {
       const { zoneid } = parseTimingID(c);
-      const v = Number(zoneid?.replace(/^.*?(\d+)$/, '$1') ?? 0);
-      return Math.max(p, v);
-    }, 0);
+      const v1 = Number(zoneid?.replace(/^(\d+).*?$/, '$1') ?? 0);
+      const v2 = Number(zoneid?.replace(/^.*?(\d+)$/, '$1') ?? 999);
+      const { verse, lastverse } = p;
+      return {
+        verse: Math.min(v1, verse),
+        lastverse: Math.max(v2, lastverse)
+      };
+    }, { verse: 999, lastverse: 0 });
     const atext = ofClass(['atext'], el);
     if (atext && verse) {
-      const data = getElementData(atext.element);
-      const { location } = data;
-      if (location) {
-        const { verse: v } = location;
-        if (v && verse > v) {
-          location.verse = verse;
-          delayHandler(
-            window,
-            (s) => xulswordState(s),
-            [
-              {
-                location,
-                selection: location,
-                scroll: { verseAt: 'center' },
-              },
-            ],
-            100,
-            'doHighlightTO',
-          );
-        }
+      const { verse: vs } = atext.element.dataset;
+      const v = Number(vs);
+      // Compare it to the selected verse of the atext element.
+      if (verse && verse !== v) {
+        // Scrolling with the current UI is not nice. Until the player can
+        // be a static dispay, it's possible to block the user where audio
+        // cannot be stopped! Also the scrolling causes activated input
+        // elements to instantly deactivate, annoyingly.
+        xulswordState((prevState) => {
+          const { location: s } = prevState;
+          const selection = clone(s);
+          if (selection) {
+            selection.verse = verse;
+            selection.lastverse = lastverse;
+            return {
+              selection,
+              scroll: null,
+            };
+          }
+          return null;
+        });
       }
     }
   }
   if (Highlight.phrase) el.classList.add('nowreading');
   if (Highlight.word) {
+    // Animates a highlight bar across a 'nowreading-sweep' span's text, from
+    // inline-start to inline-end, timed to land exactly on item.end. A CSS
+    // transition (rather than per-frame JS updates) drives the motion, so the
+    // browser keeps it smooth; background-position's own percentage formula
+    // (offset = (boxSize - imageSize) * pct) naturally accounts for the bar's
+    // width, so 0%/100% land it flush with each edge.
     el.classList.add('nowreading-sweep');
     const duration = item.end - item.start;
     const elapsedFraction =
@@ -147,12 +151,11 @@ export function onTimeUpdate(
           .forEach((e) => {
             const el = e as HTMLElement;
             doHighlight(el, item, currentTime, xulswordState);
-            // Optional: Smoothly scroll long text into view
-            scrollIntoViewIfNeeded(el, {
-              behavior: 'smooth',
-              block: 'center',
-            });
             CurrentActiveIds.add(item.id);
+            // Scrolling with the current UI is not nice. Until the player can
+            // be a static dispay, it's otherwise possible to block the user
+            // where audio cannot be stopped! Also the scrolling causes
+            // activated input elements to instantly deactivate annoyingly.
           });
       });
     } else {

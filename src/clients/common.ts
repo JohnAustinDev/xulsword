@@ -55,7 +55,7 @@ import type {
 } from '../type.ts';
 import type { XulswordState } from './components/xulsword/xulsword.tsx';
 
-window.WebAppTextScroll = -1;
+window.WebAppTextScroll = { userScrolled: -1, scriptScrolled: false };
 
 // WebApp requires methods of Gsafe to be cache-preloaded. Not all Gsafe
 // methods are explicitly called here because some calls preload multiple
