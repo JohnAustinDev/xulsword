@@ -34,7 +34,6 @@ export default function AudioPlayer(
 ): JSX.Element {
   const { audio, renderPromise, audioHandler, xulswordState } = props;
   const { file, defaults } = audio;
-  const { timing } = file ?? {};
   const { swordModule } = file ?? {};
 
   const sels = audioSelections(file, renderPromise);
@@ -50,16 +49,6 @@ export default function AudioPlayer(
         sels[index].selection,
       )
     : { audio: undefined, timing: undefined };
-
-  const installedOptions = audioSelections(
-    {
-      ...file,
-      book: undefined,
-      chapter: undefined,
-      key: undefined,
-    } as AudioPlayerFileVK | AudioPlayerFileGB,
-    renderPromise,
-  );
 
   useEffect(() => {
     if (file) {
@@ -77,15 +66,7 @@ export default function AudioPlayer(
               if (rawTiming) {
                 const t = parseTimingFile(rawTiming);
                 TimingFetched[iafTiming] = t;
-                if (diff(timing, t)) {
-                  xulswordState((prevState) => {
-                    const { audio: a } = prevState;
-                    const audio = clone(a);
-                    audio.file = file;
-                    audio.file.timing = t;
-                    return { audio };
-                  });
-                }
+                xulswordState(checkState(t));
               }
             })
             .catch((er) => log.error(er));
@@ -98,18 +79,21 @@ export default function AudioPlayer(
             : parseTimingFile(iafTiming);
         TimingFetched[iafTiming] = times;
       }
-      if (times && diff(timing, times)) {
-        xulswordState((prevState) => {
-          const { audio: a } = prevState;
-          const audio = clone(a);
-          audio.file = file;
-          audio.file.timing = times;
-          return { audio };
-        });
+      if (times) {
+        xulswordState(checkState(times));
       }
     }
-  });
+  }, [file, iafTiming]);
 
+  const installedOptions = audioSelections(
+    {
+      ...file,
+      book: undefined,
+      chapter: undefined,
+      key: undefined,
+    } as AudioPlayerFileVK | AudioPlayerFileGB,
+    renderPromise,
+  );
   const audioDOM = createRef() as React.RefObject<HTMLAudioElement>;
 
   return (
@@ -142,4 +126,23 @@ export default function AudioPlayer(
       )}
     </div>
   );
+}
+
+// Take a times object and update the state with it only if possible and
+// necessary.
+function checkState(times: ReturnType<typeof parseTimingFile>) {
+  return (prevState: XulswordState) => {
+    const { audio: a } = prevState;
+    const audio = clone(a);
+    const { file } = audio;
+    if (file) {
+      const { timing } = file;
+      if (diff(timing, times)) {
+        audio.file = file;
+        audio.file.timing = times;
+        return { audio };
+      }
+    }
+    return null;
+  };
 }

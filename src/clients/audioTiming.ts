@@ -4,6 +4,8 @@ import { getElementData } from './htmlData.ts';
 
 import type { AudioPlayerType } from '../type.ts';
 import type { XulswordState } from './components/xulsword/xulsword.tsx';
+import { scrollIntoViewIfNeeded } from './common.ts';
+import { delayHandler } from './components/libxul/xul.tsx';
 
 type TimingEntry = {
   start: number;
@@ -68,11 +70,19 @@ function doHighlight(
         const { verse: v } = location;
         if (v && verse > v) {
           location.verse = verse;
-          xulswordState({
-            location,
-            selection: location,
-            scroll: { verseAt: 'center' },
-          });
+          delayHandler(
+            window,
+            (s) => xulswordState(s),
+            [
+              {
+                location,
+                selection: location,
+                scroll: { verseAt: 'center' },
+              },
+            ],
+            100,
+            'doHighlightTO',
+          );
         }
       }
     }
@@ -138,9 +148,9 @@ export function onTimeUpdate(
             const el = e as HTMLElement;
             doHighlight(el, item, currentTime, xulswordState);
             // Optional: Smoothly scroll long text into view
-            el.scrollIntoView({
+            scrollIntoViewIfNeeded(el, {
               behavior: 'smooth',
-              block: 'nearest',
+              block: 'center',
             });
             CurrentActiveIds.add(item.id);
           });

@@ -302,6 +302,23 @@ export function clearPending(
   });
 }
 
+export function scrollIntoViewIfNeeded(
+  element: HTMLElement,
+  options: boolean | ScrollIntoViewOptions | undefined,
+) {
+  const rect = element.getBoundingClientRect();
+  const isInView =
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <=
+      (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth);
+
+  if (!isInView) {
+    element.scrollIntoView(options);
+  }
+}
+
 // Javascript's scrollIntoView() also scrolls ancestors in ways that can break
 // Electron window layout (although this may have been alleviated by changing
 // container overflow from hidden to visible). So this util sets scrollTop of

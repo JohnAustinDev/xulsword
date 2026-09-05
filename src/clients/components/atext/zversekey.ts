@@ -14,12 +14,16 @@ import {
   getMaxVerse,
   getLocalizedChapterTerm,
   getExtRefHTML,
-  safeScrollIntoView,
 } from '../../common.ts';
 import { G, GI } from '../../G.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 
-import type { LocationVKType, LookupInfo, ShowType } from '../../../type.ts';
+import type {
+  LocationVKType,
+  LookupInfo,
+  ScrollType,
+  ShowType,
+} from '../../../type.ts';
 import type RenderPromise from '../../renderPromise.ts';
 import type Xulsword from '../xulsword/xulsword.tsx';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
@@ -652,9 +656,11 @@ export function getScrollVerse(
   return null;
 }
 
+let ScrollOneTimeID = '';
 export function highlight(
   sbe: HTMLElement,
   selection: LocationVKType,
+  scroll: ScrollType,
   renderPromise: RenderPromise,
 ) {
   // First unhilight everything
@@ -697,10 +703,25 @@ export function highlight(
               if (sv && !av.id) {
                 av.id = sv;
                 const elem = document.getElementById('sv');
-                if (elem)
-                  safeScrollIntoView(elem, sbe, {
-                    block: 'center',
-                  });
+                if (elem) {
+                  // This was copied from atext.tsx. Not sure if it's still all
+                  // needed in either place.
+                  const { scrollIntoView } = scroll || {};
+                  const { selector, oneTimeID } = scrollIntoView ?? {};
+                  if (
+                    selector &&
+                    scrollIntoView &&
+                    oneTimeID &&
+                    ScrollOneTimeID !== oneTimeID
+                  ) {
+                    ScrollOneTimeID = oneTimeID;
+                    setTimeout(
+                      () =>
+                        elem.scrollIntoView(scrollIntoView),
+                      100,
+                    );
+                  }
+                }
                 sv = '';
               }
             }

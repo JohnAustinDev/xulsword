@@ -528,8 +528,11 @@ span.foreign {
 .sb .hl .wordsOfJesus {
   color: unset;
 }
-.sb .hl.no-sync {
+.sb .hl {
   color: var(--color-primary);
+}
+.sb .hl.has-sync {
+  color: unset;
 }
 .cr,
 .fn,

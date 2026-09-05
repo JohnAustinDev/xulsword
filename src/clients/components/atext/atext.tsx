@@ -435,8 +435,22 @@ class Atext
                   }
                 }
               }
-            } else {
-              versekeyScroll(sbe, scrollProps);
+            } else if (!renderPromise.waiting()) {
+              // versekeyScroll sets sbe.scrollTop, which fires a native
+              // 'scroll' event on sbe. Guard WebAppTextScroll around the
+              // call so the atextH.ts scroll handler (which drives
+              // WebApp verse-sync from user-initiated scrolling) does not
+              // mistake this programmatic scroll for one made by the user.
+              if (Build.isWebApp) {
+                const restore = window.WebAppTextScroll;
+                window.WebAppTextScroll = panelIndex;
+                versekeyScroll(sbe, scrollProps);
+                requestAnimationFrame(() => {
+                  window.WebAppTextScroll = restore;
+                });
+              } else {
+                versekeyScroll(sbe, scrollProps);
+              }
             }
             if (!renderPromise.waiting()) sbe.dataset.scroll = scrollPropsKey;
           }
@@ -470,7 +484,7 @@ class Atext
             type === C.BIBLE
           ) {
             doUntilDone((rp) => {
-              if (rp) highlight(sbe, selection, rp);
+              if (rp) highlight(sbe, selection, scroll, rp);
               if (!rp?.waiting()) sbe.dataset.highlightkey = highlightkey;
             });
           }
@@ -660,7 +674,7 @@ class Atext
             },
           );
           sbe.querySelectorAll<HTMLElement>('.hl').forEach((el) => {
-            el.classList.toggle('no-sync', !el.querySelector('.verse-sync'));
+            el.classList.toggle('has-sync', !!el.querySelector('.verse-sync'));
           });
           // Update all image paths
           libswordImgSrc(sbe);
