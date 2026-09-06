@@ -1,5 +1,6 @@
 import React, { createRef, useEffect } from 'react';
 import { clone, diff } from '../../../common.ts';
+import S from '../../../defaultPrefs.ts';
 import { audioSelections } from '../../common.ts';
 import {
   getTimingFile,
@@ -7,7 +8,10 @@ import {
   parseTimingFile,
 } from '../../audioTiming.ts';
 import { GI } from '../../G.ts';
+import log from '../../log.ts';
 import Menulist from '../libxul/menulist.tsx';
+import Button from '../libxul/button.tsx';
+import { Hbox } from '../libxul/boxes.tsx';
 import { htmlAttribs, XulProps } from '../libxul/xul.tsx';
 import './audioPlayer.css';
 
@@ -18,7 +22,6 @@ import type {
 } from '../../../type.ts';
 import type RenderPromise from '../../renderPromise.ts';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
-import log from '../../log.ts';
 
 const TimingFetched: {
   [url: string]: ReturnType<typeof parseTimingFile> | null;
@@ -33,7 +36,7 @@ export default function AudioPlayer(
   } & XulProps,
 ): JSX.Element {
   const { audio, renderPromise, audioHandler, xulswordState } = props;
-  const { file, defaults } = audio;
+  const { file, defaults, tracking } = audio;
   const { swordModule } = file ?? {};
 
   const sels = audioSelections(file, renderPromise);
@@ -66,7 +69,7 @@ export default function AudioPlayer(
               if (rawTiming) {
                 const t = parseTimingFile(rawTiming);
                 TimingFetched[iafTiming] = t;
-                xulswordState(checkState(t));
+                xulswordState(checkTimesState(t));
               }
             })
             .catch((er) => log.error(er));
@@ -80,7 +83,7 @@ export default function AudioPlayer(
         TimingFetched[iafTiming] = times;
       }
       if (times) {
-        xulswordState(checkState(times));
+        xulswordState(checkTimesState(times));
       }
     }
   }, [file, iafTiming]);
@@ -95,6 +98,11 @@ export default function AudioPlayer(
     renderPromise,
   );
   const audioDOM = createRef() as React.RefObject<HTMLAudioElement>;
+
+  const trackingIsOn =
+    typeof tracking === 'undefined'
+      ? S.prefs.xulsword.audio.tracking
+      : tracking;
 
   return (
     <div {...htmlAttribs('audioplayer', props)}>
@@ -113,16 +121,25 @@ export default function AudioPlayer(
         />
       )}
       {audio.open && (
-        <audio
-          controls
-          onEnded={audioHandler}
-          onCanPlay={audioHandler}
-          onPlay={audioHandler}
-          onTimeUpdate={() => onTimeUpdate(audio, audioDOM, xulswordState)}
-          autoPlay={!!Build.isWebApp}
-          src={src}
-          ref={audioDOM}
-        />
+        <Hbox>
+          <audio
+            controls
+            onEnded={audioHandler}
+            onCanPlay={audioHandler}
+            onPlay={audioHandler}
+            onTimeUpdate={() => onTimeUpdate(audio, audioDOM, xulswordState)}
+            autoPlay={!!Build.isWebApp}
+            src={src}
+            ref={audioDOM}
+          />
+          <Button
+            className="tracking"
+            checked={trackingIsOn}
+            disabled={!audio.file?.timing}
+            icon="highlight"
+            onPointerDown={() => xulswordState(toggleTrackingState())}
+          />
+        </Hbox>
       )}
     </div>
   );
@@ -130,7 +147,7 @@ export default function AudioPlayer(
 
 // Take a times object and update the state with it only if possible and
 // necessary.
-function checkState(times: ReturnType<typeof parseTimingFile>) {
+function checkTimesState(times: ReturnType<typeof parseTimingFile>) {
   return (prevState: XulswordState) => {
     const { audio: a } = prevState;
     const audio = clone(a);
@@ -144,5 +161,23 @@ function checkState(times: ReturnType<typeof parseTimingFile>) {
       }
     }
     return null;
+  };
+}
+
+function toggleTrackingState() {
+  return (prevState: XulswordState) => {
+    const { audio: a } = prevState;
+    const audio = clone(a);
+    audio.tracking =
+      typeof audio.tracking === 'undefined'
+        ? !S.prefs.xulsword.audio.tracking
+        : !audio.tracking;
+    const typeScriptFix: Partial<XulswordState> = audio.tracking
+      ? { audio }
+      : // When tracking turns off, atext panels will re-render, so any multi-
+        // column Bible panels that have been paged will REQUIRE verseAt top
+        // to keep current page. verseAt top works fine for single culumns too.
+        { audio, selection: null, scroll: { verseAt: 'top' } };
+    return typeScriptFix as any;
   };
 }

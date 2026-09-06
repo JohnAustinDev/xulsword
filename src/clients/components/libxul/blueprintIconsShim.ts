@@ -56,6 +56,7 @@ export { FolderNew } from '@blueprintjs/icons/lib/esm/generated/components/folde
 export { FolderOpen } from '@blueprintjs/icons/lib/esm/generated/components/folder-open.js';
 export { FolderShared } from '@blueprintjs/icons/lib/esm/generated/components/folder-shared.js';
 export { Font } from '@blueprintjs/icons/lib/esm/generated/components/font.js';
+export { Highlight } from '@blueprintjs/icons/lib/esm/generated/components/highlight.js';
 export { Help } from '@blueprintjs/icons/lib/esm/generated/components/help.js';
 export { Import } from '@blueprintjs/icons/lib/esm/generated/components/import.js';
 export { InfoSign } from '@blueprintjs/icons/lib/esm/generated/components/info-sign.js';

@@ -60,6 +60,7 @@ export { default as FolderNew } from '@blueprintjs/icons/lib/esm/generated/20px/
 export { default as FolderOpen } from '@blueprintjs/icons/lib/esm/generated/20px/paths/folder-open.js';
 export { default as FolderShared } from '@blueprintjs/icons/lib/esm/generated/20px/paths/folder-shared.js';
 export { default as Font } from '@blueprintjs/icons/lib/esm/generated/20px/paths/font.js';
+export { default as Highlight } from '@blueprintjs/icons/lib/esm/generated/20px/paths/highlight.js';
 export { default as Help } from '@blueprintjs/icons/lib/esm/generated/20px/paths/help.js';
 export { default as Import } from '@blueprintjs/icons/lib/esm/generated/20px/paths/import.js';
 export { default as InfoSign } from '@blueprintjs/icons/lib/esm/generated/20px/paths/info-sign.js';

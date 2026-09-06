@@ -16,7 +16,7 @@
   each keeps its own background color but the panel as a whole reads as
   uniformly darkened. Applied by .atext.pinned in atext.css, .tabs.pinned
   in tabs.css and .atext.pinned .npopupTX in popup.css. */
-  --overlay-text-pinned: rgba(0, 0, 0, 0.04);
+  --overlay-text-pinned: rgba(0, 0, 0, 0.03);
 
   --border-light: #dbdbd3;
   --border-dark: #bbbbbb;

@@ -10,7 +10,7 @@
 
 .audioplayer #audioCodeSelect {
   height: calc(var(--input-height) - 2px);
-  margin-bottom: 0;
+  margin-bottom: 2px;
 }
 .audioplayer #audioCodeSelect select {
   width: 100%;
@@ -26,4 +26,8 @@
 }
 .audioplayer audio:focus {
   outline: none;
+}
+
+.audioplayer .tracking.button {
+  margin: 0 0 0 2px;
 }

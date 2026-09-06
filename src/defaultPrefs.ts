@@ -115,7 +115,12 @@ const S = {
 
       keys: [null] as Array<string | null>,
 
-      audio: { open: false, file: null, defaults: {} } as AudioPlayerType,
+      audio: {
+        open: false,
+        file: null,
+        defaults: {},
+        tracking: true,
+      } as AudioPlayerType,
       history: [] as HistoryVKType[],
       historyIndex: 0 as number,
 

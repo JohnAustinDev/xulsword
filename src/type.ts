@@ -195,6 +195,7 @@ export type AudioPlayerType = {
   open: boolean;
   file: AudioPlayerFileVK | AudioPlayerFileGB | null;
   defaults?: { [swordModule: string]: string };
+  tracking?: boolean;
 };
 
 export type PinPropsType = Pick<AtextPropsType, (typeof C.PinProps)[number]>;

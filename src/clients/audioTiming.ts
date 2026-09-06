@@ -1,4 +1,5 @@
 import { clone, ofClass } from '../common.ts';
+import S from '../defaultPrefs.ts';
 import log from './log.ts';
 
 import type { AudioPlayerType } from '../type.ts';
@@ -49,16 +50,19 @@ function doHighlight(
 ) {
   if (Highlight.verse) {
     // Get the total verse range of all active zones.
-    const { verse, lastverse } = Array.from(CurrentActiveIds).reduce((p, c) => {
-      const { zoneid } = parseTimingID(c);
-      const v1 = Number(zoneid?.replace(/^(\d+).*?$/, '$1') ?? 0);
-      const v2 = Number(zoneid?.replace(/^.*?(\d+)$/, '$1') ?? 999);
-      const { verse, lastverse } = p;
-      return {
-        verse: Math.min(v1, verse),
-        lastverse: Math.max(v2, lastverse)
-      };
-    }, { verse: 999, lastverse: 0 });
+    const { verse, lastverse } = Array.from(CurrentActiveIds).reduce(
+      (p, c) => {
+        const { zoneid } = parseTimingID(c);
+        const v1 = Number(zoneid?.replace(/^(\d+).*?$/, '$1') ?? 0);
+        const v2 = Number(zoneid?.replace(/^.*?(\d+)$/, '$1') ?? 999);
+        const { verse, lastverse } = p;
+        return {
+          verse: Math.min(v1, verse),
+          lastverse: Math.max(v2, lastverse),
+        };
+      },
+      { verse: 999, lastverse: 0 },
+    );
     const atext = ofClass(['atext'], el);
     if (atext && verse) {
       const { verse: vs } = atext.element.dataset;
@@ -123,7 +127,7 @@ export function onTimeUpdate(
   audioDOM: React.RefObject<HTMLAudioElement>,
   xulswordState: React.Component<any, XulswordState>['setState'],
 ) {
-  const { file } = audio;
+  const { file, tracking } = audio;
   const { timing } = file ?? {};
   const { current: player } = audioDOM;
   if (timing && player) {
@@ -145,19 +149,25 @@ export function onTimeUpdate(
         }
       });
       // Add new highlights
-      activeItems.forEach((item) => {
-        document
-          .querySelectorAll(`div.sb span[data-id="${item.id}"]`)
-          .forEach((e) => {
-            const el = e as HTMLElement;
-            doHighlight(el, item, currentTime, xulswordState);
-            CurrentActiveIds.add(item.id);
-            // Scrolling with the current UI is not nice. Until the player can
-            // be a static dispay, it's otherwise possible to block the user
-            // where audio cannot be stopped! Also the scrolling causes
-            // activated input elements to instantly deactivate annoyingly.
-          });
-      });
+      const trackingIsOn =
+        typeof tracking === 'undefined'
+          ? S.prefs.xulsword.audio.tracking
+          : tracking;
+      if (trackingIsOn) {
+        activeItems.forEach((item) => {
+          document
+            .querySelectorAll(`div.sb span[data-id="${item.id}"]`)
+            .forEach((e) => {
+              const el = e as HTMLElement;
+              doHighlight(el, item, currentTime, xulswordState);
+              CurrentActiveIds.add(item.id);
+              // Scrolling with the current UI is not nice. Until the player can
+              // be a static dispay, it's otherwise possible to block the user
+              // where audio cannot be stopped! Also the scrolling causes
+              // activated input elements to instantly deactivate annoyingly.
+            });
+        });
+      }
     } else {
       // Clear highlight if audio moves outside covered timing windows
       CurrentActiveIds.forEach((id) => {
