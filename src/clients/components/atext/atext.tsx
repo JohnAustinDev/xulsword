@@ -59,6 +59,9 @@ export type AtextPropsType = Pick<
   typeof S.prefs.xulsword,
   'location' | 'selection' | 'scroll' | 'show' | 'place' | 'audio'
 > & {
+  showControls?: typeof S.prefs.xulsword.showControls;
+  showChooser?: typeof S.prefs.xulsword.showChooser;
+
   modkey: string | null;
 
   module?: string | null;
@@ -74,6 +77,8 @@ export type AtextPropsType = Pick<
   ownWindow: boolean;
 
   popupParentHandler: typeof popupParentHandler;
+
+  xulswordHandler?: (e: React.SyntheticEvent | PointerEvent) => void;
 
   xulswordState: React.Component<any, XulswordState>['setState'];
 
@@ -772,12 +777,15 @@ class Atext
       ownWindow,
       noteBoxHeight,
       maximizeNoteBox,
+      showChooser,
+      showControls,
       ilModuleOption,
       ilModule,
       show,
       selection,
       onAudioClick,
       bbDragEnd,
+      xulswordHandler,
     } = props;
 
     // Header logic etc.
@@ -828,6 +836,8 @@ class Atext
       ilModuleOption &&
       ilModuleOption.length > 1;
 
+    const webAppIconSize = Build.isWebApp ? 28 : C.UI.BluePrint.IconSize.LARGE;
+
     return (
       <Vbox
         domref={loadingRef}
@@ -848,6 +858,31 @@ class Atext
       >
         <Hbox className="sbcontrols">
           {isVerseKey && <div className="text-pin" />}
+          {xulswordHandler &&
+            typeof showChooser !== 'undefined' &&
+            window.innerWidth > C.UI.WebApp.mobileW && (
+              <Button
+                id="chooserButton"
+                checked={showChooser}
+                icon={showChooser ? 'menu-closed' : 'menu-open'}
+                iconSize={webAppIconSize}
+                onPointerDown={xulswordHandler}
+                title={GI.i18n.t(
+                  '',
+                  renderPromise,
+                  'Show or hide the verse chooser tool.',
+                  { ns: 'bibleBrowser' },
+                )}
+              />
+            )}
+          {xulswordHandler && typeof showControls !== 'undefined' && (
+            <Button
+              id="showControls"
+              icon="cog"
+              onPointerDown={xulswordHandler}
+              checked={showControls ?? false}
+            />
+          )}
           {module &&
             audioIcon({
               swordModule: module,

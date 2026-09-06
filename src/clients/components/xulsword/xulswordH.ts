@@ -31,7 +31,7 @@ import type { AnalyticsInfo } from '../../analytics.ts';
 import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 
-export default function handler(
+export default function xulswordHandler(
   this: Xulsword,
   e: React.SyntheticEvent | PointerEvent,
 ) {

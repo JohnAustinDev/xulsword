@@ -55,11 +55,6 @@ body {
   display: none;
 }
 
-#controlButtons {
-  margin-left: 5px;
-  width: fit-content;
-}
-
 /* Bible Browser Web-App controls are in a VBOX */
 .controls-animation {
   height: auto;
@@ -93,7 +88,7 @@ body.controls-visible {
 #xsSearchText {
   margin-right: 10px;
 }
-#player {
+#player:not(.hide) {
   margin-top: 5px;
   margin-bottom: 5px;
 }

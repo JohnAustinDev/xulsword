@@ -29,7 +29,7 @@ import viewportParentH, {
   closeMenupopups,
   bbDragEnd as bbDragEndH,
 } from '../viewport/viewportParentH.ts';
-import handlerH from './xulswordH.ts';
+import xulswordHandlerH from './xulswordH.ts';
 import {
   addHistory as addHistoryH,
   setHistory as setHistoryH,
@@ -68,7 +68,7 @@ export default class Xulsword
   extends React.Component<XulswordProps, XulswordState>
   implements RenderPromiseComponent
 {
-  handler: any;
+  xulswordHandler: any;
 
   viewportParentHandler: any;
 
@@ -108,12 +108,12 @@ export default class Xulsword
       renderPromiseID: 0,
     };
 
-    this.handler = handlerH.bind(this);
+    this.xulswordHandler = xulswordHandlerH.bind(this);
     this.viewportParentHandler = viewportParentH.bind(this);
     this.bbDragEnd = bbDragEndH.bind(this);
     this.selectionGenbk = this.selectionGenbk.bind(this);
     this.selectionVK = this.selectionVK.bind(this);
-    this.xulswordStateHandler = this.xulswordStateHandler.bind(this);
+    this.xulswordState = this.xulswordState.bind(this);
     this.addHistory = addHistoryH.bind(this);
     this.setHistory = setHistoryH.bind(this);
     this.historyMenu = historyMenuH.bind(this);
@@ -249,7 +249,7 @@ export default class Xulsword
     if (selection) this.setState({ location: selection });
   }
 
-  xulswordStateHandler(s: any) {
+  xulswordState(s: any) {
     if (Build.isDevelopment) {
       log.debug(`xulswordStateHandler setState:`, s);
     }
@@ -261,13 +261,13 @@ export default class Xulsword
       props,
       state,
       loadingRef,
-      handler,
+      xulswordHandler,
       viewportParentHandler,
       renderPromise,
       bbDragEnd,
       selectionGenbk,
       selectionVK,
-      xulswordStateHandler,
+      xulswordState,
     } = this;
     const {
       location,
@@ -347,7 +347,7 @@ export default class Xulsword
           <Button
             id="back"
             icon={`chevron-${left}`}
-            onPointerDown={handler}
+            onPointerDown={xulswordHandler}
             disabled={
               navdisabled ||
               !history.length ||
@@ -362,7 +362,7 @@ export default class Xulsword
             id="historymenu"
             icon={`double-chevron-${left}`}
             rightIcon={`double-chevron-${right}`}
-            onPointerDown={handler}
+            onPointerDown={xulswordHandler}
             disabled={navdisabled || history.length <= 1}
           >
             {historyMenupopup || <span />}
@@ -375,7 +375,7 @@ export default class Xulsword
           <Button
             id="forward"
             rightIcon={`chevron-${right}`}
-            onPointerDown={handler}
+            onPointerDown={xulswordHandler}
             disabled={navdisabled || historyIndex === 0}
           >
             {GI.i18n.t('', renderPromise, 'history.forward.label')}
@@ -394,12 +394,12 @@ export default class Xulsword
       >
         <AudioPlayer
           audio={audio}
-          audioHandler={handler}
+          audioHandler={xulswordHandler}
           renderPromise={renderPromise}
-          xulswordState={xulswordStateHandler}
+          xulswordState={xulswordState}
         />
         {Build.isElectronApp && (
-          <Button id="closeplayer" onPointerDown={handler}>
+          <Button id="closeplayer" onPointerDown={xulswordHandler}>
             {GI.i18n.t('', renderPromise, 'close.label')}
           </Button>
         )}
@@ -414,7 +414,7 @@ export default class Xulsword
             type="search"
             maxLength="24"
             flex="1"
-            onChange={handler}
+            onChange={xulswordHandler}
             onKeyUp={(e: React.KeyboardEvent) => {
               if (e.key === 'Enter') {
                 const b = document.getElementById('xsSearchButton');
@@ -428,29 +428,13 @@ export default class Xulsword
               id="xsSearchButton"
               icon="search"
               disabled={searchDisabled}
-              onPointerDown={handler}
+              onPointerDown={xulswordHandler}
             >
               {GI.i18n.t('', renderPromise, 'menu.search')}
             </Button>
           </Box>
         </Vbox>
       </Hbox>
-    );
-
-    const chooserMenuButton = (
-      <Button
-        id="chooserButton"
-        checked={showChooser}
-        icon={showChooser ? 'menu-closed' : 'menu-open'}
-        iconSize={webAppIconSize}
-        onPointerDown={handler}
-        title={GI.i18n.t(
-          '',
-          renderPromise,
-          'Show or hide the verse chooser tool.',
-          { ns: 'bibleBrowser' },
-        )}
-      />
     );
 
     const optionButtons = (
@@ -482,7 +466,7 @@ export default class Xulsword
               disabled={panels.length >= (window as any).browserMaxPanels}
               icon="add-column-right"
               iconSize={webAppIconSize}
-              onPointerDown={handler}
+              onPointerDown={xulswordHandler}
               title={GI.i18n.t(
                 '',
                 renderPromise,
@@ -495,7 +479,7 @@ export default class Xulsword
               disabled={panels.length <= 1}
               icon="remove-column-right"
               iconSize={webAppIconSize}
-              onPointerDown={handler}
+              onPointerDown={xulswordHandler}
               title={GI.i18n.t('', renderPromise, 'Remove a column of text.', {
                 ns: 'bibleBrowser',
               })}
@@ -507,7 +491,7 @@ export default class Xulsword
           checked={show.headings}
           icon="widget-header"
           iconSize={webAppIconSize}
-          onPointerDown={handler}
+          onPointerDown={xulswordHandler}
           title={GI.i18n.t('', renderPromise, 'headingsButton.tooltip')}
           disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
         />
@@ -516,7 +500,7 @@ export default class Xulsword
           checked={show.dictlinks}
           icon="link"
           iconSize={webAppIconSize}
-          onPointerDown={handler}
+          onPointerDown={xulswordHandler}
           title={GI.i18n.t('', renderPromise, 'dictButton.tooltip')}
           disabled={
             !panels.find(
@@ -529,7 +513,7 @@ export default class Xulsword
           checked={show.footnotes}
           icon="asterisk"
           iconSize={webAppIconSize}
-          onPointerDown={handler}
+          onPointerDown={xulswordHandler}
           title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
           disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
         />
@@ -539,7 +523,7 @@ export default class Xulsword
             checked={show.crossrefs}
             icon="symbol-cross"
             iconSize={webAppIconSize}
-            onPointerDown={handler}
+            onPointerDown={xulswordHandler}
             title={GI.i18n.t('', renderPromise, 'crossrefsButton.tooltip')}
             disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
           />
@@ -614,7 +598,19 @@ export default class Xulsword
         {historyComponent}
 
         <Hbox id="textnav" align="center">
-          {chooserMenuButton}
+          <Button
+            id="chooserButton"
+            checked={showChooser}
+            icon={showChooser ? 'menu-closed' : 'menu-open'}
+            iconSize={webAppIconSize}
+            onPointerDown={xulswordHandler}
+            title={GI.i18n.t(
+              '',
+              renderPromise,
+              'Show or hide the verse chooser tool.',
+              { ns: 'bibleBrowser' },
+            )}
+          />
           <Bookselect
             id="book"
             sizetopopup="none"
@@ -623,7 +619,7 @@ export default class Xulsword
             options={booklist}
             disabled={navdisabled}
             key={[location?.book, bsreset].join('.')}
-            onChange={handler}
+            onChange={xulswordHandler}
           />
           <Textbox
             id="chapter"
@@ -634,19 +630,19 @@ export default class Xulsword
             timeout="600"
             disabled={navdisabled}
             key={`c${location?.chapter}`}
-            onChange={handler}
-            onPointerDown={handler}
+            onChange={xulswordHandler}
+            onPointerDown={xulswordHandler}
           />
           <Vbox>
             <AnchorButton
               id="nextchap"
               disabled={navdisabled}
-              onPointerDown={handler}
+              onPointerDown={xulswordHandler}
             />
             <AnchorButton
               id="prevchap"
               disabled={navdisabled}
-              onPointerDown={handler}
+              onPointerDown={xulswordHandler}
             />
           </Vbox>
           <span>:</span>
@@ -659,19 +655,19 @@ export default class Xulsword
             value={location?.verse ? dString(location.verse) : ''}
             timeout="600"
             disabled={navdisabled}
-            onChange={handler}
-            onPointerDown={handler}
+            onChange={xulswordHandler}
+            onPointerDown={xulswordHandler}
           />
           <Vbox>
             <AnchorButton
               id="nextverse"
               disabled={navdisabled}
-              onPointerDown={handler}
+              onPointerDown={xulswordHandler}
             />
             <AnchorButton
               id="prevverse"
               disabled={navdisabled}
-              onPointerDown={handler}
+              onPointerDown={xulswordHandler}
             />
           </Vbox>
         </Hbox>
@@ -705,15 +701,6 @@ export default class Xulsword
       >
         {Build.isWebApp && (
           <>
-            <Hbox id="controlButtons">
-              {window.innerWidth > C.UI.WebApp.mobileW && chooserMenuButton}
-              <Button
-                id="showControls"
-                icon="cog"
-                onPointerDown={handler}
-                checked={showControls ?? false}
-              />
-            </Hbox>
             <Hbox id="controls" pack="start">
               <Vbox id="control-rows" align="start" flex="2">
                 <div
@@ -780,11 +767,13 @@ export default class Xulsword
             noteBoxHeight={noteBoxHeight}
             maximizeNoteBox={maximizeNoteBox}
             showChooser={showChooser}
+            showControls={Build.isWebApp ? showControls ?? false : undefined}
             ownWindow={false}
             atextRefs={this.atextRefs}
             eHandler={viewportParentHandler}
             bbDragEnd={bbDragEnd}
-            xulswordStateHandler={xulswordStateHandler}
+            xulswordHandler={Build.isWebApp ? xulswordHandler : undefined}
+            xulswordState={xulswordState}
           />
         </Hbox>
       </Vbox>

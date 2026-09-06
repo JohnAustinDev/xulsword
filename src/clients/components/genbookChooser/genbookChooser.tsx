@@ -45,7 +45,7 @@ export type GenbookChooserProps = {
     selection: AudioPlayerFileVK | AudioPlayerFileGB | null,
     e: React.SyntheticEvent,
   ) => void;
-  xulswordStateHandler: React.Component<any, XulswordState>['setState'];
+  xulswordState: React.Component<any, XulswordState>['setState'];
 } & XulProps;
 
 export type GenbookChooserState = RenderPromiseState & {
@@ -207,7 +207,7 @@ export default class GenbookChooser
       onNodeClick,
       needsTreeParent,
     } = this;
-    const { panels, keys, xulswordStateHandler } = props;
+    const { panels, keys, xulswordState: xulswordStateHandler } = props;
     const { expandedIDs } = state;
 
     const genbkPanels = chooserGenbks(panels);

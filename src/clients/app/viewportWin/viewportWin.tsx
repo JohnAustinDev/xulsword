@@ -100,7 +100,7 @@ export default class ViewportWin
 
     this.viewportParentHandler = viewportParentH.bind(this);
     this.bbDragEnd = bbDragEndH.bind(this);
-    this.xulswordStateHandler = this.xulswordStateHandler.bind(this);
+    this.xulswordState = this.xulswordState.bind(this);
     this.updateWindowTitle = this.updateWindowTitle.bind(this);
     this.persistState = this.persistState.bind(this);
 
@@ -208,7 +208,7 @@ export default class ViewportWin
     }
   }
 
-  xulswordStateHandler(
+  xulswordState(
     s: Parameters<React.Component<any, XulswordState>['setState']>[0],
   ) {
     const prevState = { ...this.state };
@@ -224,7 +224,7 @@ export default class ViewportWin
       viewportParentHandler,
       loadingRef,
       bbDragEnd,
-      xulswordStateHandler,
+      xulswordState,
     } = this;
     const {
       location,
@@ -284,7 +284,7 @@ export default class ViewportWin
             atextRefs={atextRefs}
             eHandler={viewportParentHandler}
             bbDragEnd={bbDragEnd}
-            xulswordStateHandler={xulswordStateHandler}
+            xulswordState={xulswordState}
           />
         </Hbox>
       </Vbox>

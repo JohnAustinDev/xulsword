@@ -44,6 +44,7 @@ type ViewportProps = ViewportPopupProps &
     keys: typeof S.prefs.xulsword.keys;
     focusPanel: number;
     showChooser: typeof S.prefs.xulsword.showChooser;
+    showControls?: typeof S.prefs.xulsword.showControls;
     tabs: typeof S.prefs.xulsword.tabs;
     panels: typeof S.prefs.xulsword.panels;
     ilModules: typeof S.prefs.xulsword.ilModules;
@@ -54,7 +55,8 @@ type ViewportProps = ViewportPopupProps &
 
     eHandler: (e: React.SyntheticEvent) => void;
     bbDragEnd: (e: PointerEvent, value: any) => void;
-    xulswordStateHandler: React.Component<any, XulswordState>['setState'];
+    xulswordHandler?: (e: React.SyntheticEvent | PointerEvent) => void;
+    xulswordState: React.Component<any, XulswordState>['setState'];
   };
 
 type ViewportState = PopupParentState &
@@ -194,10 +196,12 @@ export default class Viewport
       noteBoxHeight,
       maximizeNoteBox,
       showChooser,
+      showControls,
       ownWindow,
       eHandler,
       bbDragEnd,
-      xulswordStateHandler,
+      xulswordHandler,
+      xulswordState,
       atextRefs,
     } = props;
     const { reset, elemdata, gap, popupParent, popupReset } = state;
@@ -430,7 +434,7 @@ export default class Viewport
             ilModule={ilModules[i]}
             ilModuleOption={ilModuleOptions[i]}
             mtModule={mtModules[i]}
-            xulswordState={xulswordStateHandler}
+            xulswordState={xulswordState}
           />
         );
       }
@@ -463,11 +467,14 @@ export default class Viewport
             isPinned={isPinned[i]}
             noteBoxHeight={noteBoxHeight[i]}
             maximizeNoteBox={maximizeNoteBox[i]}
+            showChooser={Build.isWebApp ? showChooser : undefined}
+            showControls={showControls}
             ownWindow={ownWindow}
             onAudioClick={audioHandler}
             bbDragEnd={bbDragEnd}
             popupParentHandler={popupParentHandler}
-            xulswordState={xulswordStateHandler}
+            xulswordHandler={xulswordHandler}
+            xulswordState={xulswordState}
             onWheel={(e: SyntheticEvent) => {
               eHandler(e);
               this.popupParentHandler(e, panel);
@@ -521,7 +528,7 @@ export default class Viewport
             panels={panels}
             keys={keys}
             focusPanel={focusPanel}
-            xulswordStateHandler={xulswordStateHandler}
+            xulswordState={xulswordState}
             onAudioClick={audioHandler}
           />
         )}
