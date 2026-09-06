@@ -50,8 +50,8 @@ body {
   min-height: 600px;
 }
 
-/* don't show the pin for a single atext element, unless there is audio for the text. */
-.viewport:not(.has-audio) .textrow.single-atext .text-pin {
+/* don't show the pin for a single atext element */
+.viewport .textrow.single-atext .text-pin {
   display: none;
 }
 

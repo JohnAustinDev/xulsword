@@ -9,10 +9,10 @@
 .viewport .genbook-chooser {
   margin-top: 25px;
 }
-.viewport .chooser {
+.viewport .chooser:not(.hide) {
   padding-inline-end: 10px;
 }
-.viewport.chooser-hidden .chooser {
+.viewport.hide .chooser {
   display: none;
 }
 .viewport .tabrow {

@@ -75,7 +75,7 @@ class Chooser
 
   constructor(props: ChooserProps) {
     super(props);
-    const { selection, hideUnavailableBooks } = props;
+    const { selection } = props;
     let { bookGroups } = props;
     if (!bookGroups) bookGroups = ['ot', 'nt'];
     const Book = G.getBook(G.i18n.language);
