@@ -11,6 +11,7 @@ import {
   audioSelections,
   eventHandled,
   isBlockedEvent,
+  blockTouchEvents,
 } from '../../common.ts';
 import log from '../../log.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
@@ -36,8 +37,6 @@ export default function xulswordHandler(
   e: React.SyntheticEvent | PointerEvent,
 ) {
   if (isBlockedEvent(e)) return;
-  const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
-  const _ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
   const { state } = this;
   const { target, currentTarget } = e;
   const currentId =
@@ -197,6 +196,7 @@ export default function xulswordHandler(
             showChooser = !showChooser;
             return { showChooser };
           });
+          blockTouchEvents(C.UI.Events.touchButtons, e);
           break;
         }
         case 'showControls': {
@@ -205,6 +205,7 @@ export default function xulswordHandler(
             showControls = !showControls;
             return { showControls };
           });
+          blockTouchEvents(C.UI.Events.touchButtons, e);
           break;
         }
         case 'addcolumn': {

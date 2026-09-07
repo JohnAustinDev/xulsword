@@ -1,7 +1,7 @@
 import React from 'react';
 import C from '../../../constant.ts';
 import Icon from '../libxul/icon.tsx';
-import { audioSelections } from '../../common.ts';
+import { audioSelections, blockTouchEvents, eventHandled } from '../../common.ts';
 import { G, GI } from '../../G.ts';
 import Button from '../libxul/button.tsx';
 import './audioIcon.css';
@@ -62,8 +62,9 @@ export default function audioIcon(props: AudioIconProps): JSX.Element | null {
             disabled={!(!renderPromise.waiting() && selections.length)}
             icon="volume-up"
             onPointerDown={(e: React.SyntheticEvent) => {
-              e.stopPropagation();
+              eventHandled(e);
               audioHandler(selections[0]?.selection ?? null, e);
+              blockTouchEvents(C.UI.Events.touchButtons, e)
             }}
             title={GI.i18n.t('', renderPromise, 'audio.label')}
           />

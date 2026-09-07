@@ -3,6 +3,7 @@ import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { GI } from '../../G.ts';
 import {
+  blockTouchEvents,
   doBlockEvents,
   doUntilDone,
   eventHandled,
@@ -180,10 +181,7 @@ export default function handler(
       }
       // We've handled pointerover, so ignore followon events, until
       // the user points again another time.
-      if (pointerType !== 'mouse') {
-        doBlockEvents();
-        setTimeout(() => unBlockEvents(), C.UI.Chooser.bookgroupHoverDelay);
-      }
+      blockTouchEvents(C.UI.Chooser.bookgroupHoverDelay, pointerType);
       break;
     }
 

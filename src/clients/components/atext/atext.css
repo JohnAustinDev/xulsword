@@ -33,6 +33,10 @@ through. The popup is tinted in popup.css and the tab in tabs.css. */
   cursor: default;
 }
 
+.atext .hd {
+  height: 40px;
+  margin-bottom: 10px;
+}
 .atext .hd,
 .atext .ft {
   text-align: center;
@@ -235,7 +239,9 @@ lacking either keep the solid-block fallback above. */
 /* Header Links */
 .navlink {
   color: var(--color-primary);
-  margin: 2px 10px 10px 10px;
+}
+.ft .navlink {
+  margin: 10px;
 }
 .aboutlink {
   text-decoration: underline;
@@ -244,7 +250,7 @@ lacking either keep the solid-block fallback above. */
 .prevchaplink,
 .nextchaplink {
   cursor: pointer;
-  font-size: 24px;
+  font-size: 16px;
 }
 .atext.prev-disabled .prevchaplink,
 .atext.next-disabled .nextchaplink {
@@ -270,6 +276,10 @@ lacking either keep the solid-block fallback above. */
   font-size: 1.6rem;
   font-weight: bold;
   color: var(--font-heading-color);
+}
+.head-line-break + span:has( > h1),
+.head-line-break + .introtext + span:has( > h1) {
+  margin-top: 0;
 }
 @media (max-width: 767px) {
   .bibleBrowser .chaptitle {

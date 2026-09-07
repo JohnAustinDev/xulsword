@@ -739,11 +739,11 @@ class Atext
   ) {
     const appIsRTL = G.ProgramConfig?.direction === 'rtl';
     const prevArrow = appIsRTL
-      ? String.fromCharCode(8594)
-      : String.fromCharCode(8592);
+      ? String.fromCharCode(10095)
+      : String.fromCharCode(10094);
     const nextArrow = appIsRTL
-      ? String.fromCharCode(8592)
-      : String.fromCharCode(8594);
+      ? String.fromCharCode(10094)
+      : String.fromCharCode(10095);
     return (
       `
     <div class="navlink" dir="${appIsRTL ? 'rtl' : 'ltr'}">
@@ -916,7 +916,7 @@ class Atext
           )}
         </Hbox>
 
-        <Box className="hd" />
+        <Hbox align="center" className="hd" />
 
         <Vbox
           className="sb"

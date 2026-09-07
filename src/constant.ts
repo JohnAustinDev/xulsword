@@ -120,6 +120,7 @@ const C = {
     Events: {
       wheelBlockTime: 1000, // ms of dead-time after wheel-scroll
       popupBlockTime: 500, // ms events are blocked after popup close
+      touchButtons: 1000, // ms blocked after touch that causes animation
       maxBlockTime: 1000,
     },
     Popup: {

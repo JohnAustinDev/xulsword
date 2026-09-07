@@ -167,6 +167,11 @@ html:not(.is-vagrant) .popup-fail.reason {
   opacity: 0;
 }
 
+/* Since the VK select may be hidden, always show book name */
+.atext .chapbk {
+  display: block;
+}
+
 .cs-OSMHB {
   font-size: 20px;
 }

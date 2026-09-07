@@ -436,7 +436,8 @@ type ResizeObserverCtor = new (
 export function createResizeObserver(
   callback: ConstructorParameters<typeof ResizeObserver>[0],
 ): ResizeObserver {
-  if (typeof ResizeObserver !== 'undefined') return new ResizeObserver(callback);
+  if (typeof ResizeObserver !== 'undefined')
+    return new ResizeObserver(callback);
 
   let real: ResizeObserver | undefined;
   let pending: Element | undefined;
@@ -444,9 +445,9 @@ export function createResizeObserver(
     .then((mod) => {
       // The polyfill is a CommonJS module; its dynamic-import default
       // isn't typed as constructable, so go through unknown to build it.
-      const Polyfill = (
-        'default' in mod ? mod.default : mod
-      ) as unknown as ResizeObserverCtor;
+      const Polyfill = ('default' in mod
+        ? mod.default
+        : mod) as unknown as ResizeObserverCtor;
       real = new Polyfill(callback);
       if (pending) real.observe(pending);
     })
@@ -661,11 +662,51 @@ export function unBlockEvents() {
       .forEach((el) => ((el as HTMLDivElement).style.border = ''));
 }
 
+// Block handlers gated by isBlockedEvent() for a period of time. Typically
+// this is required by touch events, to ignore follow on events or spurious
+// touch events caused during UI animations, so eOrType may be provided to
+// NOT block if the event is from a mouse.
+export function blockTouchEvents(
+  millseconds: number,
+  eOrType?: React.SyntheticEvent | PointerEvent | PointerEvent['pointerType'],
+) {
+  let pointerType;
+  switch (typeof eOrType) {
+    case 'string': {
+      pointerType = eOrType;
+      break;
+    }
+    case 'undefined': {
+      pointerType = '';
+      break;
+    }
+    default: {
+      const nativeEvent =
+        'nativeEvent' in eOrType ? eOrType.nativeEvent : (eOrType as Event);
+      const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
+      ({ pointerType } = ep ?? {});
+    }
+  }
+
+  if (pointerType !== 'mouse') {
+    doBlockEvents();
+    setTimeout(() => unBlockEvents(), millseconds);
+  }
+}
+
+// Stop propagation of synthetic and native events, and record
+// PreviousPointerEvent.
 export function eventHandled(e: React.SyntheticEvent | Event) {
-  const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
-  const ep = nativeEvent instanceof PointerEvent ? nativeEvent : null;
-  if (ep) PreviousPointerEvent = ep;
+  e.preventDefault();
   e.stopPropagation();
+  if ('nativeEvent' in e) {
+    const { nativeEvent } = e;
+    nativeEvent.preventDefault();
+    nativeEvent.stopPropagation();
+    if (nativeEvent instanceof PointerEvent) {
+      PreviousPointerEvent = nativeEvent;
+    }
+  }
 }
 
 export function getLastPointerEvent() {
