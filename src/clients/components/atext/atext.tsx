@@ -661,7 +661,8 @@ class Atext
                 timing &&
                 module &&
                 audioModule &&
-                G.Tab[module].audioCodes.includes(audioModule)
+                (G.Tab[module].audioCodes.includes(audioModule) ||
+                  module === audioModule)
               )
                 addTimingSpans(sbe, timing);
             }

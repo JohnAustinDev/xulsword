@@ -38,10 +38,10 @@ use HTML::Entities qw(decode_entities);
 
 my $TimingDir = shift;
 my $AudioModuleDir = shift;
-my $ConfigArg = shift || '\separators &#x200B;';
+my $ConfigArg = shift || 'none'; # use \separators &#x200B; for UZV
 
 if (!defined($TimingDir) || !defined($AudioModuleDir) || !defined($ConfigArg) || !length($ConfigArg)) {
-  die "usage: $0 <timingSourceDir> <audioModuleDir> [<configString|\@configFile>|\\separators &#x200B;]\n";
+  die "usage: $0 <timingSourceDir> <audioModuleDir> [<configString|\@configFile>|none|\\separators &#x200B;]\n";
 }
 $TimingDir =~ s/\/+$//;
 $AudioModuleDir =~ s/\/+$//;
@@ -49,7 +49,7 @@ $AudioModuleDir =~ s/\/+$//;
 die "ERROR: Not a directory: $TimingDir\n" if !-d $TimingDir;
 die "ERROR: Not a directory: $AudioModuleDir\n" if !-d $AudioModuleDir;
 
-my $Config = &readConfig($ConfigArg);
+my $Config = $ConfigArg ne 'none' ? &readConfig($ConfigArg) : '';
 
 # Maps Paratext/USFM Bible book abbreviations to xulsword OSIS book
 # abbreviations (from src/constant.ts SupportedBooks). Extend this table if
@@ -88,7 +88,7 @@ foreach my $file (@timingFiles) {
   next if $file =~ /^\./;
   next if !-f "$TimingDir/$file";
 
-  if ($file !~ /^\d+[_-]([A-Za-z0-9]+)-(\d+)-timing\.txt$/i) {
+  if ($file !~ /(?:^|[_-])([A-Za-z0-9]+)-(\d+)-timing\.txt$/i) {
     print "WARNING: Skipping file with unrecognized name: $file\n";
     $skipped++;
     next;

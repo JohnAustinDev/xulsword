@@ -291,6 +291,7 @@ export function addTimingSpans(
 
     // Match segments within this zone block
     while (
+      level === 'phrase' &&
       segmentStart < flatText.length &&
       timingIndex < times.length &&
       zoneID === parseTimingID(times[timingIndex].id).zoneid
@@ -322,8 +323,7 @@ export function addTimingSpans(
       } else {
         // According to the timing file specification, an additional separator
         // may be suffixed to the initial verse id and it applies to all
-        // following phrases of the verse, as well as the initial phrase. Here,
-        // the suffix as allowed on any phrase, not just the first.
+        // phrases of the verse.
         times[timingIndex].additionalSeparators.split('').forEach((c) => {
           if (!zoneSeparators.includes(c)) zoneSeparators.push(c);
         });
@@ -589,6 +589,9 @@ export function parseTimingFile(timing: string): {
         .find((l) => l.startsWith('\\separators'))
         ?.replace(/^\\separators[ ]+(.*?)[ ]*$/, '$1') ?? '.?!:,',
   };
+  // If all timing id's are only verse numbers or verse ranges, then level must
+  // be 'verse'.
+  if (lines.every((l) => /\s+[-\d]+$/.test(l))) settings.level = 'verse';
   const { level } = settings;
 
   let lastZoneID = '';
@@ -621,7 +624,7 @@ export function parseTimingFile(timing: string): {
     let phrase = '';
     let word = '';
     let additionalSeparators = ''; // ids may include additional separators
-    if (parts.length === 2) {
+    if (level === 'phrase' && parts.length === 2) {
       // New verse timing file entries may not all have ids, meaning use an
       // incremented phrase number for previous verse (if any).
       lastPhrase = numberToPhrase(phraseToNumber(lastPhrase) + 1);
@@ -638,7 +641,7 @@ export function parseTimingFile(timing: string): {
         log.error(`Timing file unhandled line (parse): ${line}`);
       }
       lastZoneID = zoneid;
-      if (!phrase) phrase = 'a';
+      if (!phrase && level === 'phrase') phrase = 'a';
       lastPhrase = phrase;
 
       return {
