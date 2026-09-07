@@ -525,6 +525,8 @@ const C = {
     QUOTEEND: '"',
   },
 
+  DefaultAudioTimingSeparators: '.?!:;,',
+
   // Lists for each module type of LibSword features that should be always on.
   AlwaysOn: {
     'Biblical Texts': [],

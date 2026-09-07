@@ -1,5 +1,6 @@
 import { clone, ofClass } from '../common.ts';
 import S from '../defaultPrefs.ts';
+import C from '../constant.ts';
 import log from './log.ts';
 
 import type { AudioPlayerType } from '../type.ts';
@@ -578,16 +579,21 @@ export function parseTimingFile(timing: string): {
   // Split file into individual lines
   const lines = timing.trim().split(/\r?\n/);
 
+  // Only the LAST setting in the timing file is effective. This allows default
+  // config to be inserted at the top of each file, from HTTP header data.
   const settings = {
     level:
       (lines
+        .reverse()
         .find((l) => l.startsWith('\\level'))
         ?.replace(/^\\level\s+(\S+)\s*$/, '$1') as 'phrase' | 'verse') ??
       ('phrase' as const),
     separators:
       lines
+        .reverse()
         .find((l) => l.startsWith('\\separators'))
-        ?.replace(/^\\separators[ ]+(.*?)[ ]*$/, '$1') ?? '.?!:,',
+        ?.replace(/^\\separators[ ]+(.*?)[ ]*$/, '$1') ??
+      C.DefaultAudioTimingSeparators,
   };
   // If all timing id's are only verse numbers or verse ranges, then level must
   // be 'verse'.
@@ -693,8 +699,12 @@ export async function getTimingFile(url: string): Promise<string> {
       log.error(`Failed to get timing file: ${url}`);
     } else {
       const fileContent = await response.text();
+      const tcheader = response.headers.get('X-Timing-Config');
+      const timingConfig = tcheader ? decodeURIComponent(tcheader) : '';
       const tt = fileContent.trim();
-      return tt !== 'no-timing-file' ? tt : '';
+      return tt !== 'no-timing-file'
+        ? [timingConfig.trim(), tt].filter(Boolean).join('\n')
+        : '';
     }
   } catch (error) {
     log.error(`Error getting timing file: ${error}`);

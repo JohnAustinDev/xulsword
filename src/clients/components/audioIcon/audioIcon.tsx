@@ -1,7 +1,11 @@
 import React from 'react';
 import C from '../../../constant.ts';
 import Icon from '../libxul/icon.tsx';
-import { audioSelections, blockTouchEvents, eventHandled } from '../../common.ts';
+import {
+  audioSelections,
+  blockTouchEvents,
+  eventHandled,
+} from '../../common.ts';
 import { G, GI } from '../../G.ts';
 import Button from '../libxul/button.tsx';
 import './audioIcon.css';
@@ -53,18 +57,24 @@ export default function audioIcon(props: AudioIconProps): JSX.Element | null {
           },
       renderPromise,
     );
-    if (disableIfNoAudio || (!renderPromise.waiting() && selections.length)) {
+    if (
+      disableIfNoAudio ||
+      audio?.open ||
+      (!renderPromise.waiting() && selections.length)
+    ) {
       if (button) {
         return (
           <Button
             className="audio-icon"
             checked={audio?.open ?? true}
-            disabled={!(!renderPromise.waiting() && selections.length)}
+            disabled={
+              !audio?.open && !(!renderPromise.waiting() && selections.length)
+            }
             icon="volume-up"
             onPointerDown={(e: React.SyntheticEvent) => {
               eventHandled(e);
               audioHandler(selections[0]?.selection ?? null, e);
-              blockTouchEvents(C.UI.Events.touchButtons, e)
+              blockTouchEvents(C.UI.Events.touchButtons, e);
             }}
             title={GI.i18n.t('', renderPromise, 'audio.label')}
           />
