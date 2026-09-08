@@ -113,30 +113,24 @@ html[dir='rtl'] .atext .origselect {
 .atext.columns1 .sb {
   overflow: auto;
 }
+.textrow {
+  --reading-inset: 30px;
+}
 .atext:not(.columns1) .sb {
   overflow: hidden;
-  column-gap: 80px;
+  column-gap: calc(2.5*var(--reading-inset));
   column-rule: 4px solid var(--border-light);
   column-fill: auto;
 }
 @media (max-width: 767px) {
   .bibleBrowser .atext:not(.columns1) .sb {
-    column-gap: 14px;
     column-rule-width: 4px;
   }
   .bibleBrowser .atext:not(:last-child) {
     margin-inline-end: 5px;
   }
-  .bibleBrowser .atext .sb {
-    padding: 0 15px;
-  }
   .bibleBrowser .versePerLineButton {
     display: none;
-  }
-}
-@media (max-width: 350px) {
-  .bibleBrowser .atext .sb {
-    padding: 0 5px;
   }
 }
 .atext .sbcontrols {
@@ -265,10 +259,12 @@ lacking either keep the solid-block fallback above. */
 }
 
 /* Bible & Commentary chapter/page header */
+.vs + .chapterhead {
+  margin-top: 1em;
+}
 .chapterhead {
   display: inline-block;
   width: 100%;
-  padding-top: 26px;
   margin-bottom: 1em;
 }
 .chaptitle {
@@ -277,23 +273,9 @@ lacking either keep the solid-block fallback above. */
   font-weight: bold;
   color: var(--font-heading-color);
 }
-.head-line-break + span:has( > h1),
-.head-line-break + .introtext + span:has( > h1) {
+.head-line-break + span:has(> h1),
+.head-line-break + .introtext + span:has(> h1) {
   margin-top: 0;
-}
-@media (max-width: 767px) {
-  .bibleBrowser .chaptitle {
-    font-size: 1.3rem;
-  }
-}
-@media (max-width: 300px) {
-  .bibleBrowser .chaptitle {
-    font-size: 1rem;
-  }
-  .bibleBrowser .introlink,
-  .bibleBrowser .navlink {
-    font-size: 0.8rem;
-  }
 }
 .sb[dir='rtl'] .chaptitle {
   float: right;
@@ -606,4 +588,108 @@ html[dir='rtl'] .fncol3 {
 }
 .sb td .head2 {
   font-size: 1rem !important;
+}
+
+/* WEB-APP LONG-FORM READING SCALE
+The Bible Browser text is set on a New York Times style reading scale instead
+of the compact interface scale. Only html.bibleBrowser gets these rules, so the
+Electron app is unaffected.
+
+Nothing here is an absolute size. .textrow carries the userFontBase class,
+whose px font-size style.ts writes from the global.fontSize pref (nominally
+C.UI.Atext.fontSize = 14px, stepped by C.UI.Atext.fontSizeOptionDelta). The
+scale factors below are multiplied against that inherited size with
+calc(1em * factor), and line heights are unitless, so the entire scale
+follows the user's font-size choice. The px values quoted in the comments are
+what the nominal 14px base produces.
+
+Headings live inside .sb and so are already inset by --reading-inset; the
+left/right heading padding the design calls for (24px on tablet, 16px on
+phone) is that column inset itself, which is why no heading adds its own. */
+.bibleBrowser .textrow {
+  --reading-inset: 30px;
+  --reading-scale: 1.286; /* 18px */
+  --reading-line-height: 1.65; /* ~30px */
+  --heading-scale: 2; /* 36px, relative to the 18px reading size */
+  --heading-line-height: 1.08;
+  --chaptitle-scale: 1.4; /* 25px */
+  /* Reading measure, in em of the reading size, so it tracks the pref too. */
+  --reading-measure: 38em; /* 38em is 684px, ~625px of text inside the insets */
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .bibleBrowser .textrow {
+    --reading-inset: 24px;
+    --heading-scale: 1.889; /* 34px */
+    --heading-line-height: 1.1;
+  }
+}
+@media (max-width: 767px) {
+  .bibleBrowser .textrow {
+    --reading-inset: 16px;
+    --reading-scale: 1.214; /* 17px */
+    --reading-line-height: 1.55; /* ~26px */
+    --heading-scale: 1.647; /* 28px */
+    --heading-line-height: 1.15;
+    --chaptitle-scale: 1.2; /* 20px */
+  }
+  .bibleBrowser .textarea.multi-panel .textrow {
+    --reading-scale: 1.1;
+  }
+}
+/* Very narrow screens keep the minimal inset they have always had. */
+@media (max-width: 350px) {
+  .bibleBrowser .textrow {
+    --reading-inset: 5px;
+  }
+}
+
+.bibleBrowser .atext .sb {
+  padding-inline: var(--reading-inset);
+  font-size: calc(1em * var(--reading-scale));
+  line-height: var(--reading-line-height);
+}
+.bibleBrowser .atext .sb .head1,
+.bibleBrowser .atext .sb .head2,
+.bibleBrowser .atext .sb .head3,
+.bibleBrowser .atext .sb .head4 {
+  line-height: var(--heading-line-height);
+  text-align: center;
+  text-wrap: balance;
+}
+.bibleBrowser .atext .sb .head1 {
+  font-size: calc(1em * var(--heading-scale));
+}
+/* Subordinate headings step down from the reading size rather than from
+head1, so they stay above body text at every breakpoint. */
+.bibleBrowser .atext .sb .head2 {
+  font-size: 1.45em;
+}
+.bibleBrowser .atext .sb .head3 {
+  font-size: 1.2em;
+}
+.bibleBrowser .atext .sb .head4 {
+  font-size: 1.05em;
+}
+/* The running chapter header. em rather than the rem it uses in the app, so
+it scales with userFontBase along with everything else here. */
+.bibleBrowser .atext .sb .chaptitle {
+  font-size: calc(1em * var(--chaptitle-scale));
+}
+
+/* Cap the measure on wide viewports the way a long-form article does, and
+center what is left. .sb is the scroll container and LibSword output has no
+wrapper of its own, so the cap goes on .sb itself. */
+@media (min-width: 1024px) {
+  .bibleBrowser .atext .sb {
+    margin-inline: auto;
+  }
+  .bibleBrowser .single-panel .atext .sb {
+    max-width: var(--reading-measure);
+  }
+  .bibleBrowser .atext.columns2 .sb {
+    max-width: calc(2 * var(--reading-measure));
+  }
+  .bibleBrowser .atext.columns3 .sb {
+    max-width: calc(3 * var(--reading-measure));
+  }
 }

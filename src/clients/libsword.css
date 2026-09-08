@@ -223,7 +223,7 @@ span.sense-level-2 {
     margin-top: 2em;
     margin-bottom: 1em;
   }
-  .head1 {
+  span > .head1 {
     margin-top: 0;
     margin-bottom: 0;
   }
@@ -554,9 +554,6 @@ span.foreign {
 .gfn {
   cursor: pointer;
 }
-.gfn {
-  font-size: 0.85em;
-}
 .cr:after,
 .fn:after,
 .un:after,
@@ -564,6 +561,8 @@ span.foreign {
   vertical-align: super;
   font-family: 'arial' !important;
   line-height: 100% !important;
+  /* font-size of note symbols in headings should not change */ 
+  font-size: 18px !important;
 }
 .cr:after {
   content: '† ';
@@ -571,7 +570,7 @@ span.foreign {
 }
 .x-parallel-passage:after {
   content: '\2022 ';
-  font-size: x-large;
+  font-size: 22px !important;
   color: var(--color-primary);
 }
 .x-style1:after {
@@ -581,7 +580,7 @@ span.foreign {
 }
 .fn:after {
   content: '* ';
-  font-size: large;
+  font-size: 20px !important;
   vertical-align: top;
   color: var(--color-primary);
 }

@@ -59,6 +59,7 @@ body {
 .controls-animation {
   height: auto;
   overflow: hidden;
+  padding: 0 10px;
   transition: height 0.3s ease-out, opacity 0.3s ease-out;
   opacity: 1;
 }
@@ -76,7 +77,6 @@ body.controls-visible {
   margin-bottom: 10px;
 }
 #control-rows {
-  padding: 0 10px;
   flex-basis: 0;
   max-width: 350px;
   flex-wrap: wrap;
@@ -209,16 +209,8 @@ html:not(.is-vagrant) .popup-fail.reason {
     left: 0px;
     right: unset;
   }
-  .chapterhead {
-    padding: 0 10px;
-  }
   .dictkey {
     margin-bottom: 0.5em;
-  }
-  .cr:after,
-  .fn:after,
-  .un:after {
-    font-size: larger;
   }
 }
 

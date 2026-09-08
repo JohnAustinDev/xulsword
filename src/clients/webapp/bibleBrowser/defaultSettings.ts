@@ -83,10 +83,6 @@ export function setDefaultBibleBrowserPrefs(
     xulsword.showChooser = window.innerWidth > C.UI.WebApp.mobileW;
   }
 
-  if (global.fontSize === -1) {
-    global.fontSize = window.innerWidth > C.UI.WebApp.mobileW ? 2 : 4;
-  }
-
   if ('setComplexValue' in prefs) {
     prefs.setComplexValue('global', global);
     prefs.setComplexValue('xulsword', xulsword);
@@ -148,7 +144,7 @@ const defaultSettings: AllComponentsData = {
           },
           global: {
             locale: 'en',
-            fontSize: -1, // leave -1 to set at runtime
+            fontSize: 2, // 2 is nominal; web-app CSS controls font-size
           },
         },
       },

@@ -183,6 +183,24 @@ html[dir='rtl'] .resultBox #displayModule {
 .resultBox .slist {
   margin: 2px;
 }
+.resultBox .slist div:empty:not(.npopup div),
+.resultBox .slist div.image-viewport:not(.npopup div)  {
+  display: none;
+}
+.resultBox .slist *:not(.npopup *) {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  text-indent: 0;
+}
+/* undo this libsword.css rule for CB drop-caps */
+.resultBox .slist .x-p-first:first-letter,
+.resultBox .slist .x-p-first .line:first-child:first-letter,
+.resultBox .slist .x-p-first .item:first-child:first-letter {
+  font-size: unset;
+  float: unset;
+  margin-right: unset;
+}
 .resultBox .slist > a {
   color: var(--color-primary);
   font-size: inherit;
@@ -190,13 +208,7 @@ html[dir='rtl'] .resultBox #displayModule {
   text-decoration: underline;
   cursor: pointer;
 }
-.resultBox .slist .p-milestone {
-  display: none;
-}
-.resultBox .slist span > div {
-  display: inline-block;
-}
-.resultBox .slist > span:first-of-type {
+.search .resultBox .slist > a + span {
   padding-left: 4px;
   padding-right: 4px;
 }
