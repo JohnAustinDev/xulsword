@@ -73,6 +73,8 @@ class Chooser
 
   loadingRef: React.RefObject<HTMLDivElement>;
 
+  listRef: React.RefObject<HTMLDivElement>;
+
   constructor(props: ChooserProps) {
     super(props);
     const { selection } = props;
@@ -116,22 +118,27 @@ class Chooser
     this.handler = handlerH.bind(this);
 
     this.loadingRef = React.createRef();
+    this.listRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
   componentDidMount() {
-    const { props, rowHeight, renderPromise, centerBook } = this;
+    const { props, rowHeight, listRef, renderPromise, centerBook } = this;
     const { selection } = props;
 
-    const bookList = document.querySelector('.book-list');
-    if (!rowHeight && bookList) {
-      const smallbox = bookList.getBoundingClientRect();
-      this.listAreaHeight = smallbox.bottom - smallbox.top;
-      const bookItemList = bookList.querySelector('.bookgrouplist:not(.sizer)');
-      if (bookItemList) {
-        const bigbox = bookItemList.getBoundingClientRect();
-        const bbh = bigbox.bottom - bigbox.top;
-        const bookElem = bookItemList.querySelectorAll(`.bookgroupitem`);
+    if (listRef.current) {
+      const listAreaBox = listRef.current.getBoundingClientRect();
+      this.listAreaHeight = listAreaBox.bottom - listAreaBox.top;
+    }
+
+    if (!rowHeight && listRef.current) {
+      const bookGroupList = listRef.current.querySelector(
+        '.bookgrouplist:not(.sizer)',
+      );
+      if (bookGroupList) {
+        const bookGroupListBox = bookGroupList.getBoundingClientRect();
+        const bbh = bookGroupListBox.bottom - bookGroupListBox.top;
+        const bookElem = bookGroupList.querySelectorAll(`.bookgroupitem`);
         if (bookElem.length > 1) {
           const ith = bbh / bookElem.length;
           if (ith && !this.rowHeight) this.rowHeight = ith;
@@ -139,7 +146,7 @@ class Chooser
       }
     }
 
-    if (selection) centerBook(selection);
+    if (selection) setTimeout(() => centerBook(selection), 1000);
 
     renderPromise.dispatch();
   }
@@ -150,7 +157,11 @@ class Chooser
   }
 
   componentDidUpdate() {
-    const { renderPromise } = this;
+    const { listRef, renderPromise } = this;
+    if (listRef.current) {
+      const listAreaBox = listRef.current.getBoundingClientRect();
+      this.listAreaHeight = listAreaBox.bottom - listAreaBox.top;
+    }
     renderPromise.dispatch();
   }
 
@@ -244,6 +255,7 @@ class Chooser
       longestBook,
       renderPromise,
       loadingRef,
+      listRef,
     } = this;
     const {
       availableBooks,
@@ -311,7 +323,7 @@ class Chooser
             })}
           </Vbox>
 
-          <Vbox className="book-list" onWheel={handler}>
+          <Vbox domref={listRef} className="book-list" onWheel={handler}>
             {
               // This 'sizer' BookGroupList has one row and is only needed to set
               // chooser width according to the longest book name of all bookGroups.

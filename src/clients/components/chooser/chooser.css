@@ -126,7 +126,7 @@ html[dir='rtl'] .bookgrouplist {
   vertical-align: middle;
   font-size: inherit;
   white-space: nowrap;
-  margin: 2px 2px 0 2px;
+  margin: 3px 3px 0 3px;
   padding-top: 2px;
   padding-bottom: 2px;
   padding-inline-start: 10px;
@@ -222,6 +222,9 @@ html[dir='rtl'] .bookgroupitem:not(.disabled):hover .charrow {
 html[dir='rtl'] .chaptermenu {
   left: auto;
   right: 100%;
+}
+.bookgroupitem.selected .chaptermenu {
+  color: initial;
 }
 .bookgroupitem:not(.disabled):not(.hidden):hover .chaptermenu {
   visibility: visible;
