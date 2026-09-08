@@ -610,7 +610,7 @@ phone) is that column inset itself, which is why no heading adds its own. */
   --reading-inset: 30px;
   --reading-scale: 1.286; /* 18px */
   --reading-line-height: 1.65; /* ~30px */
-  --heading-scale: 2; /* 36px, relative to the 18px reading size */
+  --heading-scale: 1.7; /* 31px, relative to the 18px reading size */
   --heading-line-height: 1.08;
   --chaptitle-scale: 1.4; /* 25px */
   /* Reading measure, in em of the reading size, so it tracks the pref too. */
@@ -619,7 +619,7 @@ phone) is that column inset itself, which is why no heading adds its own. */
 @media (min-width: 768px) and (max-width: 1023px) {
   .bibleBrowser .textrow {
     --reading-inset: 24px;
-    --heading-scale: 1.889; /* 34px */
+    --heading-scale: 1.6; /* 29px */
     --heading-line-height: 1.1;
   }
 }
@@ -628,7 +628,7 @@ phone) is that column inset itself, which is why no heading adds its own. */
     --reading-inset: 16px;
     --reading-scale: 1.214; /* 17px */
     --reading-line-height: 1.55; /* ~26px */
-    --heading-scale: 1.647; /* 28px */
+    --heading-scale: 1.5; /* 25px */
     --heading-line-height: 1.15;
     --chaptitle-scale: 1.2; /* 20px */
   }
