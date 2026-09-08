@@ -67,7 +67,9 @@ class Chooser
 
   listAreaHeight: number;
 
-  handler: (e: React.SyntheticEvent) => void;
+  handler: (e: React.SyntheticEvent | WheelEvent) => void;
+
+  wheelListener: (e: WheelEvent) => void;
 
   renderPromise: RenderPromise;
 
@@ -117,14 +119,37 @@ class Chooser
 
     this.handler = handlerH.bind(this);
 
+    this.wheelListener = (e: WheelEvent) => {
+      const { current } = this.loadingRef;
+      if (current && e.target instanceof Node && current.contains(e.target))
+        this.handler(e);
+    };
+
     this.loadingRef = React.createRef();
     this.listRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
   componentDidMount() {
-    const { props, rowHeight, listRef, renderPromise, centerBook } = this;
+    const {
+      props,
+      rowHeight,
+      wheelListener,
+      listRef,
+      renderPromise,
+      centerBook,
+    } = this;
     const { selection } = props;
+
+    // Capture every wheel event over the chooser. The listener is on the
+    // document, in the capture phase, because otherwise the web-app stops
+    // wheel propagation at the React root. It is also non-passive, so
+    // eventHandled()'s preventDefault() can stop the wheel from scrolling
+    // the web-app iframe's parent body.
+    document.addEventListener('wheel', wheelListener, {
+      capture: true,
+      passive: false,
+    });
 
     if (listRef.current) {
       const listAreaBox = listRef.current.getBoundingClientRect();
@@ -152,6 +177,8 @@ class Chooser
   }
 
   componentWillUnmount() {
+    const { wheelListener } = this;
+    document.removeEventListener('wheel', wheelListener, { capture: true });
     clearPending(this, ['bookgroupTO', 'headingmenuTO']);
     clearPending(this, 'slideInterval', true);
   }
@@ -186,6 +213,8 @@ class Chooser
     this.slideInterval = undefined;
   }
 
+  // Returns false if the slider is already at the bottom end, and so
+  // cannot slide any further.
   slideUp(rows = 1) {
     const { state, rowHeight, listAreaHeight, stopSliding } = this;
     const { bookGroup, slideIndex } = state;
@@ -195,36 +224,42 @@ class Chooser
 
     if (slideIndex[bookGroup] >= maxScrollIndex) {
       stopSliding();
-      return;
+      return false;
     }
 
-    if (rowHeight) {
-      this.setState((prevState) => {
-        let next = prevState.slideIndex[bookGroup] + rows;
-        if (next > maxScrollIndex) next = maxScrollIndex;
-        prevState.slideIndex[bookGroup] = next;
-        return prevState;
-      });
-    }
+    if (!rowHeight) return false;
+
+    this.setState((prevState) => {
+      let next = prevState.slideIndex[bookGroup] + rows;
+      if (next > maxScrollIndex) next = maxScrollIndex;
+      prevState.slideIndex[bookGroup] = next;
+      return prevState;
+    });
+
+    return true;
   }
 
+  // Returns false if the slider is already at the top end, and so
+  // cannot slide any further.
   slideDown(rows = 1) {
     const { state, rowHeight, stopSliding } = this;
     const { bookGroup, slideIndex } = state;
 
-    if (slideIndex[bookGroup] === 0) {
+    if (slideIndex[bookGroup] <= 0) {
       stopSliding();
-      return;
+      return false;
     }
 
-    if (rowHeight) {
-      this.setState((prevState) => {
-        let next = prevState.slideIndex[bookGroup] - rows;
-        if (next < 0) next = 0;
-        prevState.slideIndex[bookGroup] = next;
-        return prevState;
-      });
-    }
+    if (!rowHeight) return false;
+
+    this.setState((prevState) => {
+      let next = prevState.slideIndex[bookGroup] - rows;
+      if (next < 0) next = 0;
+      prevState.slideIndex[bookGroup] = next;
+      return prevState;
+    });
+
+    return true;
   }
 
   centerBook(book: OSISBookType) {
@@ -323,7 +358,7 @@ class Chooser
             })}
           </Vbox>
 
-          <Vbox domref={listRef} className="book-list" onWheel={handler}>
+          <Vbox domref={listRef} className="book-list">
             {
               // This 'sizer' BookGroupList has one row and is only needed to set
               // chooser width according to the longest book name of all bookGroups.

@@ -18,7 +18,7 @@ import type Chooser from './chooser.tsx';
 
 export default function handler(
   this: Chooser,
-  e: React.SyntheticEvent | PointerEvent,
+  e: React.SyntheticEvent | PointerEvent | WheelEvent,
 ): void {
   if (isBlockedEvent(e)) return;
   const nativeEvent = 'nativeEvent' in e ? e.nativeEvent : (e as Event);
@@ -201,11 +201,25 @@ export default function handler(
     }
 
     case 'wheel': {
-      const ew = e as React.WheelEvent;
-      const { rowHeight } = this;
-      const wheelD = Math.round(ew.deltaY / rowHeight);
-      if (ew.deltaY < 0) this.slideDown(-1 * wheelD);
-      else if (ew.deltaY > 0) this.slideUp(wheelD);
+      const ew = nativeEvent as WheelEvent;
+      const { rowHeight, listAreaHeight } = this;
+      if (!rowHeight) return;
+      // Slide by a distance proportional to the wheel distance. The delta may
+      // be reported in pixels, lines or pages, so normalize it to pixels first.
+      let px = ew.deltaY;
+      if (ew.deltaMode === WheelEvent.DOM_DELTA_LINE) px *= rowHeight;
+      else if (ew.deltaMode === WheelEvent.DOM_DELTA_PAGE) px *= listAreaHeight;
+      // Rows may be fractional, which keeps small (trackpad) deltas from
+      // rounding away to no movement at all.
+      const rows = px / (2 * rowHeight);
+      // A wheel event takes over from any hover-initiated sliding.
+      this.stopSliding();
+      let slid = false;
+      if (rows < 0) slid = this.slideDown(-1 * rows);
+      else if (rows > 0) slid = this.slideUp(rows);
+      // When the slider is already at the end it is moving toward, return
+      // without handling the event.
+      if (!slid) return;
       break;
     }
 

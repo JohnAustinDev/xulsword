@@ -479,13 +479,16 @@ export default class Viewport
               eHandler(e);
               this.popupParentHandler(e, panel);
             }}
-            onPointerLeave={(e: SyntheticEvent) => {
-              this.popupParentHandler(e, panel);
-            }}
             onPointerEnter={(e: SyntheticEvent) => {
               this.popupParentHandler(e, panel);
             }}
+            onPointerDown={(e: SyntheticEvent) => {
+              this.popupParentHandler(e, panel);
+            }}
             onPointerMove={(e: SyntheticEvent) => {
+              this.popupParentHandler(e, panel);
+            }}
+            onPointerLeave={(e: SyntheticEvent) => {
               this.popupParentHandler(e, panel);
             }}
             ref={atextRefs[i]}

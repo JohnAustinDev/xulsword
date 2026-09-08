@@ -257,6 +257,12 @@ lacking either keep the solid-block fallback above. */
 .nextchaplink {
   margin-inline-start: 10px;
 }
+.ft .prevchaplink {
+  margin-inline-end: 20px;
+}
+.ft .nextchaplink {
+  margin-inline-start: 20px;
+}
 
 /* Bible & Commentary chapter/page header */
 .vs + .chapterhead {

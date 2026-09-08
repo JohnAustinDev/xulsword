@@ -132,13 +132,14 @@ export default function AudioPlayer(
             src={src}
             ref={audioDOM}
           />
-          <Button
-            className="tracking"
-            checked={trackingIsOn}
-            disabled={!audio.file?.timing}
-            icon="highlight"
-            onPointerDown={() => xulswordState(toggleTrackingState())}
-          />
+          {audio.file?.timing && (
+            <Button
+              className="tracking"
+              checked={trackingIsOn}
+              icon="highlight"
+              onPointerDown={() => xulswordState(toggleTrackingState())}
+            />
+          )}
         </Hbox>
       )}
     </div>

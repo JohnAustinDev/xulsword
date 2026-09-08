@@ -757,7 +757,6 @@ export async function lexicon(
         'sr',
         'dt',
         'dtl',
-        'aboutlink',
         'introlink',
         'searchterm',
       ],

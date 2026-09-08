@@ -145,7 +145,6 @@ export function popupParentHandler(
         case 'sr':
         case 'dt':
         case 'dtl':
-        case 'aboutlink':
         case 'introlink':
           openPopup = true;
           break;
@@ -178,6 +177,26 @@ export function popupParentHandler(
           )(e as any);
       }
       break;
+    }
+
+    case 'pointerdown': {
+      const oc = ofClass(['aboutlink'], e.target);
+      if (oc) {
+        const { type } = oc;
+        const element = oc.element as HTMLElement | undefined;
+        if (element) {
+          const data = findElementData(element);
+          updateDataAttribute(element, data);
+          this.setState({
+            elemdata: [data],
+            gap: C.UI.Popup.openGap,
+            popupParent: element,
+          });
+          break;
+        }
+      }
+      // Allow the other handlers to handle pointerdowns
+      return;
     }
 
     case 'pointermove': {

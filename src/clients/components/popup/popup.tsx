@@ -230,7 +230,6 @@ class Popup
                 'sr',
                 'dt',
                 'dtl',
-                'aboutlink',
                 'introlink',
               ],
               handler,

@@ -102,6 +102,7 @@ body.controls-visible {
 .player-animation {
   height: auto;
   overflow: hidden;
+  padding: 0 10px;
   transition: height 0.3s ease-out, opacity 0.3s ease-out;
   opacity: 1;
 }

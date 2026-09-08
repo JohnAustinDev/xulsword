@@ -344,7 +344,6 @@ export default class Search
           'sr',
           'dt',
           'dtl',
-          'aboutlink',
           'introlink',
           'searchterm',
         ],

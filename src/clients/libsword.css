@@ -218,13 +218,18 @@ span.sense-level-2 {
 }
 /* Allow margins to collapse around head1. */
 @supports selector(:has(a)) {
-  span:has( > .head1) {
+  span:has( > .head1:first-child) {
     display: block;
     margin-top: 2em;
+  }
+  span:has( > .head1:last-child) {
+    display: block;
     margin-bottom: 1em;
   }
-  span > .head1 {
+  span > .head1:first-child {
     margin-top: 0;
+  }
+  span > .head1:last-child {
     margin-bottom: 0;
   }
 }
@@ -561,20 +566,10 @@ span.foreign {
   vertical-align: super;
   font-family: 'arial' !important;
   line-height: 100% !important;
-  /* font-size of note symbols in headings should not change */ 
+  /* font-size of note symbols in headings should not change */
   font-size: 18px !important;
 }
 .cr:after {
-  content: '† ';
-  color: var(--color-primary);
-}
-.x-parallel-passage:after {
-  content: '\2022 ';
-  font-size: 22px !important;
-  color: var(--color-primary);
-}
-.x-style1:after {
-  /* used anywhere?? */
   content: '† ';
   color: var(--color-primary);
 }
@@ -586,6 +581,26 @@ span.foreign {
 }
 .un:after {
   content: '‡ ';
+  color: var(--color-primary);
+}
+.gfn {
+  color: var(--color-primary);
+  font-size: smaller !important;
+}
+.gfn:before {
+  content: '[';
+}
+.gfn:after {
+  content: '] ';
+}
+.x-parallel-passage:after {
+  content: '\2022 ';
+  font-size: 22px !important;
+  color: var(--color-primary);
+}
+.x-style1:after {
+  /* used anywhere?? */
+  content: '† ';
   color: var(--color-primary);
 }
 .no-symbol .un:after {
@@ -613,15 +628,6 @@ span.foreign {
 .sn {
   text-decoration: underline;
   cursor: pointer;
-}
-.gfn {
-  color: var(--color-primary);
-}
-.gfn:before {
-  content: '[';
-}
-.gfn:after {
-  content: '] ';
 }
 
 /* Rules for special reference modules */
