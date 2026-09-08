@@ -236,7 +236,6 @@ html[dir='rtl'] .chaptermenu {
   font-size: inherit;
   text-align: center;
   background-color: var(--bg-interface-light);
-  color: var(--color-primary);
   border: 1px outset var(--bg-interface-light);
   padding: 2px;
 }
@@ -266,7 +265,6 @@ html[dir='rtl'] .chaptermenu {
   padding-top: 10px;
   padding-bottom: 10px;
   background-color: var(--bg-interface-light);
-  color: var(--color-primary);
   border: 1px outset var(--border-dark);
   box-shadow: var(--shadow);
   border-radius: 6px;
@@ -276,7 +274,7 @@ html[dir='rtl'] .chaptermenu {
   visibility: visible;
 }
 .chaptermenu .heading-link {
-  color: var(--color-primary);
+  color: unset;
 }
 .chaptermenu .heading-link:hover {
   text-decoration: underline;
