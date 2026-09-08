@@ -22,5 +22,4 @@ html[dir='rtl'] .menupopup {
 .menupopup:not(:hover) > .selected,
 .menupopup > *:hover {
   background-color: var(--bg-interface-selection);
-  color: var(--bg-bp6-light);
 }

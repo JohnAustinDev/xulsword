@@ -32,8 +32,8 @@
   position: relative;
   flex-basis: 0;
   overflow: hidden;
-  background-color: var(--bg-interface-light);
-  border: 1px outset rgb(200, 200, 200);
+  background-color: var(--bg-interface-dark);
+  border: 1px outset var(--border-light);
   font-size: inherit;
   text-align: center;
   margin: 1px 2px;
@@ -106,10 +106,10 @@ html[dir='rtl'] .chooser .book-list {
 /* BookGroupList Component */
 .bookgrouplist {
   width: 100%;
-  background-color: var(--bg-text-light);
-  border: 1px outset var(--border-dark);
+  background-color: var(--bg-interface-dark);
+  border: 1px outset var(--border-light);
   padding: 1px 0px 1px 0px;
-  border-inline-start: 1px solid var(--border-dark);
+  border-inline-start: 1px solid var(--border-light);
   border-top-right-radius: 8px;
   border-bottom-right-radius: 8px;
 }
@@ -163,7 +163,6 @@ html[dir='rtl'] .bookgrouplist {
 }
 .bookgroupitem:not(.selected):not(.disabled):hover {
   background-color: var(--bg-interface-selection);
-  color: var(--bg-bp6-light);
 }
 .bookgroupitem.disabled {
   background-color: var(--bg-disabled);
@@ -184,8 +183,11 @@ html[dir='rtl'] .bookgrouplist {
   top: 2px;
   margin-inline-end: 2px;
   background: url(../../images/arrow.png);
-  width: 15px;
+  width: 18px;
   height: 12px;
+}
+.bookgroupitem.disabled .charrow {
+  display: none;
 }
 .bookgroupitem .hasAudo {
   margin-inline-end: 2px;
@@ -240,7 +242,6 @@ html[dir='rtl'] .chaptermenu {
 }
 .chaptermenu .chaptermenucell:hover {
   background-color: var(--bg-interface-selection);
-  color: var(--bg-bp6-light);
 }
 .chaptermenu .chaptermenucell.hasAudio:after {
   margin-inline-start: 2px;

@@ -574,7 +574,6 @@ html[dir='rtl'] .fncol3 {
 }
 .dictselectkey {
   background-color: var(--bg-interface-selection);
-  color: var(--bg-bp6-light);
 }
 .dict-description {
   font-weight: bold;

@@ -7,7 +7,7 @@
   --bg-interface-dark: hsl(0 0% 92% / 1);
   --bg-interface-light: #f5f5f5;
   --bg-bp6-light: #f6f7f9; /* mimic BluePrintJS button background color */
-  --bg-interface-selection: #1e90ff;
+  --bg-interface-selection: #e5ded9;
   --bg-disabled: rgb(211, 216, 222);
   --bg-text-light: #ffffff;
   --bg-text-dark: #f2ede9; /*hsl(from var(--bg-text-light) h calc(s - 75) calc(l + 5));*/

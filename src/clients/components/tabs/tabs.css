@@ -90,7 +90,6 @@ html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
   border-bottom: none;
 }
 a.anchorbutton .tab:hover {
-  color: var(--bg-bp6-light);
   background-color: var(--bg-interface-selection);
 }
 .tabs .mto-tab {

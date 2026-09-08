@@ -66,6 +66,9 @@ body {
   height: 0;
   opacity: 0;
 }
+.controls-animation:has(.menupopup) {
+  overflow: visible;
+}
 body.controls-visible {
   animation: hold-body-overflow 0.4s;
 }
