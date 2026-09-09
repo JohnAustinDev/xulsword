@@ -1,3 +1,52 @@
+/* WEB-APP LONG-FORM READING SCALE
+The Bible Browser text is set on a New York Times style reading scale instead
+of the compact interface scale. Only html.bibleBrowser gets these rules, so the
+Electron app is unaffected.
+
+Nothing here is an absolute size. .textrow carries the userFontBase class,
+whose px font-size style.ts writes from the global.fontSize pref (nominally
+C.UI.Atext.fontSize = 14px, stepped by C.UI.Atext.fontSizeOptionDelta). The
+scale factors below are multiplied against that inherited size with
+calc(1em * factor), and line heights are unitless, so the entire scale
+follows the user's font-size choice. The px values quoted in the comments are
+what the nominal 14px base produces.
+
+Headings live inside .sb and so are already inset by --reading-inset; the
+left/right heading padding the design calls for (24px on tablet, 16px on
+phone) is that column inset itself, which is why no heading adds its own. */
+:root {
+  --reading-inset: 30px;
+  --reading-scale: 1.286; /* 18px */
+  --reading-line-height: 1.65; /* ~30px */
+  --heading-scale: 1.7; /* 31px, relative to the 18px reading size */
+  --heading-line-height: 1.08;
+  --chaptitle-scale: 1.4; /* 25px */
+  --popup-scale: 1.1;
+  /* Reading measure, in em of the reading size, so it tracks the pref too. */
+  --reading-measure: 38em; /* 38em is 684px, ~625px of text inside the insets */
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --reading-inset: 24px;
+    --heading-scale: 1.6; /* 29px */
+    --heading-line-height: 1.1;
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    --reading-inset: 16px;
+    /* --reading-scale: 1.214;*/ /* 17px */
+    --reading-line-height: 1.55; /* ~26px */
+    --heading-scale: 1.5; /* 25px */
+    --heading-line-height: 1.15;
+    --chaptitle-scale: 1.2; /* 20px */
+  }
+  .bibleBrowser .textarea.multi-panel .textrow {
+    --reading-inset: 5px;
+    --reading-scale: 1.1;
+  }
+}
+
 :root {
   --input-height: 32px;
 }

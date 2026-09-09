@@ -140,7 +140,7 @@ html[dir='rtl'] .resultBox #displayModule {
 .resultBox > div:first-child {
   padding-inline-start: calc(5em + 5px);
 }
-.resultBox .spacer {
+.resultBox .spacer:not(.npopup .spacer) {
   height: 0;
   border-bottom: 1px solid var(--border-dark);
   margin: 0 10px 10px 10px;

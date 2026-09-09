@@ -50,6 +50,7 @@ html:not(.popupWin) .npopupTX {
 .popup-text {
   width: 100%;
   clear: both;
+  font-size: calc(1em * var(--popup-scale));
 }
 
 /* WINDOWED POPUP STYLES */
