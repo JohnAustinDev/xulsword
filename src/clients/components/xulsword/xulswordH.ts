@@ -416,7 +416,7 @@ export default function xulswordHandler(
 
     case 'ended': {
       const { audio } = state;
-      const { open, file, defaults } = clone(audio);
+      const { file, defaults } = clone(audio);
       doUntilDone((rp) => {
         if (rp && file) {
           const { swordModule } = file;
@@ -465,12 +465,11 @@ export default function xulswordHandler(
                 sels.sort((a) =>
                   a.conf.module === defaults[swordModule] ? -1 : 0,
                 );
-              void playAudio({
-                open,
+              void playAudio(
                 // null closes the player
-                file: sels[0]?.selection ?? null,
+                sels[0]?.selection ?? null,
                 defaults,
-              });
+              );
             }
           }
         }

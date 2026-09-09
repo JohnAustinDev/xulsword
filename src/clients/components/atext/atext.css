@@ -632,20 +632,15 @@ phone) is that column inset itself, which is why no heading adds its own. */
 @media (max-width: 767px) {
   .bibleBrowser .textrow {
     --reading-inset: 16px;
-    --reading-scale: 1.214; /* 17px */
+    /* --reading-scale: 1.214;*/ /* 17px */
     --reading-line-height: 1.55; /* ~26px */
     --heading-scale: 1.5; /* 25px */
     --heading-line-height: 1.15;
     --chaptitle-scale: 1.2; /* 20px */
   }
   .bibleBrowser .textarea.multi-panel .textrow {
-    --reading-scale: 1.1;
-  }
-}
-/* Very narrow screens keep the minimal inset they have always had. */
-@media (max-width: 350px) {
-  .bibleBrowser .textrow {
     --reading-inset: 5px;
+    --reading-scale: 1.1;
   }
 }
 

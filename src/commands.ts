@@ -209,17 +209,17 @@ export function setXulswordPanels(
   return result;
 }
 
-export async function playAudio(audio: AudioPlayerType) {
-  let xulsword: Partial<typeof S.prefs.xulsword> | undefined;
-  const { file: selection, defaults } = audio;
-  if (selection) {
+export async function playAudio(
+  file: AudioPlayerType['file'],
+  defaults?: AudioPlayerType['defaults'],
+) {
+  const audio: Partial<typeof S.prefs.xulsword.audio> = {};
+  if (file) {
     if (
-      'book' in selection &&
-      Object.values(C.SupportedBooks).some((bg: any) =>
-        bg.includes(selection.book),
-      )
+      'book' in file &&
+      Object.values(C.SupportedBooks).some((bg: any) => bg.includes(file.book))
     ) {
-      const { book, chapter, swordModule } = selection;
+      const { book, chapter, swordModule } = file;
       if (book && typeof chapter !== 'undefined') {
         await goToLocationVK({
           book,
@@ -228,8 +228,8 @@ export async function playAudio(audio: AudioPlayerType) {
           v11n: (swordModule && G().Tab[swordModule].v11n) || null,
         });
       }
-    } else if ('key' in selection) {
-      const { key, swordModule } = selection;
+    } else if ('key' in file) {
+      const { key, swordModule } = file;
       if (key && swordModule) {
         await goToLocationGB({
           otherMod: swordModule,
@@ -237,22 +237,29 @@ export async function playAudio(audio: AudioPlayerType) {
         });
       }
     }
-    xulsword = {
-      audio: {
-        open: true,
-        file: selection,
-        defaults,
-      },
-    };
+    audio.open = true;
+    audio.file = file;
+    if (defaults) audio.defaults = defaults;
   } else {
-    xulsword = {
-      audio: { open: false, file: null, defaults },
-      selection: null,
-    };
+    audio.open = false;
+    audio.file = null;
+    if (defaults) audio.defaults = defaults;
+    G().Prefs.setComplexValue('xulsword.selection', null);
+    // When selection is unset, atext panels may re-render, so any multi-
+    // column Bible panels that have been paged will REQUIRE verseAt top
+    // to keep current page. verseAt top works fine for single culumns too.
+    (G().Prefs as GAddWindowId['Prefs']).mergeValue(
+      'xulsword',
+      { selection: null, scroll: { verseAt: 'top' } },
+      'prefs',
+      undefined,
+      false,
+      -2,
+    );
   }
   (G().Prefs as GAddWindowId['Prefs']).mergeValue(
-    'xulsword',
-    xulsword,
+    'xulsword.audio',
+    audio,
     'prefs',
     undefined,
     false,

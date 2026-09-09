@@ -153,7 +153,6 @@ export default class Viewport
     e: React.SyntheticEvent,
   ) {
     const { audio } = this.props;
-    const { open, defaults } = audio;
     const atextClick = !!ofClass(['textarea'], e.target)?.element;
     let file: AudioPlayerFileVK | AudioPlayerFileGB | null | undefined;
     if (selection && (!atextClick || !audio.open)) file = selection;
@@ -163,7 +162,7 @@ export default class Viewport
       // because at that time all available audio file options are again
       // collected and a single option will be selected according to current
       // defaults.
-      void playAudio({ open, file, defaults });
+      void playAudio(file);
     }
   }
 
