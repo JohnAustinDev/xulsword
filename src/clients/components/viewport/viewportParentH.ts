@@ -605,7 +605,9 @@ export default function handler(
           return;
         }
       }
-      break;
+
+      // Allow the other handlers to handle pointerdown
+      return;
     }
 
     case 'pointerenter': {

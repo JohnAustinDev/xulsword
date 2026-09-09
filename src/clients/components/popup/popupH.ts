@@ -353,7 +353,9 @@ export default function handler(
         });
         if (e.cancelable) e.preventDefault();
       }
-      break;
+
+      // Allow the other handlers to handle pointerdown
+      return;
     }
 
     case 'pointermove': {

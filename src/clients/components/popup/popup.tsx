@@ -274,9 +274,10 @@ class Popup
     if (!module && !feature) return null;
     return (
       <select
+        id={`select-${module || feature}`}
         key={mods
-          .concat([selected || '', module || '', feature || ''])
-          .join('.')}
+      .concat([selected || '', module || '', feature || ''])
+      .join('.')}
         className="popup-mod-select"
         value={selected || undefined}
         data-module={module}

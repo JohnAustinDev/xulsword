@@ -208,7 +208,9 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
             log.warn(`Unhandled atextHandler click event '${targ.type}'`);
           return;
       }
-      break;
+
+      // Allow the other handlers to handle pointerdown
+      return;
     }
 
     case 'dblclick': {
@@ -356,13 +358,13 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           aTextWheelScroll(ew, atext, this);
         }
       }
-      // Return rather than call eventHandled, for other wheel handlers.
+      // Allow the other handlers to handle wheel
       return;
     }
 
     // This handler is only intended for web-app user scrolling of atext, NOT
-    // programmatic scrolling of any kind. Also it should never effect the 
-    // atext element which the user scrolled, only the others. Note: scroll 
+    // programmatic scrolling of any kind. Also it should never effect the
+    // atext element which the user scrolled, only the others. Note: scroll
     // events don't bubble!
     case 'scroll': {
       const { userScrolled, scriptScrolled } = window.WebAppTextScroll;

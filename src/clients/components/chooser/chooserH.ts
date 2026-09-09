@@ -4,7 +4,6 @@ import C from '../../../constant.ts';
 import { GI } from '../../G.ts';
 import {
   blockTouchEvents,
-  doBlockEvents,
   doUntilDone,
   eventHandled,
   isBlockedEvent,

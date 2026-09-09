@@ -195,7 +195,7 @@ export function popupParentHandler(
           break;
         }
       }
-      // Allow the other handlers to handle pointerdowns
+      // Allow the other handlers to handle pointerdown
       return;
     }
 
@@ -469,8 +469,10 @@ export function popupHandler(
       break;
     }
 
-    // Close the popup when the mouse leaves it.
+    // Close popup when the mouse leaves it.
     case 'pointerleave': {
+      // Uncomment to keep popup open when debugging it.
+      // return;
       const { popupRef } = this;
       const { popupParent, popupHold } = this.state;
       const parent = popupParent || document.getElementById('root');

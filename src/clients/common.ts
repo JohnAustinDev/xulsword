@@ -701,6 +701,7 @@ export function eventHandled(e: React.SyntheticEvent | Event) {
   e.stopPropagation();
   if ('nativeEvent' in e) {
     const { nativeEvent } = e;
+    // log.verbose(`Handled native ${nativeEvent.type} event.`);
     nativeEvent.preventDefault();
     nativeEvent.stopPropagation();
     if (nativeEvent instanceof PointerEvent) {
