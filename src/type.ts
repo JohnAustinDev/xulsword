@@ -87,8 +87,6 @@ declare global {
     isClient: boolean;
     isServer: boolean;
   };
-
-  var WebAppSkipModules: string;
 }
 
 export type QuerablePromise<T> = Promise<T> & {
@@ -393,6 +391,7 @@ export type TabType = {
   v11n: V11nType | '';
   label: string;
   labelClass: string;
+  noTab: boolean;
 };
 
 export type ModTypes =

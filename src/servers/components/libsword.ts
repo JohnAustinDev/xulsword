@@ -1068,6 +1068,29 @@ export function moduleUnsupported(
   return reasons;
 }
 
+const readUserRepoModuleList = (filename: string) => {
+  const file = Dirs.xsModsUser.append(filename);
+  const content = (file.exists() && file.readFile()) || '';
+  if (content && content.match(/^[A-Za-z0-9_]+(,\s*[A-Za-z0-9_]+)*\s*$/)) {
+    return content.trim().split(/,\s*/);
+  }
+  return [];
+};
+
+// Read special module lists:
+// nowebapp    - Some modules may be made unavailable to the web app. These are
+//               listed in xsModsUser/nowebapp.
+// nowebapptab - Some modules may be made available to the web app, but NOT
+//               listed in a tab (ie. very large dictionary modules). These
+//               are listed in xsModsUser/nowebapptab.
+export function getModuleList(listName: 'nowebapp' | 'nowebapptab'): string[] {
+  const ckey = `getModuleList.${listName}`;
+  if (!Cache.has(ckey)) {
+    Cache.write(Build.isWebApp ? readUserRepoModuleList(listName) : [], ckey);
+  }
+  return Cache.read(ckey);
+}
+
 export type LibSwordType = Omit<
   typeof LibSword,
   | 'initialized'

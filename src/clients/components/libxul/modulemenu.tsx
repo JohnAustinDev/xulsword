@@ -23,6 +23,7 @@ type ModuleMenuProps = {
   sortByLabel?: boolean; // sort options alphabetically by label
   disabled?: boolean;
   allowNotInstalled?: boolean;
+  allowNoTabs?: boolean;
   modules?: string[]; // show only these modules or all if []
   types?: ModTypes[]; // show only these types or all if []
   onChange: (e: any) => void | Promise<void>;
@@ -35,6 +36,7 @@ export default function ModuleMenu({
   sortByLabel = true,
   disabled = false,
   allowNotInstalled = false,
+  allowNoTabs = false,
   modules = [],
   types = [],
   ...props
@@ -50,6 +52,7 @@ export default function ModuleMenu({
   } else {
     mtabs = [...G.Tabs];
   }
+  if (!allowNoTabs) mtabs = mtabs.filter((t) => !t.noTab);
 
   const labels: Record<string, string> = {};
   mtabs.forEach((t) => {

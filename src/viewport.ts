@@ -338,12 +338,14 @@ export function getTabChange<T extends TabChangeState>(
   // state of the clicked menuitem's tab, and not each tab's previous state.
   let doWhat2 = doWhat;
   if (doWhat === 'toggle' && panelIndex === -1) {
-    const [m] = whichTabs;
+    const [t] = whichTabs;
     const dwh =
-      m !== null &&
-      tabs.every((t: any) => t === undefined || t?.includes(m.module));
+      t !== null &&
+      tabs.every((tt: any) => tt === undefined || tt?.includes(t.module));
     doWhat2 = dwh ? 'hide' : 'show';
   }
+
+  // Generate a new set of tabs for each open panel.
   panelIndexes.forEach((pi: number) => {
     const bank = tabs[pi] === undefined ? [] : tabs[pi];
     if (bank) {
@@ -364,7 +366,10 @@ export function getTabChange<T extends TabChangeState>(
         }
       });
       sortTabsByLocale(newtabs);
-      tabs[pi] = newtabs.map((t) => t.module);
+
+      tabs[pi] = newtabs
+        .filter((t) => !t.noTab)
+        .map((t) => t.module);
     }
   });
 

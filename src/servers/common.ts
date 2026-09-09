@@ -22,7 +22,7 @@ import Subscription from '../subscription.ts';
 import Dirs from './components/dirs.ts';
 import DiskCache from './components/diskcache.ts';
 import Data from './components/data.ts';
-import LibSword, { moduleUnsupported } from './components/libsword.ts';
+import LibSword, { getModuleList, moduleUnsupported } from './components/libsword.ts';
 import LocalFile from './components/localFile.ts';
 import getFontFamily from './fontfamily.ts';
 import { allBkChsInV11n } from './allBkChsInV11n.ts';
@@ -325,15 +325,15 @@ export function getTabs(): TabType[] {
     const tabs: TabType[] = [];
     const modlist: any = LibSword.getModuleList();
     if (modlist === C.NOMODULES) return [];
-    const skip0 = Build.isWebApp && global.WebAppSkipModules;
-    const skips = skip0 && typeof skip0 == 'string' ? skip0.split(/,\s*/) : [];
+    const noModules = getModuleList('nowebapp');
+    const noTabs = getModuleList('nowebapptab');
     modlist.split('<nx>').forEach((mstring: string) => {
       const [module, mt] = mstring.split(';');
       const type = mt as ModTypes;
       if (
         module &&
         moduleUnsupported(module).length === 0 &&
-        !skips.includes(module)
+        !noModules.includes(module)
       ) {
         let label = LibSword.getModuleInformation(module, 'TabLabel');
         if (label === C.NOTFOUND)
@@ -386,6 +386,7 @@ export function getTabs(): TabType[] {
           )
             ? 'rtl'
             : 'ltr',
+          noTab: noTabs.includes(module),
         };
 
         tabs.push(tab);
@@ -1103,84 +1104,91 @@ export function getLanguageName(code: string): { en: string; local: string } {
 export function getAllDictionaryKeyList(module: string): string[] {
   const pkey = 'keylist';
   if (!DiskCache.has(pkey, module)) {
-    let list = LibSword.getAllDictionaryKeys(module);
-    list.pop();
-    // KeySort entry enables localized list sorting by character collation.
-    // Square brackets are used to separate any arbitrary JDK 1.4 case
-    // sensitive regular expressions which are to be treated as single
-    // characters during the sort comparison. Also, a single set of curly
-    // brackets can be used around a regular expression which matches any
-    // characters/patterns that need to be ignored during the sort comparison.
-    // IMPORTANT: Any square or curly bracket within regular expressions must
-    // have had an additional backslash added before it.
-    const sort0 = LibSword.getModuleInformation(module, 'KeySort');
-    if (sort0 !== C.NOTFOUND) {
-      const sort = `-${sort0}0123456789`;
-      const getignRE = /(?<!\\)\{(.*?)(?<!\\)\}/; // captures the ignore regex
-      const getsrtRE = /^\[(.*?)(?<!\\)\]/; // captures sorting regexes
-      const getescRE = /\\(?=[{}[\]])/g; // matches the KeySort escapes
-      const ignoreREs: RegExp[] = [/\s/];
-      const ignREm = sort.match(getignRE);
-      if (ignREm) ignoreREs.push(new RegExp(ignREm[1].replace(getescRE, '')));
-      let sort2 = sort.replace(getignRE, '');
-      let sortREs: Array<[number, number, RegExp]> = [];
-      for (let i = 0; sort2.length; i += 1) {
-        let re = sort2.substring(0, 1);
-        let rlen = 1;
-        const mt = sort2.match(getsrtRE);
-        if (mt) {
-          [, re] = mt;
-          rlen = re.length + 2;
+    let list: string[] = [];
+    // The web-app does not allow listing all keys of dictionary modules
+    // which are not permitted for display in a tab (they may be too long
+    // for clients to deal with).
+    const noTabs = getModuleList('nowebapptab');
+    if (!noTabs.includes(module)) {
+      list = LibSword.getAllDictionaryKeys(module);
+      list.pop();
+      // KeySort entry enables localized list sorting by character collation.
+      // Square brackets are used to separate any arbitrary JDK 1.4 case
+      // sensitive regular expressions which are to be treated as single
+      // characters during the sort comparison. Also, a single set of curly
+      // brackets can be used around a regular expression which matches any
+      // characters/patterns that need to be ignored during the sort comparison.
+      // IMPORTANT: Any square or curly bracket within regular expressions must
+      // have had an additional backslash added before it.
+      const sort0 = LibSword.getModuleInformation(module, 'KeySort');
+      if (sort0 !== C.NOTFOUND) {
+        const sort = `-${sort0}0123456789`;
+        const getignRE = /(?<!\\)\{(.*?)(?<!\\)\}/; // captures the ignore regex
+        const getsrtRE = /^\[(.*?)(?<!\\)\]/; // captures sorting regexes
+        const getescRE = /\\(?=[{}[\]])/g; // matches the KeySort escapes
+        const ignoreREs: RegExp[] = [/\s/];
+        const ignREm = sort.match(getignRE);
+        if (ignREm) ignoreREs.push(new RegExp(ignREm[1].replace(getescRE, '')));
+        let sort2 = sort.replace(getignRE, '');
+        let sortREs: Array<[number, number, RegExp]> = [];
+        for (let i = 0; sort2.length; i += 1) {
+          let re = sort2.substring(0, 1);
+          let rlen = 1;
+          const mt = sort2.match(getsrtRE);
+          if (mt) {
+            [, re] = mt;
+            rlen = re.length + 2;
+          }
+          sortREs.push([i, re.length, new RegExp(`^(${re})`)]);
+          sort2 = sort2.substring(rlen);
         }
-        sortREs.push([i, re.length, new RegExp(`^(${re})`)]);
-        sort2 = sort2.substring(rlen);
-      }
-      sortREs = sortREs.sort((a, b) => {
-        const [, alen] = a;
-        const [, blen] = b;
-        if (alen > blen) return -1;
-        if (alen < blen) return 1;
-        return 0;
-      });
-      list = list.sort((aa, bb) => {
-        let a = aa;
-        let b = bb;
-        ignoreREs.forEach((re) => {
-          a = aa.replace(re, '');
-          b = bb.replace(re, '');
+        sortREs = sortREs.sort((a, b) => {
+          const [, alen] = a;
+          const [, blen] = b;
+          if (alen > blen) return -1;
+          if (alen < blen) return 1;
+          return 0;
         });
-        for (; a.length && b.length; ) {
-          let x;
-          let am;
-          let bm;
-          for (x = 0; x < sortREs.length; x += 1) {
-            const [, , re] = sortREs[x];
-            if (am === undefined && re.test(a)) am = sortREs[x];
-            if (bm === undefined && re.test(b)) bm = sortREs[x];
+        list = list.sort((aa, bb) => {
+          let a = aa;
+          let b = bb;
+          ignoreREs.forEach((re) => {
+            a = aa.replace(re, '');
+            b = bb.replace(re, '');
+          });
+          for (; a.length && b.length; ) {
+            let x;
+            let am;
+            let bm;
+            for (x = 0; x < sortREs.length; x += 1) {
+              const [, , re] = sortREs[x];
+              if (am === undefined && re.test(a)) am = sortREs[x];
+              if (bm === undefined && re.test(b)) bm = sortREs[x];
+            }
+            if (am !== undefined && bm !== undefined) {
+              const [ia, , rea] = am;
+              const [ib, , reb] = bm;
+              if (ia < ib) return -1;
+              if (ia > ib) return 1;
+              a = a.replace(rea, '');
+              b = b.replace(reb, '');
+            } else if (am !== undefined && bm === undefined) {
+              return -1;
+            } else if (am === undefined && bm !== undefined) {
+              return 1;
+            }
+            const ax = a.charCodeAt(0);
+            const bx = b.charCodeAt(0);
+            if (ax < bx) return -1;
+            if (ax > bx) return 1;
+            a = a.substring(1);
+            b = b.substring(1);
           }
-          if (am !== undefined && bm !== undefined) {
-            const [ia, , rea] = am;
-            const [ib, , reb] = bm;
-            if (ia < ib) return -1;
-            if (ia > ib) return 1;
-            a = a.replace(rea, '');
-            b = b.replace(reb, '');
-          } else if (am !== undefined && bm === undefined) {
-            return -1;
-          } else if (am === undefined && bm !== undefined) {
-            return 1;
-          }
-          const ax = a.charCodeAt(0);
-          const bx = b.charCodeAt(0);
-          if (ax < bx) return -1;
-          if (ax > bx) return 1;
-          a = a.substring(1);
-          b = b.substring(1);
-        }
-        if (a.length && !b.length) return -1;
-        if (!a.length && b.length) return 1;
-        return 0;
-      });
+          if (a.length && !b.length) return -1;
+          if (!a.length && b.length) return 1;
+          return 0;
+        });
+      }
     }
     DiskCache.write(pkey, list, module);
   }

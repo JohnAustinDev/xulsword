@@ -940,9 +940,11 @@ export function validateViewportModulePrefs(
   });
 
   const { tabs: tbs } = state;
-  tbs.forEach((p, i) => {
-    if (p) {
-      tbs[i] = p.filter((m) => G().Tabs.find((t) => t.module === m));
+  tbs.forEach((tb, i) => {
+    if (tb) {
+      tbs[i] = tb.filter((m) =>
+        G().Tabs.find((t) => t.module === m && !t.noTab),
+      );
     }
   });
 }

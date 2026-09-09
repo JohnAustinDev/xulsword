@@ -34,10 +34,6 @@ import type { GCallType, ServerWait } from '../../type.ts';
 
 Dirs.init();
 
-const isInvalidWebAppDataLogged = (data: unknown, depth = 0) => {
-  return isInvalidWebAppData(data, depth, log);
-};
-
 const logfile = Dirs.LogDir.append(`xulsword.log`);
 log.transports.console.level = C.LogLevel;
 log.transports.file.level = C.LogLevel;
@@ -73,27 +69,18 @@ i18nInit('en').catch((er) => {
   log.error(`Server i18nInit('en') error: ${er}`);
 });
 
-// Some modules in the xsModsUser or xsModsCommon repositories may be
-// made unavailable to the web app.
-const readWebAppSkipModules = () => {
-  const nowebapp = Dirs.xsModsUser.append('nowebapp');
-  const skipModules = (nowebapp.exists() && nowebapp.readFile()) || '';
-  return (
-    (skipModules.match(/^[A-Za-z0-9_]+(,\s*[A-Za-z0-9_]+)*\s*$/) &&
-      skipModules) ||
-    ''
-  );
-};
-global.WebAppSkipModules = readWebAppSkipModules();
 Subscription.subscribe.resetMain(() => {
-  global.WebAppSkipModules = readWebAppSkipModules();
   LibSword.quit();
   Cache.clear();
   LibSword.init();
 });
+
 // This server never calls DiskCache.writeAllStores(). This causes DiskCache
 // to operate no differently than regular cache (if cleared by resetMain()).
 Subscription.subscribe.resetMain(() => DiskCache.delete());
+
+// Check periodically for a reset file in xsModsUser that, if found, causes
+// this server to reset after the file is removed.
 setInterval(() => {
   const reset = Dirs.xsModsUser.append('reset');
   if (reset.exists()) {
@@ -105,8 +92,7 @@ setInterval(() => {
   }
 }, 5000);
 
-// Create the HTTP server, or both the HTTPS and HTTP3 servers (for web-
-// transport connections)
+// Create the HTTP(S) server
 const sslkey = process.env.SERVER_KEY_PEM;
 const sslcrt = process.env.SERVER_CRT_PEM;
 let server;
@@ -121,7 +107,7 @@ if (sslkey && sslcrt) {
   // would require difficult configuration with compilation from source. Even
   // then it would perform WITHOUT the few web-transport benefits, since
   // socket.io WILL NOT utilize them (concurrent threads, non-blocking etc.).
-  log.info(`Initialized SSL server.`);
+  log.info(`Initialized HTTPS server.`);
 } else {
   server = http.createServer();
   log.info(`Initialized HTTP server (insecure).`);
@@ -159,6 +145,10 @@ io.engine.use(
 
 const rateLimiter = new RateLimiterMemory(C.Server.ipLimit);
 toobusy.maxLag(C.Server.tooBusyMaxLag);
+
+const isInvalidWebAppDataLogged = (data: unknown, depth = 0) => {
+  return isInvalidWebAppData(data, depth, log);
+};
 
 io.on('connection', (socket) => {
   // Check Node.JS RAM usage and clear LibSword cache as needed.
