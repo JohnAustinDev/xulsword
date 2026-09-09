@@ -16,6 +16,7 @@ import {
 import RenderPromise from '../../renderPromise.ts';
 import { topHandle, htmlAttribs } from '../libxul/xul.tsx';
 import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
+import Spacer from '../libxul/spacer.tsx';
 import Button from '../libxul/button.tsx';
 import { getRefBible } from '../atext/zversekey.ts';
 import popupH, { getPopupHTML } from './popupH.ts';
@@ -381,7 +382,7 @@ class Popup
                 icon="drag-handle-horizontal"
               />
             )}
-            <Box flex="1" />
+            <Spacer flex="1" />
             {bibleMod &&
               (type === 'cr' || type === 'sr') &&
               this.selector(allBibleModules, bibleMod, bibleMod)}
