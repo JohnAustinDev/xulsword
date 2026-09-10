@@ -34,7 +34,7 @@ phone) is that column inset itself, which is why no heading adds its own. */
 }
 @media (max-width: 767px) {
   :root {
-    --reading-inset: 16px;
+    --reading-inset: 10px;
     /* --reading-scale: 1.214;*/ /* 17px */
     --reading-line-height: 1.55; /* ~26px */
     --heading-scale: 1.5; /* 25px */

@@ -113,9 +113,6 @@ html[dir='rtl'] .atext .origselect {
 .atext.columns1 .sb {
   overflow: auto;
 }
-.textrow {
-  --reading-inset: 30px;
-}
 .atext:not(.columns1) .sb {
   overflow: hidden;
   column-gap: calc(2.5*var(--reading-inset));
