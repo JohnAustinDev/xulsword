@@ -83,22 +83,22 @@ socket.on('connect', () => {
     }
 
     // DETERMINATION OF INITIAL BIBLE BROWSER STATE:
-    // Initial xulsword state is set by xulsword's getStatePref()
-    // system. So initial user prefs must be saved before renderToRoot() is
-    // run. The writeSettingsToPrefsStores() function does this by combining
-    // xulsword default prefs, user prefs for the storage ID, and server
-    // settings. These are combined in the order specified by the ID as
-    // follows:
+    // Initial xulsword state is set by xulsword's getStatePref() system.
+    // Initial user prefs must be saved before renderToRoot() is run. The
+    // writeSettingsToPrefsStores() function does this by combining xulsword
+    // default prefs, user prefs for the storage ID, and server settings. These
+    // are combined in the order specified by the ID as follows:
     //
     //  storage ID
-    //   none        -User prefs are not persistent between page reloads, so
+    //   none        -User prefs are NOT PERSISTENT between page reloads, so
     //                xulsword default prefs and data settings alone will
     //                determine the initial state.
     //   <ID>        -Same as 'before:<ID>'
     //   before:<ID> -Order is xulsword default prefs, followed by user prefs
     //                for this storage ID (if they exist) then server
     //                settings. Therefore server settings will override user
-    //                prefs when determining the initial state.
+    //                prefs when determining the initial state. But see
+    //                EXCEPTIONS below.
     //   after:<ID>  -Order is xulsword default prefs, followed by server
     //                settings, then user prefs for this storage ID (if they
     //                exist). Therefore once a user pref has been set (upon
@@ -113,20 +113,38 @@ socket.on('connect', () => {
       storageId = storageId.substring(applyUserPrefs.length + 1);
       if (applyUserPrefs === 'none') storageId = 'none';
     }
+    let preExistingPrefs = false;
     if (storageId !== 'none') {
       Prefs.setStorageId(storageId);
-      if (!Prefs.storeExists('prefs', storageId)) applyUserPrefs = 'before';
+      if (!Prefs.storeExists('prefs', storageId)) {
+        applyUserPrefs = 'before';
+      } else preExistingPrefs = true;
     }
     // EXCEPTIONS to storage ID rules:
-    // These user prefs cannot be changed by the user (ie. there is no UI to
-    // do so) but they will nevertheless take on default values upon first
-    // use, so server settings must always override them regardless of
-    // storage ID specifying 'after'. This insures unchangeable xulsword
-    // default prefs will not permanently override these server settings.
     if (applyUserPrefs === 'after') {
+      // These user prefs cannot be changed by the user. Perhaps there is no UI
+      // to do so. But they will nevertheless take on default values upon first
+      // load. Server settings should always override them to insure a xulsword
+      // default value will not permanently override both the user and server
+      // settings.
       Prefs.setComplexValue('xulsword.place', settings.prefs.xulsword.place);
       Prefs.setCharPref('global.locale', settings.prefs.global.locale);
       Prefs.setIntPref('global.fontSize', settings.prefs.global.fontSize);
+    } else if (preExistingPrefs && applyUserPrefs === 'before') {
+      // The server should never be able to change the user's choice for these
+      // prefs. They can only be changed by the server if prefs for the
+      // storageId were not pre-existing.
+      if (settings.prefs.xulsword.audio) {
+        try {
+          const tracking = Prefs.getBoolPref(
+            'xulsword.audio.tracking',
+            'prefs',
+          );
+          settings.prefs.xulsword.audio.tracking = tracking;
+        } catch (er) {
+          log.error(er);
+        }
+      }
     }
     writeSettingsToPrefsStores(settings, applyUserPrefs);
 

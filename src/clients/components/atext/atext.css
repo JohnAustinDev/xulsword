@@ -600,6 +600,9 @@ html[dir='rtl'] .fncol3 {
   font-size: calc(1em * var(--reading-scale));
   line-height: var(--reading-line-height);
 }
+.bibleBrowser .atext .nb {
+  font-size: calc(1em * var(--popup-scale));
+}
 .bibleBrowser .atext .sb .head1,
 .bibleBrowser .atext .sb .head2,
 .bibleBrowser .atext .sb .head3,
