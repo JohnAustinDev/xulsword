@@ -71,7 +71,7 @@ multi-column LTR general books
   background: url(../../images/pushpin0.png);
   z-index: 5;
 }
-html[dir='rtl'] .atext .text-pin {
+#root[dir='rtl'] .atext .text-pin {
   transform: none;
   float: right;
   left: auto;
@@ -91,7 +91,7 @@ html[dir='rtl'] .atext .text-pin {
 .atext .towindow {
   z-index: 5;
 }
-html[dir='rtl'] .atext .towindow {
+#root[dir='rtl'] .atext .towindow {
   float: right;
 }
 
@@ -99,7 +99,7 @@ html[dir='rtl'] .atext .towindow {
   margin: 5px;
 }
 
-html[dir='rtl'] .atext .origselect {
+#root[dir='rtl'] .atext .origselect {
   right: unset;
   left: 12px;
 }
@@ -115,18 +115,18 @@ html[dir='rtl'] .atext .origselect {
 }
 .atext:not(.columns1) .sb {
   overflow: hidden;
-  column-gap: calc(2.5*var(--reading-inset));
+  column-gap: calc(2.5 * var(--reading-inset));
   column-rule: 4px solid var(--border-light);
   column-fill: auto;
 }
 @media (max-width: 767px) {
-  .bibleBrowser .atext:not(.columns1) .sb {
+  #root.bibleBrowser .atext:not(.columns1) .sb {
     column-rule-width: 4px;
   }
-  .bibleBrowser .atext:not(:last-child) {
+  #root.bibleBrowser .atext:not(:last-child) {
     margin-inline-end: 5px;
   }
-  .bibleBrowser .versePerLineButton {
+  #root.bibleBrowser .versePerLineButton {
     display: none;
   }
 }
@@ -137,7 +137,7 @@ html[dir='rtl'] .atext .origselect {
   right: auto;
   padding-inline-start: 12px;
 }
-html[dir='rtl'] .sbcontrols {
+#root[dir='rtl'] .sbcontrols {
   left: auto;
   right: 0px;
 }
@@ -171,7 +171,7 @@ html[dir='rtl'] .sbcontrols {
   top: 0px;
   right: 5px;
 }
-html[dir='rtl'] .notebox-maximizer {
+#root[dir='rtl'] .notebox-maximizer {
   right: auto;
   left: 42px;
 }
@@ -441,7 +441,7 @@ lacking either keep the solid-block fallback above. */
 .cropened .fncol3 {
   visibility: visible;
 }
-html[dir='rtl'] .fncol3 {
+#root[dir='rtl'] .fncol3 {
   border-left: none;
   border-right: 1px solid var(--border-dark);
 }
@@ -592,39 +592,39 @@ html[dir='rtl'] .fncol3 {
   font-size: 1rem !important;
 }
 
-.bibleBrowser .atext .sb {
+#root.bibleBrowser .atext .sb {
   padding-inline: var(--reading-inset);
   font-size: calc(1em * var(--reading-scale));
   line-height: var(--reading-line-height);
 }
-.bibleBrowser .atext .nb {
+#root.bibleBrowser .atext .nb {
   font-size: calc(1em * var(--popup-scale));
 }
-.bibleBrowser .atext .sb .head1,
-.bibleBrowser .atext .sb .head2,
-.bibleBrowser .atext .sb .head3,
-.bibleBrowser .atext .sb .head4 {
+#root.bibleBrowser .atext .sb .head1,
+#root.bibleBrowser .atext .sb .head2,
+#root.bibleBrowser .atext .sb .head3,
+#root.bibleBrowser .atext .sb .head4 {
   line-height: var(--heading-line-height);
   text-align: center;
   text-wrap: balance;
 }
-.bibleBrowser .atext .sb .head1 {
+#root.bibleBrowser .atext .sb .head1 {
   font-size: calc(1em * var(--heading-scale));
 }
 /* Subordinate headings step down from the reading size rather than from
 head1, so they stay above body text at every breakpoint. */
-.bibleBrowser .atext .sb .head2 {
+#root.bibleBrowser .atext .sb .head2 {
   font-size: 1.45em;
 }
-.bibleBrowser .atext .sb .head3 {
+#root.bibleBrowser .atext .sb .head3 {
   font-size: 1.2em;
 }
-.bibleBrowser .atext .sb .head4 {
+#root.bibleBrowser .atext .sb .head4 {
   font-size: 1.05em;
 }
 /* The running chapter header. em rather than the rem it uses in the app, so
 it scales with userFontBase along with everything else here. */
-.bibleBrowser .atext .sb .chaptitle {
+#root.bibleBrowser .atext .sb .chaptitle {
   font-size: calc(1em * var(--chaptitle-scale));
 }
 
@@ -632,16 +632,16 @@ it scales with userFontBase along with everything else here. */
 center what is left. .sb is the scroll container and LibSword output has no
 wrapper of its own, so the cap goes on .sb itself. */
 @media (min-width: 1024px) {
-  .bibleBrowser .atext .sb {
+  #root.bibleBrowser .atext .sb {
     margin-inline: auto;
   }
-  .bibleBrowser .single-panel .atext .sb {
+  #root.bibleBrowser .single-panel .atext .sb {
     max-width: var(--reading-measure);
   }
-  .bibleBrowser .atext.columns2 .sb {
+  #root.bibleBrowser .atext.columns2 .sb {
     max-width: calc(2 * var(--reading-measure));
   }
-  .bibleBrowser .atext.columns3 .sb {
+  #root.bibleBrowser .atext.columns3 .sb {
     max-width: calc(3 * var(--reading-measure));
   }
 }

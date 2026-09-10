@@ -1,7 +1,7 @@
 
 /* This custom skin is used by calling setGlobalSkin('dark'). NOTE: this skin
 expects the BluePrintJS class 'bp6-dark' to be added to top container.*/
-:root {
+#root {
   --color-primary: #8abbff; /* mimics BluePrintJS dark theme primary color */
   --color-secondary: rgba(204, 204, 0, 0.8);
   --color-secondary2: rgba(100, 100, 255, 0.8);

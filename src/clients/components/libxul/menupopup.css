@@ -10,7 +10,7 @@
   border: 1px solid #999;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
 }
-html[dir='rtl'] .menupopup {
+#root[dir='rtl'] .menupopup {
   transform: translateX(50%);
 }
 .menupopup > * {

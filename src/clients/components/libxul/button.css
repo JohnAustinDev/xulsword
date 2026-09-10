@@ -28,7 +28,7 @@
 }
 
 /* bp6 disabled was 0.6 opacity, which looks bad with a patterned background */
-html.isElectron .bp6-button:not([class*='bp6-intent-']):disabled,
-html.isElectron .button .bp6-button:not([class*='bp6-intent-']).bp6-disabled {
+#root.isElectron .bp6-button:not([class*='bp6-intent-']):disabled,
+#root.isElectron .button .bp6-button:not([class*='bp6-intent-']).bp6-disabled {
   background-color: var(--bg-disabled);
 }

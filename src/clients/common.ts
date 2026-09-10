@@ -209,11 +209,11 @@ export function windowArguments(
 // Add <style id="skin"> and write any user pref skin CSS to it.
 export function setGlobalSkin(skin: typeof S.prefs.global.skin) {
   if (Build.isElectronApp) {
-    // Set BluePrint Dark theme class.
-    const html = document?.getElementsByTagName('html')[0];
-    if (html) {
-      if (skin === 'dark') html.classList.add('bp6-dark');
-      else html.classList.remove('bp6-dark');
+    // Set BluePrint Dark theme class (on #root, see renderToRoot).
+    const rootElement = document.getElementById('root');
+    if (rootElement) {
+      if (skin === 'dark') rootElement.classList.add('bp6-dark');
+      else rootElement.classList.remove('bp6-dark');
     }
     // Update skin CSS
     let css = '';

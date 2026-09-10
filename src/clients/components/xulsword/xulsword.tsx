@@ -131,7 +131,7 @@ export default class Xulsword
     const { renderPromise } = this;
     this.destroy.push(registerUpdateStateFromPref('prefs', 'xulsword', this));
     this.xulswordHeightObserver.sync();
-    this.syncBodyClasses();
+    this.syncRootClasses();
     renderPromise.dispatch();
   }
 
@@ -139,7 +139,7 @@ export default class Xulsword
     const { state, renderPromise } = this;
     const { scroll, audio, location, keys } = state;
 
-    this.syncBodyClasses();
+    this.syncRootClasses();
 
     if (Build.isWebApp) {
       doUntilDone((renderPromise2) => {
@@ -218,15 +218,18 @@ export default class Xulsword
       func();
     });
     this.destroy = [];
-    document.body.classList.remove('controls-visible', 'player-visible');
+    document
+      .getElementById('root')
+      ?.classList.remove('controls-visible', 'player-visible');
   }
 
-  // Mirrors the controls/player show-hide animation state onto document.body
-  // so bibleBrowser.css can react to it without a :has() selector.
-  syncBodyClasses() {
+  // Mirrors the controls/player show-hide animation state onto #root so
+  // bibleBrowser.css can react to it without a :has() selector.
+  syncRootClasses() {
     const { showControls, audio } = this.state;
-    document.body.classList.toggle('controls-visible', !!showControls);
-    document.body.classList.toggle('player-visible', !!audio.open);
+    const rootElement = document.getElementById('root');
+    rootElement?.classList.toggle('controls-visible', !!showControls);
+    rootElement?.classList.toggle('player-visible', !!audio.open);
   }
 
   selectionGenbk(selection: SelectORMType | undefined, _id?: string): void {

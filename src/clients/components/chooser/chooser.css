@@ -57,11 +57,11 @@
   border-bottom-left-radius: 8px;
   padding: 8px 0px 8px 0px;
 }
-html[dir='rtl'] .chooser .bookgroup:first-child {
+#root[dir='rtl'] .chooser .bookgroup:first-child {
   border-top-left-radius: 0;
   border-top-right-radius: 8px;
 }
-html[dir='rtl'] .chooser .bookgroup:last-child {
+#root[dir='rtl'] .chooser .bookgroup:last-child {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 8px;
 }
@@ -73,22 +73,22 @@ html[dir='rtl'] .chooser .bookgroup:last-child {
   background-position-y: center;
   background-repeat: no-repeat;
 }
-html.ky-Arab .label.ot {
+#root.ky-Arab .label.ot {
   background-image: url('../../../../assets/locales/ky-Arab/OT.png');
 }
-html.ky-Arab .label.nt {
+#root.ky-Arab .label.nt {
   background-image: url('../../../../assets/locales/ky-Arab/NT.png');
 }
-html.fa .label.ot {
+#root.fa .label.ot {
   background-image: url('../../../../assets/locales/fa/OT.png');
 }
-html.fa .label.nt {
+#root.fa .label.nt {
   background-image: url('../../../../assets/locales/fa/NT.png');
 }
-html.ug .label.ot {
+#root.ug .label.ot {
   background-image: url('../../../../assets/locales/ug/OT.png');
 }
-html.ug .label.nt {
+#root.ug .label.nt {
   background-image: url('../../../../assets/locales/ug/NT.png');
 }
 .chooser .book-list {
@@ -96,7 +96,7 @@ html.ug .label.nt {
   border-top-right-radius: 8px;
   border-bottom-right-radius: 8px;
 }
-html[dir='rtl'] .chooser .book-list {
+#root[dir='rtl'] .chooser .book-list {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   border-top-left-radius: 8px;
@@ -113,7 +113,7 @@ html[dir='rtl'] .chooser .book-list {
   border-top-right-radius: 8px;
   border-bottom-right-radius: 8px;
 }
-html[dir='rtl'] .bookgrouplist {
+#root[dir='rtl'] .bookgrouplist {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   border-top-left-radius: 8px;
@@ -196,13 +196,13 @@ html[dir='rtl'] .bookgrouplist {
   width: 15px;
   height: 13px;
 }
-html[dir='rtl'] .bookgroupitem .charrow {
+#root[dir='rtl'] .bookgroupitem .charrow {
   background: url(../../images/arrow-rtl.png);
 }
 .bookgroupitem:not(.disabled):hover .charrow {
   background: url(../../images/arrow2.png);
 }
-html[dir='rtl'] .bookgroupitem:not(.disabled):hover .charrow {
+#root[dir='rtl'] .bookgroupitem:not(.disabled):hover .charrow {
   background: url(../../images/arrow2-rtl.png);
 }
 
@@ -219,7 +219,7 @@ html[dir='rtl'] .bookgroupitem:not(.disabled):hover .charrow {
   border-spacing: 0px 0px;
   z-index: 8;
 }
-html[dir='rtl'] .chaptermenu {
+#root[dir='rtl'] .chaptermenu {
   left: auto;
   right: 100%;
 }

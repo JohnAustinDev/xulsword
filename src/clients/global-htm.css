@@ -1,4 +1,4 @@
-:root {
+#root {
   --color-primary: #2d72d2;
   --color-secondary: #f0b12e;
   --color-secondary2: #462476;
@@ -35,7 +35,7 @@
 }
 
 /* Used for height and width animations */
-:root {
+#root {
   interpolate-size: allow-keywords;
 }
 
@@ -51,9 +51,27 @@
   }
 }
 
-/* By default layouts should fill their windows without scrollbars */
-html,
-body,
+/* By default layouts should fill their windows without scrollbars.
+ These are the only rules in xulsword that size the host document, so they are
+ gated on the ownsDocument class. Documents that xulsword serves itself carry
+ it on <html>: the Electron app (root.html), the web-app served as its own page
+ or iframe (bibleBrowser.html). A host page that renders the web-app inline does
+ not carry it, so it keeps its own html and body styling and sizes #root itself. */
+html.ownsDocument,
+html.ownsDocument body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: clip;
+}
+html.ownsDocument:has(#root.fitToContent),
+html.ownsDocument:has(#root.fitToContent) body {
+  width: fit-content;
+  height: fit-content;
+}
+
+/* Everything below is scoped to #root and applies to every target. */
 #root,
 #reset {
   height: 100%;
@@ -63,20 +81,21 @@ body,
   overflow: clip;
 }
 
-html.fitToContent,
-html.fitToContent body,
-html.fitToContent #root,
-html.fitToContent #reset {
+#root.fitToContent,
+#root.fitToContent #reset {
   width: fit-content;
   height: fit-content;
 }
-html #root {
+#root {
   background-color: var(--bg-interface-light);
+  /* Makes #root the containing block for the absolutely positioned overlays
+  below, so they cover the web-app rather than the whole document. */
+  position: relative;
 }
 
 /* Anchor (undo blueprint.css colors) */
-html a,
-html a:hover {
+#root a,
+#root a:hover {
   color: var(--color-primary);
 }
 

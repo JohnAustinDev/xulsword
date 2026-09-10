@@ -17,7 +17,7 @@
 .empty {
   cursor: help !important;
 }
-html[dir='rtl'] .npopup {
+#root[dir='rtl'] .npopup {
   left: auto;
   right: 15px;
 }
@@ -37,7 +37,7 @@ html[dir='rtl'] .npopup {
     var(--overlay-text-pinned)
   );
 }
-html:not(.popupWin) .npopupTX {
+#root:not(.popupWin) .npopupTX {
   max-height: 50vh;
 }
 .npopup.hide .npopupTX {
@@ -222,7 +222,7 @@ html:not(.popupWin) .npopupTX {
 .popup-fail > div > * {
   display: inline-block;
 }
-.bibleBrowser .popup-fail.requires .button-box {
+#root.bibleBrowser .popup-fail.requires .button-box {
   display: none;
 }
 

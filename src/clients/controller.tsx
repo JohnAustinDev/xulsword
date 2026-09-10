@@ -117,9 +117,9 @@ function addStateToHistory(state: ControllerState) {
 let didFinishRenderTO: NodeJS.Timeout | null | undefined;
 function didFinishRender() {
   if (descriptor?.fitToContent) {
-    const [htmlElem] = Array.from(document.getElementsByTagName('html'));
+    const rootElem = document.getElementById('root');
     const [bodyElem] = Array.from(document.getElementsByTagName('body'));
-    if (htmlElem && bodyElem) {
+    if (rootElem && bodyElem) {
       const b = bodyElem.getBoundingClientRect();
       if (b && Build.isElectronApp) {
         // Add 20 px, otherwise unnecessary scrollbars may appear.
@@ -127,7 +127,7 @@ function didFinishRender() {
       }
       // Now that the window has been resized, remove the fitToContent
       // class so content will fill the window even if it shrinks.
-      htmlElem.classList.remove('fitToContent');
+      rootElem.classList.remove('fitToContent');
     }
   }
   if (Build.isElectronApp) window.IPC.send('did-finish-render');
@@ -553,7 +553,7 @@ export type PrintOptionsType = {
 };
 
 export type RootOptionsType = {
-  htmlCssClass: string;
+  rootCssClass: string;
   resetOnResize: boolean;
   print: PrintOptionsType | null;
   onload: (() => void) | null;
@@ -564,7 +564,7 @@ export default async function renderToRoot(
   component: ReactElement,
   options?: Partial<RootOptionsType>,
 ) {
-  const { print, resetOnResize, htmlCssClass, onload, onunload } =
+  const { print, resetOnResize, rootCssClass, onload, onunload } =
     options || {};
 
   log.verbose(`Initializing new window:`, descriptor);
@@ -602,7 +602,7 @@ export default async function renderToRoot(
   setGlobalSkin(skin);
 
   // Set window type and language classes on the root html element.
-  const classes: string[] = htmlCssClass ? [htmlCssClass] : [];
+  const classes: string[] = rootCssClass ? [rootCssClass] : [];
   if (Build.isElectronApp) classes.push('isElectron');
   if (Build.isWebApp) classes.push('isWebApp');
   const classArgs = [
@@ -630,14 +630,16 @@ export default async function renderToRoot(
         ),
       );
   }
-  const html = document?.getElementsByTagName('html')[0];
-  if (html) {
-    html.className = classes.join(' ');
-    const dir = G.i18n.t('locale_direction');
-    html.dir = dir;
+  // These classes and the text direction are applied to #root rather than to
+  // <html> so that all xulsword CSS can be scoped to #root. That keeps the
+  // web-app from restyling a host page when it is rendered into a webpage.
+  const rootElement = document.getElementById('root');
+  if (rootElement) {
+    rootElement.className = classes.join(' ');
+    rootElement.dir = G.i18n.t('locale_direction');
   }
 
-  const root = createRoot(document.getElementById('root') as HTMLElement);
+  const root = createRoot(rootElement as HTMLElement);
 
   root.render(
     <StrictMode>

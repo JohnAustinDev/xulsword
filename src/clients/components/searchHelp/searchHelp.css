@@ -43,7 +43,7 @@
 .even-row {
   background-color: rgb(230, 230, 230);
 }
-td {
+#root td {
   padding: 5px;
 }
 .col0 {

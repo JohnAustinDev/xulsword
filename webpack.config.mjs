@@ -1,5 +1,6 @@
 /*global process */
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { spawn, execSync } from 'child_process';
 import webpack from 'webpack';
 import chalk from 'chalk';
@@ -10,6 +11,19 @@ import * as sass from 'sass';
 import CompressionPlugin from 'compression-webpack-plugin';
 import projectPaths from './scripts/projectPaths.mjs';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
+
+// Webpack resolves a `use` entry as a module request, so the local loader has
+// to be named by absolute path.
+const scopeCssToRootLoader = fileURLToPath(
+  new URL('./scripts/scopeCssToRoot.cjs', import.meta.url),
+);
+
+// The stylesheets that scopeCssToRoot rewrites: everything xulsword does not
+// author itself. See the loader, and the CSS rules that use this list, for why.
+const scopedCss = [
+  /node_modules[\\/]normalize\.css[\\/]/,
+  /clients[\\/]webapp[\\/]blueprintSubset\.scss$/,
+];
 
 // Webpack entry points to build, grouped by target.
 // prettier-ignore
@@ -376,15 +390,86 @@ export default function (opts) {
             },
             sideEffects: false,
           },
-          { test: /\.css$/, use: [MiniCssExtractPlugin.loader, 'css-loader'] },
-          {
-            test: /\.scss$/,
-            use: [
-              MiniCssExtractPlugin.loader,
-              'css-loader',
-              { loader: 'sass-loader', options: { implementation: sass } },
-            ],
-          },
+          // For webappClients, every stylesheet is rewritten by scopeCssToRoot
+          // so that all of its rules apply inside #root and carry one extra id.
+          // Confining them matters because the IBT website renders the web-app
+          // directly into one of its own pages; the extra id matters because
+          // that host page's CSS would otherwise win on specificity. Applying
+          // it to EVERY rule is what keeps the web-app's internal cascade
+          // unchanged. Two modes: 'reset' rewrites the document-level
+          // third-party stylesheets (normalize.css and the Blueprint subset),
+          // 'webapp' lifts xulsword's own already-#root-scoped CSS. Other builds
+          // (the Electron app) are untouched and keep the plain rules below.
+          ...(build === 'webappClients'
+            ? [
+                {
+                  test: /\.css$/,
+                  include: scopedCss,
+                  use: [
+                    MiniCssExtractPlugin.loader,
+                    'css-loader',
+                    {
+                      loader: scopeCssToRootLoader,
+                      options: { mode: 'reset' },
+                    },
+                  ],
+                },
+                {
+                  test: /\.scss$/,
+                  include: scopedCss,
+                  use: [
+                    MiniCssExtractPlugin.loader,
+                    'css-loader',
+                    {
+                      loader: scopeCssToRootLoader,
+                      options: { mode: 'reset' },
+                    },
+                    {
+                      loader: 'sass-loader',
+                      options: { implementation: sass },
+                    },
+                  ],
+                },
+                {
+                  test: /\.css$/,
+                  exclude: scopedCss,
+                  use: [
+                    MiniCssExtractPlugin.loader,
+                    'css-loader',
+                    { loader: scopeCssToRootLoader, options: { mode: 'webapp' } },
+                  ],
+                },
+                {
+                  test: /\.scss$/,
+                  exclude: scopedCss,
+                  use: [
+                    MiniCssExtractPlugin.loader,
+                    'css-loader',
+                    { loader: scopeCssToRootLoader, options: { mode: 'webapp' } },
+                    {
+                      loader: 'sass-loader',
+                      options: { implementation: sass },
+                    },
+                  ],
+                },
+              ]
+            : [
+                {
+                  test: /\.css$/,
+                  use: [MiniCssExtractPlugin.loader, 'css-loader'],
+                },
+                {
+                  test: /\.scss$/,
+                  use: [
+                    MiniCssExtractPlugin.loader,
+                    'css-loader',
+                    {
+                      loader: 'sass-loader',
+                      options: { implementation: sass },
+                    },
+                  ],
+                },
+              ]),
           ...useFileLoader.map((ext) => {
             return { test: new RegExp(`\\.${ext}$`), use: 'file-loader' };
           }),

@@ -182,9 +182,9 @@ socket.on('connect', () => {
         validateModulePrefs();
 
         renderToRoot(<Xulsword onWheelCapture={wheelCapture} />, {
-          htmlCssClass: 'bibleBrowser',
+          rootCssClass: 'bibleBrowser',
           onload: () => {
-            document.querySelector('html')?.classList.add('finished-loading');
+            document.getElementById('root')?.classList.add('finished-loading');
           },
         }).catch((er) => {
           log.error(er);

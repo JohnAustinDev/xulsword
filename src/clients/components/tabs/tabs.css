@@ -73,7 +73,7 @@ changed */
   overflow: auto;
   transform: unset;
 }
-html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
+#root[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
   right: unset;
   left: 0px;
 }

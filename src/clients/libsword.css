@@ -94,22 +94,22 @@
 .ref {
   display: inline;
 }
-span[data-type='headword'] {
+#root span[data-type='headword'] {
   font-weight: bold;
   font-variant: small-caps;
   text-decoration: underline;
 }
-span[data-type='derivative'] {
+#root span[data-type='derivative'] {
   font-weight: bold;
   font-variant: small-caps;
 }
-span[data-rend='italic'] {
+#root span[data-rend='italic'] {
   font-style: italic;
 }
-span[data-rend='bold'] {
+#root span[data-rend='bold'] {
   font-weight: bold;
 }
-span[data-rend='small-caps'] {
+#root span[data-rend='small-caps'] {
   font-variant: small-caps;
 }
 .pos:before {
@@ -181,7 +181,7 @@ span.sense[data-n='0']:before {
 .sense[data-n]:before {
   content: 'Sense ' attr(data-n) ': ';
 }
-span[class*=' sense-level-'] {
+#root span[class*=' sense-level-'] {
   margin: 0 3em;
 }
 span.sense-level-0 {
@@ -218,11 +218,11 @@ span.sense-level-2 {
 }
 /* Allow margins to collapse around head1. */
 @supports selector(:has(a)) {
-  span:has( > .head1:first-child) {
+  span:has(> .head1:first-child) {
     display: block;
     margin-top: 2em;
   }
-  span:has( > .head1:last-child) {
+  span:has(> .head1:last-child) {
     display: block;
     margin-bottom: 1em;
   }

@@ -237,6 +237,8 @@
     "libxulsword": "portal:./libxulsword",
     "memorystore": "^1.6.7",
     "mini-css-extract-plugin": "^1.6.0",
+    "postcss": "^8.5.28",
+    "postcss-selector-parser": "^7.1.6",
     "prettier": "^3.6.2",
     "rate-limiter-flexible": "^7.2.0",
     "react": "^18.2.0",

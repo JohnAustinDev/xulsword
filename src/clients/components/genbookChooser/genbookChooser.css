@@ -29,15 +29,15 @@
   transition-delay: 0.25s;
 }
 
-html[dir='rtl'] .genbook-chooser .scroll-parent {
+#root[dir='rtl'] .genbook-chooser .scroll-parent {
   transform: scaleX(-1);
   left: unset;
   right: 0px;
 }
-html[dir='rtl'] .genbook-chooser .scroll-parent:hover {
+#root[dir='rtl'] .genbook-chooser .scroll-parent:hover {
   right: -5px;
 }
-html[dir='rtl'] .bp6-tree-node-label {
+#root[dir='rtl'] .bp6-tree-node-label {
   transform: scaleX(-1);
 }
 

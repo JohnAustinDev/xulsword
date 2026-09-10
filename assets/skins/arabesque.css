@@ -1,6 +1,6 @@
 
 /* This custom skin called may be added using setGlobalSkin('arabesque') */
-:root {
+#root {
   --color-primary: #2e5cd1e6;
   --color-secondary: rgba(204, 204, 0, 0.8);
   --color-secondary2: rgba(100, 100, 255, 0.8);

@@ -21,10 +21,10 @@
 .selectvk > *:not(:first-child) {
   display: inline-block;
 }
-html .selectvk > * {
+#root .selectvk > * {
   margin-inline-end: 0;
 }
-html .selectvk > * + * {
+#root .selectvk > * + * {
   margin-inline-start: 10px;
 }
 

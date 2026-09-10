@@ -1,6 +1,6 @@
-html.splashWin,
-.splashWin body,
-.splashWin #root {
+html.ownsDocument:has(#root.splashWin),
+html.ownsDocument:has(#root.splashWin) body,
+#root.splashWin {
   overflow: hidden;
   margin: 0;
   padding: 0 !important;

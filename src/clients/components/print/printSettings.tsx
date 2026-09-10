@@ -605,27 +605,33 @@ export default class PrintSettings extends React.Component<
     let style = '';
     const i = getPageInfo();
     if (i.realPaperW) {
-      // Page margins for multi-page (pageable) printouts must use print margins (not
-      // CSS content margins) in order to work properly. But print HTML must use CSS
-      // content margins in order to show a preview of the printout. Print margins and
-      // page size and orientation can be passed as options to webContents print and
-      // printToPDF methods, or else CSS print media @page properties may be used. In
-      // printSettings, BOTH methods are used, with the same values. This is because
-      // only one or the other seems to work in certain cases, and specifying both
-      // doesn't seem to cause problems.
-      // NOTE: pageable content width and height must not be set for print to work!
+      // Page margins for multi-page (pageable) printouts must use print
+      // margins (not CSS content margins) in order to work properly. But
+      // print HTML must use CSS content margins in order to show a preview of
+      // the printout. Print margins and page size and orientation can be
+      // passed as options to webContents print and printToPDF methods, or else
+      // CSS print media @page properties may be used. In printSettings, BOTH
+      // methods are used, with the same values. This is because only one or
+      // the other seems to work in certain cases, and specifying both doesn't
+      // seem to cause problems.
+      // NOTE: pageable content width and height must not be set for print to
+      // work!
+
+      // The web-app CSS has #root prefixed to every selector during packaging
+      // so add it to these rules too if needed.
+      const waroot = Build.isWebApp ? '#root ' : '';
       style = `
-      .pageView {
+      ${waroot}.pageView {
         width: ${i.pageViewW}px;
         height: ${i.pageViewH}px;
       }
-      .page-buttons {
+      ${waroot}.page-buttons {
         left: ${i.pageViewW / 2 - 0.5 * i.pagebuttonsW}px;
       }
-      .scale {
+      ${waroot}.scale {
         transform: scale(${i.pageViewToContentScale});
       }
-      .content {
+      ${waroot}.content {
         width: ${i.contentW}px;
         height: ${i.contentH}px;
         padding-top: ${(margins.top * convertToPx.mm) / i.pageToContentScale}px;
@@ -639,10 +645,10 @@ export default class PrintSettings extends React.Component<
           (margins.left * convertToPx.mm) / i.pageToContentScale
         }px;
       }
-      .userFontBase {
+      ${waroot}.userFontBase {
         font-size: ${scale / 100}em;
       }
-      .pageable .printContainer {
+      ${waroot}.pageable .printContainer {
         column-count: ${twoColumns ? 2 : 1}
       }
 
@@ -654,14 +660,14 @@ export default class PrintSettings extends React.Component<
           margin-bottom: ${margins.bottom}mm;
           margin-left: ${margins.left}mm;
         }
-        .pageView {
+        ${waroot}.pageView {
           width: unset;
           height: unset;
         }
-        .scale {
+        ${waroot}.scale {
           transform: scale(${i.pageToContentScale});
         }
-        .content  {
+        ${waroot}.content  {
           width: ${100 / i.pageToContentScale}vw;
           height: ${100 / i.pageToContentScale}vh;
           padding-top: unset;
@@ -669,7 +675,7 @@ export default class PrintSettings extends React.Component<
           padding-bottom: unset;
           padding-left: unset;
         }
-        .pageable .content {
+        ${waroot}.pageable .content {
           width: unset !important;
           height: unset !important;
         }

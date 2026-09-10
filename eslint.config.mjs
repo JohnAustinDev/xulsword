@@ -130,6 +130,16 @@ const config = [
       parserOptions: { project: './tsconfig.json' },
     },
   },
+  {
+    // Webpack's loader-runner require()s loaders, so scripts/scopeCssToRoot.cjs
+    // has to be CommonJS even though the rest of the repo is ESM.
+    files: ['**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: { ...globals.node, ...globals.commonjs },
+    },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
 ];
 
 // console.log(config);

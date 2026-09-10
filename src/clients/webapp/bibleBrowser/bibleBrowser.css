@@ -1,7 +1,6 @@
 /* WEB-APP LONG-FORM READING SCALE
 The Bible Browser text is set on a New York Times style reading scale instead
-of the compact interface scale. Only html.bibleBrowser gets these rules, so the
-Electron app is unaffected.
+of the compact interface scale. Only .bibleBrowser uses these variables.
 
 Nothing here is an absolute size. .textrow carries the userFontBase class,
 whose px font-size style.ts writes from the global.fontSize pref (nominally
@@ -14,7 +13,7 @@ what the nominal 14px base produces.
 Headings live inside .sb and so are already inset by --reading-inset; the
 left/right heading padding the design calls for (24px on tablet, 16px on
 phone) is that column inset itself, which is why no heading adds its own. */
-:root {
+#root {
   --reading-inset: 30px;
   --reading-scale: 1.286; /* 18px */
   --reading-line-height: 1.65; /* ~30px */
@@ -26,14 +25,14 @@ phone) is that column inset itself, which is why no heading adds its own. */
   --reading-measure: 38em; /* 38em is 684px, ~625px of text inside the insets */
 }
 @media (min-width: 768px) and (max-width: 1023px) {
-  :root {
+  #root {
     --reading-inset: 24px;
     --heading-scale: 1.6; /* 29px */
     --heading-line-height: 1.1;
   }
 }
 @media (max-width: 767px) {
-  :root {
+  #root {
     --reading-inset: 10px;
     /* --reading-scale: 1.214;*/ /* 17px */
     --reading-line-height: 1.55; /* ~26px */
@@ -41,17 +40,17 @@ phone) is that column inset itself, which is why no heading adds its own. */
     --heading-line-height: 1.15;
     --chaptitle-scale: 1.2; /* 20px */
   }
-  .bibleBrowser .textarea.multi-panel .textrow {
+  #root.bibleBrowser .textarea.multi-panel .textrow {
     --reading-inset: 5px;
     --reading-scale: 1.1;
   }
 }
 
-:root {
+#root {
   --input-height: 32px;
 }
 
-html:not(.finished-loading):after {
+#root:not(.finished-loading):after {
   content: '';
   position: absolute;
   top: 0px;
@@ -64,8 +63,9 @@ html:not(.finished-loading):after {
   opacity: 0.8;
 }
 
-/* body height is the iframe's height and is scrollable */
-body {
+/* Body height is the iframe's height and is scrollable. Only when xulsword
+ owns the document (see global-htm.css); a host page scrolls itself. */
+html.ownsDocument body {
   height: 100%;
   overflow-y: auto;
 }
@@ -109,7 +109,9 @@ body {
   height: auto;
   overflow: hidden;
   padding: 0 10px;
-  transition: height 0.3s ease-out, opacity 0.3s ease-out;
+  transition:
+    height 0.3s ease-out,
+    opacity 0.3s ease-out;
   opacity: 1;
 }
 .controls-animation.hide {
@@ -119,7 +121,7 @@ body {
 .controls-animation:has(.menupopup) {
   overflow: visible;
 }
-body.controls-visible {
+#root.controls-visible {
   animation: hold-body-overflow 0.4s;
 }
 #controls #control-rows {
@@ -152,14 +154,16 @@ body.controls-visible {
   height: auto;
   overflow: hidden;
   padding: 0 10px;
-  transition: height 0.3s ease-out, opacity 0.3s ease-out;
+  transition:
+    height 0.3s ease-out,
+    opacity 0.3s ease-out;
   opacity: 1;
 }
 .player-animation.hide {
   height: 0;
   opacity: 0;
 }
-body.player-visible {
+#root.player-visible {
   animation: hold-body-overflow 0.4s;
 }
 #control-rows > div,
@@ -200,7 +204,7 @@ audio {
   margin-top: 0;
 }
 
-html:not(.is-vagrant) .popup-fail.reason {
+#root:not(.is-vagrant) .popup-fail.reason {
   display: none;
 }
 
@@ -212,7 +216,9 @@ html:not(.is-vagrant) .popup-fail.reason {
   height: 100%;
   width: auto;
   white-space: nowrap;
-  transition: width 0.3s ease-out, opacity 0.3s ease-out;
+  transition:
+    width 0.3s ease-out,
+    opacity 0.3s ease-out;
   opacity: 1;
 }
 .chooser-animation.hide {
@@ -255,7 +261,7 @@ html:not(.is-vagrant) .popup-fail.reason {
     left: unset;
     right: 0px;
   }
-  html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
+  #root[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
     left: 0px;
     right: unset;
   }

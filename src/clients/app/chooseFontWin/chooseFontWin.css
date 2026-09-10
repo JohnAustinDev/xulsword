@@ -31,7 +31,7 @@
   top: -100px;
   right: 100%;
 }
-html[dir='rtl'].chooseFontWin .picker-button .chrome-picker {
+#root[dir='rtl'].chooseFontWin .picker-button .chrome-picker {
   right: unset;
   left: 50%;
 }

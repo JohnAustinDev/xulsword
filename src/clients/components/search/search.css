@@ -11,14 +11,16 @@
 .search-grid > .grid-row-cell:not(:first-child) {
   height: auto;
   opacity: 1;
-  transition: height 0.3s ease-out, opacity 0.3s ease-out;
+  transition:
+    height 0.3s ease-out,
+    opacity 0.3s ease-out;
 }
 .search-grid.less > .grid-row-cell:not(:first-child) {
   height: 0;
   opacity: 0;
   overflow: hidden;
 }
-body.search-expanded {
+#root.search-expanded {
   animation: hold-body-overflow 0.4s;
 }
 .search-grid .groupbox {
@@ -124,7 +126,7 @@ body.search-expanded {
   float: right;
   margin: 0 5px 5px 5px;
 }
-html[dir='rtl'] .resultBox #displayModule {
+#root[dir='rtl'] .resultBox #displayModule {
   float: left;
 }
 .resultBox #displayModule {
@@ -184,7 +186,7 @@ html[dir='rtl'] .resultBox #displayModule {
   margin: 2px;
 }
 .resultBox .slist div:empty:not(.npopup div),
-.resultBox .slist div.image-viewport:not(.npopup div)  {
+.resultBox .slist div.image-viewport:not(.npopup div) {
   display: none;
 }
 .resultBox .slist *:not(.npopup *) {
@@ -242,12 +244,12 @@ html[dir='rtl'] .resultBox #displayModule {
 
 /* 640 is the aproximate width of the search tool group */
 @media (max-width: 640px) {
-  .searchWin body {
+  html.ownsDocument:has(#root.searchWin) body {
     overflow-y: auto;
   }
-  .searchWin #root,
-  .searchWin #reset,
-  .searchWin .search {
+  #root.searchWin,
+  #root.searchWin #reset,
+  #root.searchWin .search {
     height: unset;
   }
   .search {
