@@ -52,11 +52,10 @@
 }
 
 /* By default layouts should fill their windows without scrollbars.
- These are the only rules in xulsword that size the host document, so they are
- gated on the ownsDocument class. Documents that xulsword serves itself carry
- it on <html>: the Electron app (root.html), the web-app served as its own page
- or iframe (bibleBrowser.html). A host page that renders the web-app inline does
- not carry it, so it keeps its own html and body styling and sizes #root itself. */
+ These are the only rules in xulsword that size the host document, and they are
+ gated on the ownsDocument class, because the web-app may be embedded in a
+ some webpage (which will NOT have the ownsDocument class) and there we should
+ never mess with their page! */
 html.ownsDocument,
 html.ownsDocument body {
   height: 100%;

@@ -436,7 +436,10 @@ export default function (opts) {
                   use: [
                     MiniCssExtractPlugin.loader,
                     'css-loader',
-                    { loader: scopeCssToRootLoader, options: { mode: 'webapp' } },
+                    {
+                      loader: scopeCssToRootLoader,
+                      options: { mode: 'webapp' },
+                    },
                   ],
                 },
                 {
@@ -445,7 +448,10 @@ export default function (opts) {
                   use: [
                     MiniCssExtractPlugin.loader,
                     'css-loader',
-                    { loader: scopeCssToRootLoader, options: { mode: 'webapp' } },
+                    {
+                      loader: scopeCssToRootLoader,
+                      options: { mode: 'webapp' },
+                    },
                     {
                       loader: 'sass-loader',
                       options: { implementation: sass },
@@ -629,10 +635,16 @@ export default function (opts) {
                       .join('\n'),
                   );
                   console.log(
-                    chalk.bgGreen.bold(
-                      `localhost:${devServerPort}/src/clients/webapp/bibleBrowser/bibleBrowserParent.html` +
-                        '\n',
-                    ),
+                    [
+                      'bibleBrowserIframe.html',
+                      'bibleBrowserFixedIframe.html',
+                    ]
+                      .map((file) =>
+                        chalk.bgGreen.bold(
+                          `localhost:${devServerPort}/src/clients/webapp/bibleBrowser/${file}`,
+                        ),
+                      )
+                      .join('\n'),
                   );
                 }
                 spawn('yarn', [start], {
