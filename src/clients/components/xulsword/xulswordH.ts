@@ -13,6 +13,7 @@ import {
   isBlockedEvent,
   blockTouchEvents,
 } from '../../common.ts';
+import { getRootNode } from '../../rootNode.ts';
 import log from '../../log.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
 import { genbookChange } from '../atext/ztext.ts';
@@ -144,7 +145,7 @@ export default function xulswordHandler(
         case 'xsSearchButton': {
           let module = state.panels.find((m) => m);
           if (!module && G.Tabs.length) [{ module }] = G.Tabs;
-          const tbp = document.getElementById('xsSearchText');
+          const tbp = getRootNode().getElementById('xsSearchText');
           const tb = tbp?.getElementsByTagName('input');
           const searchtext = tb?.[0].value;
           if (searchtext && module && module in G.Tab) {

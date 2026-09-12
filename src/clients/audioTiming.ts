@@ -2,6 +2,7 @@ import { clone, ofClass } from '../common.ts';
 import S from '../defaultPrefs.ts';
 import C from '../constant.ts';
 import log from './log.ts';
+import { getRootNode } from './rootNode.ts';
 
 import type { AudioPlayerType } from '../type.ts';
 import type { XulswordState } from './components/xulsword/xulsword.tsx';
@@ -34,13 +35,15 @@ const CurrentActiveIds = new Set<string>();
 
 // Stops and removes the moving highlight bar from a span.
 function unHighlight(id: string) {
-  document.querySelectorAll(`div.sb span[data-id="${id}"]`).forEach((e) => {
-    const el = e as HTMLElement;
-    el.classList.remove('nowreading');
-    el.classList.remove('nowreading-sweep');
-    el.style.transition = '';
-    el.style.backgroundPosition = '';
-  });
+  getRootNode()
+    .querySelectorAll(`div.sb span[data-id="${id}"]`)
+    .forEach((e) => {
+      const el = e as HTMLElement;
+      el.classList.remove('nowreading');
+      el.classList.remove('nowreading-sweep');
+      el.style.transition = '';
+      el.style.backgroundPosition = '';
+    });
 }
 
 function doHighlight(

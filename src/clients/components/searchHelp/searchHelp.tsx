@@ -3,6 +3,7 @@ import { sanitizeHTML, dString } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { GI } from '../../G.ts';
 import { functionalComponentRenderPromise } from '../../common.ts';
+import { getRootNode } from '../../rootNode.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { addClass, XulProps } from '../../components/libxul/xul.tsx';
 import { Box } from '../libxul/boxes.tsx';
@@ -15,7 +16,7 @@ export type SearchHelpProps = {
 } & XulProps;
 
 function write(id: string, html: string) {
-  const elem = document.getElementById(id);
+  const elem = getRootNode().getElementById(id);
   if (elem) elem.innerHTML = sanitizeHTML(html);
 }
 

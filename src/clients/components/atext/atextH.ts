@@ -19,6 +19,7 @@ import {
 } from '../../common.ts';
 import log from '../../log.ts';
 import { getElementData } from '../../htmlData.ts';
+import { getRootNode, getSelection } from '../../rootNode.ts';
 import { onClick as onVerseSyncClick } from '../../audioTiming.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { aTextWheelScroll, getScrollVerse } from './zversekey.ts';
@@ -30,7 +31,7 @@ function scroll2Note(atext: HTMLElement, id: string) {
   Array.from(atext.getElementsByClassName('fnselected')).forEach((note) => {
     note.classList.remove('fnselected');
   });
-  const note = document.getElementById(id);
+  const note = getRootNode().getElementById(id);
   if (!note) return false;
   note.classList.add('fnselected');
   const nb = atext.querySelector('.nb');
@@ -79,7 +80,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
             let id;
             if (targ.type === 'cr' && p) {
               id = `w${index}.footnote.${ptype}.${title}`;
-              row = document.getElementById(id);
+              row = getRootNode().getElementById(id);
             } else {
               const rowx = ofClass(['fnrow'], elem);
               if (rowx) row = rowx.element;
@@ -216,7 +217,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
     case 'dblclick': {
       if (ofClass(['sb'], e.target)) {
         // Get selected text
-        const selob = window.getSelection();
+        const selob = getSelection();
         if (selob) {
           let searchtext = selob.toString();
           searchtext = cleanDoubleClickSelection(searchtext);
@@ -375,7 +376,9 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           let atext: HTMLElement | null = null;
           const singleColumnScrollSyncs: number[] = [];
           (
-            Array.from(document.querySelectorAll('.atext')) as HTMLElement[]
+            Array.from(
+              getRootNode().querySelectorAll('.atext'),
+            ) as HTMLElement[]
           ).forEach((txt) => {
             const { index: i, module: mod, columns, ispinned } = txt.dataset;
             if (

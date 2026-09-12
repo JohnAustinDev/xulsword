@@ -14,6 +14,7 @@ import C from '../constant.ts';
 import DynamicStyleSheet from './style.ts';
 import ContextData from './contextData.ts';
 import { setGlobalSkin, windowArguments } from './common.ts';
+import { getRootElement, getRootNode, setRootNode } from './rootNode.ts';
 import log from './log.ts';
 import {
   delayHandler,
@@ -35,6 +36,7 @@ import Textbox from './components/libxul/textbox.tsx';
 import 'normalize.css/normalize.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import './global-htm.css';
+import './ownsDocument.css';
 
 import type { ReactElement, SyntheticEvent } from 'react';
 import type {
@@ -117,7 +119,7 @@ function addStateToHistory(state: ControllerState) {
 let didFinishRenderTO: NodeJS.Timeout | null | undefined;
 function didFinishRender() {
   if (descriptor?.fitToContent) {
-    const rootElem = document.getElementById('root');
+    const rootElem = getRootElement();
     const [bodyElem] = Array.from(document.getElementsByTagName('body'));
     if (rootElem && bodyElem) {
       const b = bodyElem.getBoundingClientRect();
@@ -590,7 +592,28 @@ export default async function renderToRoot(
   descriptor = windowArguments();
   Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
 
-  dynamicStyleSheet = new DynamicStyleSheet(document);
+  // The web-app is rendered into a shadow root attached to the page's #root
+  // element, so that the host page's CSS cannot restyle the web-app, and the
+  // web-app's CSS cannot restyle the host page. The shadow root gets its own
+  // #root, to which all xulsword CSS is scoped. Electron windows own their
+  // document, so they render directly into #root, as does the web-app in the
+  // few browsers lacking Shadow DOM (there #root scoping alone must suffice).
+  // NOTE: BlueprintJS components that portal into document.body (Popover,
+  // Overlay, Toaster etc.) render outside the shadow root, and so unstyled.
+  let rootElement = document.getElementById('root');
+  if (
+    Build.isWebApp &&
+    rootElement &&
+    typeof rootElement.attachShadow === 'function'
+  ) {
+    const shadowRoot = rootElement.attachShadow({ mode: 'open' });
+    rootElement = document.createElement('div');
+    rootElement.id = 'root';
+    shadowRoot.appendChild(rootElement);
+    setRootNode(shadowRoot);
+  } else setRootNode(document);
+
+  dynamicStyleSheet = new DynamicStyleSheet(getRootNode());
   const st = Build.isElectronApp
     ? ((G as GType).Data.read('stylesheetData') as StyleType)
     : undefined;
@@ -633,7 +656,6 @@ export default async function renderToRoot(
   // These classes and the text direction are applied to #root rather than to
   // <html> so that all xulsword CSS can be scoped to #root. That keeps the
   // web-app from restyling a host page when it is rendered into a webpage.
-  const rootElement = document.getElementById('root');
   if (rootElement) {
     rootElement.className = classes.join(' ');
     rootElement.dir = G.i18n.t('locale_direction');

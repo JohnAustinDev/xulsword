@@ -9,6 +9,7 @@ import {
 import C from '../../../constant.ts';
 import { cachePreload } from '../../common.ts';
 import log from '../../log.ts';
+import { setRootNode } from '../../rootNode.ts';
 import Prefs from '../prefs.ts';
 import WidgetVK from './widgetVK.tsx';
 import WidgetOR from './widgetOR.tsx';
@@ -18,6 +19,10 @@ import defaultSettings from './defaultSettings.ts';
 import type { ComponentData } from '../common.ts';
 
 window.WebAppClient = 'Widgets';
+
+// Widgets render into the page itself, rather than into a shadow root as
+// renderToRoot() does, so their stylesheets go to the document.
+setRootNode(document);
 
 const socket = socketConnect(
   Number(process.env.WEBAPP_PORT),

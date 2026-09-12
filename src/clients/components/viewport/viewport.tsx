@@ -8,6 +8,7 @@ import Popup from '../popup/popup.tsx';
 import * as H from '../popup/popupParentH.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
+import { getRootElement, getRootNode } from '../../rootNode.ts';
 import log from '../../log.ts';
 import { clearPending } from '../../common.ts';
 import { addClass, topHandle } from '../libxul/xul.tsx';
@@ -110,7 +111,7 @@ export default class Viewport
   componentDidUpdate() {
     const { state, renderPromise } = this;
     const { popupParent, elemdata } = state;
-    if (popupParent && !document.body.contains(popupParent)) {
+    if (popupParent && !getRootNode().contains(popupParent)) {
       this.setState({ popupParent: null });
     } else if (popupParent && elemdata?.length) {
       // Do the fade in effect
@@ -122,7 +123,7 @@ export default class Viewport
 
   componentWillUnmount() {
     clearPending(this, ['popupDelayTO', 'popupUnblockTO']);
-    document.getElementById('root')?.classList.remove('multi-panel');
+    getRootElement()?.classList.remove('multi-panel');
   }
 
   // Mirrors DOM state that CSS would otherwise need :has() to react to:
@@ -137,7 +138,7 @@ export default class Viewport
     const viewportEl = this.loadingRef.current;
     if (!viewportEl) return;
     const isMultiPanel = !!viewportEl.querySelector('.textarea.multi-panel');
-    document.getElementById('root')?.classList.toggle('multi-panel', isMultiPanel);
+    getRootElement()?.classList.toggle('multi-panel', isMultiPanel);
     viewportEl.classList.toggle(
       'has-audio',
       !!viewportEl.querySelector('.audio-icon'),

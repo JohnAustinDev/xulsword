@@ -51,23 +51,18 @@
   }
 }
 
-/* By default layouts should fill their windows without scrollbars.
- These are the only rules in xulsword that size the host document, and they are
- gated on the ownsDocument class, because the web-app may be embedded in a
- some webpage (which will NOT have the ownsDocument class) and there we should
- never mess with their page! */
-html.ownsDocument,
-html.ownsDocument body {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: clip;
-}
-html.ownsDocument:has(#root.fitToContent),
-html.ownsDocument:has(#root.fitToContent) body {
-  width: fit-content;
-  height: fit-content;
+/* Rules sizing the document itself are in ownsDocument.css. */
+
+/* The web-app's #root is inside a shadow root whose host is the page's own
+ #root element (see renderToRoot() in controller.tsx). Shadow DOM keeps the host
+ page's selectors out, but inherited properties still flow in through the host,
+ so reset them all there. Visibility stays inherited so that the host page can
+ still hide the web-app. The host page can also still style the host box itself,
+ since its rules outrank :host. */
+:host {
+  all: initial;
+  display: block;
+  visibility: inherit;
 }
 
 /* Everything below is scoped to #root and applies to every target. */

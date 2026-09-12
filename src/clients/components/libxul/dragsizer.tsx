@@ -1,8 +1,8 @@
 import React from 'react';
-import './dragsizer.css';
-
+import { getRootElement } from '../../rootNode.ts';
 import type { XulProps } from './xul.tsx';
 import { Box } from './boxes.tsx';
+import './dragsizer.css';
 
 export type DragSizerVal = {
   mousePos: number; // mouse position
@@ -51,7 +51,7 @@ export default class DragSizer extends React.Component<
   }
 
   componentDidMount() {
-    const root = document.getElementById('root') as HTMLDivElement;
+    const root = getRootElement() as HTMLDivElement;
     if (root) {
       this.listeners.forEach((l) => {
         root.addEventListener(l[0], l[1]);
@@ -60,7 +60,7 @@ export default class DragSizer extends React.Component<
   }
 
   componentWillUnmount() {
-    const root = document.getElementById('root') as HTMLDivElement;
+    const root = getRootElement() as HTMLDivElement;
     if (root) {
       this.listeners.forEach((l) => {
         root.removeEventListener(l[0], l[1]);

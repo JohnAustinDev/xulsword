@@ -3,6 +3,7 @@ import { goToLocationVK } from '../../../commands.ts';
 import C from '../../../constant.ts';
 import { clone, escapeRE, ofClass, randomID } from '../../../common.ts';
 import { getElementData } from '../../htmlData.ts';
+import { getRootNode } from '../../rootNode.ts';
 import { G, GI } from '../../G.ts';
 import {
   doUntilDone,
@@ -59,7 +60,7 @@ export function closeMenupopups(component: Xulsword | ViewportWin) {
     ({ historyMenupopup } = state as XulswordState);
   }
   let reset = 0;
-  Array.from(document.getElementsByClassName('tabs')).forEach((t) => {
+  Array.from(getRootNode().querySelectorAll('.tabs')).forEach((t) => {
     if (t.classList.contains('open')) reset += 1;
   });
   if (state && (reset || historyMenupopup)) {

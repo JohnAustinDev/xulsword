@@ -1,6 +1,7 @@
 import React, { ChangeEvent } from 'react';
 import { setXulswordTabs } from '../../../commands.ts';
 import { ofClass } from '../../../common.ts';
+import { getRootNode } from '../../rootNode.ts';
 import { htmlAttribs } from '../libxul/xul.tsx';
 import { AnchorButton } from '../libxul/button.tsx';
 import Menupopup from '../libxul/menupopup.tsx';
@@ -246,7 +247,7 @@ class Tabs
       let newpup = null;
       if (!prevState.multiTabMenupopup) {
         const { multiTabs } = prevState;
-        const textrow = document.getElementsByClassName('textrow');
+        const textrow = getRootNode().querySelectorAll('.textrow');
         const height = textrow.length ? textrow[0].clientHeight : null;
         newpup = (
           <Menupopup style={height ? { maxHeight: `${height}px` } : undefined}>

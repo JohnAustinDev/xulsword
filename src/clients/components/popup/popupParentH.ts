@@ -1,11 +1,12 @@
 import type React from 'react';
 import Subscription from '../../../subscription.ts';
-import { clone, getCSS, ofClass, pad, randomID } from '../../../common.ts';
+import { clone, ofClass, randomID } from '../../../common.ts';
 import { goToLocationVK } from '../../../commands.ts';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
+import { getRootElement } from '../../rootNode.ts';
 import {
   cancelStrongsHiLights,
   doBlockEvents,
@@ -268,7 +269,7 @@ export function popupHandler(
       const { state } = this;
       const { popupParent } = state;
       const { element, type } = oc;
-      const parent = popupParent || document.getElementById('root');
+      const parent = popupParent || getRootElement();
       // Require popup or window parent but don't search beyond npopup when testing type
       if (!parent || type === 'npopup') return;
       if (e.cancelable) e.preventDefault();
@@ -475,7 +476,7 @@ export function popupHandler(
       // return;
       const { popupRef } = this;
       const { popupParent, popupHold } = this.state;
-      const parent = popupParent || document.getElementById('root');
+      const parent = popupParent || getRootElement();
       if (
         parent &&
         !popupHold &&

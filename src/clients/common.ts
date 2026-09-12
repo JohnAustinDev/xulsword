@@ -26,6 +26,7 @@ import RenderPromise from './renderPromise.ts';
 import analytics from './analytics.ts';
 import { getElementData, HTMLData } from './htmlData.ts';
 import log from './log.ts';
+import { getRootElement, getRootNode } from './rootNode.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
@@ -210,7 +211,7 @@ export function windowArguments(
 export function setGlobalSkin(skin: typeof S.prefs.global.skin) {
   if (Build.isElectronApp) {
     // Set BluePrint Dark theme class (on #root, see renderToRoot).
-    const rootElement = document.getElementById('root');
+    const rootElement = getRootElement();
     if (rootElement) {
       if (skin === 'dark') rootElement.classList.add('bp6-dark');
       else rootElement.classList.remove('bp6-dark');
@@ -487,7 +488,7 @@ export function iframeAutoHeightObserver(selector: string): {
     const height = observed ? observed.clientHeight : NaN;
     if (height !== lastHeight) {
       lastHeight = height;
-      const so = document.querySelector(selector);
+      const so = getRootNode().querySelector(selector);
       if (so) {
         window.parent.postMessage(
           {
@@ -501,7 +502,7 @@ export function iframeAutoHeightObserver(selector: string): {
   });
   return {
     sync: () => {
-      const elem = document.querySelector(selector);
+      const elem = getRootNode().querySelector(selector);
       if (elem !== observed) {
         observer.disconnect();
         observed = elem;
@@ -527,8 +528,13 @@ export function strongsHilights(classes: string[]) {
     .filter((c) => /^S_\w*\d+$/.test(c))
     .forEach((sclass, xx) => {
       const x = xx > 2 ? 2 : xx;
-      const sheet = document.styleSheets[document.styleSheets.length - 1];
-      const cssRuleTemplate = getCSS(`.matchingStrongs${x} {`);
+      const { styleSheets } = getRootNode();
+      const sheet = styleSheets[styleSheets.length - 1];
+      // Webapp builds scope every rule to #root (see scopeCssToRoot.cjs).
+      const cssRuleTemplate = getCSS(
+        `${Build.isWebApp ? '#root ' : ''}.matchingStrongs${x} {`,
+        styleSheets,
+      );
       if (cssRuleTemplate) {
         // Each Strong's module uses classes with different number
         // padding, so multiple rules are required for situations

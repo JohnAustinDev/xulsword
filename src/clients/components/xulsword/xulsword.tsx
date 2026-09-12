@@ -15,6 +15,7 @@ import {
   isIBTChildrensBible,
   iframeAutoHeightObserver,
 } from '../../common.ts';
+import { getRootElement, getRootNode } from '../../rootNode.ts';
 import { addClass, delayHandler, topHandle } from '../libxul/xul.tsx';
 import Button, { AnchorButton } from '../libxul/button.tsx';
 import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
@@ -218,16 +219,14 @@ export default class Xulsword
       func();
     });
     this.destroy = [];
-    document
-      .getElementById('root')
-      ?.classList.remove('controls-visible', 'player-visible');
+    getRootElement()?.classList.remove('controls-visible', 'player-visible');
   }
 
   // Mirrors the controls/player show-hide animation state onto #root so
   // bibleBrowser.css can react to it without a :has() selector.
   syncRootClasses() {
     const { showControls, audio } = this.state;
-    const rootElement = document.getElementById('root');
+    const rootElement = getRootElement();
     rootElement?.classList.toggle('controls-visible', !!showControls);
     rootElement?.classList.toggle('player-visible', !!audio.open);
   }
@@ -420,7 +419,7 @@ export default class Xulsword
             onChange={xulswordHandler}
             onKeyUp={(e: React.KeyboardEvent) => {
               if (e.key === 'Enter') {
-                const b = document.getElementById('xsSearchButton');
+                const b = getRootNode().getElementById('xsSearchButton');
                 if (b) b.click();
               }
             }}

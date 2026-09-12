@@ -63,12 +63,7 @@ phone) is that column inset itself, which is why no heading adds its own. */
   opacity: 0.8;
 }
 
-/* Body height is the iframe's height and is scrollable. Only when xulsword
- owns the document (see global-htm.css); a host page scrolls itself. */
-html.ownsDocument body {
-  height: 100%;
-  overflow-y: auto;
-}
+/* Document-level rules are in ownsDocument.css. */
 /* root is --min-height for multi-panel, otherwise it's unset */
 #root.multi-panel .viewport {
   height: calc(var(--min-height) - 76px);

@@ -8,6 +8,7 @@ import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
 import { cachePreload } from '../../common.ts';
 import log from '../../log.ts';
+import { getRootElement, getStyleParent } from '../../rootNode.ts';
 import renderToRoot from '../../controller.tsx';
 import Xulsword from '../../components/xulsword/xulsword.tsx';
 import socketConnect from '../preload.ts';
@@ -69,17 +70,15 @@ socket.on('connect', () => {
       settings.prefs.xulsword.scroll = { verseAt: 'center' };
     }
 
-    // Add CSS
+    // Custom CSS, added once rendering begins, since it styles the web-app
+    // and so belongs in its shadow root (see renderToRoot()).
     const { css } = settings;
+    let customStyle: Element | null = null;
     if (css) {
       const style = document.createElement('div');
       // style must be a child of div to pass through the sanitizer.
       sanitizeHTML(style, `<div><style>${css}</style></div>`);
-      if (style.firstElementChild?.firstElementChild) {
-        document
-          .querySelector('body')
-          ?.insertBefore(style.firstElementChild.firstElementChild, null);
-      }
+      customStyle = style.firstElementChild?.firstElementChild ?? null;
     }
 
     // DETERMINATION OF INITIAL BIBLE BROWSER STATE:
@@ -184,7 +183,8 @@ socket.on('connect', () => {
         renderToRoot(<Xulsword onWheelCapture={wheelCapture} />, {
           rootCssClass: 'bibleBrowser',
           onload: () => {
-            document.getElementById('root')?.classList.add('finished-loading');
+            if (customStyle) getStyleParent().appendChild(customStyle);
+            getRootElement()?.classList.add('finished-loading');
           },
         }).catch((er) => {
           log.error(er);

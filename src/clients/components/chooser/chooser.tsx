@@ -121,7 +121,11 @@ class Chooser
 
     this.wheelListener = (e: WheelEvent) => {
       const { current } = this.loadingRef;
-      if (current && e.target instanceof Node && current.contains(e.target))
+      // The listener is on the document, so e.target is retargeted to the
+      // shadow host when the web-app is in a shadow root. composedPath() still
+      // starts from the real target.
+      const [target] = e.composedPath();
+      if (current && target instanceof Node && current.contains(target))
         this.handler(e);
     };
 

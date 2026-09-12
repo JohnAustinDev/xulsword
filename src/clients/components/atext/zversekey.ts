@@ -18,6 +18,7 @@ import {
 } from '../../common.ts';
 import { G, GI } from '../../G.ts';
 import { delayHandler } from '../libxul/xul.tsx';
+import { getRootNode } from '../../rootNode.ts';
 
 import type {
   LocationVKType,
@@ -688,7 +689,7 @@ export function highlight(
       let sv = '';
       if (Build.isWebApp) {
         sv = 'sv';
-        const oldsv = document.getElementById('sv');
+        const oldsv = getRootNode().getElementById('sv');
         if (oldsv) oldsv.id = '';
       }
       if (verse) {
@@ -713,7 +714,7 @@ export function highlight(
               av.classList.add('hl');
               if (sv && !av.id) {
                 av.id = sv;
-                const elem = document.getElementById('sv');
+                const elem = getRootNode().getElementById('sv');
                 if (elem) {
                   // This was copied from atext.tsx. Not sure if it's still all
                   // needed in either place.

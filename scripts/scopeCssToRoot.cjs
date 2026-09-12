@@ -10,6 +10,13 @@
 // page, as the IBT website does, because the reset would restyle the entire
 // host page.
 //
+// The web-app is rendered into a shadow root there (see renderToRoot()
+// in controller.tsx), which already keeps the two pages' CSS apart. But a
+// shadow root contains no html or body for the resets to match, so they must
+// be rewritten to #root regardless. And in browsers without Shadow DOM the
+// web-app is rendered into the host page itself, so the rest of this still
+// applies.
+//
 // Rather than fork the stylesheets per target, this loader scopes them so a
 // single build is correct for both web targets. It runs on the raw CSS,
 // before css-loader, and only on the files webpack.config.mjs points at.
@@ -44,7 +51,8 @@
 //                                                   element, so only the
 //                                                   specificity changes)
 //     html.ownsDocument   ->  unchanged  (deliberately document-level; see
-//     html.ownsDocument body -> unchanged  global-htm.css)
+//     html.ownsDocument body -> unchanged  ownsDocument.css)
+//     :host               ->  unchanged  (the shadow host; see global-htm.css)
 //
 // @keyframes steps (from/to/50%) are not element selectors and are skipped in
 // both modes.
@@ -73,6 +81,12 @@ function isDocumentRoot(node) {
   );
 }
 
+// :host, :host(...) and :host-context(...) select the shadow host from inside
+// the web-app's shadow root, which is outside #root.
+function isShadowHost(node) {
+  return node.type === 'pseudo' && /^:host\b/i.test(node.value);
+}
+
 // Scope a single selector (never a comma-separated list; postcss splits those
 // for us). Returns the rewritten selector. `mode` is 'reset' or 'webapp'.
 function scopeSelector(selector, filename, mode) {
@@ -96,9 +110,14 @@ function scopeSelector(selector, filename, mode) {
 
     if (mode === 'webapp') {
       // xulsword's own CSS. Its html/body rules are deliberately
-      // document-level (the ownsDocument rules in global-htm.css and the
-      // @media print reset), so leave them exactly as written.
-      if (head.some(isDocumentRoot) || tail.some(isDocumentRoot)) {
+      // document-level (the ownsDocument rules and the @media print reset),
+      // and its :host rules style the shadow host, so leave them exactly as
+      // written.
+      if (
+        head.some(isDocumentRoot) ||
+        tail.some(isDocumentRoot) ||
+        head.some(isShadowHost)
+      ) {
         action = 'keep';
         return;
       }

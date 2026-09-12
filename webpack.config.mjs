@@ -25,6 +25,11 @@ const scopedCss = [
   /clients[\\/]webapp[\\/]blueprintSubset\.scss$/,
 ];
 
+// Stylesheets holding deliberately document-level rules (html.ownsDocument
+// ...). The web-app renders into a shadow root, where such rules could never
+// match, so for webappClients these go to the document <head> instead.
+const documentCss = /[\\/]ownsDocument\.css$/;
+
 // Webpack entry points to build, grouped by target.
 // prettier-ignore
 const builds = {
@@ -221,6 +226,16 @@ export default function (opts) {
 
     const useUrlLoader = ['png'];
 
+    // The web-app renders into a shadow root (see renderToRoot() in
+    // controller.tsx), which stylesheets linked from the document <head> can't
+    // reach. So its CSS is bundled into the JS, and style-loader adds each
+    // stylesheet as a <style> element through rootNode.ts, which places it in
+    // the shadow root.
+    const styleLoader = {
+      loader: 'style-loader',
+      options: { insert: path.join(srcPath, 'clients', 'rootNode.ts') },
+    };
+
     const devServerPort = env(
       build === 'appClients'
         ? 'WEBPACK_DEV_APP_PORT'
@@ -392,21 +407,29 @@ export default function (opts) {
           },
           // For webappClients, every stylesheet is rewritten by scopeCssToRoot
           // so that all of its rules apply inside #root and carry one extra id.
-          // Confining them matters because the IBT website renders the web-app
-          // directly into one of its own pages; the extra id matters because
-          // that host page's CSS would otherwise win on specificity. Applying
-          // it to EVERY rule is what keeps the web-app's internal cascade
-          // unchanged. Two modes: 'reset' rewrites the document-level
-          // third-party stylesheets (normalize.css and the Blueprint subset),
-          // 'webapp' lifts xulsword's own already-#root-scoped CSS. Other builds
-          // (the Electron app) are untouched and keep the plain rules below.
+          // The IBT website renders the web-app directly into one of its own
+          // pages, inside a shadow root where the host page's CSS can't reach.
+          // There, the scoping is what lets document-level resets (html, body)
+          // apply at all. In browsers without Shadow DOM, where the web-app is
+          // rendered into the page itself, the scoping also confines the rules
+          // to #root, and the extra id beats the host page's CSS on
+          // specificity. Applying it to EVERY rule is what keeps the web-app's
+          // internal cascade unchanged. Two modes: 'reset' rewrites the
+          // document-level third-party stylesheets (normalize.css and the
+          // Blueprint subset), 'webapp' lifts xulsword's own already-#root-
+          // scoped CSS. Other builds (the Electron app) are untouched and keep
+          // the plain rules below.
           ...(build === 'webappClients'
             ? [
+                {
+                  test: documentCss,
+                  use: ['style-loader', 'css-loader'],
+                },
                 {
                   test: /\.css$/,
                   include: scopedCss,
                   use: [
-                    MiniCssExtractPlugin.loader,
+                    styleLoader,
                     'css-loader',
                     {
                       loader: scopeCssToRootLoader,
@@ -418,7 +441,7 @@ export default function (opts) {
                   test: /\.scss$/,
                   include: scopedCss,
                   use: [
-                    MiniCssExtractPlugin.loader,
+                    styleLoader,
                     'css-loader',
                     {
                       loader: scopeCssToRootLoader,
@@ -432,9 +455,9 @@ export default function (opts) {
                 },
                 {
                   test: /\.css$/,
-                  exclude: scopedCss,
+                  exclude: [...scopedCss, documentCss],
                   use: [
-                    MiniCssExtractPlugin.loader,
+                    styleLoader,
                     'css-loader',
                     {
                       loader: scopeCssToRootLoader,
@@ -446,7 +469,7 @@ export default function (opts) {
                   test: /\.scss$/,
                   exclude: scopedCss,
                   use: [
-                    MiniCssExtractPlugin.loader,
+                    styleLoader,
                     'css-loader',
                     {
                       loader: scopeCssToRootLoader,
@@ -494,7 +517,7 @@ export default function (opts) {
       },
 
       plugins: [
-        new MiniCssExtractPlugin(),
+        build !== 'webappClients' ? new MiniCssExtractPlugin() : null,
         // While compiling the bundle, DefinePlugin will permanently set all build
         // and environment variables to these fixed values.
         new webpack.DefinePlugin(

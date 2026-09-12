@@ -25,6 +25,7 @@ import {
   strongsHilights,
   cancelStrongsHiLights,
 } from '../../common.ts';
+import { getRootElement } from '../../rootNode.ts';
 import Popup from '../../components/popup/popup.tsx';
 import * as H from '../../components/popup/popupParentH.ts';
 import Button from '../../components/libxul/button.tsx';
@@ -300,7 +301,7 @@ export default class Search
     this.destroy.forEach((d) => {
       d();
     });
-    const rootElement = document.getElementById('root');
+    const rootElement = getRootElement();
     rootElement?.classList.remove('search-expanded');
     rootElement?.classList.remove('help-open');
   }
@@ -309,7 +310,7 @@ export default class Search
   // bibleBrowser.css and search.css can react to it without :has().
   syncGlobalClasses() {
     const { moreLess, showHelp } = this.state;
-    const rootElement = document.getElementById('root');
+    const rootElement = getRootElement();
     rootElement?.classList.toggle('search-expanded', !!moreLess);
     rootElement?.classList.toggle('help-open', !!showHelp);
   }

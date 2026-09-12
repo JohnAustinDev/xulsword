@@ -14,6 +14,7 @@ import {
   windowArguments,
 } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
+import { getRootElement } from '../../rootNode.ts';
 import { topHandle, htmlAttribs } from '../libxul/xul.tsx';
 import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
 import Spacer from '../libxul/spacer.tsx';
@@ -157,7 +158,7 @@ class Popup
           const margin = 10;
           const pwidth = `calc(100vw - ${margin + margin + 4}px)`;
           popup.style.width = pwidth;
-          if (!document.querySelector(`html[dir='rtl']`)) {
+          if (getRootElement()?.dir !== 'rtl') {
             popup.style.left = '0px';
             const boxl = popup.getBoundingClientRect().left;
             popup.style.left = `${margin - boxl}px`;

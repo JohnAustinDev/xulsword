@@ -10,6 +10,7 @@ import {
   unBlockEvents,
 } from '../../common.ts';
 import log from '../../log.ts';
+import { getRootNode } from '../../rootNode.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 
 import type { BookGroupType } from '../../../type.ts';
@@ -60,7 +61,7 @@ export default function handler(
         }
 
         case 'bookgroupitem': {
-          const bookList = document.querySelector('.book-list');
+          const bookList = getRootNode().querySelector('.book-list');
           if (ep && bookList) {
             if (
               ep.clientY <

@@ -35,6 +35,7 @@ import {
 import { addTimingSpans } from '../../audioTiming.ts';
 import handlerH from './atextH.ts';
 import audioIcon from '../audioIcon/audioIcon.tsx';
+import { getRootNode } from '../../rootNode.ts';
 import '../../libsword.css';
 import './atext.css';
 
@@ -461,7 +462,7 @@ class Atext
           sbe.scrollLeft = 0;
         } else if (update && type === C.DICTIONARY) {
           const id = `${stringHash(modkey)}.${panelIndex}`;
-          const keyelem = document.getElementById(id);
+          const keyelem = getRootNode().getElementById(id);
           if (Build.isElectronApp && keyelem) {
             safeScrollIntoView(keyelem, nbe, undefined, 40);
             const dictlist = keyelem.parentNode

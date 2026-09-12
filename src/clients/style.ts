@@ -137,12 +137,22 @@ function insertModuleCSS(
 export default class DynamicStyleSheet {
   sheet: CSSStyleSheet | null;
 
+  // Chromium ignores @font-face rules inside a shadow root, so when root is a
+  // ShadowRoot the font faces get a sheet of their own in the document.
+  fontSheet: CSSStyleSheet | null;
+
   style: StyleType;
 
-  constructor(doc: Document) {
-    const style = doc.createElement('style');
-    doc.head.appendChild(style);
+  constructor(root: Document | ShadowRoot) {
+    const style = document.createElement('style');
+    (root === document ? document.head : root).appendChild(style);
     this.sheet = style.sheet;
+    this.fontSheet = this.sheet;
+    if (root !== document) {
+      const fontStyle = document.createElement('style');
+      document.head.appendChild(fontStyle);
+      this.fontSheet = fontStyle.sheet;
+    }
     const module = { default: G.ModuleConfigDefault } as Record<
       string,
       ConfigType
@@ -158,7 +168,7 @@ export default class DynamicStyleSheet {
   }
 
   update(styleConfigs?: StyleType) {
-    const { sheet } = this;
+    const { sheet, fontSheet } = this;
 
     const renderPromise = new RenderPromise(() => {
       this.update(styleConfigs);
@@ -171,9 +181,12 @@ export default class DynamicStyleSheet {
     ) as typeof S.style.style;
     const style = styleConfigs || prefStyleConfigs;
     const classPrefixes = ['cs'];
-    if (sheet) {
+    if (sheet && fontSheet) {
       while (sheet.cssRules.length) {
         sheet.deleteRule(0);
+      }
+      while (fontSheet.cssRules.length) {
+        fontSheet.deleteRule(0);
       }
       classPrefixes.forEach((prefix) => {
         Object.entries(this.style).forEach((entry) => {
@@ -230,7 +243,7 @@ export default class DynamicStyleSheet {
           const rule = `@font-face {font-family:${normalizeFontFamily(
             fontFamily,
           )}; src:url("${url2}"); font-display: swap;}`;
-          sheet.insertRule(rule, sheet.cssRules.length);
+          fontSheet.insertRule(rule, fontSheet.cssRules.length);
         }
       });
 

@@ -1,0 +1,7 @@
+/* Body height is the iframe's height and is scrollable. Only when xulsword
+ owns the document (see src/clients/ownsDocument.css); a host page scrolls
+ itself. */
+html.ownsDocument body {
+  height: 100%;
+  overflow-y: auto;
+}

@@ -4,6 +4,7 @@ import { b64toBlob } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import { functionalComponentRenderPromise, printRefs } from '../../common.ts';
+import { getRootElement } from '../../rootNode.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button.tsx';
 import Spacer from '../libxul/spacer.tsx';
@@ -39,7 +40,7 @@ export default function Print(props: PrintProps) {
   // Mirrors whether the .print element (vs. the PDF preview) is showing onto
   // #root, so print.css can react to it without a :has() selector.
   useEffect(() => {
-    const root = document.getElementById('root');
+    const root = getRootElement();
     root?.classList.toggle('printing', !iframeFilePath);
     return () => {
       root?.classList.remove('printing');

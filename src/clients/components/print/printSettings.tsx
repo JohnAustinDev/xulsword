@@ -15,6 +15,7 @@ import {
   iframeAutoHeightObserver,
   doUntilDone,
 } from '../../common.ts';
+import { getRootElement, getRootNode } from '../../rootNode.ts';
 import log from '../../log.ts';
 import Icon from '../libxul/icon.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
@@ -437,7 +438,7 @@ export default class PrintSettings extends React.Component<
     const { print } = props;
     const { printContainerRef } = printRefs;
     const { pageable } = print;
-    const settingsRef = document.querySelector(
+    const settingsRef = getRootNode().querySelector(
       '#root .printsettings-container',
     );
     if (settingsRef && printContainerRef.current) {
@@ -456,7 +457,7 @@ export default class PrintSettings extends React.Component<
       const realPaperH = paperSize[landscape ? 'w' : 'h'];
 
       // Print container's height is only constrained in wide screen mode.
-      const rootH = document.getElementById('root');
+      const rootH = getRootElement();
       const winHeight = rootH ? rootH.offsetHeight : window.innerHeight;
       const pageViewMaxH = isWideScreen
         ? winHeight - 2 * C.UI.Print.viewMargin
@@ -529,7 +530,7 @@ export default class PrintSettings extends React.Component<
     const { current } = printRefs.printContainerRef;
     if (!current) return;
     const { offsetWidth } = current;
-    const lastColumn = document.getElementById('adjustLastColumn');
+    const lastColumn = getRootNode().getElementById('adjustLastColumn');
     if (lastColumn) lastColumn.remove();
     current.scrollLeft = 0;
     const scrollLeftMax = current.scrollWidth - current.offsetWidth;

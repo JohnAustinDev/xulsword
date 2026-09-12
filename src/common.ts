@@ -841,10 +841,13 @@ export function cleanDoubleClickSelection(sel: string) {
 // specified.
 export function getCSS(
   selectorStr: string,
-  aSheet?: CSSStyleSheet,
+  aSheet?: CSSStyleSheet | StyleSheetList,
 ): { sheet: CSSStyleSheet; rule: CSSRule; index: number } | null {
   const selector = new RegExp(`^${escapeRE(selectorStr)}`);
-  const sheets = aSheet ? [aSheet] : Array.from(document.styleSheets);
+  const sheets =
+    aSheet && 'cssRules' in aSheet
+      ? [aSheet]
+      : Array.from(aSheet ?? document.styleSheets);
   let result: { sheet: CSSStyleSheet; rule: CSSRule; index: number } | null =
     null;
   sheets.forEach((sheet) => {
