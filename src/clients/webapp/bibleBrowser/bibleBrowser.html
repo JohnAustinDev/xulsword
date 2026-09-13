@@ -7,46 +7,31 @@
     <meta name="MobileOptimized" content="width" />
     <meta name="HandheldFriendly" content="true" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      media="all"
+      href="/src/clients/webapp/bibleBrowser/hostHead.css"
+    />
+    <link
+      rel="stylesheet"
+      media="all"
+      href="/src/clients/webapp/bibleBrowser/test.css"
+    />
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f9;
+      button {
+        background-color: #e0e0e0;
         color: #333;
-        margin: 0;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
       }
-      .container {
-        max-width: 1150px;
-        width: 100%;
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      }
-      h1 {
-        color: rgb(0, 200, 0);
-      }
-      p {
-        line-height: 1.6;
-      }
-      iframe {
-        display: block;
-        width: 100%;
-        height: 400px;
-        border: 2px dashed rgb(0, 200, 0);
-        border-radius: 4px;
-        margin: 20px 0;
-      }
-      .box {
-        display: block !important;
+      button.active {
+        background-color: #007bff;
+        color: #fff;
       }
     </style>
   </head>
   <body>
+    <button class="active" id="ownsDocumentButton">Show iframe view</button>
     <div class="container box">
-      <h1>Lorem Ipsum Dolor</h1>
+      <h1>Host Embedded Bible Browser Implementation</h1>
       <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin ac
         feugiat lorem. Vestibulum sed feugiat orci, nec porttitor leo. Duis
@@ -55,7 +40,6 @@
       </p>
 
       <div id="root">
-        <!-- id=root is expected by global-html.css -->
         <div id="bibleBrowser_1" data-react-component="bibleBrowser"></div>
       </div>
 
@@ -66,5 +50,31 @@
         in nulla.
       </p>
     </div>
+    <script>
+      onload = () => {
+        const [html] = document.getElementsByTagName('HTML');
+        const button = document.getElementById('ownsDocumentButton');
+        const root = document.getElementById('root');
+        button.addEventListener('click', (e) => {
+          button.classList.toggle('active');
+          html.classList.toggle(
+            'ownsDocument',
+            button.classList.contains('active'),
+          );
+          const { shadowRoot } = root;
+          if (shadowRoot) {
+            const shroot = shadowRoot.querySelector('#root');
+            if (shroot)
+              shroot.classList.toggle(
+                'ownsDocument',
+                button.classList.contains('active'),
+              );
+          }
+        });
+        const inIframe = window.self !== window.top;
+        if (!inIframe) button.click();
+        else html.classList.add('in-iframe');
+      };
+    </script>
   </body>
 </html>

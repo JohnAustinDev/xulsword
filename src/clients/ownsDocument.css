@@ -1,21 +1,31 @@
-/* By default layouts should fill their windows without scrollbars.
- These are the only rules in xulsword that size the host document, and they are
- gated on the ownsDocument class, because the web-app may be embedded in a
- some webpage (which will NOT have the ownsDocument class) and there we should
- never mess with their page!
- These rules must apply to the document itself, so for the web-app, which
- renders into a shadow root, webpack adds all ownsDocument.css files to the
- document <head> rather than to the shadow root (see webpack.config.mjs). */
+/* These rules apply to the document itself, not within a webapp shadow root.
+ Webpack adds all ownsDocument.css files to the document <head>.
+*/
+
+/* Be default, an owned document's top is scrollable */
 html.ownsDocument,
 html.ownsDocument body {
   height: 100%;
   width: 100%;
   margin: 0;
   padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* But in Electron or auto-height mode (set by bibleBrowserParent.js) 
+the top should NOT be scrollable. */
+html.ownsDocument.auto-height,
+html.ownsDocument:has(.isElectron),
+html.ownsDocument.auto-height body,
+html.ownsDocument:has(.isElectron) body {
   overflow: clip;
 }
+
+/* fitToContent is set on #root by controller.tsx */
 html.ownsDocument:has(#root.fitToContent),
 html.ownsDocument:has(#root.fitToContent) body {
   width: fit-content;
   height: fit-content;
 }
+

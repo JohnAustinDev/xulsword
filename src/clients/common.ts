@@ -645,7 +645,7 @@ export function doBlockEvents() {
       C.UI.Events.maxBlockTime,
     );
   if (Build.isDevelopment)
-    document
+    getRootNode()
       .querySelectorAll(`.atext`)
       .forEach((el) => ((el as HTMLDivElement).style.border = `2px solid red`));
 }
@@ -663,7 +663,7 @@ export function unBlockEvents() {
   if (UnblockEventsTO) clearInterval(UnblockEventsTO);
   UnblockEventsTO = null;
   if (Build.isDevelopment)
-    document
+    getRootNode()
       .querySelectorAll(`.atext`)
       .forEach((el) => ((el as HTMLDivElement).style.border = ''));
 }

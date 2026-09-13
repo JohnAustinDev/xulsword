@@ -159,7 +159,7 @@ export function onTimeUpdate(
           : tracking;
       if (trackingIsOn) {
         activeItems.forEach((item) => {
-          document
+          getRootNode()
             .querySelectorAll(`div.sb span[data-id="${item.id}"]`)
             .forEach((e) => {
               const el = e as HTMLElement;

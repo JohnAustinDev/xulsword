@@ -347,3 +347,46 @@ export function updateLinks(
     }
   }
 }
+
+// Scope all CSS selectors with #root (plus another #root to beat packaged
+// selectors which were already scoped to #root).
+export function scopeCssToRoot(cssString: string) {
+  const scope = '#root';
+  // Split by opening braces to separate selector zones from style blocks
+  const parts = cssString.split('{');
+  const result = [];
+
+  for (let i = 0; i < parts.length - 1; i++) {
+    const currentPart = parts[i];
+
+    // Find where the previous style block ended (the last closing brace)
+    const lastClosingBraceIdx = currentPart.lastIndexOf('}');
+
+    // Extract the raw selectors segment
+    const selectorsPart = currentPart.slice(lastClosingBraceIdx + 1);
+    const beforeSelectors = currentPart.slice(0, lastClosingBraceIdx + 1);
+
+    // If it's a valid selector string, process its comma-separated values
+    if (selectorsPart.trim()) {
+      const modifiedSelectors = selectorsPart
+        .split(',')
+        .map((selector) => {
+          const trimmed = selector.trim();
+          if (!trimmed) return '';
+          return trimmed.startsWith(scope)
+            ? `${scope}${scope}${trimmed}`
+            : `${scope}${scope} ${trimmed}`;
+        })
+        .filter(Boolean);
+
+      // Reconstruct this section with the newly scoped selectors
+      result.push(beforeSelectors + '\n' + modifiedSelectors.join(', ') + ' ');
+    } else {
+      result.push(currentPart);
+    }
+  }
+
+  // Append the final remaining style block closing piece
+  result.push(parts[parts.length - 1]);
+  return result.join('{');
+}

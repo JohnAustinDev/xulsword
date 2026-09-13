@@ -14,7 +14,7 @@ import {
   windowArguments,
 } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { getRootElement } from '../../rootNode.ts';
+import { getRootElement, getRootNode } from '../../rootNode.ts';
 import { topHandle, htmlAttribs } from '../libxul/xul.tsx';
 import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
 import Spacer from '../libxul/spacer.tsx';
@@ -156,16 +156,12 @@ class Popup
         // screen.
         if (Build.isWebApp && window.innerWidth <= C.UI.WebApp.mobileW) {
           const margin = 10;
-          const pwidth = `calc(100vw - ${margin + margin + 4}px)`;
+          const pwidth = `calc(100% - ${margin + margin}px)`;
           popup.style.width = pwidth;
           if (getRootElement()?.dir !== 'rtl') {
-            popup.style.left = '0px';
-            const boxl = popup.getBoundingClientRect().left;
-            popup.style.left = `${margin - boxl}px`;
+            popup.style.left = `${margin}px`;
           } else {
-            popup.style.right = '0px';
-            const boxl = popup.getBoundingClientRect().right;
-            popup.style.right = `${boxl - margin}px`;
+            popup.style.right = `${margin}px`;
           }
         }
 
@@ -255,7 +251,7 @@ class Popup
             if (Build.isWebApp && pointerType && pointerType !== 'mouse')
               setTimeout(
                 () =>
-                  document
+                  getRootNode()
                     .querySelector('.popupheader')
                     ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
                 100,

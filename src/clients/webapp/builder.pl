@@ -42,6 +42,10 @@ if ("$?" eq "0") {
   my $cmd = "cp $xulsword/src/clients/webapp/bibleBrowser/bibleBrowserParent.js '$dist'";
   print $cmd . "\n";
   `$cmd`;
+  # Copy hostHead.css.js to dist
+  my $cmd = "cp $xulsword/src/clients/webapp/bibleBrowser/hostHead.css '$dist'";
+  print $cmd . "\n";
+  `$cmd`;
   # Copy webappClients js to dist
   $cmd = "cp $xulsword/build/webapp/dist/webappClients/* '$dist'";
   print $cmd . "\n";

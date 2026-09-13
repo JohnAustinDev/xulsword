@@ -58,15 +58,13 @@ phone) is that column inset itself, which is why no heading adds its own. */
   left: 0px;
   right: 0px;
   z-index: 9999;
-  background: url('../../images/loader.gif') 50% 50% no-repeat
-    rgb(249, 249, 249);
+  background: var(--loader-url) 50% 50% no-repeat rgb(249, 249, 249);
   opacity: 0.8;
 }
 
-/* Document-level rules are in ownsDocument.css. */
-/* root is --min-height for multi-panel, otherwise it's unset */
+/* root is --multipanel-height for multi-panel, otherwise it's unset */
 #root.multi-panel .viewport {
-  height: calc(var(--min-height) - 76px);
+  height: var(--multipanel-height);
 }
 #root {
   height: unset;

@@ -1,0 +1,34 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  color: #333;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.container {
+  max-width: 1150px;
+  width: 100%;
+  background: #fff;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+h1 {
+  color: green;
+}
+html.ownsDocument h1 {
+  color: red;
+}
+p {
+  line-height: 1.6;
+}
+iframe {
+  display: block;
+  width: 100%;
+  border: 2px dashed #e24ace;
+  border-radius: 4px;
+  margin: 20px 0;
+}

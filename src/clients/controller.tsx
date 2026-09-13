@@ -659,6 +659,9 @@ export default async function renderToRoot(
   if (rootElement) {
     rootElement.className = classes.join(' ');
     rootElement.dir = G.i18n.t('locale_direction');
+    const html = document.querySelector('html');
+    if (html && html.classList.contains('ownsDocument'))
+      rootElement.classList.add('ownsDocument');
   }
 
   const root = createRoot(rootElement as HTMLElement);

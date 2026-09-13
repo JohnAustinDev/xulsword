@@ -1,0 +1,14 @@
+/* This CSS could go in ownsDocument.css, which is loaded to head by
+Javascript, but that results in visible flashes as the host page loads.
+This file must be loaded in the host page's <head> with <link>. */
+
+/* See the fallback in bibleBrowser.tsx for browsers without :has support. */
+@supports selector(:has(*)) {
+  html.ownsDocument *:not(#root, :has(#root)) {
+    display: none;
+  }
+}
+
+html.ownsDocument:not(.finished-loading):after {
+  background: var(--loader-url) 50% 50% no-repeat rgb(249, 249, 249);
+}

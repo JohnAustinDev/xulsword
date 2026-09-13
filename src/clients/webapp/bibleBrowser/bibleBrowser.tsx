@@ -17,6 +17,7 @@ import {
   writeSettingsToPrefsStores,
   getComponentSettings,
   getReactComponents,
+  scopeCssToRoot,
 } from '../common.ts';
 import defaultSettings, {
   BibleBrowserData,
@@ -77,7 +78,7 @@ socket.on('connect', () => {
     if (css) {
       const style = document.createElement('div');
       // style must be a child of div to pass through the sanitizer.
-      sanitizeHTML(style, `<div><style>${css}</style></div>`);
+      sanitizeHTML(style, `<div><style>${scopeCssToRoot(css)}</style></div>`);
       customStyle = style.firstElementChild?.firstElementChild ?? null;
     }
 
@@ -192,4 +193,39 @@ socket.on('connect', () => {
       })
       .catch((er) => log.error(er));
   }
+});
+
+// When running in an iframe on a page with bibleBrowserParent.js, the parent
+// tells this document whether to use 'auto-height' styling (see
+// ownsDocument.css). Request the mode too, in case the parent's message was
+// sent before this listener existed.
+if (window.parent !== window) {
+  const heightModes = ['auto-height'];
+  window.addEventListener('message', (e) => {
+    if (
+      e.source === window.parent &&
+      e.data?.type === 'iframeHeightMode' &&
+      heightModes.includes(e.data.mode)
+    ) {
+      const html = document.documentElement;
+      html.classList.remove(...heightModes);
+      if (heightModes.includes(e.data.mode)) html.classList.add(e.data.mode);
+    }
+  });
+  window.parent.postMessage({ type: 'iframeHeightModeRequest' }, '*');
+}
+
+// :has fallback for ownsDocument.css: html.ownsDocument *:not(#root, :has(#root))
+// Browsers without :has drop that entire rule.
+window.addEventListener('load', () => {
+  if (typeof CSS !== 'undefined' && CSS.supports('selector(:has(*))')) return;
+  const root = document.getElementById('root');
+  if (!root) return;
+  const hasRootClass = 'xs-has-root';
+  for (let e = root.parentElement; e; e = e.parentElement) {
+    e.classList.add(hasRootClass);
+  }
+  const style = document.createElement('style');
+  style.textContent = `html.ownsDocument *:not(#root):not(.${hasRootClass}) { display: none; }`;
+  document.head.appendChild(style);
 });

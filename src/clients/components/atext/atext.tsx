@@ -537,7 +537,7 @@ class Atext
               ScrollOneTimeID = oneTimeID;
               setTimeout(
                 () =>
-                  document
+                  getRootNode()
                     .querySelector(selector)
                     ?.scrollIntoView(scrollIntoView),
                 100,

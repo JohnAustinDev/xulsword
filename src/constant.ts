@@ -197,6 +197,7 @@ const C = {
         v11n: 'KJV',
         label: 'none',
         labelClass: 'none',
+        noTab: false,
       } as TabType,
       MConfigType: {
         direction: 'ltr',
