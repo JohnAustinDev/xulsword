@@ -156,12 +156,22 @@ class Popup
         // screen.
         if (Build.isWebApp && window.innerWidth <= C.UI.WebApp.mobileW) {
           const margin = 10;
-          const pwidth = `calc(100% - ${margin + margin}px)`;
-          popup.style.width = pwidth;
-          if (getRootElement()?.dir !== 'rtl') {
-            popup.style.left = `${margin}px`;
-          } else {
-            popup.style.right = `${margin}px`;
+          const textarea = getRootElement()?.querySelector(
+            '.textarea',
+          ) as HTMLElement | null;
+          if (textarea) {
+            const textAreaBox = textarea.getBoundingClientRect();
+            const pwidth = `${textarea.offsetWidth - margin - margin}px`;
+            popup.style.width = pwidth;
+            if (getRootElement()?.dir !== 'rtl') {
+              popup.style.left = '0';
+              const popupLeft = popup.getBoundingClientRect().left;
+              popup.style.left = `${margin + textAreaBox.left - popupLeft}px`;
+            } else {
+              popup.style.right = '0';
+              const popupRight = popup.getBoundingClientRect().right;
+              popup.style.right = `${margin - textAreaBox.right + popupRight}px`;
+            }
           }
         }
 
@@ -274,8 +284,8 @@ class Popup
       <select
         id={`select-${module || feature}`}
         key={mods
-      .concat([selected || '', module || '', feature || ''])
-      .join('.')}
+          .concat([selected || '', module || '', feature || ''])
+          .join('.')}
         className="popup-mod-select"
         value={selected || undefined}
         data-module={module}

@@ -620,7 +620,7 @@ export default class PrintSettings extends React.Component<
 
       // The web-app CSS has #root prefixed to every selector during packaging
       // so add it to these rules too if needed.
-      const waroot = Build.isWebApp ? '#root ' : '';
+      const waroot = Build.isWebApp ? '#root#root ' : '';
       style = `
       ${waroot}.pageView {
         width: ${i.pageViewW}px;
