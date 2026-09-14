@@ -703,7 +703,7 @@ export default class Xulsword
       >
         {Build.isWebApp && (
           <>
-            <Hbox id="controls" pack="start">
+            <Hbox id="controls" pack="center">
               <Vbox id="control-rows" align="start" flex="2">
                 <div
                   className={`controls-animation${showControls ? '' : ' hide'}`}

@@ -6,7 +6,6 @@ import { Analytics } from '../analytics.ts';
 import { createNodeList, getProps, updateLinks } from '../web-common.ts';
 import SelectOR from '../components/libxul/selectOR.tsx';
 
-import type { PrefValue } from '../../type.ts';
 import type {
   SelectORMType,
   SelectORProps,
