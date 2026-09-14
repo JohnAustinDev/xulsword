@@ -141,7 +141,8 @@ export const parallelism = 10;
 export default function (opts) {
   const envFlags = ['all', 'packaged', 'development', 'production'];
 
-  const { rootPath, srcPath, appDistPath, webappPath, webappDistPath } = projectPaths;
+  const { rootPath, srcPath, appDistPath, webappPath, webappDistPath } =
+    projectPaths;
 
   const { all, packaged } = opts;
   if (all) {
@@ -365,7 +366,7 @@ export default function (opts) {
           library: path.join(webappDistPath, 'library'),
         }[build],
         publicPath: ['webapp', 'widgets', 'library'].includes(build)
-          ? env('WEBAPP_PUBLIC_DIST')
+          ? path.join(env('WEBAPP_PUBLIC_DIST'), build, path.sep)
           : './',
         ...(build === 'library'
           ? { library: 'xulsword', globalObject: 'globalThis' }
@@ -525,8 +526,12 @@ export default function (opts) {
             'Build.isElectronApp': ['appSrv', 'preload', 'appClients'].includes(
               build,
             ),
-            'Build.isWebApp': ['webappSrv', 'webapp', 'widgets'].includes(build),
-            'Build.isClient': ['appClients', 'webapp', 'widgets'].includes(build),
+            'Build.isWebApp': ['webappSrv', 'webapp', 'widgets'].includes(
+              build,
+            ),
+            'Build.isClient': ['appClients', 'webapp', 'widgets'].includes(
+              build,
+            ),
             'Build.isServer': ['appSrv', 'webappSrv'].includes(build),
             'Build.isPackaged': !!packaged,
             ...Object.entries(defaultEnvironment).reduce((entries, entry) => {
@@ -580,7 +585,9 @@ export default function (opts) {
       ]
         .concat(
           builds[build][1].map(() => {
-            return allowgzip && production && ['webapp', 'widgets'].includes(build)
+            return allowgzip &&
+              production &&
+              ['webapp', 'widgets'].includes(build)
               ? new CompressionPlugin({
                   deleteOriginalAssets: true,
                   threshold: 30000,
@@ -596,28 +603,11 @@ export default function (opts) {
               return new HtmlWebpackPlugin({
                 filename: `${name}.html`,
                 scriptLoading: 'defer',
-                template: path.join(
-                  {
-                    appClients: path.join(
-                      srcPath,
-                      'clients',
-                      'app',
-                      'root.html',
-                    ),
-                    webapp: path.join(
-                      srcPath,
-                      'clients',
-                      name,
-                      `${name}.html`,
-                    ),
-                    widgets: path.join(
-                      srcPath,
-                      'clients',
-                      name,
-                      `${name}.html`,
-                    ),
-                  }[build],
-                ),
+                template: {
+                  appClients: path.join(srcPath, 'clients', 'app', 'root.html'),
+                  webapp: path.join(srcPath, 'clients', name, `${name}.html`),
+                  widgets: path.join(srcPath, 'clients', name, `${name}.html`),
+                }[build],
                 chunks: [name],
               });
             }
@@ -661,10 +651,7 @@ export default function (opts) {
                       .join('\n'),
                   );
                   console.log(
-                    [
-                      'test.html',
-                      'test-fixed.html',
-                    ]
+                    ['test.html', 'test-fixed.html']
                       .map((file) =>
                         chalk.bgGreen.bold(
                           `localhost:${devServerPort}/src/clients/webapp/${file}`,
