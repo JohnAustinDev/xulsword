@@ -2,9 +2,9 @@ import React from 'react';
 import {
   isRepoLocal,
   repositoryModuleKey,
-  sanitizeHTML,
   stringHash,
 } from '../../../common.ts';
+import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import {

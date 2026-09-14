@@ -1,9 +1,6 @@
 import React from 'react';
-import {
-  sanitizeHTML,
-  setGlobalPanels,
-  validateModulePrefs,
-} from '../../common.ts';
+import { setGlobalPanels, validateModulePrefs } from '../../common.ts';
+import { sanitizeHTML } from '../../sanitizeHTML.ts';
 import S from '../../defaultPrefs.ts';
 import C from '../../constant.ts';
 import { cachePreload } from '../common.ts';
@@ -61,6 +58,7 @@ socket.on('connect', () => {
       bibleBrowserComp,
       defaultSettings,
     ) as BibleBrowserData;
+    setDefaultBibleBrowserPrefs(settings.prefs);
 
     // Since servers do not receive URL fragments from browsers, URL
     // fragments cannot be handled by the server, so handle now.

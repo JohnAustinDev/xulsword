@@ -1,5 +1,6 @@
 import type React from 'react';
-import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
+import { getSwordOptions, ofClass } from '../../../common.ts';
+import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import C from '../../../constant.ts';
 import { GI } from '../../G.ts';
 import {

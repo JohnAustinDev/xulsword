@@ -62,7 +62,9 @@ type FamilyNodes = {
 // be available.
 //
 // The nodeLists prop is a list of versekey mods to select from which need
-// NOT BE INSTALLED since the module and node list is provided.
+// NOT BE INSTALLED since the module and node list is provided. If a nodeList
+// module provided here is also listed in otherMods, the installed module's
+// nodeList will be IGNORED and the provided nodelist will be used.
 //
 // If initialORM selects a module which is not installed, and also has no
 // corresponding nodeLists[] entry, all selectors but the module selector
@@ -97,7 +99,7 @@ export default class SelectOR
     const defaultORM: SelectORMType = {
       otherMod:
         otherMods?.[0] ||
-        nodeLists?.[0].otherMod ||
+        (nodeLists?.[0] && nodeLists?.[0].otherMod) ||
         G.Tabs.find((t) => !t.isVerseKey)?.module ||
         '',
       keys: [],
@@ -215,39 +217,42 @@ export default class SelectOR
     const { otherMod, keys } = selection;
 
     // Get modules to be made available for selection, and their node lists:
-    const list: NodeListOR[] = nodeLists || [];
+    const list: NodeListOR[] = nodeLists?.slice() ?? [];
     const propNodeListsMods: string[] = (
       otherModsProp && !otherModsProp.length
         ? []
         : otherModsProp || G.Tabs.map((t) => t.module)
     ).filter((m) => m && m in G.Tab && !G.Tab[m].isVerseKey);
 
-    const propNodeLists: NodeListOR[] = propNodeListsMods.map((m) => {
-      let nodes: TreeNodeInfo[] = [];
-      if (G.Tab[m].tabType === 'Genbks') {
-        nodes = GI.genBookTreeNodes(
-          [
-            {
-              id: m,
-              label: m,
-            },
-          ],
-          renderPromise,
-          m,
-        );
-      } else if (G.Tab[m].tabType === 'Dicts') {
-        const keylist = GI.getAllDictionaryKeyList([], renderPromise, m);
-        if (!renderPromise.waiting()) nodes = dictTreeNodes(keylist, m);
+    const propNodeLists: (NodeListOR | null)[] = propNodeListsMods.map((m) => {
+      if (!list.some((l) => l.otherMod === m)) {
+        let nodes: TreeNodeInfo[] = [];
+        if (G.Tab[m].tabType === 'Genbks') {
+          nodes = GI.genBookTreeNodes(
+            [
+              {
+                id: m,
+                label: m,
+              },
+            ],
+            renderPromise,
+            m,
+          );
+        } else if (G.Tab[m].tabType === 'Dicts') {
+          const keylist = GI.getAllDictionaryKeyList([], renderPromise, m);
+          if (!renderPromise.waiting()) nodes = dictTreeNodes(keylist, m);
+        }
+        return {
+          otherMod: m,
+          label: G.Tab[m].label,
+          labelClass: G.Tab[m].labelClass,
+          nodes,
+        };
       }
-      return {
-        otherMod: m,
-        label: G.Tab[m].label,
-        labelClass: G.Tab[m].labelClass,
-        nodes,
-      };
+      return null;
     });
 
-    list.push(...propNodeLists);
+    list.push(...(propNodeLists.filter(Boolean) as NodeListOR[]));
 
     const isDictMod = otherMod in G.Tab && G.Tab[otherMod].tabType === 'Dicts';
     let nodes = list.find((l) => l.otherMod === otherMod)?.nodes || [];
@@ -357,7 +362,7 @@ export default class SelectOR
 
     // Child selector
     if (childNodes.length) {
-      let selectedValue = enableMultipleSelection ? keys : keys[0];
+      let selectedValue = enableMultipleSelection ? keys : (keys[0] ?? '');
       if (
         typeof selectedValue === 'string' &&
         (!selectedValue || selectedValue.endsWith(C.GBKSEP))
@@ -376,7 +381,7 @@ export default class SelectOR
       selects.push(
         <Menulist
           className="select-child"
-          key={['ch', parentNode ? parentNode.id : module].join('.')}
+          key={['ch', parentNode ? parentNode.id : otherMod].join('.')}
           multiple={!!enableMultipleSelection}
           value={selectedValue}
           disabled={disabled || !selectedModuleIsInstalled || numChildren < 2}

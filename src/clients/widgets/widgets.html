@@ -7,21 +7,16 @@
     <meta name="MobileOptimized" content="width" />
     <meta name="HandheldFriendly" content="true" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <style>
-      body > div {
-        border: 1px solid grey;
-        padding: 1em;
-        margin-bottom: 1em;
-        width: fit-content;
-      }
-    </style>
+    <link rel="stylesheet" media="all" href="/src/clients/webapp/test.css">
   </head>
   <body>
-    <div id="selectOR_1" data-react-component="selectOR"></div>
-
-    <div id="selectVK_1" data-react-component="selectVK"></div>
-
-    <div id="selectMenulist_1" data-react-component="selectMenulist"></div>
+    <h1>Select Other (selectOR)</h1>
+    <div id="selectOR_1" class="widget" data-react-component="selectOR"></div>
+    <br>
+    <h1>Select VerseKey (selectVK)</h1>
+    <div id="selectVK_1" class="widget" data-react-component="selectVK"></div>
+    <br>
+    <h1>Select Menu List (selectMenulist)</h1>
+    <div id="selectMenulist_1" class="widget" data-react-component="selectMenulist"></div>
   </body>
 </html>

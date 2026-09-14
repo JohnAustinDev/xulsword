@@ -4,7 +4,7 @@ import { functionalComponentRenderPromise } from '../common.ts';
 import { Analytics } from '../analytics.ts';
 import Menulist from '../components/libxul/menulist.tsx';
 import { delayHandler } from '../components/libxul/xul.tsx';
-import { getProps } from '../web-common.ts';
+import { fadeTo, getProps } from '../web-common.ts';
 
 import type { ChangeEvent, ReactNode } from 'react';
 import type { MenulistProps } from '../components/libxul/menulist.tsx';
@@ -152,20 +152,22 @@ export default function WidgetMenulist(
     const cto = `animate.${compid}`;
     const elem = document.getElementById(compid)?.parentElement;
     if (elem) {
-      const jels = jQuery(elem.querySelectorAll('.update_url a, a.update_url'));
+      const els = elem.querySelectorAll<HTMLElement>(
+        '.update_url a, a.update_url',
+      );
       if (inOut) {
         delayHandler(
           globalThis,
-          (j) => {
-            j.fadeTo(1000, 1);
+          (e) => {
+            fadeTo(e, 1, 1000);
             (globalThis as any)[cto] = null;
           },
-          [jels],
+          [els],
           250,
           cto,
         );
       } else if (!(globalThis as any)[cto]) {
-        jels.fadeTo(1, 0);
+        fadeTo(els, 0, 0);
       }
     }
   }
@@ -180,7 +182,7 @@ export default function WidgetMenulist(
       const { option } = d;
       return (
         <option key={randomID()} value={dataItemIndex}>
-          {(option as FileItem).label}
+          {typeof option === 'string' ? option : option.label}
         </option>
       );
     } else if ('optgroup' in d) {

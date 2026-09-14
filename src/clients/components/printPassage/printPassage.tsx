@@ -2,7 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
-import { diff, randomID, sanitizeHTML, stringHash } from '../../../common.ts';
+import { diff, randomID, stringHash } from '../../../common.ts';
+import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import {

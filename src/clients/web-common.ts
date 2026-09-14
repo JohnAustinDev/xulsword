@@ -13,10 +13,7 @@ import Prefs from './web-prefs.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { PrefObject, PrefRoot, PrefValue } from '../type.ts';
 import type { SelectORMType } from './components/libxul/selectOR.tsx';
-import {
-  setDefaultBibleBrowserPrefs,
-  type BibleBrowserData,
-} from './webapp/defaultSettings.ts';
+import type { BibleBrowserData } from './webapp/defaultSettings.ts';
 import type {
   ChaplistType,
   WidgetMenulistData,
@@ -70,10 +67,6 @@ export function getComponentSettings(
     }
     if (typeof data !== 'undefined') {
       (data as any).component = reactComponent;
-      if (data.component === 'bibleBrowser')
-        setDefaultBibleBrowserPrefs(
-          data.settings.prefs as BibleBrowserData['settings']['prefs'],
-        );
       return data;
     }
   }
@@ -88,8 +81,9 @@ export function getProps<T extends Record<string, any>>(
   const newProps = {};
   Object.entries(defaultProps).forEach((entry) => {
     const [prop, v] = entry;
-    (newProps as any)[prop] =
-      typeof props[prop] !== 'undefined' ? props[prop] : v;
+    if (prop)
+      (newProps as any)[prop] =
+        typeof props[prop] !== 'undefined' ? props[prop] : v;
   });
   return newProps as T;
 }
@@ -343,8 +337,24 @@ export function updateLinks(
     // change.
     const animate = ofClass('update_url', anchor);
     if (!isReset && animate) {
-      jQuery(anchor).fadeTo(1, 0).fadeTo(1000, 1);
+      fadeTo([anchor], 0, 0);
+      fadeTo([anchor], 1, 1000);
     }
+  }
+}
+
+// Transition the opacity of elements to a value over ms milliseconds using a
+// CSS transition (ms of 0 sets opacity immediately).
+export function fadeTo(
+  elems: Iterable<HTMLElement>,
+  opacity: number,
+  ms: number,
+) {
+  for (const elem of elems) {
+    // Flush pending style changes so a previous fadeTo is the transition start.
+    void elem.offsetWidth;
+    elem.style.transition = ms ? `opacity ${ms}ms` : 'none';
+    elem.style.opacity = opacity.toString();
   }
 }
 

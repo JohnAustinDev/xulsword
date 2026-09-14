@@ -1,5 +1,6 @@
 import React, { useLayoutEffect } from 'react';
-import { sanitizeHTML, dString } from '../../../common.ts';
+import { dString } from '../../../common.ts';
+import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import C from '../../../constant.ts';
 import { GI } from '../../G.ts';
 import { functionalComponentRenderPromise } from '../../common.ts';

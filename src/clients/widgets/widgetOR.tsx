@@ -1,11 +1,12 @@
 /* eslint-disable react/prop-types */
 import React, { useState } from 'react';
-import { findTreeNode } from '../../common.ts';
+import { clone, findTreeNode } from '../../common.ts';
 import C from '../../constant.ts';
 import { Analytics } from '../analytics.ts';
 import { createNodeList, getProps, updateLinks } from '../web-common.ts';
 import SelectOR from '../components/libxul/selectOR.tsx';
 
+import type { PrefValue } from '../../type.ts';
 import type {
   SelectORMType,
   SelectORProps,
@@ -23,23 +24,29 @@ export type WidgetORProps = {
 export type WidgetORState = Omit<SelectORProps, 'onSelection'>;
 
 export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
-  const { compid, settings } = wprops;
+  const { compid, settings: stn } = wprops;
+  const settings = clone(stn as any) as WidgetORData;
   const { actions, props, data, update_url: updateUrl } = settings;
-
-  const nodes = createNodeList(data);
   const { initialORM } = props;
-  if (initialORM) {
-    props.nodeLists = [
-      {
-        otherMod: initialORM.otherMod,
-        label: 'genbk',
-        labelClass: 'cs-LTR_DEFAULT',
-        nodes,
-      },
-    ];
-    if (findTreeNode(initialORM.keys[0], nodes) === undefined) {
+  const { otherMod } = initialORM;
+
+  // If data and initial module are provided, the data is assigned to it. And
+  // if the initial key is missing or non-existent in the data, a valid initial
+  // key is chosen.
+  if (data && otherMod) {
+    let { nodeLists } = props;
+    if (!nodeLists) nodeLists = [];
+    const nodes = createNodeList(data);
+    nodeLists.push({
+      otherMod,
+      nodes,
+      label: 'genbk',
+      labelClass: 'cs-LTR_DEFAULT',
+    });
+    if (nodes.length && findTreeNode(initialORM.keys[0], nodes) === undefined) {
       initialORM.keys = [nodes[0].id.toString()];
     }
+    props.nodeLists = nodeLists;
   }
 
   const onSelectOR = (selection?: SelectORMType): void => {
@@ -57,7 +64,7 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
             const player = comParent?.querySelector('audio') as
               | HTMLAudioElement
               | undefined;
-            if (player) {
+            if (player && data) {
               const da = data[parent].find((x) => x[0] === chapter);
               if (da) {
                 player.setAttribute('src', da[1]);
@@ -78,24 +85,29 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
   const updateLinksOR = (selection: SelectORMType, isReset = false) => {
     const comParent = document.getElementById(compid)?.parentElement;
     const anchors = comParent?.querySelectorAll('.update_url a, a.update_url');
-    if (anchors && updateUrl)
+    if (anchors && updateUrl && data)
       (Array.from(anchors) as HTMLAnchorElement[]).forEach((anchor) => {
         updateLinks(anchor, selection, data, updateUrl, isReset);
       });
   };
 
   const updateAnalyticsInfo = (selection: SelectORMType) => {
-    const { keys } = selection;
-    const [key] = keys;
-    const segs = key.split(C.GBKSEP);
-    const chapter = segs.pop();
-    const parent = segs.join(C.GBKSEP);
-    const da = data[parent].find((x) => x[0] === chapter);
-    if (da) {
-      const [, , , mid] = da;
-      const elem = document.getElementById(compid)?.parentElement;
-      if (elem) {
-        Analytics.addInfo({ mid: Number(mid) }, Analytics.topInfoElement(elem));
+    if (data) {
+      const { keys } = selection;
+      const [key] = keys;
+      const segs = key.split(C.GBKSEP);
+      const chapter = segs.pop();
+      const parent = segs.join(C.GBKSEP);
+      const da = data[parent].find((x) => x[0] === chapter);
+      if (da) {
+        const [, , , mid] = da;
+        const elem = document.getElementById(compid)?.parentElement;
+        if (elem) {
+          Analytics.addInfo(
+            { mid: Number(mid) },
+            Analytics.topInfoElement(elem),
+          );
+        }
       }
     }
   };
@@ -103,16 +115,13 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
   const [state] = useState(() => {
     const s = getProps(props, {
       initialORM: { otherMod: 'genbk', keys: [] },
-      nodeLists: [],
       otherMods: [],
       disabled: false,
       enableMultipleSelection: false,
       enableParentSelection: false,
     }) as WidgetORState;
-
     updateLinksOR(s.initialORM, true);
     updateAnalyticsInfo(s.initialORM);
-
     return s;
   });
 

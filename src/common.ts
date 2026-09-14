@@ -1,5 +1,4 @@
 /* eslint-disable no-control-regex */
-import DOMPurify from 'dompurify';
 import C from './constant.ts';
 import S, { completePanelPrefDefaultArrays } from './defaultPrefs.ts';
 import Cache from './cache.ts';
@@ -621,22 +620,6 @@ export function encodeWindowsNTFSPath(filename: string, passSlash: boolean) {
     const hex = codePoint.toString(16).toUpperCase().padStart(2, '0');
     return `%${hex}`;
   });
-}
-
-// This function should always be used when writing to innerHTML.
-export function sanitizeHTML<T extends string | HTMLElement>(
-  parentOrHtml: T,
-  html?: string,
-): T {
-  const sanitize = (s?: string): string => {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    return DOMPurify.sanitize(s || '', { USE_PROFILES: { html: true } });
-  };
-  if (typeof parentOrHtml === 'string') {
-    return sanitize(parentOrHtml) as T;
-  }
-  parentOrHtml.innerHTML = sanitize(html);
-  return parentOrHtml;
 }
 
 // Return a hash number for a string.

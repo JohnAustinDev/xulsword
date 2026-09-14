@@ -2,9 +2,9 @@ import React from 'react';
 import {
   JSON_attrib_stringify,
   ofClass,
-  sanitizeHTML,
   stringHash,
 } from '../../../common.ts';
+import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
 import {

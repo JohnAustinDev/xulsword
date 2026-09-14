@@ -3,6 +3,7 @@ import type C from '../../constant.ts';
 import type { MenulistProps } from '../components/libxul/menulist.tsx';
 import type { SelectORProps } from '../components/libxul/selectOR.tsx';
 import type { SelectVKProps } from '../components/libxul/selectVK.tsx';
+import type { XulProps } from '../components/libxul/xul.tsx';
 import type { AllComponentsData } from '../web-common.ts';
 
 export type WidgetActions =
@@ -25,8 +26,8 @@ export type WidgetORData = {
   component: 'selectOR';
   actions?: WidgetActions[];
   langcode: (typeof C.Locales)[number][0];
-  props: Omit<SelectORProps, 'onSelection'>;
-  data: ChaplistType;
+  props: Omit<SelectORProps, 'onSelection' | keyof XulProps>;
+  data?: ChaplistType;
   update_url?: UpdateUrlDataType;
 };
 
@@ -97,15 +98,10 @@ const defaultSettings: AllComponentsData = {
       langcode: 'en',
       props: {
         initialORM: {
-          otherMod: 'modname',
-          keys: ['First chapter'],
+          otherMod: 'RUSCB',
+          keys: [],
         },
-      },
-      data: {
-        '': [
-          ['000 First chapter', '', 1000000, 0, [1, 2, 200000], 'chapters'],
-          ['001 Second chapter', '', 1000000, 0, [1, 2, 200000], 'chapters'],
-        ],
+        otherMods: ['RUSCB'],
       },
     },
 
@@ -114,11 +110,11 @@ const defaultSettings: AllComponentsData = {
       autodownload: false,
       langcode: 'en',
       props: {
-        value: 'Item 1',
+        value: 'Yes',
       },
       data: {
         urlroot: '/some-url',
-        items: [{ option: 'Item 1' }, { option: 'Item 2' }],
+        items: [{ option: 'Yes' }, { option: 'No' }],
       },
     },
   },

@@ -184,7 +184,6 @@
     "@types/express-session": "^1.18.2",
     "@types/ftp": "^0.3.36",
     "@types/gunzip-maybe": "^1.4.2",
-    "@types/jquery": "^3.5.32",
     "@types/node": "^22.0.0",
     "@types/react": "^18.2.0",
     "@types/react-color": "^3.0.13",

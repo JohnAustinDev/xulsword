@@ -5,8 +5,8 @@ import {
   clone,
   ofClass,
   randomID,
-  sanitizeHTML,
 } from '../../../common.ts';
+import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import {

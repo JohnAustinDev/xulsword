@@ -3,12 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { Intent, ProgressBar, Spinner, Tag } from '@blueprintjs/core';
 import { G } from './G.ts';
 import Subscription from '../subscription.ts';
-import {
-  JSON_stringify,
-  randomID,
-  sanitizeHTML,
-  stringHash,
-} from '../common.ts';
+import { JSON_stringify, randomID, stringHash } from '../common.ts';
+import { sanitizeHTML } from '../sanitizeHTML.ts';
 import Cache from '../cache.ts';
 import C from '../constant.ts';
 import DynamicStyleSheet from './style.ts';

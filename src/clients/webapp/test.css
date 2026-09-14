@@ -25,7 +25,8 @@ html.ownsDocument h1 {
 p {
   line-height: 1.6;
 }
-iframe {
+iframe,
+.widget {
   display: block;
   width: 100%;
   border: 2px dashed #e24ace;

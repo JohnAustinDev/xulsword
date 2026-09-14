@@ -7,9 +7,9 @@ import {
   diff,
   JSON_attrib_stringify,
   keep,
-  sanitizeHTML,
   stringHash,
 } from '../../../common.ts';
+import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import { G, GI } from '../../G.ts';
 import {
   addHoverLinks,

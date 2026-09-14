@@ -6,10 +6,10 @@ import {
   clone,
   diff,
   drop,
-  sanitizeHTML,
   stringHash,
   dString,
 } from '../../../common.ts';
+import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';

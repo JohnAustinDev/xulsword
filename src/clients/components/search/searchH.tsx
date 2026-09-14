@@ -6,9 +6,9 @@ import { goToLocationGB, goToLocationVK } from '../../../commands.ts';
 import {
   noAutoSearchIndex,
   escapeRE,
-  sanitizeHTML,
   randomID,
 } from '../../../common.ts';
+import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import { addHoverLinks } from '../../common.ts';

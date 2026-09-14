@@ -1,7 +1,7 @@
 import React from 'react';
 import { Intent, OverlayToaster, Position } from '@blueprintjs/core';
 import VerseKey from '../../../verseKey.ts';
-import { sanitizeHTML } from '../../../common.ts';
+import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import { GE as G, GI } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import {
