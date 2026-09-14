@@ -408,7 +408,7 @@ export default function xulswordHandler(
     }
 
     case 'canplay': {
-      const player: HTMLAudioElement | undefined = document
+      const player: HTMLAudioElement | undefined = getRootNode()
         .getElementById('player')
         ?.getElementsByTagName('audio')[0];
       if (player) player.play().catch(() => {});

@@ -183,7 +183,7 @@ export function onTimeUpdate(
 }
 
 export function onClick(elem: HTMLElement) {
-  const player: HTMLAudioElement | undefined = document
+  const player: HTMLAudioElement | undefined = getRootNode()
     .getElementById('player')
     ?.getElementsByTagName('audio')[0];
   if (player) {
