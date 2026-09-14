@@ -1,5 +1,5 @@
 /* This stylesheet is not referenced anywhere (so it's not handled by webpack).
-But it must be linked to in the <head> of any iframe content document which
+But it must be linked to in the <head> of any content document which
 hosts the webapp. */
 
 /* Be default, the iframe content is scrollable */

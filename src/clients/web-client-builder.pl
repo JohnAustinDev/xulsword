@@ -50,8 +50,8 @@ if ("$?" eq "0") {
   my $cmd = "cp $xulsword/src/clients/webapp/bibleBrowserParent.js '$dist/webapp'";
   print $cmd . "\n";
   `$cmd`;
-  # Copy iframe.css to dist
-  my $cmd = "cp $xulsword/src/clients/webapp/iframe.css '$dist/webapp'";
+  # Copy head.css to dist
+  my $cmd = "cp $xulsword/src/clients/webapp/head.css '$dist/webapp'";
   print $cmd . "\n";
   `$cmd`;
   my $libs = "ibt.libraries.yml";
