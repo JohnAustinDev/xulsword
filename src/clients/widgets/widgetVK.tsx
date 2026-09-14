@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { diff } from '../../../common.ts';
-import { Analytics } from '../../analytics.ts';
-import { getProps, updateLinks } from '../common.ts';
-import SelectVK from '../../components/libxul/selectVK.tsx';
+import { diff } from '../../common.ts';
+import { Analytics } from '../analytics.ts';
+import { getProps, updateLinks } from '../web-common.ts';
+import SelectVK from '../components/libxul/selectVK.tsx';
 
 import type {
   SelectVKProps,
   SelectVKType,
-} from '../../components/libxul/selectVK.tsx';
+} from '../components/libxul/selectVK.tsx';
 import type { WidgetVKData } from './defaultSettings.ts';
 
 // A React component widget for selection of a Bible verse from any Bible verse

@@ -3,27 +3,27 @@ import {
   sanitizeHTML,
   setGlobalPanels,
   validateModulePrefs,
-} from '../../../common.ts';
-import S from '../../../defaultPrefs.ts';
-import C from '../../../constant.ts';
-import { cachePreload } from '../../common.ts';
-import log from '../../log.ts';
-import { getRootElement, getStyleParent } from '../../rootNode.ts';
-import renderToRoot from '../../controller.tsx';
-import Xulsword from '../../components/xulsword/xulsword.tsx';
-import socketConnect from '../preload.ts';
-import Prefs from '../prefs.ts';
+} from '../../common.ts';
+import S from '../../defaultPrefs.ts';
+import C from '../../constant.ts';
+import { cachePreload } from '../common.ts';
+import log from '../log.ts';
+import { getRootElement, getStyleParent } from '../rootNode.ts';
+import renderToRoot from '../controller.tsx';
+import Xulsword from '../components/xulsword/xulsword.tsx';
+import socketConnect from '../web-preload.ts';
+import Prefs from '../web-prefs.ts';
 import {
   writeSettingsToPrefsStores,
   getComponentSettings,
   getReactComponents,
   scopeCssToRoot,
-} from '../common.ts';
+} from '../web-common.ts';
 import defaultSettings, {
   BibleBrowserData,
   setDefaultBibleBrowserPrefs,
 } from './defaultSettings.ts';
-import './bibleBrowser.css';
+import './webapp.css';
 
 window.WebAppClient = 'BibleBrowser';
 
@@ -196,9 +196,8 @@ socket.on('connect', () => {
 });
 
 // When running in an iframe on a page with bibleBrowserParent.js, the parent
-// tells this document whether to use 'auto-height' styling (see
-// ownsDocument.css). Request the mode too, in case the parent's message was
-// sent before this listener existed.
+// tells this document whether to use 'auto-height' styling. Request the mode
+// too, in case the parent's message was sent before this listener existed.
 if (window.parent !== window) {
   const heightModes = ['auto-height'];
   window.addEventListener('message', (e) => {
@@ -215,7 +214,7 @@ if (window.parent !== window) {
   window.parent.postMessage({ type: 'iframeHeightModeRequest' }, '*');
 }
 
-// :has fallback for ownsDocument.css: html.ownsDocument *:not(#root, :has(#root))
+// :has fallback for html.ownsDocument *:not(#root, :has(#root))
 // Browsers without :has drop that entire rule.
 window.addEventListener('load', () => {
   if (typeof CSS !== 'undefined' && CSS.supports('selector(:has(*))')) return;

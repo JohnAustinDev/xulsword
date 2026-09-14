@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { diff, drupalSetting, randomID } from '../../../common.ts';
-import { functionalComponentRenderPromise } from '../../common.ts';
-import { Analytics } from '../../analytics.ts';
-import Menulist from '../../components/libxul/menulist.tsx';
-import { delayHandler } from '../../components/libxul/xul.tsx';
-import { getProps } from '../common.ts';
+import { diff, drupalSetting, randomID } from '../../common.ts';
+import { functionalComponentRenderPromise } from '../common.ts';
+import { Analytics } from '../analytics.ts';
+import Menulist from '../components/libxul/menulist.tsx';
+import { delayHandler } from '../components/libxul/xul.tsx';
+import { getProps } from '../web-common.ts';
 
 import type { ChangeEvent, ReactNode } from 'react';
-import type { MenulistProps } from '../../components/libxul/menulist.tsx';
+import type { MenulistProps } from '../components/libxul/menulist.tsx';
 import type { FileItem, WidgetMenulistData } from './defaultSettings.ts';
 
 // A React component widget for selection from a set of options, such as a set

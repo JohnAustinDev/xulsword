@@ -4,6 +4,7 @@ import log from '../../log.ts';
 import ModuleManager, {
   onunload,
 } from '../components/moduleManager/moduleManager.tsx';
+import '../app.css';
 
 renderToRoot(<ModuleManager id="removeModule" />, { onunload }).catch((er) => {
   log.error(er);

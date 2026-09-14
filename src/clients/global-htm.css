@@ -63,8 +63,6 @@
   }
 }
 
-/* Rules sizing the document itself are in ownsDocument.css. */
-
 /* The web-app's #root is inside a shadow root whose host is the page's own
  #root element (see renderToRoot() in controller.tsx). Shadow DOM keeps the host
  page's selectors out, but inherited properties still flow in through the host,

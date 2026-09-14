@@ -22,13 +22,8 @@ const scopeCssToRootLoader = fileURLToPath(
 // author itself. See the loader, and the CSS rules that use this list, for why.
 const scopedCss = [
   /node_modules[\\/]normalize\.css[\\/]/,
-  /clients[\\/]webapp[\\/]blueprintSubset\.scss$/,
+  /clients[\\/]web-blueprintSubset\.scss$/,
 ];
-
-// Stylesheets holding deliberately document-level rules (html.ownsDocument
-// ...). The web-app renders into a shadow root, where such rules could never
-// match, so for webappClients these go to the document <head> instead.
-const documentCss = /[\\/]ownsDocument\.css$/;
 
 // Webpack entry points to build, grouped by target.
 // prettier-ignore
@@ -75,11 +70,17 @@ const builds = {
     ],
   ],
 
-  webappClients: [
+  webapp: [
     'web',
     [
-      './src/clients/webapp/widgets/widgets.tsx',
-      './src/clients/webapp/bibleBrowser/bibleBrowser.tsx'
+      './src/clients/webapp/webapp.tsx'
+    ],
+  ],
+
+  widgets: [
+    'web',
+    [
+      './src/clients/widgets/widgets.tsx',
     ],
   ],
 
@@ -91,14 +92,13 @@ const builds = {
   ]
 };
 
-// webappClients (bibleBrowser, widgets) and library (analytics.ts, loaded
-// alongside them) are embedded in third-party pages and viewed on whatever
-// mobile browser a visitor happens to have, so their babel target reaches
-// back to ~2018 devices rather than following '> 0.25%, not dead' (which
-// tracks current evergreen browsers and is fine for the Electron-only
-// appClients/appSrv/preload builds, always run on a bundled modern
-// Chromium).
-const webappClientsBrowserslist =
+// The webapp, widgets and library (analytics.ts, loaded alongside them) are
+// embedded in third-party pages and viewed on whatever mobile browser a
+// visitor happens to have, so their babel target reaches back to ~2018 devices
+// rather than following '> 0.25%, not dead' (which tracks current evergreen
+// browsers and is fine for the Electron-only appClients/appSrv/preload builds,
+// always run on a bundled modern Chromium).
+const webBrowsersList =
   'ios_saf >= 11, chrome >= 63, and_chr >= 63, samsung >= 8, firefox >= 58, and_ff >= 58, not dead';
 
 const defaultEnvironment = {
@@ -141,7 +141,7 @@ export const parallelism = 10;
 export default function (opts) {
   const envFlags = ['all', 'packaged', 'development', 'production'];
 
-  const { rootPath, srcPath, appDistPath, webappDistPath } = projectPaths;
+  const { rootPath, srcPath, appDistPath, webappPath, webappDistPath } = projectPaths;
 
   const { all, packaged } = opts;
   if (all) {
@@ -149,7 +149,8 @@ export default function (opts) {
     opts.preload = true;
     opts.webappSrv = true;
     opts.appClients = true;
-    opts.webappClients = true;
+    opts.webapp = true;
+    opts.widgets = true;
     opts.library = true;
   }
 
@@ -279,21 +280,21 @@ export default function (opts) {
             srcPath,
             'clients/components/libxul/blueprintIconsShim.ts',
           ),
-          // bibleBrowser.tsx and widgets.tsx (via controller.tsx) only render
+          // webapp.tsx and widgets.tsx (via controller.tsx) only render
           // a small subset of Blueprint's components, but the compiled
           // '@blueprintjs/core/lib/css/blueprint.css' bundles every
           // component's styles as one static file with no way to tree-shake
-          // it. Redirect that import, for the webappClients build only, to a
+          // it. Redirect that import, for the webapp build only, to a
           // hand-curated Sass file that assembles just the component
           // partials actually used (see blueprintSubset.scss for how that
           // set was determined and how to keep it up to date). The
           // appClients (Electron) build keeps the full compiled CSS since
           // its windows use many more Blueprint components.
-          ...(build === 'webappClients'
+          ...(['webapp', 'widgets'].includes(build)
             ? {
                 '@blueprintjs/core/lib/css/blueprint.css$': path.join(
                   srcPath,
-                  'clients/webapp/blueprintSubset.scss',
+                  'clients/web-blueprintSubset.scss',
                 ),
               }
             : {}),
@@ -302,7 +303,7 @@ export default function (opts) {
 
       optimization: {
         minimize: production ? true : false,
-        ...(build === 'webappClients'
+        ...(['webapp', 'widgets'].includes(build)
           ? {
               moduleIds: 'deterministic',
               runtimeChunk: 'single',
@@ -350,7 +351,7 @@ export default function (opts) {
         filename: `[name]${
           ['appSrv', 'webappSrv'].includes(build)
             ? '.cjs'
-            : ['webappClients', 'library'].includes(build)
+            : ['webapp', 'widgets', 'library'].includes(build)
               ? `_${githash.substr(0, 12)}.js`
               : '.js'
         }`,
@@ -358,11 +359,12 @@ export default function (opts) {
           appSrv: path.join(appDistPath, 'appSrv'),
           preload: path.join(appDistPath, 'preload'),
           appClients: path.join(appDistPath, 'appClients'),
-          webappSrv: path.join(webappDistPath, 'webappSrv'),
-          webappClients: path.join(webappDistPath, 'webappClients'),
+          webappSrv: path.join(webappPath, 'server'),
+          webapp: path.join(webappDistPath, 'webapp'),
+          widgets: path.join(webappDistPath, 'widgets'),
           library: path.join(webappDistPath, 'library'),
         }[build],
-        publicPath: ['webappClients', 'library'].includes(build)
+        publicPath: ['webapp', 'widgets', 'library'].includes(build)
           ? env('WEBAPP_PUBLIC_DIST')
           : './',
         ...(build === 'library'
@@ -386,26 +388,26 @@ export default function (opts) {
                     {
                       targets: ['appSrv', 'webappSrv'].includes(build)
                         ? { node: env('NODE_VERSION') }
-                        : ['webappClients', 'library'].includes(build)
-                          ? webappClientsBrowserslist
+                        : ['webapp', 'widgets', 'library'].includes(build)
+                          ? webBrowsersList
                           : '> 0.25%, not dead',
                     },
                   ],
-                  ['appClients', 'webappClients'].includes(build)
+                  ['appClients', 'webapp', 'widgets'].includes(build)
                     ? ['@babel/preset-react', { development }]
                     : null,
                 ].filter(Boolean),
 
                 // React refresh webpack plugin
                 ...(development &&
-                ['webappClients', 'appClients'].includes(build)
+                ['appClients', 'webapp', 'widgets'].includes(build)
                   ? { plugins: ['react-refresh/babel'] }
                   : {}),
               },
             },
             sideEffects: false,
           },
-          // For webappClients, every stylesheet is rewritten by scopeCssToRoot
+          // For webapp, every stylesheet is rewritten by scopeCssToRoot
           // so that all of its rules apply inside #root and carry one extra id.
           // The IBT website renders the web-app directly into one of its own
           // pages, inside a shadow root where the host page's CSS can't reach.
@@ -419,12 +421,8 @@ export default function (opts) {
           // Blueprint subset), 'webapp' lifts xulsword's own already-#root-
           // scoped CSS. Other builds (the Electron app) are untouched and keep
           // the plain rules below.
-          ...(build === 'webappClients'
+          ...(build === 'webapp'
             ? [
-                {
-                  test: documentCss,
-                  use: ['style-loader', 'css-loader'],
-                },
                 {
                   test: /\.css$/,
                   include: scopedCss,
@@ -455,7 +453,7 @@ export default function (opts) {
                 },
                 {
                   test: /\.css$/,
-                  exclude: [...scopedCss, documentCss],
+                  exclude: [...scopedCss],
                   use: [
                     styleLoader,
                     'css-loader',
@@ -517,7 +515,7 @@ export default function (opts) {
       },
 
       plugins: [
-        build !== 'webappClients' ? new MiniCssExtractPlugin() : null,
+        build !== 'webapp' ? new MiniCssExtractPlugin() : null,
         // While compiling the bundle, DefinePlugin will permanently set all build
         // and environment variables to these fixed values.
         new webpack.DefinePlugin(
@@ -527,8 +525,8 @@ export default function (opts) {
             'Build.isElectronApp': ['appSrv', 'preload', 'appClients'].includes(
               build,
             ),
-            'Build.isWebApp': ['webappSrv', 'webappClients'].includes(build),
-            'Build.isClient': ['appClients', 'webappClients'].includes(build),
+            'Build.isWebApp': ['webappSrv', 'webapp', 'widgets'].includes(build),
+            'Build.isClient': ['appClients', 'webapp', 'widgets'].includes(build),
             'Build.isServer': ['appSrv', 'webappSrv'].includes(build),
             'Build.isPackaged': !!packaged,
             ...Object.entries(defaultEnvironment).reduce((entries, entry) => {
@@ -542,7 +540,7 @@ export default function (opts) {
             return entries;
           }, {}),
         ),
-        build !== 'webappClients'
+        !['webapp', 'widgets'].includes(build)
           ? new webpack.IgnorePlugin({
               resourceRegExp: /original-fs/,
               contextRegExp: /adm-zip/,
@@ -576,13 +574,13 @@ export default function (opts) {
             })
           : null,
 
-        development && ['webappClients', 'appClients'].includes(build)
+        development && ['appClients', 'webapp', 'widgets'].includes(build)
           ? new ReactRefreshWebpackPlugin()
           : null,
       ]
         .concat(
           builds[build][1].map(() => {
-            return allowgzip && production && build === 'webappClients'
+            return allowgzip && production && ['webapp', 'widgets'].includes(build)
               ? new CompressionPlugin({
                   deleteOriginalAssets: true,
                   threshold: 30000,
@@ -593,7 +591,7 @@ export default function (opts) {
         )
         .concat(
           builds[build][1].map((entry) => {
-            if (['webappClients', 'appClients'].includes(build)) {
+            if (['appClients', 'webapp', 'widgets'].includes(build)) {
               const name = path.basename(entry).replace(/\.[^.]+$/, '');
               return new HtmlWebpackPlugin({
                 filename: `${name}.html`,
@@ -606,10 +604,15 @@ export default function (opts) {
                       'app',
                       'root.html',
                     ),
-                    webappClients: path.join(
+                    webapp: path.join(
                       srcPath,
                       'clients',
-                      'webapp',
+                      name,
+                      `${name}.html`,
+                    ),
+                    widgets: path.join(
+                      srcPath,
+                      'clients',
                       name,
                       `${name}.html`,
                     ),
@@ -626,7 +629,7 @@ export default function (opts) {
 
       // Dev Server can't work in development mode unless CompressionPlugin
       // deleteOriginalAssets is false.
-      ...(development && ['appClients', 'webappClients'].includes(build)
+      ...(development && ['appClients', 'webapp'].includes(build)
         ? {
             devServer: {
               port: devServerPort,
@@ -647,7 +650,7 @@ export default function (opts) {
                     `localhost:${devServerPort}/webpack-dev-server`,
                   ),
                 );
-                if (build === 'webappClients') {
+                if (build === 'webapp') {
                   console.log(
                     builds[build][1]
                       .map((html) =>
@@ -659,12 +662,12 @@ export default function (opts) {
                   );
                   console.log(
                     [
-                      'bibleBrowserIframe.html',
-                      'bibleBrowserFixedIframe.html',
+                      'iframe.html',
+                      'iframe-fixed.html',
                     ]
                       .map((file) =>
                         chalk.bgGreen.bold(
-                          `localhost:${devServerPort}/src/clients/webapp/bibleBrowser/${file}`,
+                          `localhost:${devServerPort}/src/clients/webapp/${file}`,
                         ),
                       )
                       .join('\n'),

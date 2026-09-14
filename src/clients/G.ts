@@ -12,7 +12,7 @@ import { GBuilder } from '../type.ts';
 import { callResultDecompress } from './common.ts';
 import RenderPromise, { GCallsOrPromise } from './renderPromise.ts';
 import log from './log.ts';
-import CookiePrefs from './webapp/prefs.ts';
+import CookiePrefs from './web-prefs.ts';
 
 import type { GCallType, GIType, Gsafe, GType, PrefValue } from '../type.ts';
 

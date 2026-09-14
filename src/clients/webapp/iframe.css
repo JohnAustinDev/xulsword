@@ -1,0 +1,41 @@
+/* This stylesheet is not referenced anywhere (so it's not handled by webpack).
+But it must be linked to in the <head> of any iframe content document which
+hosts the webapp. */
+
+/* Be default, the iframe content is scrollable */
+html.ownsDocument,
+html.ownsDocument body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* But in auto-height mode (set by bibleBrowserParent.js) the iframe should NOT
+be scrollable. */
+html.ownsDocument.auto-height,
+html.ownsDocument.auto-height body {
+  overflow: clip;
+}
+
+/* fitToContent is set on #root by controller.tsx (used by webapp?) */
+html.ownsDocument:has(#root.fitToContent),
+html.ownsDocument:has(#root.fitToContent) body {
+  width: fit-content;
+  height: fit-content;
+}
+
+/* See the fallback in webapp.tsx for browsers without :has support. */
+@supports selector(:has(*)) {
+  html.ownsDocument *:not(#root, :has(#root)) {
+    display: none;
+  }
+}
+
+html.ownsDocument:not(.finished-loading):after {
+  background: var(--loader-url) 50% 50% no-repeat rgb(249, 249, 249);
+}
+
+

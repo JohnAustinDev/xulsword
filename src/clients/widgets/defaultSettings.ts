@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import type C from '../../../constant.ts';
-import type { MenulistProps } from '../../components/libxul/menulist.tsx';
-import type { SelectORProps } from '../../components/libxul/selectOR.tsx';
-import type { SelectVKProps } from '../../components/libxul/selectVK.tsx';
-import type { AllComponentsData } from '../common.ts';
+import type C from '../../constant.ts';
+import type { MenulistProps } from '../components/libxul/menulist.tsx';
+import type { SelectORProps } from '../components/libxul/selectOR.tsx';
+import type { SelectVKProps } from '../components/libxul/selectVK.tsx';
+import type { AllComponentsData } from '../web-common.ts';
 
 export type WidgetActions =
   | 'bible_audio_Play'

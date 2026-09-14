@@ -29,6 +29,7 @@ import Button from '../../components/libxul/button.tsx';
 import { addClass } from '../../components/libxul/xul.tsx';
 import { localizeBookmarks } from '../common.ts';
 import * as H from './bmManagerWinH.tsx';
+import '../app.css';
 import './bmManagerWin.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
 

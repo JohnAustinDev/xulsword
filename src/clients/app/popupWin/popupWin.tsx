@@ -12,6 +12,7 @@ import {
   PopupParentInitState,
 } from '../../components/popup/popupParentH.ts';
 import Popup from '../../components/popup/popup.tsx';
+import '../app.css';
 import '../../components/atext/atext.css';
 
 import type { RenderPromiseState } from '../../renderPromise.ts';

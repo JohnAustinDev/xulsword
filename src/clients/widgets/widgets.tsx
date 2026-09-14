@@ -1,22 +1,22 @@
 import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import socketConnect from '../preload.ts';
+import socketConnect from '../web-preload.ts';
 import {
   writeSettingsToPrefsStores,
   getComponentSettings,
   getReactComponents,
-} from '../common.ts';
-import C from '../../../constant.ts';
-import { cachePreload } from '../../common.ts';
-import log from '../../log.ts';
-import { setRootNode } from '../../rootNode.ts';
-import Prefs from '../prefs.ts';
+} from '../web-common.ts';
+import C from '../../constant.ts';
+import { cachePreload } from '../common.ts';
+import log from '../log.ts';
+import { setRootNode } from '../rootNode.ts';
+import Prefs from '../web-prefs.ts';
 import WidgetVK from './widgetVK.tsx';
 import WidgetOR from './widgetOR.tsx';
 import WidgetMenulist from './widgetMenulist.tsx';
 import defaultSettings from './defaultSettings.ts';
 
-import type { ComponentData } from '../common.ts';
+import type { ComponentData } from '../web-common.ts';
 
 window.WebAppClient = 'Widgets';
 

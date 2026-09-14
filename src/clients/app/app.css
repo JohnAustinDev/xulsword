@@ -1,0 +1,16 @@
+html,
+html body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: clip;
+}
+
+/* fitToContent is set on #root by controller.tsx */
+html:has(#root.fitToContent),
+html:has(#root.fitToContent) body {
+  width: fit-content;
+  height: fit-content;
+}
+

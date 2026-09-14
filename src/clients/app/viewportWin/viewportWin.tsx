@@ -29,6 +29,7 @@ import viewportParentH, {
   vpWindowState,
   bbDragEnd as bbDragEndH,
 } from '../../components/viewport/viewportParentH.ts';
+import '../app.css';
 
 import type { NewModulesType } from '../../../type.ts';
 import type Atext from '../../components/atext/atext.tsx';

@@ -49,7 +49,7 @@ import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
 import type { SelectORMType } from './clients/components/libxul/selectOR.tsx';
 import type RenderPromise from './clients/renderPromise.ts';
 import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
-import type { BibleBrowserControllerGlobal } from './clients/webapp/bibleBrowser/bibleBrowser.tsx';
+import type { BibleBrowserControllerGlobal } from './clients/webapp/webapp.tsx';
 import type Window from './servers/app/components/window.ts';
 
 // This file contains functions that are used in common with both xulsword

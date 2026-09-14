@@ -1,13 +1,13 @@
 // Replaces the full @blueprintjs/core/lib/css/blueprint.css (~520KB) for the
-// webappClients build. That compiled stylesheet includes every Blueprint
+// web builds. That compiled stylesheet includes every Blueprint
 // component (menus, popovers, tags, tables, sliders, tabs, etc.), but
-// bibleBrowser.tsx and widgets.tsx only render a small subset of them.
+// webapp.tsx and widgets.tsx only render a small subset of them.
 // Blueprint's classnames (e.g. "bp6-button") are assembled at runtime from a
 // namespace variable rather than ever appearing as literal strings in source
 // or compiled JS, so a content-scanning tool (PurgeCSS and similar) cannot
 // determine which selectors are actually used - it would delete all of them.
 // This file is curated by hand instead, verified against the components that
-// actually survive tree-shaking in the webappClients bundle (confirmed with
+// actually survive tree-shaking in the webapp bundle (confirmed with
 // webpack-bundle-analyzer's report.html for that build). If bibleBrowser or
 // widgets start using another Blueprint component, its partial needs to be
 // added below or that component's styling will silently be missing.

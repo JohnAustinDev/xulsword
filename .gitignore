@@ -24,6 +24,7 @@ node_modules
 #won't work: !node_modules/libxulsword
 
 build/release
+build/webapp/server
 .dll
 **/dist
 src/**/*.d.ts

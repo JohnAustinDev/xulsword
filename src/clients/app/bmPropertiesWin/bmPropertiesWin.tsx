@@ -32,6 +32,7 @@ import Button from '../../components/libxul/button.tsx';
 import Spacer from '../../components/libxul/spacer.tsx';
 import TreeView from '../../components/libxul/treeview.tsx';
 import { localizeBookmarks } from '../common.ts';
+import '../app.css';
 import './bmPropertiesWin.css';
 
 import type {

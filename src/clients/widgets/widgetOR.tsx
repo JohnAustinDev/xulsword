@@ -1,15 +1,15 @@
 /* eslint-disable react/prop-types */
 import React, { useState } from 'react';
-import { findTreeNode } from '../../../common.ts';
-import C from '../../../constant.ts';
-import { Analytics } from '../../analytics.ts';
-import { createNodeList, getProps, updateLinks } from '../common.ts';
-import SelectOR from '../../components/libxul/selectOR.tsx';
+import { findTreeNode } from '../../common.ts';
+import C from '../../constant.ts';
+import { Analytics } from '../analytics.ts';
+import { createNodeList, getProps, updateLinks } from '../web-common.ts';
+import SelectOR from '../components/libxul/selectOR.tsx';
 
 import type {
   SelectORMType,
   SelectORProps,
-} from '../../components/libxul/selectOR.tsx';
+} from '../components/libxul/selectOR.tsx';
 import type { WidgetORData } from './defaultSettings.ts';
 
 // A React component widget for selecting from an arbitrary hierarchical

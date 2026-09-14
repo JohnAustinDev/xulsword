@@ -13,6 +13,7 @@ import Modinfo, {
   modinfoParentInitialState,
   modinfoParentHandler as modinfoParentHandlerH,
 } from '../../components/libxul/modinfo.tsx';
+import '../app.css';
 import '../splashWin/splashWin.css';
 import './aboutWin.css';
 

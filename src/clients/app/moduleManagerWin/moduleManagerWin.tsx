@@ -4,6 +4,7 @@ import renderToRoot from '../../controller.tsx';
 import ModuleManager, {
   onunload,
 } from '../components/moduleManager/moduleManager.tsx';
+import '../app.css';
 
 renderToRoot(<ModuleManager id="moduleManager" />, {
   resetOnResize: false, // turns on after Internet dialog

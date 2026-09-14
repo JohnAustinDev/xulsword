@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import getIPC, { getProcessInfo } from '../../preload.ts';
+import getIPC, { getProcessInfo } from '../preload.ts';
 
 import type Electron from 'electron';
 import type { Socket } from 'socket.io-client';

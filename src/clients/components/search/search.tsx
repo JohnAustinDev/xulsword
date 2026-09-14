@@ -307,7 +307,7 @@ export default class Search
   }
 
   // Mirrors the search-grid expand/help-card state onto #root so
-  // bibleBrowser.css and search.css can react to it without :has().
+  // webapp.css and search.css can react to it without :has().
   syncGlobalClasses() {
     const { moreLess, showHelp } = this.state;
     const rootElement = getRootElement();

@@ -244,7 +244,7 @@
 
 /* 640 is the aproximate width of the search tool group */
 @media (max-width: 640px) {
-  html.ownsDocument:has(#root.searchWin) body {
+  html:has(#root.searchWin) body {
     overflow-y: auto;
   }
   #root.searchWin,

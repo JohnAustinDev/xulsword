@@ -36,7 +36,6 @@ import Textbox from './components/libxul/textbox.tsx';
 import 'normalize.css/normalize.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import './global-htm.css';
-import './ownsDocument.css';
 
 import type { ReactElement, SyntheticEvent } from 'react';
 import type {

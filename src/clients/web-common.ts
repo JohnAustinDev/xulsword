@@ -1,22 +1,22 @@
-import S from '../../defaultPrefs.ts';
-import C from '../../constant.ts';
+import S from '../defaultPrefs.ts';
+import C from '../constant.ts';
 import {
   clone,
   drupalSetting,
   hierarchy,
   ofClass,
   resolveTemplateURL,
-} from '../../common.ts';
-import { Analytics } from '../analytics.ts';
-import Prefs from './prefs.ts';
+} from '../common.ts';
+import { Analytics } from './analytics.ts';
+import Prefs from './web-prefs.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { PrefObject, PrefRoot, PrefValue } from '../../type.ts';
-import type { SelectORMType } from '../components/libxul/selectOR.tsx';
+import type { PrefObject, PrefRoot, PrefValue } from '../type.ts';
+import type { SelectORMType } from './components/libxul/selectOR.tsx';
 import {
   setDefaultBibleBrowserPrefs,
   type BibleBrowserData,
-} from './bibleBrowser/defaultSettings.ts';
+} from './webapp/defaultSettings.ts';
 import type {
   ChaplistType,
   WidgetMenulistData,
@@ -24,7 +24,7 @@ import type {
   WidgetVKData,
   UpdateUrlDataType,
 } from './widgets/defaultSettings.ts';
-import type { SelectVKType } from '../components/libxul/selectVK.tsx';
+import type { SelectVKType } from './components/libxul/selectVK.tsx';
 
 export type AllComponentsData = {
   react: {

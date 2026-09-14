@@ -5,6 +5,7 @@ import log from '../../log.ts';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Label from '../../components/libxul/label.tsx';
 import Stack from '../../components/libxul/stack.tsx';
+import '../app.css';
 import './splashWin.css';
 
 const overlay = G.inlineFile(

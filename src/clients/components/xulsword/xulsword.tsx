@@ -38,7 +38,7 @@ import {
 } from './history.tsx';
 import './xulsword.css';
 
-import type { BibleBrowserControllerGlobal } from '../../webapp/bibleBrowser/bibleBrowser.tsx';
+import type { BibleBrowserControllerGlobal } from '../../webapp/webapp.tsx';
 import type { OSISBookType } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
@@ -223,7 +223,7 @@ export default class Xulsword
   }
 
   // Mirrors the controls/player show-hide animation state onto #root so
-  // bibleBrowser.css can react to it without a :has() selector.
+  // webapp.css can react to it without a :has() selector.
   syncRootClasses() {
     const { showControls, audio } = this.state;
     const rootElement = getRootElement();

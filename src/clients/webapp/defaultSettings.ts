@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
-import Cache from '../../../cache.ts';
-import C from '../../../constant.ts';
-import { G } from '../../G.ts';
-import { GCacheKey } from '../../../common.ts';
-import type S from '../../../defaultPrefs.ts';
-import type { AllComponentsData } from '../common.ts';
-import type { PrefsGType } from '../../../prefs.ts';
+import Cache from '../../cache.ts';
+import C from '../../constant.ts';
+import { G } from '../G.ts';
+import { GCacheKey } from '../../common.ts';
+import type S from '../../defaultPrefs.ts';
+import type { AllComponentsData } from '../web-common.ts';
+import type { PrefsGType } from '../../prefs.ts';
 
 export type BibleBrowserData = {
   component: 'bibleBrowser';

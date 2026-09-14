@@ -24,6 +24,7 @@ import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Button from '../../components/libxul/button.tsx';
 import SelectVK from '../../components/libxul/selectVK.tsx';
 import Spacer from '../../components/libxul/spacer.tsx';
+import '../app.css';
 import '../../libsword.css';
 import '../../components/atext/atext.css';
 import './copyPassageWin.css';

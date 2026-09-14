@@ -28,6 +28,7 @@ import handlerH, {
   preclose,
   computedStyle,
 } from './chooseFontWinH.ts';
+import '../app.css';
 import './chooseFontWin.css';
 
 import type { ColorResult } from 'react-color';

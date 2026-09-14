@@ -430,7 +430,7 @@ type ResizeObserverCtor = new (
 ) => ResizeObserver;
 
 // ResizeObserver is unavailable on mobile browsers from before ~2020 (see
-// webappClientsBrowserslist in webpack.config.mjs). Rather than a no-op on
+// webBrowsersList in webpack.config.mjs). Rather than a no-op on
 // those browsers, lazily load a polyfill so callers keep working. The
 // polyfill is only fetched when the native API is missing, so browsers that
 // already support it never pay for it.
