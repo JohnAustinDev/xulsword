@@ -356,10 +356,10 @@ export default function (opts) {
               : '.js'
         }`,
         path: {
-          appSrv: path.join(appDistPath, 'appSrv'),
           preload: path.join(appDistPath, 'preload'),
+          appSrv: path.join(appDistPath, 'appSrv'),
+          webappSrv: path.join(webappPath, 'release', 'server'),
           appClients: path.join(appDistPath, 'appClients'),
-          webappSrv: path.join(webappPath, 'server'),
           webapp: path.join(webappDistPath, 'webapp'),
           widgets: path.join(webappDistPath, 'widgets'),
           library: path.join(webappDistPath, 'library'),
@@ -629,7 +629,7 @@ export default function (opts) {
 
       // Dev Server can't work in development mode unless CompressionPlugin
       // deleteOriginalAssets is false.
-      ...(development && ['appClients', 'webapp'].includes(build)
+      ...(development && ['appClients', 'webapp', 'widgets'].includes(build)
         ? {
             devServer: {
               port: devServerPort,
@@ -662,12 +662,23 @@ export default function (opts) {
                   );
                   console.log(
                     [
-                      'iframe.html',
-                      'iframe-fixed.html',
+                      'test.html',
+                      'test-fixed.html',
                     ]
                       .map((file) =>
                         chalk.bgGreen.bold(
                           `localhost:${devServerPort}/src/clients/webapp/${file}`,
+                        ),
+                      )
+                      .join('\n'),
+                  );
+                }
+                if (build === 'widgets') {
+                  console.log(
+                    builds[build][1]
+                      .map((html) =>
+                        chalk.bgGreen.bold(
+                          `localhost:${devServerPort}/${path.parse(html).name}.html`,
                         ),
                       )
                       .join('\n'),

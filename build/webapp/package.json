@@ -4,7 +4,7 @@
   "description": "Web application built with xulsword",
   "version": "1.0.0",
   "type": "module",
-  "main": "./server/server.cjs",
+  "main": "./release/server/server.cjs",
   "author": {
     "name": "John Austin",
     "email": "gpl.programs.info@gmail.com",

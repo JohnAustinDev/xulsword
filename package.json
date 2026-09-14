@@ -8,6 +8,7 @@
     "start:app": "webpack serve --env development --env appClients",
     "start:appSrv": "webpack --env development --env appSrv --env preload && cross-env LD_LIBRARY_PATH='./Cpp/lib' electron ./build/app/dist/appSrv/server.cjs",
     "start:webapp": "webpack serve --env development --env webapp",
+    "start:widgets": "webpack serve --env development --env widgets",
     "start:webappSrv": "webpack --env development --env webappSrv && cross-env LD_LIBRARY_PATH='./Cpp/lib' node ./build/webapp",
     "build:app": "yarn build:clean && webpack --env packaged --env production --env preload --env appSrv --env appClients",
     "build:webapp": "webpack --env production --env webappSrv --env webapp",
