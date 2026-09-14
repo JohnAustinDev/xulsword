@@ -1,7 +1,7 @@
 /*global process */
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { spawn, execSync } from 'child_process';
+import { spawn } from 'child_process';
 import webpack from 'webpack';
 import chalk from 'chalk';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
@@ -246,15 +246,6 @@ export default function (opts) {
 
     const allowgzip = false;
 
-    const githash = (() => {
-      try {
-        const hash = execSync('git rev-parse HEAD').toString().trim();
-        return hash;
-      } catch {
-        return 'unknown';
-      }
-    })();
-
     return {
       ...(development ? { devtool: 'source-map' } : {}),
 
@@ -306,8 +297,11 @@ export default function (opts) {
         minimize: production ? true : false,
         ...(['webapp', 'widgets'].includes(build)
           ? {
+              // Vendors is split into its own content-hashed chunk so browsers
+              // keep it cached across deployments until dependencies actually
+              // change. The webpack runtime stays embedded in each entry
+              // chunk since webapp and widgets are never on the same page.
               moduleIds: 'deterministic',
-              runtimeChunk: 'single',
               splitChunks: {
                 cacheGroups: {
                   vendor: {
@@ -353,7 +347,7 @@ export default function (opts) {
           ['appSrv', 'webappSrv'].includes(build)
             ? '.cjs'
             : ['webapp', 'widgets', 'library'].includes(build)
-              ? `_${githash.substr(0, 12)}.js`
+              ? '_[contenthash:12].js'
               : '.js'
         }`,
         path: {
@@ -516,7 +510,13 @@ export default function (opts) {
       },
 
       plugins: [
-        build !== 'webapp' ? new MiniCssExtractPlugin() : null,
+        build !== 'webapp'
+          ? new MiniCssExtractPlugin(
+              build === 'widgets'
+                ? { filename: '[name]_[contenthash:12].css' }
+                : {},
+            )
+          : null,
         // While compiling the bundle, DefinePlugin will permanently set all build
         // and environment variables to these fixed values.
         new webpack.DefinePlugin(

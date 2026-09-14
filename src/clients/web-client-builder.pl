@@ -19,6 +19,11 @@ if ("$DIST_PARENT_DIR" =~ /^\./) {
 my $xulsword = `pwd`; chomp $xulsword;
 `rm -rf "$DIST_PARENT_DIR/dist/"*`;
 `rm -rf "$xulsword/build/webapp/dist/"*`;
+# Server directories must be created individually now and permissions set.
+`mkdir "$DIST_PARENT_DIR/dist/library"`;
+`mkdir "$DIST_PARENT_DIR/dist/webapp"`;
+`mkdir "$DIST_PARENT_DIR/dist/widgets"`;
+`chmod 775 "$DIST_PARENT_DIR/dist/*"`;
 
 # Sourcing for environment variables does not work in Perl, so a wrapper
 # web-client-build.sh must be used to set the environment.
@@ -62,14 +67,15 @@ if ("$?" eq "0") {
       opendir(JSF, "$dist/$dir") || die "ERROR: Could not open directory $dist/$dir.\n";
       my @files = readdir(JSF);
       closedir(JSF);
-      foreach my $bundle ('webapp', 'widgets', 'runtime', 'vendors', 'analytics') {
+      foreach my $bundle ('webapp', 'widgets', 'vendors', 'analytics') {
         foreach my $f (@files) {
-          if ($f =~ /^${bundle}_.*\.js(\.(gz|br))?$/) {
+          if ($f =~ /^${bundle}_.*\.(js|css)(\.(gz|br))?$/) {
             $file = $f;
+            my $ext = $1;
             open(INF, "<:encoding(UTF-8)", "$libs") || die;
             open(OUTF, ">:encoding(UTF-8)", "$libs.tmp") || die;
             while(<INF>) {
-              s/(?<=\bdist\/${dir}\/)${bundle}_.*\.js(\.(gz|br))?(?=:)/$file/;
+              s/(?<=\bdist\/${dir}\/)${bundle}_.*\.${ext}(\.(gz|br))?(?=:)/$file/;
               print OUTF $_;
             }
             close(INF); close(OUTF); `mv "$libs.tmp" "$libs"`;
