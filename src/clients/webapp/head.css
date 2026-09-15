@@ -21,10 +21,12 @@ html.ownsDocument.auto-height body {
 }
 
 /* fitToContent is set on #root by controller.tsx (used by webapp?) */
-html.ownsDocument:has(#root.fitToContent),
-html.ownsDocument:has(#root.fitToContent) body {
-  width: fit-content;
-  height: fit-content;
+@supports selector(:has(a)) {
+  html.ownsDocument:has(#root.fitToContent),
+  html.ownsDocument:has(#root.fitToContent) body {
+    width: fit-content;
+    height: fit-content;
+  }
 }
 
 /* See the fallback in webapp.tsx for browsers without :has support. */
@@ -37,5 +39,3 @@ html.ownsDocument:has(#root.fitToContent) body {
 html.ownsDocument:not(.finished-loading):after {
   background: var(--loader-url) 50% 50% no-repeat rgb(249, 249, 249);
 }
-
-

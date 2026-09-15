@@ -275,9 +275,11 @@ lacking either keep the solid-block fallback above. */
   font-weight: bold;
   color: var(--font-heading-color);
 }
-.head-line-break + span:has(> h1),
-.head-line-break + .introtext + span:has(> h1) {
-  margin-top: 0;
+@supports selector(:has(a)) {
+  .head-line-break + span:has(> h1),
+  .head-line-break + .introtext + span:has(> h1) {
+    margin-top: 0;
+  }
 }
 .sb[dir='rtl'] .chaptitle {
   float: right;
