@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { clone, findTreeNode } from '../../common.ts';
 import C from '../../constant.ts';
 import { Analytics } from '../analytics.ts';
-import { createNodeList, getProps, updateLinks } from '../web-common.ts';
+import { createNodeList, updateLinks } from '../web-common.ts';
 import SelectOR from '../components/libxul/selectOR.tsx';
 
 import type {
@@ -112,13 +112,13 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
   };
 
   const [state] = useState(() => {
-    const s = getProps(props, {
-      initialORM: { otherMod: 'genbk', keys: [] },
+    const s: WidgetORState = {
       otherMods: [],
       disabled: false,
       enableMultipleSelection: false,
       enableParentSelection: false,
-    }) as WidgetORState;
+      ...props,
+    };
     updateLinksOR(s.initialORM, true);
     updateAnalyticsInfo(s.initialORM);
     return s;

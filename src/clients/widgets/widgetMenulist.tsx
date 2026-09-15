@@ -4,7 +4,7 @@ import { functionalComponentRenderPromise } from '../common.ts';
 import { Analytics } from '../analytics.ts';
 import Menulist from '../components/libxul/menulist.tsx';
 import { delayHandler } from '../components/libxul/xul.tsx';
-import { fadeTo, getProps } from '../web-common.ts';
+import { fadeTo } from '../web-common.ts';
 
 import type { ChangeEvent, ReactNode } from 'react';
 import type { MenulistProps } from '../components/libxul/menulist.tsx';
@@ -36,7 +36,10 @@ export default function WidgetMenulist(
   const { compid, settings } = wprops;
   const { actions, autodownload, props, data } = settings;
   // eslint-disable-next-line react/prop-types
-  const { value } = props;
+  let { value } = props;
+  value = !Number.isNaN(Number(value))
+    ? Number(value)
+    : data.items.findIndex((d) => 'option' in d);
 
   if (!persist) persist = { noAutodownload: true, components: {} };
   if (!(compid in persist.components))
@@ -44,13 +47,13 @@ export default function WidgetMenulist(
 
   const { loadingRef } = functionalComponentRenderPromise();
   const [state, setState] = useState(() => {
-    return getProps(props, {
+    const s: WidgetMenulistState = {
       disabled: false,
       multiple: false,
-      value: !Number.isNaN(Number(value))
-        ? Number(value)
-        : data.items.findIndex((d) => 'option' in d),
-    });
+      ...props,
+      value,
+    };
+    return s;
   });
 
   // Component state may be controlled by Drupal with this:

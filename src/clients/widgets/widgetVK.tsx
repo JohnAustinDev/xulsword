@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { diff } from '../../common.ts';
 import { Analytics } from '../analytics.ts';
-import { getProps, updateLinks } from '../web-common.ts';
+import { updateLinks } from '../web-common.ts';
 import SelectVK from '../components/libxul/selectVK.tsx';
 
 import type {
@@ -105,12 +105,13 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
   };
 
   const [state, setState] = useState(() => {
-    const s = getProps(props, {
-      initialVK: { book: 'Gen', chapter: 1, v11n: 'KJV' },
+    const s: WidgetVKState = {
       options: {},
       disabled: false,
       allowNotInstalled: true,
-    });
+      ...props
+    };
+
     // If VK chaplist is set and contains at least one chapter, make sure
     // initial VK is in the Chaplist, and the selecVK shows only chapters
     // in Chaplist.

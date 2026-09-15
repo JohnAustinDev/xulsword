@@ -74,20 +74,6 @@ export function getComponentSettings(
   return null;
 }
 
-export function getProps<T extends Record<string, any>>(
-  props: T,
-  defaultProps: T,
-): T {
-  const newProps = {};
-  Object.entries(defaultProps).forEach((entry) => {
-    const [prop, v] = entry;
-    if (prop)
-      (newProps as any)[prop] =
-        typeof props[prop] !== 'undefined' ? props[prop] : v;
-  });
-  return newProps as T;
-}
-
 export function writeSettingsToPrefsStores(
   settings: Partial<PrefRoot>,
   userPrefs: 'before' | 'after' | 'none',
