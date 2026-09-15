@@ -178,12 +178,11 @@ socket.on('connect', () => {
         setDefaultBibleBrowserPrefs(Prefs);
         setGlobalPanels(Prefs, numPanels);
         validateModulePrefs();
-
         renderToRoot(<Xulsword onWheelCapture={wheelCapture} />, {
           rootCssClass: 'bibleBrowser',
           onload: () => {
             if (customStyle) getStyleParent().appendChild(customStyle);
-            getRootElement()?.classList.add('finished-loading');
+            document.querySelector('#root')?.classList.add('finished-loading');
           },
         }).catch((er) => {
           log.error(er);
@@ -211,18 +210,3 @@ if (window.parent !== window) {
   });
   window.parent.postMessage({ type: 'iframeHeightModeRequest' }, '*');
 }
-
-// :has fallback for html.ownsDocument *:not(#root, :has(#root))
-// Browsers without :has drop that entire rule.
-window.addEventListener('load', () => {
-  if (typeof CSS !== 'undefined' && CSS.supports('selector(:has(*))')) return;
-  const root = document.getElementById('root');
-  if (!root) return;
-  const hasRootClass = 'xs-has-root';
-  for (let e = root.parentElement; e; e = e.parentElement) {
-    e.classList.add(hasRootClass);
-  }
-  const style = document.createElement('style');
-  style.textContent = `html.ownsDocument *:not(#root):not(.${hasRootClass}) { display: none; }`;
-  document.head.appendChild(style);
-});

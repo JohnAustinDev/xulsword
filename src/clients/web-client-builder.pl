@@ -59,6 +59,10 @@ if ("$?" eq "0") {
   my $cmd = "cp $xulsword/src/clients/webapp/head.css '$dist/webapp'";
   print $cmd . "\n";
   `$cmd`;
+  # Run css-has-pseudo on head.css (and everything else).
+  my $cmd = "node '$DIST_PARENT_DIR/../../../../utils/compileCSS.mjs'";
+  print $cmd . "\n";
+  `$cmd`;
   my $libs = "ibt.libraries.yml";
   chdir "$DIST_PARENT_DIR" || die "ERROR: Could not cd to $DIST_PARENT_DIR.\n:";
   if (-e "$libs") {

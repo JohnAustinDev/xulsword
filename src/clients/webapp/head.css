@@ -21,21 +21,28 @@ html.ownsDocument.auto-height body {
 }
 
 /* fitToContent is set on #root by controller.tsx (used by webapp?) */
-@supports selector(:has(a)) {
-  html.ownsDocument:has(#root.fitToContent),
-  html.ownsDocument:has(#root.fitToContent) body {
-    width: fit-content;
-    height: fit-content;
-  }
+html.ownsDocument:has(#root.fitToContent),
+html.ownsDocument:has(#root.fitToContent) body {
+  width: fit-content;
+  height: fit-content;
 }
 
-/* See the fallback in webapp.tsx for browsers without :has support. */
-@supports selector(:has(*)) {
-  html.ownsDocument *:not(#root, :has(#root)) {
-    display: none;
-  }
+html.ownsDocument *:not(#root, :has(#root)) {
+  display: none;
 }
 
-html.ownsDocument:not(.finished-loading):after {
-  background: var(--loader-url) 50% 50% no-repeat rgb(249, 249, 249);
+#root:not(.finished-loading) {
+  height: calc(var(--multipanel-height, max(400px, 80vh)) - 35px);
+  position: relative;
+}
+#root:not(.finished-loading):after {
+  content: '';
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  z-index: 9999;
+  background: var(--loader-url, url('../images/loader-host.gif')) 50% 50% no-repeat rgb(249, 249, 249);
+  opacity: 0.8;
 }
