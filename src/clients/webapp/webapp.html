@@ -1,5 +1,5 @@
 <!doctype html>
-<html class="ownsDocument">
+<html>
   <head>
     <title>Inline Bible Browser Implementation</title>
     <meta charset="utf-8" />
@@ -7,16 +7,8 @@
     <meta name="MobileOptimized" content="width" />
     <meta name="HandheldFriendly" content="true" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      rel="stylesheet"
-      media="all"
-      href="/src/clients/webapp/head.css"
-    />
-    <link
-      rel="stylesheet"
-      media="all"
-      href="/src/clients/webapp/test.css"
-    />
+    <link rel="stylesheet" media="all" href="/src/clients/webapp/head.css" />
+    <link rel="stylesheet" media="all" href="/src/clients/webapp/test.css" />
     <style>
       button {
         background-color: #e0e0e0;
@@ -26,10 +18,16 @@
         background-color: #007bff;
         color: #fff;
       }
+      html {
+        --loader-url: url('/src/clients/images/loader-host.gif');
+      }
+      html.ownsDocument {
+        --loader-url: url('/src/clients/images/loader.gif');
+      }
     </style>
   </head>
   <body>
-    <button class="active" id="ownsDocumentButton">Show iframe view</button>
+    <button id="ownsDocumentButton">Show iframe view</button>
     <div class="container box">
       <h1>Host Embedded Bible Browser Implementation</h1>
       <p>
@@ -51,30 +49,30 @@
       </p>
     </div>
     <script>
-      onload = () => {
-        const [html] = document.getElementsByTagName('HTML');
-        const button = document.getElementById('ownsDocumentButton');
-        const root = document.getElementById('root');
-        button.addEventListener('click', (e) => {
-          button.classList.toggle('active');
-          html.classList.toggle(
-            'ownsDocument',
-            button.classList.contains('active'),
-          );
-          const { shadowRoot } = root;
-          if (shadowRoot) {
-            const shroot = shadowRoot.querySelector('#root');
-            if (shroot)
-              shroot.classList.toggle(
-                'ownsDocument',
-                button.classList.contains('active'),
-              );
-          }
-        });
-        const inIframe = window.self !== window.top;
-        if (!inIframe) button.click();
-        else html.classList.add('in-iframe');
-      };
+      const [html] = document.getElementsByTagName('HTML');
+      const button = document.getElementById('ownsDocumentButton');
+      const root = document.getElementById('root');
+      button.addEventListener('click', (e) => {
+        button.classList.toggle('active');
+        html.classList.toggle(
+          'ownsDocument',
+          button.classList.contains('active'),
+        );
+        const { shadowRoot } = root;
+        if (shadowRoot) {
+          const shroot = shadowRoot.querySelector('#root');
+          if (shroot)
+            shroot.classList.toggle(
+              'ownsDocument',
+              button.classList.contains('active'),
+            );
+        }
+      });
+      const inIframe = window.self !== window.top;
+      if (inIframe) {
+        button.click();
+        html.classList.add('in-iframe');
+      }
     </script>
   </body>
 </html>
