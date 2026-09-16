@@ -20,9 +20,9 @@ my $xulsword = `pwd`; chomp $xulsword;
 `rm -rf "$DIST_PARENT_DIR/dist/"*`;
 `rm -rf "$xulsword/build/webapp/dist/"*`;
 # Server directories must be created individually now and permissions set.
-`mkdir "$DIST_PARENT_DIR/dist/library"`;
-`mkdir "$DIST_PARENT_DIR/dist/webapp"`;
-`mkdir "$DIST_PARENT_DIR/dist/widgets"`;
+`mkdir -p "$DIST_PARENT_DIR/dist/library"`;
+`mkdir -p "$DIST_PARENT_DIR/dist/webapp"`;
+`mkdir -p "$DIST_PARENT_DIR/dist/widgets"`;
 `chmod 775 "$DIST_PARENT_DIR/dist/*"`;
 
 # Sourcing for environment variables does not work in Perl, so a wrapper
