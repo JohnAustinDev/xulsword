@@ -48,8 +48,17 @@ socket.on('connect', () => {
   const bibleBrowserComps = getReactComponents(document).filter(
     (x) => x.dataset.reactComponent === 'bibleBrowser',
   );
-  if (bibleBrowserComps.length > 1)
+  if (bibleBrowserComps.length > 1) {
+    // NOTE: Single instance limitation is from xulsword's controller.tsx,
+    // which was originally designed to control a whole window. Multiple
+    // bibleBrowser instances may be supported with at least these changes:
+    // - Shadow DOM becomes attached to instance rather than #root.
+    // - Prefs id in this file must include the instance id, and this prefs
+    //   object must be passed to and utilized by each xulsword instance.
+    // - rootNode.ts must be modified to handle instance id.
+    // - Window and xulsword effects must be separated in controller.tsx.
     log.error('Only one Browser Bible component per document is supported.');
+  }
   else if (!initialized) {
     initialized = true;
 
