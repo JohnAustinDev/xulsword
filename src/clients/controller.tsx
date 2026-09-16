@@ -564,6 +564,11 @@ export default async function renderToRoot(
   const { print, resetOnResize, rootCssClass, onload, onunload } =
     options || {};
 
+  // The web-app requires Shadow DOM (see below). Browsers lacking it (Internet
+  // Explorer) are not supported, so there the web-app silently never renders.
+  if (Build.isWebApp && typeof Element.prototype.attachShadow !== 'function')
+    return;
+
   log.verbose(`Initializing new window:`, descriptor);
 
   // On web clients, IPC is not available until the socket is connected.
@@ -590,17 +595,12 @@ export default async function renderToRoot(
   // The web-app is rendered into a shadow root attached to the page's #root
   // element, so that the host page's CSS cannot restyle the web-app, and the
   // web-app's CSS cannot restyle the host page. The shadow root gets its own
-  // #root, to which all xulsword CSS is scoped. Electron windows own their
-  // document, so they render directly into #root, as does the web-app in the
-  // few browsers lacking Shadow DOM (there #root scoping alone must suffice).
+  // #root, which carries the window's classes. Electron windows own their
+  // document, so they render directly into #root.
   // NOTE: BlueprintJS components that portal into document.body (Popover,
   // Overlay, Toaster etc.) render outside the shadow root, and so unstyled.
   let rootElement = document.getElementById('root');
-  if (
-    Build.isWebApp &&
-    rootElement &&
-    typeof rootElement.attachShadow === 'function'
-  ) {
+  if (Build.isWebApp && rootElement) {
     const shadowRoot = rootElement.attachShadow({ mode: 'open' });
     rootElement = document.createElement('div');
     rootElement.id = 'root';
@@ -649,8 +649,8 @@ export default async function renderToRoot(
       );
   }
   // These classes and the text direction are applied to #root rather than to
-  // <html> so that all xulsword CSS can be scoped to #root. That keeps the
-  // web-app from restyling a host page when it is rendered into a webpage.
+  // <html> because the web-app's #root is in a shadow root, where selectors
+  // cannot reach <html>.
   if (rootElement) {
     rootElement.className = classes.join(' ');
     rootElement.dir = G.i18n.t('locale_direction');

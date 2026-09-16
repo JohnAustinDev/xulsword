@@ -62,10 +62,10 @@
   "typescript.format.enable": false,
 
   "files.exclude": {
-    "./src/*.js": true,
-    "./src/*.d.ts": true,
-    "./src/*.d.ts.map": true,
-    "./src/*.js.map": true
+    "src/*.js": true,
+    "src/**/*.d.ts": true,
+    "src/**/*.d.ts.map": true,
+    "src/**/*.js.map": true
   },
 
   "search.exclude": {
@@ -76,6 +76,11 @@
     "node_modules": true,
     "yarn.lock": true,
     "*.{css,sass,scss}.d.ts": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "Cpp/{boost,sword,clucene,zlib,install,build,lib}*/**": true,
+    "profile_webapp/**": true
   },
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "cmake.sourceDirectory": "${workspaceFolder}/Cpp",

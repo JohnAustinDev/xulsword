@@ -617,22 +617,18 @@ export default class PrintSettings extends React.Component<
       // seem to cause problems.
       // NOTE: pageable content width and height must not be set for print to
       // work!
-
-      // The web-app CSS has #root prefixed to every selector during packaging
-      // so add it to these rules too if needed.
-      const waroot = Build.isWebApp ? '#root#root ' : '';
       style = `
-      ${waroot}.pageView {
+      #root .pageView {
         width: ${i.pageViewW}px;
         height: ${i.pageViewH}px;
       }
-      ${waroot}.page-buttons {
+      .page-buttons {
         left: ${i.pageViewW / 2 - 0.5 * i.pagebuttonsW}px;
       }
-      ${waroot}.scale {
+      .scale {
         transform: scale(${i.pageViewToContentScale});
       }
-      ${waroot}.content {
+      .content {
         width: ${i.contentW}px;
         height: ${i.contentH}px;
         padding-top: ${(margins.top * convertToPx.mm) / i.pageToContentScale}px;
@@ -646,10 +642,10 @@ export default class PrintSettings extends React.Component<
           (margins.left * convertToPx.mm) / i.pageToContentScale
         }px;
       }
-      ${waroot}.userFontBase {
+      .userFontBase {
         font-size: ${scale / 100}em;
       }
-      ${waroot}.pageable .printContainer {
+      .pageable .printContainer {
         column-count: ${twoColumns ? 2 : 1}
       }
 
@@ -661,14 +657,14 @@ export default class PrintSettings extends React.Component<
           margin-bottom: ${margins.bottom}mm;
           margin-left: ${margins.left}mm;
         }
-        ${waroot}.pageView {
+        .pageView {
           width: unset;
           height: unset;
         }
-        ${waroot}.scale {
+        .scale {
           transform: scale(${i.pageToContentScale});
         }
-        ${waroot}.content  {
+        .content  {
           width: ${100 / i.pageToContentScale}vw;
           height: ${100 / i.pageToContentScale}vh;
           padding-top: unset;
@@ -676,7 +672,7 @@ export default class PrintSettings extends React.Component<
           padding-bottom: unset;
           padding-left: unset;
         }
-        ${waroot}.pageable .content {
+        .pageable .content {
           width: unset !important;
           height: unset !important;
         }

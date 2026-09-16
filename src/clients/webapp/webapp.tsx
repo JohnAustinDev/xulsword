@@ -14,12 +14,12 @@ import {
   writeSettingsToPrefsStores,
   getComponentSettings,
   getReactComponents,
-  scopeCssToRoot,
 } from '../web-common.ts';
 import defaultSettings, {
   BibleBrowserData,
   setDefaultBibleBrowserPrefs,
 } from './defaultSettings.ts';
+import './shadowRoot.scss';
 import './webapp.css';
 
 window.WebAppClient = 'BibleBrowser';
@@ -85,7 +85,7 @@ socket.on('connect', () => {
     if (css) {
       const style = document.createElement('div');
       // style must be a child of div to pass through the sanitizer.
-      sanitizeHTML(style, `<div><style>${scopeCssToRoot(css)}</style></div>`);
+      sanitizeHTML(style, `<div><style>${css}</style></div>`);
       customStyle = style.firstElementChild?.firstElementChild ?? null;
     }
 

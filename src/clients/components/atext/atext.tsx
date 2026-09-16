@@ -935,7 +935,7 @@ class Atext
           height={realNoteBoxHeight}
           style={
             columns > 1
-              ? { width: `calc(${100 / columns}% - 24px)` }
+              ? { width: `calc(${100 / columns}% - ${14 + 2 * columns}px)` }
               : undefined
           }
         >

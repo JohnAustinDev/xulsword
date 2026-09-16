@@ -634,16 +634,16 @@ it scales with userFontBase along with everything else here. */
 center what is left. .sb is the scroll container and LibSword output has no
 wrapper of its own, so the cap goes on .sb itself. */
 @media (min-width: 1024px) {
-  #root.bibleBrowser .atext .sb {
+  #root.bibleBrowser .atext:not(.Dicts) .sb {
     margin-inline: auto;
   }
-  #root.bibleBrowser .single-panel .atext .sb {
+  #root.bibleBrowser .single-panel .atext:not(.Dicts) .sb {
     max-width: var(--reading-measure);
   }
-  #root.bibleBrowser .atext.columns2 .sb {
+  #root.bibleBrowser .atext:not(.Dicts).columns2 .sb {
     max-width: calc(2 * var(--reading-measure));
   }
-  #root.bibleBrowser .atext.columns3 .sb {
+  #root.bibleBrowser .atext:not(.Dicts).columns3 .sb {
     max-width: calc(3 * var(--reading-measure));
   }
 }

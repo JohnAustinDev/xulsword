@@ -530,11 +530,7 @@ export function strongsHilights(classes: string[]) {
       const x = xx > 2 ? 2 : xx;
       const { styleSheets } = getRootNode();
       const sheet = styleSheets[styleSheets.length - 1];
-      // Webapp builds scope every rule to #root (see scopeCssToRoot.cjs).
-      const cssRuleTemplate = getCSS(
-        `${Build.isWebApp ? '#root ' : ''}.matchingStrongs${x} {`,
-        styleSheets,
-      );
+      const cssRuleTemplate = getCSS(`.matchingStrongs${x} {`, styleSheets);
       if (cssRuleTemplate) {
         // Each Strong's module uses classes with different number
         // padding, so multiple rules are required for situations

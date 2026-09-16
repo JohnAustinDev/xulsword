@@ -1,0 +1,15 @@
+// The web-app renders into a shadow root (see renderToRoot() in
+// controller.tsx), which contains no html or body element, so the rules that
+// normalize.css and Blueprint's reset apply to html and body never match
+// there. Apply them to #root instead (body's margin is reset in global-htm.css).
+@import '@blueprintjs/colors/lib/scss/colors';
+@import '@blueprintjs/core/src/common/variables';
+@import '@blueprintjs/core/src/common/mixins';
+
+#root {
+  -webkit-text-size-adjust: 100%;
+  box-sizing: border-box;
+  @include base-typography();
+  color: $pt-text-color;
+  font-family: $pt-font-family;
+}
