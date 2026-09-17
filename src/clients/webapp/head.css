@@ -33,13 +33,14 @@ html.ownsDocument *:not(#root, :has(#root)) {
 
 #root {
   /* This is the minimum height a hosted webapp will take. */
-  --min-height: max(500px, 80vh);
+  --min-height: max(540px, 80vh);
 }
 html.ownsDocument #root {
   /* This is the minimum height an iframed webapp will take.
   If iframe height is ever less than this, a scroll-bar will appear in the
-  webapp. */
-  --min-height: 700px;
+  webapp. This is the optimal height for current third-party sites that use
+  the webapp without bibleBrowserParent.js control. */
+  --min-height: 540px;
 }
 
 #root:not(.finished-loading) {

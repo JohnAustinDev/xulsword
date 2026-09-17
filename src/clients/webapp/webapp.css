@@ -72,14 +72,14 @@ phone) is that column inset itself, which is why no heading adds its own. */
 }
 
 /* viewport height is iframe height (with closed controls)
-minus 2*10px(top/bottom-margins) - 8px(the safety margin of
-bibleBrowserParent.js) - 2px(tab-top-border) */
+minus 2*10px(top/bottom-margins) - 4px(safety margin) -
+2px(tab-top-border) */
 #root .viewport {
-  min-height: calc(var(--min-height) - 30px);
+  min-height: calc(var(--min-height) - 26px);
   margin: 0 10px 10px 10px;
 }
 #root.multi-panel .viewport {
-  height: calc(var(--min-height) - 30px);
+  height: calc(var(--min-height) - 26px);
 }
 
 /* don't show the pin for a single atext element */
