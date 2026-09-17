@@ -132,6 +132,7 @@ const defaultSettings: AllComponentsData = {
             place: {} as any, // leave as {} to update at runtime
 
             showChooser: null as unknown as boolean, // leave as null to set at runtime
+            showControls: false,
             tabs: [[], []], // leave tab-bank arrays empty to show all tabs in each bank.
             panels: ['', ''], // leave panels empty to show the first installed module
             ilModules: [null, null],

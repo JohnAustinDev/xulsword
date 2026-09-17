@@ -71,14 +71,15 @@ phone) is that column inset itself, which is why no heading adds its own. */
   overflow-y: hidden;
 }
 
-/* --multipanel-height is not set in xulsword, but is part of the IBT webapp
-api so third-party sites can set it if desired. */
-#root.multi-panel .viewport {
-  height: var(--multipanel-height, max(400px, 80vh));
-}
+/* viewport height is iframe height (with closed controls)
+minus 2*10px(top/bottom-margins) - 8px(the safety margin of
+bibleBrowserParent.js) - 2px(tab-top-border) */
 #root .viewport {
+  min-height: calc(var(--min-height) - 30px);
   margin: 0 10px 10px 10px;
-  min-height: var(--multipanel-height, max(400px, 80vh));
+}
+#root.multi-panel .viewport {
+  height: calc(var(--min-height) - 30px);
 }
 
 /* don't show the pin for a single atext element */

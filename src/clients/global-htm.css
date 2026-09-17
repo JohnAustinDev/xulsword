@@ -34,7 +34,9 @@
   --input-height: 28px;
 }
 
-/* Host Styles */
+/* Host Styles: Variables must be set on #root for the xulsword app, and so
+cannot be overwritten by host CSS, so the ownsDocument class is copied from
+host's html element onto the shadow #root element. */
 #root:not(.ownsDocument) {
   --color-primary: #8d3524 ;
   --color-secondary: #a7bd43;

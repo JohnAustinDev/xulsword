@@ -400,7 +400,16 @@ export default function (opts) {
             use: [
               build === 'webapp' ? styleLoader : MiniCssExtractPlugin.loader,
               'css-loader',
-              { loader: 'sass-loader', options: { implementation: sass } },
+              {
+                loader: 'sass-loader',
+                options: {
+                  implementation: sass,
+                  sassOptions: {
+                    silenceDeprecations: ['import'],
+                    quietDeps: true,
+                  },
+                },
+              },
             ],
           },
           ...useFileLoader.map((ext) => {

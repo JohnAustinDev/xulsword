@@ -22,6 +22,8 @@ import defaultSettings, {
 import './shadowRoot.scss';
 import './webapp.css';
 
+import type { PrefRoot, PrefValue } from '../../type.ts';
+
 window.WebAppClient = 'BibleBrowser';
 
 export type BibleBrowserControllerGlobal = {
@@ -58,8 +60,7 @@ socket.on('connect', () => {
     // - rootNode.ts must be modified to handle instance id.
     // - Window and xulsword effects must be separated in controller.tsx.
     log.error('Only one Browser Bible component per document is supported.');
-  }
-  else if (!initialized) {
+  } else if (!initialized) {
     initialized = true;
 
     const [bibleBrowserComp] = bibleBrowserComps;
@@ -134,24 +135,48 @@ socket.on('connect', () => {
       // load. Server settings should always override them to insure a xulsword
       // default value will not permanently override both the user and server
       // settings.
+      (['global.locale', 'global.fontSize', 'xulsword.place'] as const).forEach(
+        (pref) => {
+          let sv = settings;
+          pref.split('.').forEach((p) => {
+            if (sv && typeof sv === 'object' && p in sv && (sv as any)[p]) {
+              sv = (sv as any)[p];
+            }
+          });
+          if (sv !== settings) Prefs.setComplexValue(pref, sv);
+        },
+      );
       Prefs.setComplexValue('xulsword.place', settings.prefs.xulsword.place);
       Prefs.setCharPref('global.locale', settings.prefs.global.locale);
       Prefs.setIntPref('global.fontSize', settings.prefs.global.fontSize);
     } else if (preExistingPrefs && applyUserPrefs === 'before') {
-      // The server should never be able to change the user's choice for these
-      // prefs. They can only be changed by the server if prefs for the
-      // storageId were not pre-existing.
-      if (settings.prefs.xulsword.audio) {
-        try {
-          const tracking = Prefs.getBoolPref(
-            'xulsword.audio.tracking',
-            'prefs',
-          );
-          settings.prefs.xulsword.audio.tracking = tracking;
-        } catch (er) {
-          log.error(er);
-        }
-      }
+      // The server should never be able to change user choices for these prefs
+      // So for each storageId, once the user has had a chance to set these
+      // prefs, they can only be changed by the user. However they can
+      // effectively be updated by the server by changing the storageId.
+      (['xulsword.audio.tracking', 'xulsword.showControls'] as const).forEach(
+        (pref) => {
+          let pv: PrefValue | null = null;
+          const pkeys = pref.split('.');
+          const root = pkeys.shift() as keyof typeof settings.prefs;
+          try {
+            pv = Prefs.getComplexValue(root, 'prefs') as PrefRoot;
+          } catch (er) {
+            log.error(er);
+          }
+          let setting: any = settings.prefs[root];
+          pkeys.forEach((p, i, a) => {
+            if (pv && typeof pv === 'object' && p in pv && (pv as any)[p]) {
+              if (i === a.length - 1) setting[p] = (pv as any)[p];
+              else {
+                pv = (pv as any)[p];
+                if (!(p in setting)) setting[p] = {};
+                setting = setting[p];
+              }
+            }
+          });
+        },
+      );
     }
     writeSettingsToPrefsStores(settings, applyUserPrefs);
 

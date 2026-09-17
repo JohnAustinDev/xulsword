@@ -1,6 +1,6 @@
 /* This stylesheet is not referenced anywhere (so it's not handled by webpack).
-But it must be linked to in the <head> of any content document which
-hosts the webapp. */
+But it must be linked to in the <head> of every content document which
+hosts the webapp (iframes and hosts). */
 
 /* Be default, the iframe content is scrollable */
 html.ownsDocument,
@@ -31,17 +31,28 @@ html.ownsDocument *:not(#root, :has(#root)) {
   display: none;
 }
 
+#root {
+  /* This is the minimum height a hosted webapp will take. */
+  --min-height: max(500px, 80vh);
+}
+html.ownsDocument #root {
+  /* This is the minimum height an iframed webapp will take.
+  If iframe height is ever less than this, a scroll-bar will appear in the
+  webapp. */
+  --min-height: 700px;
+}
+
 #root:not(.finished-loading) {
-  height: calc(var(--multipanel-height, max(400px, 80vh)) - 35px);
+  height: var(--min-height);
   position: relative;
 }
 #root:not(.finished-loading):after {
   content: '';
   position: absolute;
-  top: 0px;
-  bottom: 0px;
-  left: 0px;
-  right: 0px;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 9999;
   background: var(--loader-url) 50% 50% no-repeat rgb(249, 249, 249);
   opacity: 0.8;
