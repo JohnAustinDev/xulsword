@@ -704,7 +704,12 @@ export default class Xulsword
         {Build.isWebApp && (
           <>
             <Hbox id="controls" pack="center">
-              <Vbox id="control-rows" align="start" flex="2">
+              <Vbox
+                id="control-rows"
+                className={audio.open || showControls ? 'open' : ''}
+                align="start"
+                flex="2"
+              >
                 <div
                   className={`controls-animation${showControls ? '' : ' hide'}`}
                 >
@@ -769,7 +774,7 @@ export default class Xulsword
             noteBoxHeight={noteBoxHeight}
             maximizeNoteBox={maximizeNoteBox}
             showChooser={showChooser}
-            showControls={Build.isWebApp ? showControls ?? false : undefined}
+            showControls={Build.isWebApp ? (showControls ?? false) : undefined}
             ownWindow={false}
             atextRefs={this.atextRefs}
             eHandler={viewportParentHandler}

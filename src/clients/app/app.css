@@ -8,9 +8,11 @@ html body {
 }
 
 /* fitToContent is set on #root by controller.tsx */
-html:has(#root.fitToContent),
-html:has(#root.fitToContent) body {
-  width: fit-content;
-  height: fit-content;
+@supports selector(:has(a)) {
+  html:has(#root.fitToContent),
+  html:has(#root.fitToContent) body {
+    width: fit-content;
+    height: fit-content;
+  }
 }
 

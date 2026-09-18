@@ -1,6 +1,7 @@
 /* This stylesheet is not referenced anywhere (so it's not handled by webpack).
 But it must be linked to in the <head> of every content document which
-hosts the webapp (iframes and hosts). */
+hosts the webapp (iframes and hosts). This stylsheet may use :has unlike the
+webapp CSS itslef. */
 
 /* Be default, the iframe content is scrollable */
 html.ownsDocument,
@@ -32,8 +33,14 @@ html.ownsDocument *:not(#root, :has(#root)) {
 }
 
 #root {
-  /* This is the minimum height a hosted webapp will take. */
-  --min-height: max(540px, 80vh);
+  /* This is the minimum height a hosted webapp will take. The 290px is the
+  webpage header, so the webapp fills the rest of the page. */
+  --min-height: max(540px, calc(100vh - 290px));
+}
+@media (max-width: 767px) {
+  #root {
+    --min-height: max(540px, calc(100vh - 190px));
+  }
 }
 html.ownsDocument #root {
   /* This is the minimum height an iframed webapp will take.
