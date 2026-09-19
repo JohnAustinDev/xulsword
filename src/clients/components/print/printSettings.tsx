@@ -646,7 +646,14 @@ export default class PrintSettings extends React.Component<
         font-size: ${scale / 100}em;
       }
       .pageable .printContainer {
-        column-count: ${twoColumns ? 2 : 1}
+        column-count: ${twoColumns ? 2 : 1};
+        /* Safari only lays overflowing content out as extra columns in the
+        inline direction (which is what paging scrolls through) when
+        column-width is also specified. Without it, a single column overflows
+        downward instead, leaving scrollWidth === clientWidth, so paging is
+        lost. Since column-count is a maximum when both are given, a 1px
+        column-width never changes the number of columns used. */
+        column-width: 1px;
       }
 
       @media print {
