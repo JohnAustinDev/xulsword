@@ -279,7 +279,7 @@ function bookmarkProgramMenu(
 
 function addShortcutKeys(submenu?: MenuItemConstructorOptions[]): void {
   if (submenu) {
-    const sc = /(?!<&)&([^&])/;
+    const sc = /(?<!&)&([^&])/;
 
     const numbers: string[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) =>
       n.toString(),
@@ -363,7 +363,7 @@ function ts(key: string, sckey?: string): string {
   let text = i18n.t(key);
   const sckey2 = sckey || `${key}.sc`;
   if (text) {
-    text = text.replace(/(?!<&)&(?!=&)/g, '&&');
+    text = text.replace(/(?<!&)&(?!&)/g, '&&');
     if (i18n.exists(sckey2)) {
       const l = i18n.t(sckey2);
       const re = new RegExp(`(${l})`, 'i');

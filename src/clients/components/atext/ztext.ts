@@ -208,7 +208,7 @@ export function libswordText(
           const sel = new RegExp(`(dictkey)([^>]*">${escapeRE(key)}<)`);
           const list = Cache.read('keyHTML', module)
             .replace(sel, '$1 dictselectkey$2')
-            .replace(/(?<=id="[^"]+\.)0(?=")/g, n.toString());
+            .replace(/(id="[^"]+\.)0(?=")/g, (_m: string, id: string) => `${id}${n}`);
           r.noteHTML += `
             <div class="dictlist">
               <div class="headerbox">
