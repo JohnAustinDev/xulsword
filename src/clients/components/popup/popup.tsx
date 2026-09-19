@@ -16,7 +16,7 @@ import {
 import RenderPromise from '../../renderPromise.ts';
 import { getRootElement, getRootNode } from '../../rootNode.ts';
 import { topHandle, htmlAttribs } from '../libxul/xul.tsx';
-import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
+import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import Button from '../libxul/button.tsx';
 import { getRefBible } from '../atext/zversekey.ts';

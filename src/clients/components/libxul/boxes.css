@@ -7,7 +7,7 @@
 .vbox,
 .xs-orient-vertical {
   flex-direction: column;
-  justify-content: space-around;
+  justify-content: flex-start;
 }
 
 .hbox,
