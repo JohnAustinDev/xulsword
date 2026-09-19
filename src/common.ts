@@ -138,6 +138,15 @@ export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// The final element of an array, or undefined when it's empty. This exists
+// because Array.prototype.at(-1) needs Chrome 92 / Safari 15.4 / Firefox 90,
+// above the floor in .browserslistrc, and @babel/preset-env is configured
+// without useBuiltIns so it does not polyfill built-in methods. An eslint
+// no-restricted-syntax rule keeps .at() from creeping back in.
+export function last<T>(array: readonly T[] | undefined): T | undefined {
+  return array?.[array.length - 1];
+}
+
 export function callLog(acall: GCallType): string {
   if (C.LogLevel === 'silly') return JSON_stringify(acall);
   let arginfo = `${acall[2]?.length} args`;
@@ -1761,7 +1770,7 @@ export function gbQualifiedPath(key: string, gbAudio: GenBookAudio): string {
     const keys = key.split(C.GBKSEP);
     // For ChapterZeroIsIntro=false, intro is: keys=[a, b, ''] ords=[1,1]
     // and qualified path is: '001 a/001 b'
-    if (keys.at(-1) === '' && keys.length - 1 === ords.length) keys.pop();
+    if (last(keys) === '' && keys.length - 1 === ords.length) keys.pop();
     if (ords.length === keys.length) {
       return ords.map((o, i) => `${pad(o, 3, 0)} ${keys[i]}`).join(C.GBKSEP);
     }
@@ -2006,7 +2015,7 @@ function IBTtemplateURL(
       // IBT introduction chapter(s) requests use the parent key without a
       // following slash (ending with a slash means 'all children' rather than
       // introduction).
-      const isIntro = segs.at(-1)?.match(/^(0|000)( .*)?$/);
+      const isIntro = last(segs)?.match(/^(0|000)( .*)?$/);
       if (isIntro) segs.pop();
       segs = segs.map((seg) => {
         if (useOrd) return Number(seg).toString();

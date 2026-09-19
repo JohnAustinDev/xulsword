@@ -342,8 +342,10 @@ export class Analytics {
     // Origin domain
     let origin;
     try {
+      /* eslint-disable compat/compat */
       if (window.location.ancestorOrigins && window.location.ancestorOrigins[0])
         [origin] = window.location.ancestorOrigins;
+      /* eslint-enable compat/compat */
       if (!origin && document.referrer) origin = document.referrer;
       if (origin) origin = new URL(origin).hostname;
     } catch (er) {

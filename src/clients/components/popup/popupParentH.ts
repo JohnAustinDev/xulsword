@@ -1,6 +1,6 @@
 import type React from 'react';
 import Subscription from '../../../subscription.ts';
-import { clone, ofClass, randomID } from '../../../common.ts';
+import { clone, last, ofClass, randomID } from '../../../common.ts';
 import { goToLocationVK } from '../../../commands.ts';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
@@ -290,8 +290,8 @@ export function popupHandler(
                 if (elemdata === null) elemdata = [];
                 else elemdata = clone(elemdata);
                 // sn links within sn popups should keep their original context
-                if (elemdata.at(-1)?.type === 'sn' && data.type === 'sn') {
-                  data.context = elemdata.at(-1)?.context;
+                if (last(elemdata)?.type === 'sn' && data.type === 'sn') {
+                  data.context = last(elemdata)?.context;
                 }
                 elemdata.push(data);
                 // set the gap so as to position popup under the mouse

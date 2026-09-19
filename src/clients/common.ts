@@ -15,6 +15,7 @@ import {
   prefType,
   dString,
   getCSS,
+  last,
   pad,
 } from '../common.ts';
 import C from '../constant.ts';
@@ -186,7 +187,7 @@ export function windowArguments(prop: string): PrefValue;
 export function windowArguments(
   prop: string | undefined,
 ): PrefValue | WindowDescriptorPrefType {
-  const dataID = window.ProcessInfo.argv().at(-1);
+  const dataID = last(window.ProcessInfo.argv());
   if (
     Build.isElectronApp &&
     typeof dataID === 'string' &&

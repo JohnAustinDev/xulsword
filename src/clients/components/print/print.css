@@ -26,7 +26,7 @@
 
 /* This value is < WidePrintWidth. At this width and lower, the print
 controls appear below the print container. */
-@media (width < 1000px) {
+@media (max-width: 999.98px) {
   .print {
     height: unset;
   }

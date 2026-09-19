@@ -1,5 +1,5 @@
 import React from 'react';
-import { dString, ofClass } from '../../../common.ts';
+import { dString, last, ofClass } from '../../../common.ts';
 import VerseKey from '../../../verseKey.ts';
 import Subscription from '../../../subscription.ts';
 import { goToLocationGB, goToLocationVK } from '../../../commands.ts';
@@ -110,12 +110,12 @@ function getScopes(
     let kjvscope = input;
     if (kjvscope === 'all') {
       kjvscope = Object.values(C.SupportedBooks)
-        .map((books) => `${books[0]}-${books.at(-1)}`)
+        .map((books) => `${books[0]}-${last(books)}`)
         .join(' ');
     } else if (C.SupportedBookGroups.includes(kjvscope as never)) {
       const books =
         kjvscope in C.SupportedBooks && (C.SupportedBooks as any)[kjvscope];
-      if (books) kjvscope = `${books[0]}-${books.at(-1)}`;
+      if (books) kjvscope = `${books[0]}-${last(books)}`;
     }
     const scopebooks = kjvScopeBooks(kjvscope);
     const modbooks = GI.getBooksInVKModule([], renderPromise, module); // are in v11n order

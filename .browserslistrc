@@ -1,0 +1,43 @@
+# Browser support targets. This is the single source of truth: webpack's babel
+# config, eslint-plugin-compat and stylelint all read it from here.
+#
+# The floor is set by @blueprintjs/core v6, whose compiled CSS uses logical
+# properties (margin-inline, padding-inline). Those need Chrome 89 / Safari 15,
+# and we can't go below them without patching a dependency's stylesheet. Our own
+# CSS uses logical properties in ~79 places for the same reason, so the floor is
+# real rather than theoretical.
+#
+# Firefox sits at 84 rather than tracking the same date, because selector lists
+# inside :not() - ':not(a, b)' - landed there, and we use them in six places.
+#
+# Things deliberately NOT in the floor, because they're already guarded at
+# runtime and degrade cleanly on older browsers:
+#   - :has()     always wrapped in @supports selector(:has(a)), with a fallback
+#                in the matching @supports not block
+#   - Shadow DOM checked via Element.prototype.attachShadow in controller.tsx
+#   - ResizeObserver dynamically imports resize-observer-polyfill when absent
+#
+# NOTE: @babel/preset-env transpiles *syntax* only here (useBuiltIns is not
+# enabled, to keep the webapp bundle small). Newer built-in *methods* are
+# therefore NOT polyfilled and must not be used unless they clear the floor
+# below - eslint-plugin-compat is what enforces that.
+
+# The webapp, widgets and library (analytics.ts, loaded alongside them) are
+# embedded in third-party pages and viewed on whatever browser a visitor
+# happens to have. These queries are the unnamed default section, so lint
+# checks everything against them - most of src/clients is shared between the
+# webapp and Electron builds, and the webapp floor is the stricter of the two.
+chrome >= 89
+edge >= 89
+safari >= 15
+ios_saf >= 15
+firefox >= 84
+samsung >= 15
+and_chr >= 89
+and_ff >= 84
+not dead
+
+# appClients (the Electron windows) only ever run in the bundled Chromium, so
+# they're free to use anything that ships with it.
+[electron]
+electron >= 37.0

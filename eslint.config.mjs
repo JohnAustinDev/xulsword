@@ -4,6 +4,7 @@ import ts from 'typescript-eslint';
 import react from 'eslint-plugin-react/configs/recommended.js';
 import { fixupConfigRules } from '@eslint/compat';
 import prettier from 'eslint-config-prettier';
+import compat from 'eslint-plugin-compat';
 
 const config = [
   {
@@ -11,7 +12,11 @@ const config = [
   },
   {
     ignores: [
-      '*.d.ts',
+      // Must be '**/*.d.ts': a bare '*.d.ts' only matches the repo root, and
+      // every .d.ts file here is in a subdirectory, so nothing was excluded
+      // and each one raised a 'not found in any of the provided project(s)'
+      // parsing error.
+      '**/*.d.ts',
       '**/assets/',
       '**/archive/',
       '**/build/',
@@ -69,6 +74,56 @@ const config = [
       ],
     },
   },
+
+  // Check browser API usage against the targets in .browserslistrc. This
+  // matters because @babel/preset-env is configured without useBuiltIns (to
+  // keep the webapp bundle small), so it compiles down *syntax* only: a newer
+  // built-in method like Object.hasOwn() is left as-is and simply throws on a
+  // browser too old to have it. Nothing else catches that.
+  //   - lintAllEsApis extends the check from DOM APIs to ES built-ins. It's
+  //     marked experimental upstream, but it's precisely the class of
+  //     breakage this is here to prevent.
+  //   - ignoreConditionalChecks reports calls inside an if() too. Without it
+  //     the plugin assumes 'if (!Object.hasOwn(a, b))' is feature detection
+  //     and stays quiet, which is how the one real instance went unnoticed.
+  ...[
+    // Code that ships to the webapp/widgets, plus the shared modules they
+    // bundle, checked against the default (webapp) browserslist section. The
+    // Electron windows only ever run in the bundled Chromium, so they get the
+    // far newer 'electron' section.
+    { files: ['src/*.{js,ts,tsx}', 'src/clients/**/*.{js,ts,tsx}'],
+      ignores: ['src/clients/app/**'], env: 'defaults' },
+    { files: ['src/clients/app/**/*.{js,ts,tsx}'], env: 'electron' },
+  ].map(({ files, ignores, env }) => ({
+    files,
+    ...(ignores ? { ignores } : {}),
+    ...compat.configs['flat/recommended'],
+    settings: {
+      lintAllEsApis: true,
+      ignoreConditionalChecks: true,
+      browserslistOpts: { env },
+    },
+    rules: {
+      ...compat.configs['flat/recommended'].rules,
+      // eslint-plugin-compat resolves statics and globals (Object.hasOwn,
+      // structuredClone) but not instance methods, because it can't tell what
+      // a receiver's type is. Array.prototype.at() is the one that has bitten
+      // us, so ban it outright rather than leave it unchecked. Electron code
+      // is exempt: Chromium 138 has had it for years.
+      ...(env === 'defaults'
+        ? {
+            'no-restricted-syntax': [
+              'error',
+              {
+                selector: "CallExpression[callee.property.name='at']",
+                message:
+                  '.at() needs Chrome 92 / Safari 15.4 / Firefox 90, which is above the floor in .browserslistrc, and Babel does not polyfill built-in methods. Use last() from common.ts, or index arithmetic.',
+              },
+            ],
+          }
+        : {}),
+    },
+  })),
 
   // Rules to be applied only outside src (ie to config):
   {

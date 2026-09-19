@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { diff, drupalSetting, randomID } from '../../common.ts';
+import { diff, drupalSetting, last, randomID } from '../../common.ts';
 import { functionalComponentRenderPromise } from '../common.ts';
 import { Analytics } from '../analytics.ts';
 import Menulist from '../components/libxul/menulist.tsx';
@@ -212,7 +212,7 @@ export default function WidgetMenulist(
           return d;
         })
         .reduce((p, c) => {
-          const pl = p.at(-1);
+          const pl = last(p);
           if (pl && 'optgroup' in pl && 'option' in c)
             (pl as any).children.push(c);
           else p.push(c);

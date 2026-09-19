@@ -7,6 +7,7 @@ import {
   findTreeAncestors,
   findTreeSiblings,
   gbAncestorIDs,
+  last,
   stringHash,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
@@ -268,7 +269,7 @@ export default class SelectOR
       let pn: TreeNodeInfo | undefined;
       for (let i = 0; i < ancIDs.length; i += 1) {
         const p = ancIDs[i].split(C.GBKSEP);
-        if (!p.at(-1)) p.pop();
+        if (!last(p)) p.pop();
         const n: TreeNodeInfo = {
           id: ancIDs[i],
           label: p.pop() || '',
@@ -374,7 +375,7 @@ export default class SelectOR
       }
       this.selectorValue =
         typeof selectedValue === 'string' ? [selectedValue] : selectedValue;
-      const parentNode = ancestorNodes.at(-1);
+      const parentNode = last(ancestorNodes);
       const numChildren: number =
         (enableParentSelection && ancestorNodes.length ? 1 : 0) +
         childNodes.length;
@@ -453,7 +454,7 @@ function nodeFamily(
     nodes,
     isDictMod,
   );
-  const parentNode = ancestorNodes.at(-1);
+  const parentNode = last(ancestorNodes);
   if (parentNode?.childNodes) {
     const { childNodes } = parentNode;
     return {

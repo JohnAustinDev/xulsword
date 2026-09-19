@@ -78,15 +78,6 @@ const builds = {
   ]
 };
 
-// The webapp, widgets and library (analytics.ts, loaded alongside them) are
-// embedded in third-party pages and viewed on whatever mobile browser a
-// visitor happens to have, so their babel target reaches back to ~2018 devices
-// rather than following '> 0.25%, not dead' (which tracks current evergreen
-// browsers and is fine for the Electron-only appClients/appSrv/preload builds,
-// always run on a bundled modern Chromium).
-const webBrowsersList =
-  'ios_saf >= 11, chrome >= 63, and_chr >= 63, samsung >= 8, firefox >= 58, and_ff >= 58, not dead';
-
 const defaultEnvironment = {
   WEBAPP_DOMAIN: 'http://localhost:1212',
   WEBAPP_CORS_ORIGIN: 'http://localhost:1212',
@@ -366,13 +357,27 @@ export default function (opts) {
                 presets: [
                   [
                     '@babel/preset-env',
-                    {
-                      targets: ['appSrv', 'webappSrv'].includes(build)
-                        ? { node: env('NODE_VERSION') }
-                        : ['webapp', 'widgets', 'library'].includes(build)
-                          ? webBrowsersList
-                          : '> 0.25%, not dead',
-                    },
+                    // Browser targets live in .browserslistrc, so that
+                    // eslint-plugin-compat and stylelint check against the
+                    // same floor this compiles to. Node targets stay here
+                    // because NODE_VERSION is an environment variable, which
+                    // a browserslist config can't read.
+                    // NOTE: useBuiltIns is deliberately not enabled, to keep
+                    // the webapp bundle small. That means only syntax is
+                    // compiled down - newer built-in methods are NOT
+                    // polyfilled, and eslint-plugin-compat is what keeps
+                    // them out.
+                    ['appSrv', 'webappSrv'].includes(build)
+                      ? { targets: { node: env('NODE_VERSION') } }
+                      : {
+                          browserslistEnv: [
+                            'webapp',
+                            'widgets',
+                            'library',
+                          ].includes(build)
+                            ? 'defaults'
+                            : 'electron',
+                        },
                   ],
                   ['appClients', 'webapp', 'widgets'].includes(build)
                     ? ['@babel/preset-react', { development }]

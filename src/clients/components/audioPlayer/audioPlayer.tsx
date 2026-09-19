@@ -62,7 +62,7 @@ export default function AudioPlayer(
       let times: ReturnType<typeof parseTimingFile> | null = null;
       // If iafTiming is a URL, then fetch raw timing (and apply it if needed).
       if (iafTiming?.startsWith('http')) {
-        if (!Object.hasOwn(TimingFetched, iafTiming)) {
+        if (!Object.prototype.hasOwnProperty.call(TimingFetched, iafTiming)) {
           TimingFetched[iafTiming] = null;
           getTimingFile(iafTiming)
             .then((rawTiming) => {
