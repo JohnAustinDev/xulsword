@@ -2,13 +2,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
-import {
-  clone,
-  diff,
-  drop,
-  stringHash,
-  dString,
-} from '../../../common.ts';
+import { clone, diff, drop, stringHash, dString } from '../../../common.ts';
 import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
@@ -337,17 +331,7 @@ export default class Search
       formatResult(res, state, renderPromise);
       addHoverLinks(
         res,
-        [
-          'cr',
-          'fn',
-          'un',
-          'sn',
-          'sr',
-          'dt',
-          'dtl',
-          'introlink',
-          'searchterm',
-        ],
+        ['cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink', 'searchterm'],
         popupParentHandler,
       );
       if (!renderPromise.waiting()) res.dataset.resultsHtml = resultsHtml;
@@ -530,9 +514,7 @@ export default class Search
               key="indexing"
               body={
                 <Vbox pack="center" align="center">
-                  <Label
-                    value={indexingLabel}
-                  />
+                  <Label value={indexingLabel} />
                 </Vbox>
               }
             />
@@ -572,10 +554,7 @@ export default class Search
                     align="center"
                   >
                     <Hbox className="searchtextLabel" align="center">
-                      <Label
-                        control="searchtext"
-                        value={`${searchLabel}:`}
-                      />
+                      <Label control="searchtext" value={`${searchLabel}:`} />
                     </Hbox>
 
                     <Vbox className="searchtext">
@@ -607,16 +586,8 @@ export default class Search
                       </Button>
                       {!showHelp && helpButton}
                       <Button id="moreLess" onPointerDown={handler}>
-                        {!moreLess && (
-                          <Label
-                            value={moreLabel}
-                          />
-                        )}
-                        {moreLess && (
-                          <Label
-                            value={lessLabel}
-                          />
-                        )}
+                        {!moreLess && <Label value={moreLabel} />}
+                        {moreLess && <Label value={lessLabel} />}
                       </Button>
                     </Hbox>
                   </Groupbox>

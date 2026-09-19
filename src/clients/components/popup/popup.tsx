@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  JSON_attrib_stringify,
-  ofClass,
-  stringHash,
-} from '../../../common.ts';
+import { JSON_attrib_stringify, ofClass, stringHash } from '../../../common.ts';
 import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';

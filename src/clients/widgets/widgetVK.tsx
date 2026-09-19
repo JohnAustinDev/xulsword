@@ -109,7 +109,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
       options: {},
       disabled: false,
       allowNotInstalled: true,
-      ...props
+      ...props,
     };
 
     // If VK chaplist is set and contains at least one chapter, make sure

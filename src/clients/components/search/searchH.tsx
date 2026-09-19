@@ -3,11 +3,7 @@ import { dString, last, ofClass } from '../../../common.ts';
 import VerseKey from '../../../verseKey.ts';
 import Subscription from '../../../subscription.ts';
 import { goToLocationGB, goToLocationVK } from '../../../commands.ts';
-import {
-  noAutoSearchIndex,
-  escapeRE,
-  randomID,
-} from '../../../common.ts';
+import { noAutoSearchIndex, escapeRE, randomID } from '../../../common.ts';
 import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
@@ -749,17 +745,7 @@ export async function lexicon(
     });
     addHoverLinks(
       lexdiv,
-      [
-        'cr',
-        'fn',
-        'un',
-        'sn',
-        'sr',
-        'dt',
-        'dtl',
-        'introlink',
-        'searchterm',
-      ],
+      ['cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink', 'searchterm'],
       popupParentHandler,
     );
   }

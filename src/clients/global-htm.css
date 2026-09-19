@@ -38,10 +38,10 @@
 cannot be overwritten by host CSS, so the ownsDocument class is copied from
 host's html element onto the shadow #root element. */
 #root:not(.ownsDocument) {
-  --color-primary: #8d3524 ;
+  --color-primary: #8d3524;
   --color-secondary: #a7bd43;
-  --color-secondary2: #813C34;
-  --color-secondary3: #0F65D6;
+  --color-secondary2: #813c34;
+  --color-secondary3: #0f65d6;
   --bg-interface-light: #f9f6f3;
 }
 

@@ -367,9 +367,7 @@ export function getTabChange<T extends TabChangeState>(
       });
       sortTabsByLocale(newtabs);
 
-      tabs[pi] = newtabs
-        .filter((t) => !t.noTab)
-        .map((t) => t.module);
+      tabs[pi] = newtabs.filter((t) => !t.noTab).map((t) => t.module);
     }
   });
 

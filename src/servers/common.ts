@@ -22,7 +22,10 @@ import Subscription from '../subscription.ts';
 import Dirs from './components/dirs.ts';
 import DiskCache from './components/diskcache.ts';
 import Data from './components/data.ts';
-import LibSword, { getModuleList, moduleUnsupported } from './components/libsword.ts';
+import LibSword, {
+  getModuleList,
+  moduleUnsupported,
+} from './components/libsword.ts';
 import LocalFile from './components/localFile.ts';
 import getFontFamily from './fontfamily.ts';
 import { allBkChsInV11n } from './allBkChsInV11n.ts';
