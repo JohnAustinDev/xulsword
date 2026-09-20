@@ -671,7 +671,8 @@ export default class PrintSettings extends React.Component<
 
       @media print {
         ${pageStyle}
-        .pageView {
+        /* NOTE: this must be scoped exactly like the pageView rule above. */
+        #root .pageView {
           width: unset;
           height: unset;
         }
