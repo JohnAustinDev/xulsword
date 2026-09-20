@@ -604,8 +604,21 @@ export default class PrintSettings extends React.Component<
     const { selectRefs, pagebuttons, getPageInfo, handler } = this;
 
     let style = '';
+    let pageStyle = '';
     const i = getPageInfo();
     if (i.realPaperW) {
+      // @page applies to the document's page context rather than to any
+      // element, so it only takes effect from a stylesheet of the document
+      // itself. In the web-app this stylesheet lives in a shadow root, so the
+      // same rule is also portaled into the host document's head below.
+      pageStyle = `
+        @page {
+          size: ${i.realPaperW}${i.paperSize.u} ${i.realPaperH}${i.paperSize.u};
+          margin-top: ${margins.top}mm;
+          margin-right: ${margins.right}mm;
+          margin-bottom: ${margins.bottom}mm;
+          margin-left: ${margins.left}mm;
+        }`;
       // Page margins for multi-page (pageable) printouts must use print
       // margins (not CSS content margins) in order to work properly. But
       // print HTML must use CSS content margins in order to show a preview of
@@ -657,13 +670,7 @@ export default class PrintSettings extends React.Component<
       }
 
       @media print {
-        @page {
-          size: ${i.realPaperW}${i.paperSize.u} ${i.realPaperH}${i.paperSize.u};
-          margin-top: ${margins.top}mm;
-          margin-right: ${margins.right}mm;
-          margin-bottom: ${margins.bottom}mm;
-          margin-left: ${margins.left}mm;
-        }
+        ${pageStyle}
         .pageView {
           width: unset;
           height: unset;
@@ -733,6 +740,13 @@ export default class PrintSettings extends React.Component<
           )}
 
         <style>{style}</style>
+
+        {/* PAGE SETUP (see pageStyle above) */}
+        {getRootNode() !== document &&
+          ReactDOM.createPortal(
+            <style>{`@media print { ${pageStyle} }`}</style>,
+            document.head,
+          )}
 
         {/* CUSTOM SETTINGS */}
         <div className="printControls" ref={customSettingsRef} />

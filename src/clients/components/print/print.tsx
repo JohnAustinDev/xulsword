@@ -4,7 +4,7 @@ import { b64toBlob } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import { functionalComponentRenderPromise, printRefs } from '../../common.ts';
-import { getRootElement } from '../../rootNode.ts';
+import { getRootElement, getShadowHost } from '../../rootNode.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button.tsx';
 import Spacer from '../libxul/spacer.tsx';
@@ -31,11 +31,75 @@ type PrintProps = XulProps & {
   print: PrintOptionsType;
 };
 
+// The web-app renders into a shadow root attached to an element of a host page
+// (see renderToRoot() in controller.tsx) but window.print() always prints the
+// whole host document, so the host page would otherwise be printed above, and
+// overlapping, the page view. While the print view is showing, this print-only
+// stylesheet hides everything in the host document except the web-app, and
+// neutralizes the layout of the elements between <html> and the shadow host,
+// which would otherwise offset, clip or paginate the printout. It must be added
+// to the host document itself, because neither the web-app's stylesheets nor
+// its class names can reach out of the shadow root.
+const hostChainClass = 'xulsword-print-host';
+
+const hostPrintCSS = `
+@media print {
+  .${hostChainClass} > *:not(.${hostChainClass}),
+  .${hostChainClass}::before,
+  .${hostChainClass}::after {
+    display: none !important;
+  }
+  .${hostChainClass} {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    float: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    background: none !important;
+  }
+}`;
+
+// Returns a function which undoes everything this one does.
+function hideHostPageWhilePrinting(): () => void {
+  const host = getShadowHost();
+  if (!host) return () => {};
+  const chain: Element[] = [];
+  for (let elem: Element | null = host; elem; elem = elem.parentElement) {
+    elem.classList.add(hostChainClass);
+    chain.push(elem);
+  }
+  const style = document.createElement('style');
+  style.textContent = hostPrintCSS;
+  document.head.appendChild(style);
+  return () => {
+    chain.forEach((elem) => {
+      elem.classList.remove(hostChainClass);
+    });
+    style.remove();
+  };
+}
+
 export default function Print(props: PrintProps) {
   const { children, print } = props;
   const { pageViewRef } = printRefs;
   const { pageable, direction, iframeFilePath } = print;
   const { renderPromise, loadingRef } = functionalComponentRenderPromise();
+
+  // Keep the host page out of the printout for as long as the print view is
+  // available (the stylesheet only applies to print media, so it is inert
+  // until the printout is actually generated).
+  useEffect(() => hideHostPageWhilePrinting(), []);
 
   // Mirrors whether the .print element (vs. the PDF preview) is showing onto
   // #root, so print.css can react to it without a :has() selector.

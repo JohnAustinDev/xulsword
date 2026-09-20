@@ -26,6 +26,13 @@ export function getRootElement(): HTMLElement | null {
   return getRootNode().getElementById('root');
 }
 
+// The host page element the web-app's shadow root is attached to, or null for
+// Electron windows, which own their document and so have no host page.
+export function getShadowHost(): Element | null {
+  const node = getRootNode();
+  return node instanceof ShadowRoot ? node.host : null;
+}
+
 // Where to put a <style> element so that it applies to xulsword's elements.
 export function getStyleParent(): Node {
   return styleParent ?? document.head;
