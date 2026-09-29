@@ -1,5 +1,10 @@
 /* eslint-disable no-console */
-import { JSON_parse, JSON_stringify, stringHash } from '../common.ts';
+import {
+  JSON_parse,
+  JSON_stringify,
+  drupalSetting,
+  stringHash,
+} from '../common.ts';
 import log from './log.ts';
 
 // This module is also packaged as a library that may be be used by a web
@@ -49,6 +54,7 @@ export type AnalyticsInfoFinal = AnalyticsInfo & {
   origin: string;
   webapp: boolean;
   tag: boolean;
+  auth: boolean;
 };
 
 // One of these AnalyticsInfo types is required to generate a standardized
@@ -367,6 +373,7 @@ export class Analytics {
       webapp: Build.isWebApp,
       origin,
       tag: typeof this.tag === 'function',
+      auth: Number(drupalSetting('user.uid')) > 0,
     };
     Object.entries(send).forEach((entry) => {
       if (typeof entry[1] === 'undefined') delete (send as any)[entry[0]];
