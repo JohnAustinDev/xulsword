@@ -14,6 +14,11 @@ type TimingEntry = {
   additionalSeparators: string;
 };
 
+// A timing entry as matched against the text. Its id may differ from the
+// timing file's (see combineTimingZones), so dataId holds the timing file
+// id(s) the highlighter uses to find its span(s).
+type ZoneTimingEntry = TimingEntry & { dataId: string };
+
 type TimingSettings = {
   level: 'phrase' | 'verse';
   separators: string;
@@ -36,7 +41,7 @@ const CurrentActiveIds = new Set<string>();
 // Stops and removes the moving highlight bar from a span.
 function unHighlight(id: string) {
   getRootNode()
-    .querySelectorAll(`div.sb span[data-id="${id}"]`)
+    .querySelectorAll(`div.sb span[data-id~="${id}"]`)
     .forEach((e) => {
       const el = e as HTMLElement;
       el.classList.remove('nowreading');
@@ -57,8 +62,7 @@ function doHighlight(
     const { verse, lastverse } = Array.from(CurrentActiveIds).reduce(
       (p, c) => {
         const { zoneid } = parseTimingID(c);
-        const v1 = Number(zoneid?.replace(/^(\d+).*?$/, '$1') ?? 0);
-        const v2 = Number(zoneid?.replace(/^.*?(\d+)$/, '$1') ?? 999);
+        const [v1, v2] = verseRange(zoneid);
         const { verse, lastverse } = p;
         return {
           verse: Math.min(v1, verse),
@@ -160,7 +164,7 @@ export function onTimeUpdate(
       if (trackingIsOn) {
         activeItems.forEach((item) => {
           getRootNode()
-            .querySelectorAll(`div.sb span[data-id="${item.id}"]`)
+            .querySelectorAll(`div.sb span[data-id~="${item.id}"]`)
             .forEach((e) => {
               const el = e as HTMLElement;
               doHighlight(el, item, currentTime, xulswordState);
@@ -199,8 +203,14 @@ export function addTimingSpans(
   divElement: HTMLDivElement,
   timing: ReturnType<typeof parseTimingFile>,
 ) {
-  const { times, settings } = timing;
+  const { settings } = timing;
   const { level, separators } = settings;
+
+  // Work on a copy, since timing is React state which must not be modified.
+  const times: ZoneTimingEntry[] = timing.times.map((t) => ({
+    ...t,
+    dataId: t.id,
+  }));
 
   // Text having these classes is ignored during phrase splitting.
   const skipClass = ['versenum', 'cr', 'fn', 'un'];
@@ -233,13 +243,18 @@ export function addTimingSpans(
 
     let { zoneid } = parseTimingID(times[timingIndex].id);
     if (zoneid && zoneid !== zoneID) {
-      const zoneVerseStart = Number(zoneID.replace(/^(\d+).*?$/, '$1'));
-      const zoneVerseEnd = Number(zoneID.replace(/^.*?(\d+)$/, '$1'));
-      if (zoneVerseEnd < Number(zoneid?.replace(/^(\d+).*?$/, '$1'))) return;
-      while (zoneVerseStart > Number(zoneid?.replace(/^.*?(\d+)$/, '$1'))) {
+      const [zoneVerseStart, zoneVerseEnd] = verseRange(zoneID);
+      if (zoneVerseEnd < verseRange(zoneid)[0]) return;
+      while (zoneVerseStart > verseRange(zoneid)[1]) {
         timingIndex++;
         if (timingIndex >= times.length) return;
         ({ zoneid } = parseTimingID(times[timingIndex].id));
+      }
+      // The text may unexpectedly combine multiple verses into a single verse
+      // range (eg. 8-9) while the timing file still lists each verse
+      // separately. So combine those timing entries to match the text.
+      if (zoneID.includes('-') && zoneid !== zoneID) {
+        combineTimingZones(times, timingIndex, zoneID, level);
       }
     }
 
@@ -373,6 +388,72 @@ export function addTimingSpans(
   });
 }
 
+// Returns the first and last verse numbers of a zoneid (eg. 8 or 8-9), or
+// NaN if zoneid has none.
+function verseRange(zoneid: string | undefined): [number, number] {
+  if (!zoneid) return [NaN, NaN];
+  return [
+    Number(zoneid.replace(/^(\d+).*?$/, '$1')),
+    Number(zoneid.replace(/^.*?(\d+)$/, '$1')),
+  ];
+}
+
+/**
+ * Modifies the times array in place, combining the consecutive entries
+ * beginning at startIndex, whose zones all fall within the verse range zoneID
+ * (eg. separate entries for verses 8 and 9 when the text has 8-9), into
+ * entries for zoneID itself. At verse level the entries become a single entry
+ * spanning all of them. At phrase level every entry is kept, but the phrases
+ * of each later verse are renumbered to follow those of the verse before it,
+ * so each segment is still placed as before. Each entry's dataId keeps the
+ * timing file id(s) so the highlighter still finds the spans.
+ */
+function combineTimingZones(
+  times: ZoneTimingEntry[],
+  startIndex: number,
+  zoneID: string,
+  level: TimingSettings['level'],
+) {
+  const [first, last] = verseRange(zoneID);
+  let endIndex = startIndex;
+  while (endIndex < times.length) {
+    const [v1, v2] = verseRange(parseTimingID(times[endIndex].id).zoneid);
+    if (!(v1 >= first && v2 <= last)) break;
+    endIndex++;
+  }
+  const entries = times.slice(startIndex, endIndex);
+  if (!entries.length) return;
+
+  if (level === 'verse') {
+    times.splice(startIndex, entries.length, {
+      start: Math.min(...entries.map((e) => e.start)),
+      end: Math.max(...entries.map((e) => e.end)),
+      id: [parseTimingID(entries[0].id).level, zoneID].join('_'),
+      dataId: entries.map((e) => e.dataId).join(' '),
+      additionalSeparators: Array.from(
+        new Set(entries.map((e) => e.additionalSeparators).join('')),
+      ).join(''),
+    });
+    return;
+  }
+
+  let lastZoneid = '';
+  let phraseOffset = 0;
+  let maxPhrase = 0;
+  entries.forEach((entry) => {
+    const { level: lev, zoneid, phrase, word } = parseTimingID(entry.id);
+    if (zoneid !== lastZoneid) {
+      phraseOffset = maxPhrase;
+      lastZoneid = zoneid ?? '';
+    }
+    const newPhrase = phrase + phraseOffset;
+    maxPhrase = Math.max(maxPhrase, newPhrase);
+    entry.id = [lev, zoneID, numberToPhrase(newPhrase), word !== -1 ? word : '']
+      .filter(Boolean)
+      .join('_');
+  });
+}
+
 /**
  * Finds the index immediately following the wordCount-th word (1-based),
  * counting words from fromIdx in text. Words are runs of non-whitespace
@@ -412,18 +493,24 @@ function moveUnclaimedSiblings(span: HTMLElement, target: Node) {
   }
 }
 
+// Elements whose text is split into sync spans rather than being moved whole
+// into a single span (see nearestBlockAncestor).
+const BlockTags = ['DIV', 'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];
+
 /**
- * Finds the nearest div container of a node: either the zone itself,
- * or the closest ancestor <div> (eg. a poetry stanza rendered from an OSIS
- * <div> milestone, which is a descendant of the zone but wraps a whole run
- * of lines/text). Text nodes are split into sync spans relative to this
- * container, the same way they would be relative to the zone, so that a
- * div's text is not swallowed whole by a single timing entry.
+ * Finds the nearest block container of a node: either the zone itself,
+ * or the closest ancestor block element (eg. a poetry stanza rendered from an
+ * OSIS <div> milestone, or a canonical title rendered as <h1>, which is a
+ * descendant of the zone but wraps a whole run of lines/text). Text nodes are
+ * split into sync spans relative to this container, the same way they would
+ * be relative to the zone, so that a block's text is not swallowed whole by a
+ * single timing entry.
  */
 function nearestBlockAncestor(parent: Node, zone: Element): Element {
   let node: Node | null = parent;
   while (node && node !== zone) {
-    if (node instanceof HTMLElement && node.tagName === 'DIV') return node;
+    if (node instanceof HTMLElement && BlockTags.includes(node.tagName))
+      return node;
     node = node.parentNode;
   }
   return zone;
@@ -438,7 +525,7 @@ function wrapTextRange(
   textMap: TextMap[],
   startIdx: number,
   endIdx: number,
-  timingItem: TimingEntry,
+  timingItem: ZoneTimingEntry,
   claimedContainers: Set<Node>,
 ) {
   const doc = zone.ownerDocument;
@@ -449,7 +536,8 @@ function wrapTextRange(
   // boundaries. A DOM node can only live in one parent, so each block
   // container touched by this segment gets its own sync span (all sharing
   // the same data-id/data-start; the highlighting code already matches on
-  // all spans with a given data-id).
+  // all spans with a given data-id). A data-id may list several space
+  // separated timing ids (see combineTimingZones).
   const spans = new Map<
     Element,
     { span: HTMLElement; firstInserted: boolean }
@@ -460,7 +548,7 @@ function wrapTextRange(
       const span = doc.createElement('span');
       span.className = 'verse-sync';
       span.setAttribute('data-start', timingItem.start.toString());
-      span.setAttribute('data-id', timingItem.id);
+      span.setAttribute('data-id', timingItem.dataId);
       entry = { span, firstInserted: false };
       spans.set(container, entry);
     }
