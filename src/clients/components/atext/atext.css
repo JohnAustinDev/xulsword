@@ -211,10 +211,10 @@ multi-column LTR general books
   background-color: rgba(255, 255, 0, 0.25);
 }
 /* Timing files with read headings are not yet supported */
-.head1 .nowreading,
-.head2 .nowreading,
-.head3 .nowreading,
-.head4 .nowreading {
+.head1:not(.canonical) .nowreading,
+.head2:not(.canonical) .nowreading,
+.head3:not(.canonical) .nowreading,
+.head4:not(.canonical) .nowreading {
   background-color: unset;
 }
 
