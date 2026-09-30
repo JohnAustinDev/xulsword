@@ -218,18 +218,18 @@ span.sense-level-2 {
 }
 /* Allow margins to collapse around head1. */
 @supports selector(:has(a)) {
-  span:has(> .head1:first-child) {
+  span:not(.verse-sync):has(> .head1:first-child) {
     display: block;
     margin-top: 2em;
   }
-  span:has(> .head1:last-child) {
+  span:not(.verse-sync):has(> .head1:last-child) {
     display: block;
     margin-bottom: 1em;
   }
-  span > .head1:first-child {
+  span:not(.verse-sync) > .head1:first-child {
     margin-top: 0;
   }
-  span > .head1:last-child {
+  span:not(.verse-sync) > .head1:last-child {
     margin-bottom: 0;
   }
 }
