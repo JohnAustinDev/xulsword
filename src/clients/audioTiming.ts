@@ -231,7 +231,8 @@ export function addTimingSpans(
 
   // Titles that are read aloud get their own spans, so the zones below are
   // matched against the rest of the timing entries.
-  addTitleTimingSpans(divElement, Array.from(zones), allTimes);
+  const canonicalIsText = canonicalTitlesAreText(allTimes);
+  addTitleTimingSpans(divElement, Array.from(zones), allTimes, canonicalIsText);
   const times = allTimes.filter((t) => !parseTitleID(t.id));
 
   let timingIndex = 0;
@@ -285,7 +286,7 @@ export function addTimingSpans(
         // well as titles that are not verse text.
         if (
           skipClass.some((c) => node.classList.contains(c)) ||
-          isNonCanonicalTitle(node)
+          isTitleNotText(node, canonicalIsText)
         ) {
           return;
         }
@@ -376,6 +377,7 @@ export function addTimingSpans(
         segmentEnd,
         times[timingIndex],
         claimedContainers,
+        canonicalIsText,
       );
 
       segmentStart = segmentEnd;
@@ -395,6 +397,7 @@ export function addTimingSpans(
         flatText.length,
         times[timingIndex],
         claimedContainers,
+        canonicalIsText,
       );
       timingIndex++;
     }
@@ -457,23 +460,30 @@ function getTitleKind(el: Element): TitleKind | null {
   return 's';
 }
 
+// Returns true if a timing file's canonical titles are verse text. They are,
+// unless the timing file times any psalm (d) titles, in which case its creator
+// chose to read canonical titles as titles.
+function canonicalTitlesAreText(times: ZoneTimingEntry[]): boolean {
+  return !times.some((t) => parseTitleID(t.id) === 'd');
+}
+
 // Titles must never be inside a verse's synchronization span, unless they are
-// canonical, in which case they are just verse text.
-function isNonCanonicalTitle(node: Node): boolean {
+// canonical and canonicalIsText, in which case they are just verse text.
+function isTitleNotText(node: Node, canonicalIsText: boolean): boolean {
   return (
     node instanceof Element &&
     !!getTitleKind(node) &&
-    !node.classList.contains('canonical')
+    !(canonicalIsText && node.classList.contains('canonical'))
   );
 }
 
 // Returns true if node is or contains a title that is not verse text.
-function containsNonCanonicalTitle(node: Node): boolean {
+function containsTitleNotText(node: Node, canonicalIsText: boolean): boolean {
   return (
     node instanceof Element &&
-    (isNonCanonicalTitle(node) ||
+    (isTitleNotText(node, canonicalIsText) ||
       Array.from(node.querySelectorAll(HeadingSelector)).some((h) =>
-        isNonCanonicalTitle(h),
+        isTitleNotText(h, canonicalIsText),
       ))
   );
 }
@@ -491,14 +501,16 @@ function createSyncSpan(doc: Document, timingItem: ZoneTimingEntry) {
  * synchronization span. Each title timing entry is applied to the next title
  * element of its kind (see getTitleKind), but only one located between the
  * verses of the timing entries surrounding it, so that any titles which are
- * not read aloud are passed over. Canonical titles within a zone are part of the zone's
- * text, so they are never matched. Titles outside of zones are not verse text,
- * so canonical ones there (such as preverse psalm titles) are matched.
+ * not read aloud are passed over. Canonical titles within a zone are part of the
+ * zone's text when canonicalIsText (see canonicalTitlesAreText), so they are
+ * then never matched. Titles outside of zones are not verse text, so canonical
+ * ones there (such as preverse psalm titles) are always matched.
  */
 function addTitleTimingSpans(
   divElement: HTMLDivElement,
   zones: Element[],
   times: ZoneTimingEntry[],
+  canonicalIsText: boolean,
 ) {
   // Find the candidate titles and where each is located relative to the
   // verses: a title within a zone is at that zone's verse(s), while a title
@@ -526,7 +538,7 @@ function addTitleTimingSpans(
       !el.closest('.introtext')
     ) {
       if (zone?.contains(el)) {
-        if (isNonCanonicalTitle(el))
+        if (isTitleNotText(el, canonicalIsText))
           titles.push({ title: el, kind, range: zoneRange });
       } else {
         const v = zoneRange[1] + 0.5;
@@ -680,9 +692,13 @@ function moveUnclaimedSiblings(span: HTMLElement, target: Node) {
 
 // Returns true if a title that is not verse text lies among the siblings
 // between span and target.
-function nonCanonicalTitleBetween(span: HTMLElement, target: Node): boolean {
+function titleNotTextBetween(
+  span: HTMLElement,
+  target: Node,
+  canonicalIsText: boolean,
+): boolean {
   for (let n = span.nextSibling; n && n !== target; n = n.nextSibling) {
-    if (containsNonCanonicalTitle(n)) return true;
+    if (containsTitleNotText(n, canonicalIsText)) return true;
   }
   return false;
 }
@@ -721,6 +737,7 @@ function wrapTextRange(
   endIdx: number,
   timingItem: ZoneTimingEntry,
   claimedContainers: Set<Node>,
+  canonicalIsText: boolean,
 ) {
   const doc = zone.ownerDocument;
 
@@ -743,7 +760,8 @@ function wrapTextRange(
     // piece it would claim, the segment continues in a new span.
     if (
       !entry ||
-      (entry.firstInserted && nonCanonicalTitleBetween(entry.span, target))
+      (entry.firstInserted &&
+        titleNotTextBetween(entry.span, target, canonicalIsText))
     ) {
       entry = { span: createSyncSpan(doc, timingItem), firstInserted: false };
       spans.set(container, entry);
