@@ -198,8 +198,11 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
         }
 
         case 'versenum': {
+          // Skip any title read at the start of the verse (see audioTiming).
           const sync: HTMLElement | null =
-            elem.parentElement?.querySelector('.verse-sync') ?? null;
+            elem.parentElement?.querySelector(
+              '.verse-sync:not([data-id^="title_"])',
+            ) ?? null;
           if (sync) onVerseSyncClick(sync);
           break;
         }

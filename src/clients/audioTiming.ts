@@ -38,6 +38,14 @@ const Highlight = {
 
 const CurrentActiveIds = new Set<string>();
 
+// Timing file ids of titles that are read aloud: a prefix naming the SFM
+// marker of the title, followed by the title's order among those of its kind
+// in the text (whatever their levels). So s1, s2 etc. are the first, second
+// etc. section titles (\s), mt1 the first main title (\mt), d1 the first psalm
+// title (\d), sp1 the first speaker title (\sp) and is1 the first introduction
+// section title (\is).
+const TitleTagRE = /^(s|mt|d|sp|is)(\d+)$/;
+
 // Stops and removes the moving highlight bar from a span.
 function unHighlight(id: string) {
   getRootNode()
@@ -58,21 +66,23 @@ function doHighlight(
   xulswordState: React.Component<any, XulswordState>['setState'],
 ) {
   if (Highlight.verse) {
-    // Get the total verse range of all active zones.
-    const { verse, lastverse } = Array.from(CurrentActiveIds).reduce(
-      (p, c) => {
-        const { zoneid } = parseTimingID(c);
-        const [v1, v2] = verseRange(zoneid);
-        const { verse, lastverse } = p;
-        return {
-          verse: Math.min(v1, verse),
-          lastverse: Math.max(v2, lastverse),
-        };
-      },
-      { verse: 999, lastverse: 0 },
-    );
+    // Get the total verse range of all active zones (titles have none).
+    const { verse, lastverse } = Array.from(CurrentActiveIds)
+      .filter((id) => !parseTitleID(id))
+      .reduce(
+        (p, c) => {
+          const { zoneid } = parseTimingID(c);
+          const [v1, v2] = verseRange(zoneid);
+          const { verse, lastverse } = p;
+          return {
+            verse: Math.min(v1, verse),
+            lastverse: Math.max(v2, lastverse),
+          };
+        },
+        { verse: 999, lastverse: 0 },
+      );
     const atext = ofClass(['atext'], el);
-    if (atext && verse) {
+    if (atext && lastverse) {
       const { verse: vs } = atext.element.dataset;
       const v = Number(vs);
       // Compare it to the selected verse of the atext element.
@@ -207,7 +217,7 @@ export function addTimingSpans(
   const { level, separators } = settings;
 
   // Work on a copy, since timing is React state which must not be modified.
-  const times: ZoneTimingEntry[] = timing.times.map((t) => ({
+  const allTimes: ZoneTimingEntry[] = timing.times.map((t) => ({
     ...t,
     dataId: t.id,
   }));
@@ -217,8 +227,12 @@ export function addTimingSpans(
 
   // Identify and isolate container zones (currently verses).
   // TODO!! Support more than just Bible text.
-  // TODO!! Support titles
   const zones = divElement.querySelectorAll(':scope > .vs');
+
+  // Titles that are read aloud get their own spans, so the zones below are
+  // matched against the rest of the timing entries.
+  addTitleTimingSpans(divElement, Array.from(zones), allTimes);
+  const times = allTimes.filter((t) => !parseTitleID(t.id));
 
   let timingIndex = 0;
 
@@ -234,12 +248,7 @@ export function addTimingSpans(
 
     const zoneSeparators: string[] = separators.split('');
 
-    // The verse number is normally a direct child of the zone, but poetry
-    // lines (eg. rendered from OSIS <l>/<lg> markup as <div class="line">)
-    // wrap the zone's content in their own divs, pushing it down to a
-    // grandchild or deeper. Search all descendants rather than assuming a
-    // fixed depth.
-    const zoneID = zone.querySelector('.versenum')?.textContent.trim() ?? '';
+    const zoneID = getZoneID(zone);
 
     let { zoneid } = parseTimingID(times[timingIndex].id);
     if (zoneid && zoneid !== zoneID) {
@@ -272,8 +281,12 @@ export function addTimingSpans(
         });
         totalLength += text?.length ?? 0;
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        // Completely skip these classes (don't map their text content)
-        if (skipClass.some((c) => node.classList.contains(c))) {
+        // Completely skip these classes (don't map their text content), as
+        // well as titles that are not verse text.
+        if (
+          skipClass.some((c) => node.classList.contains(c)) ||
+          isNonCanonicalTitle(node)
+        ) {
           return;
         }
         // Process everything else normally
@@ -398,6 +411,178 @@ function verseRange(zoneid: string | undefined): [number, number] {
   ];
 }
 
+// Like verseRange, but a zoneid having no verses is unbounded.
+function boundedVerseRange(zoneid: string | undefined): [number, number] {
+  const [v1, v2] = verseRange(zoneid);
+  return [Number.isNaN(v1) ? -Infinity : v1, Number.isNaN(v2) ? Infinity : v2];
+}
+
+// Returns the verse number or verse range (eg. 8-9) of a zone.
+function getZoneID(zone: Element): string {
+  // The verse number is normally a direct child of the zone, but poetry
+  // lines (eg. rendered from OSIS <l>/<lg> markup as <div class="line">)
+  // wrap the zone's content in their own divs, pushing it down to a
+  // grandchild or deeper. Search all descendants rather than assuming a
+  // fixed depth.
+  return zone.querySelector('.versenum')?.textContent.trim() ?? '';
+}
+
+// The kinds of title, named for their timing file prefix (see TitleTagRE).
+// Introduction main titles (\imt) have no timing prefix here, but must not be
+// taken for main titles.
+type TitleKind = 's' | 'mt' | 'd' | 'sp' | 'is' | 'imt';
+
+// Returns the kind of title of a title timing id (see parseTimingFile), or
+// null if id is not a title's.
+function parseTitleID(id: string): TitleKind | null {
+  const [prefix, tag] = id.split('_');
+  const m = prefix === 'title' ? tag?.match(TitleTagRE) : null;
+  return m ? (m[1] as TitleKind) : null;
+}
+
+const HeadingSelector = 'h1, h2, h3, h4, h5, h6';
+
+// Returns the kind of a title element, or null if el is not a title. Titles
+// are heading elements of class head1 to head4 (LibSword renders every title
+// within a verse as h1, whatever its level). Other classes come from the OSIS
+// title's type and subType, which give its kind.
+function getTitleKind(el: Element): TitleKind | null {
+  if (!el.matches(HeadingSelector)) return null;
+  const c = el.classList;
+  if (![1, 2, 3, 4].some((n) => c.contains(`head${n}`))) return null;
+  if (c.contains('x-introduction')) return c.contains('main') ? 'imt' : 'is';
+  if (c.contains('main')) return 'mt';
+  if (c.contains('psalm')) return 'd';
+  if (c.contains('x-speaker')) return 'sp';
+  return 's';
+}
+
+// Titles must never be inside a verse's synchronization span, unless they are
+// canonical, in which case they are just verse text.
+function isNonCanonicalTitle(node: Node): boolean {
+  return (
+    node instanceof Element &&
+    !!getTitleKind(node) &&
+    !node.classList.contains('canonical')
+  );
+}
+
+// Returns true if node is or contains a title that is not verse text.
+function containsNonCanonicalTitle(node: Node): boolean {
+  return (
+    node instanceof Element &&
+    (isNonCanonicalTitle(node) ||
+      Array.from(node.querySelectorAll(HeadingSelector)).some((h) =>
+        isNonCanonicalTitle(h),
+      ))
+  );
+}
+
+function createSyncSpan(doc: Document, timingItem: ZoneTimingEntry) {
+  const span = doc.createElement('span');
+  span.className = 'verse-sync';
+  span.setAttribute('data-start', timingItem.start.toString());
+  span.setAttribute('data-id', timingItem.dataId);
+  return span;
+}
+
+/**
+ * Wraps the content of each title element that is read aloud in its own
+ * synchronization span. Each title timing entry is applied to the next title
+ * element of its kind (see getTitleKind), but only one located between the
+ * verses of the timing entries surrounding it, so that any titles which are
+ * not read aloud are passed over. Canonical titles within a zone are part of the zone's
+ * text, so they are never matched. Titles outside of zones are not verse text,
+ * so canonical ones there (such as preverse psalm titles) are matched.
+ */
+function addTitleTimingSpans(
+  divElement: HTMLDivElement,
+  zones: Element[],
+  times: ZoneTimingEntry[],
+) {
+  // Find the candidate titles and where each is located relative to the
+  // verses: a title within a zone is at that zone's verse(s), while a title
+  // between zones is half a verse before the following zone (or after the
+  // preceding zone, if none follows).
+  const zoneSet = new Set(zones);
+  type Title = { title: Element; kind: TitleKind; range: [number, number] };
+  const titles: Title[] = [];
+  let zone: Element | null = null;
+  let zoneRange: [number, number] = [-Infinity, Infinity];
+  let between: Title[] = [];
+  for (const el of divElement.querySelectorAll(
+    `:scope > .vs, ${HeadingSelector}`,
+  )) {
+    const kind = getTitleKind(el);
+    if (zoneSet.has(el)) {
+      zone = el;
+      zoneRange = boundedVerseRange(getZoneID(el));
+      const v = zoneRange[0] - 0.5;
+      between.forEach((t) => (t.range = [v, v]));
+      between = [];
+    } else if (
+      kind &&
+      // Introductions are hidden, so are never read with the text.
+      !el.closest('.introtext')
+    ) {
+      if (zone?.contains(el)) {
+        if (isNonCanonicalTitle(el))
+          titles.push({ title: el, kind, range: zoneRange });
+      } else {
+        const v = zoneRange[1] + 0.5;
+        const t: Title = {
+          title: el,
+          kind,
+          range: zone ? [v, v] : [-Infinity, Infinity],
+        };
+        titles.push(t);
+        between.push(t);
+      }
+    }
+  }
+
+  let nextTitle = 0;
+  times.forEach((entry, i) => {
+    const kind = parseTitleID(entry.id);
+    if (!kind) return;
+
+    // The verses between which this title is read.
+    const prev = times
+      .slice(0, i)
+      .reverse()
+      .find((t) => !parseTitleID(t.id));
+    const next = times.slice(i + 1).find((t) => !parseTitleID(t.id));
+    const first = prev
+      ? boundedVerseRange(parseTimingID(prev.id).zoneid)[0]
+      : -Infinity;
+    const last = next
+      ? boundedVerseRange(parseTimingID(next.id).zoneid)[1]
+      : Infinity;
+
+    const find = (kinds: TitleKind[]) =>
+      titles.findIndex(
+        (t, j) =>
+          j >= nextTitle &&
+          t.range[0] <= last &&
+          t.range[1] >= first &&
+          kinds.includes(t.kind),
+      );
+    let index = find([kind]);
+    // The kind of a title element may not reflect the SFM marker it was
+    // labeled by (eg. some timing files label \d psalm titles as s, and some
+    // \s2 titles are rendered as speaker titles), so an s title may also be
+    // any other heading within the text.
+    if (index === -1 && kind === 's') index = find(['d', 'sp']);
+    if (index === -1) return;
+    nextTitle = index + 1;
+
+    const { title } = titles[index];
+    const span = createSyncSpan(divElement.ownerDocument, entry);
+    while (title.firstChild) span.appendChild(title.firstChild);
+    title.appendChild(span);
+  });
+}
+
 /**
  * Modifies the times array in place, combining the consecutive entries
  * beginning at startIndex, whose zones all fall within the verse range zoneID
@@ -493,6 +678,15 @@ function moveUnclaimedSiblings(span: HTMLElement, target: Node) {
   }
 }
 
+// Returns true if a title that is not verse text lies among the siblings
+// between span and target.
+function nonCanonicalTitleBetween(span: HTMLElement, target: Node): boolean {
+  for (let n = span.nextSibling; n && n !== target; n = n.nextSibling) {
+    if (containsNonCanonicalTitle(n)) return true;
+  }
+  return false;
+}
+
 // Elements whose text is split into sync spans rather than being moved whole
 // into a single span (see nearestBlockAncestor).
 const BlockTags = ['DIV', 'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];
@@ -542,14 +736,16 @@ function wrapTextRange(
     Element,
     { span: HTMLElement; firstInserted: boolean }
   >();
-  function spanFor(container: Element) {
+  function spanFor(container: Element, target: Node) {
     let entry = spans.get(container);
-    if (!entry) {
-      const span = doc.createElement('span');
-      span.className = 'verse-sync';
-      span.setAttribute('data-start', timingItem.start.toString());
-      span.setAttribute('data-id', timingItem.dataId);
-      entry = { span, firstInserted: false };
+    // A title that is not verse text must not be pulled into the span (see
+    // moveUnclaimedSiblings), so if one lies between the span and the next
+    // piece it would claim, the segment continues in a new span.
+    if (
+      !entry ||
+      (entry.firstInserted && nonCanonicalTitleBetween(entry.span, target))
+    ) {
+      entry = { span: createSyncSpan(doc, timingItem), firstInserted: false };
       spans.set(container, entry);
     }
     return entry;
@@ -565,8 +761,6 @@ function wrapTextRange(
     if (!parent) return;
 
     const blockAncestor = nearestBlockAncestor(parent, zone);
-    const entry = spanFor(blockAncestor);
-    const { span } = entry;
 
     if (parent !== blockAncestor) {
       // This text node lives inside inline markup (eg. <hi>, notes) nested
@@ -582,6 +776,8 @@ function wrapTextRange(
       if (claimedContainers.has(container)) return;
       claimedContainers.add(container);
 
+      const entry = spanFor(blockAncestor, container);
+      const { span } = entry;
       if (!entry.firstInserted) {
         blockAncestor.replaceChild(span, container);
         entry.firstInserted = true;
@@ -591,6 +787,9 @@ function wrapTextRange(
       if (span !== container) span.appendChild(container);
       return;
     }
+
+    const entry = spanFor(blockAncestor, map.node);
+    const { span } = entry;
 
     const localStart = overlapStart - map.startIdx;
     const localEnd = overlapEnd - map.startIdx;
@@ -686,9 +885,10 @@ export function parseTimingFile(timing: string): {
         ?.replace(/^\\separators[ ]+(.*?)[ ]*$/, '$1') ??
       C.DefaultAudioTimingSeparators,
   };
-  // If all timing id's are only verse numbers or verse ranges, then level must
-  // be 'verse'.
-  if (lines.every((l) => /\s+[-\d]+$/.test(l))) settings.level = 'verse';
+  // If all timing id's are only verse numbers or verse ranges (or titles),
+  // then level must be 'verse'.
+  if (lines.every((l) => /\s+([-\d]+|(s|mt|d|sp|is)\d+)$/.test(l)))
+    settings.level = 'verse';
   const { level } = settings;
 
   let lastZoneID = '';
@@ -713,7 +913,18 @@ export function parseTimingFile(timing: string): {
       return null;
     }
 
-    // TODO!!: Support Titles
+    // Titles that are read aloud have no verse id, since they may occur
+    // between verses. They are identified by their kind and order instead
+    // (see TitleTagRE).
+    if (TitleTagRE.test(parts[2] ?? '')) {
+      return {
+        start,
+        end,
+        id: ['title', parts[2]].join('_'),
+        additionalSeparators: '',
+      };
+    }
+
     // Get the xulsword timing id. The xulsword timing id is different than
     // the id in the timing file, but easier to use. Based on SIL timing file
     // documentation, we must support all expected possibilities

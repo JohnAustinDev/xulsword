@@ -210,13 +210,6 @@ multi-column LTR general books
 .nowreading {
   background-color: rgba(255, 255, 0, 0.25);
 }
-/* Timing files with read headings are not yet supported */
-.head1:not(.canonical) .nowreading,
-.head2:not(.canonical) .nowreading,
-.head3:not(.canonical) .nowreading,
-.head4:not(.canonical) .nowreading {
-  background-color: unset;
-}
 
 /* Moving highlight bar: audioTiming.ts times a background-position
 transition to sweep from timing.start to timing.end. Requires both
