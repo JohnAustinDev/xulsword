@@ -24,8 +24,11 @@ import { onClick as onVerseSyncClick } from '../../audioTiming.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { aTextWheelScroll, getScrollVerse } from './zversekey.ts';
 
+import type S from '../../../defaultPrefs.ts';
 import type { GType, SearchType } from '../../../type.ts';
 import type Atext from './atext.tsx';
+import type { VariantSelectType } from './atext.tsx';
+
 
 function scroll2Note(atext: HTMLElement, id: string) {
   Array.from(atext.getElementsByClassName('fnselected')).forEach((note) => {
@@ -448,6 +451,26 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
             ilModules[panelIndex] = module;
             return { ilModules };
           });
+        }
+      }
+      const variantselect = ofClass(['variantselect'], e.target);
+      if (variantselect) {
+        const s = variantselect.element.firstChild as
+          | HTMLSelectElement
+          | undefined;
+        const { module } = this.props;
+        if (s && module) {
+          const variants = {
+            ...(G.Prefs.getComplexValue(
+              'global.variants',
+            ) as typeof S.prefs.global.variants),
+            [module]: {
+              variant: s.value === 'variant',
+              allVariants: s.value === 'both',
+            },
+          };
+          G.Prefs.setComplexValue('global.variants', variants);
+          this.setState({ variants });
         }
       }
       break;

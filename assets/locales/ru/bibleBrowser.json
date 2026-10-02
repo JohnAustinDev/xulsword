@@ -3,5 +3,9 @@
   "Show or hide the verse chooser tool.": "Показать или скрыть инструмент выбора стиха.",
   "Add another column of text.": "Добавьте еще один столбец текста.",
   "Remove a column of text.": "Удалить столбец текста.",
-  "About this text": "об этом тексте"
+  "About this text": "об этом тексте",
+  "Textual variants": "Разночтения",
+  "normal": "основной",
+  "variant": "разночтение",
+  "both": "оба"
 }

@@ -264,6 +264,7 @@ void xulsword::updateGlobalOptions(bool disableFootCrossRed) {
   MyManager->setGlobalOption("Strong's Numbers",Strongs ? "On":"Off");
   MyManager->setGlobalOption("Morphological Tags",Morph ? "On":"Off");
   MyManager->setGlobalOption("Morpheme Segmentation",MorphSeg ? "On":"Off");
+  MyManager->setGlobalOption("Textual Variants",AllTextVariants ? "All Readings":(TextVariant ? "Secondary Reading":"Primary Reading"));
 }
 
 
@@ -1693,6 +1694,8 @@ void xulsword::setGlobalOption(const char *option, const char *setting) {
   else if (!strcmp(option,"Strong's Numbers"))         {thisOption = &Strongs;}
   else if (!strcmp(option,"Morphological Tags"))       {thisOption = &Morph;}
   else if (!strcmp(option,"Morpheme Segmentation"))    {thisOption = &MorphSeg;}
+  else if (!strcmp(option,"Textual Variant"))          {thisOption = &TextVariant;}
+  else if (!strcmp(option,"All Textual Variants"))     {thisOption = &AllTextVariants;}
   else {xsThrow("SetGlobalOption: unknown option \"%s\" .", option); return;}
 
   // Now update the global option
@@ -1721,6 +1724,8 @@ const char *xulsword::getGlobalOption(const char *option) {
   else if (!strcmp(option,"Strong's Numbers"))         {thisOption = &Strongs;}
   else if (!strcmp(option,"Morphological Tags"))       {thisOption = &Morph;}
   else if (!strcmp(option,"Morpheme Segmentation"))    {thisOption = &MorphSeg;}
+  else if (!strcmp(option,"Textual Variant"))          {thisOption = &TextVariant;}
+  else if (!strcmp(option,"All Textual Variants"))     {thisOption = &AllTextVariants;}
   else {xsThrow("GetGlobalOption: unknown option \"%s\".", option); return NULL;}
 
   // Now return the proper value

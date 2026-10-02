@@ -428,7 +428,12 @@ const C = {
     'Hebrew Cantillation': 'hebcantillation',
     'Hebrew Vowel Points': 'hebvowelpoints',
     'Words of Christ in Red': 'redwords',
-  } as { [key in SwordFilterType]: keyof ShowType },
+  } as {
+    [key in Exclude<
+      SwordFilterType,
+      'Textual Variant' | 'All Textual Variants'
+    >]: keyof ShowType;
+  },
 
   SwordFilterValues: ['Off', 'On'] as SwordFilterValueType[],
 

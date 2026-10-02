@@ -4,6 +4,8 @@ import Cache from '../../cache.ts';
 import C from '../../constant.ts';
 import { G } from '../G.ts';
 import { GCacheKey } from '../../common.ts';
+
+import type { TextualVariantType } from '../../type.ts';
 import type S from '../../defaultPrefs.ts';
 import type { AllComponentsData } from '../web-common.ts';
 import type { PrefsGType } from '../../prefs.ts';
@@ -16,10 +18,10 @@ export type BibleBrowserData = {
     css: string;
     prefs: {
       xulsword: Partial<(typeof S)['prefs']['xulsword']>;
-      global: {
-        locale: (typeof C.Locales)[number][0];
-        fontSize: number;
-      };
+      global: Pick<
+        (typeof S)['prefs']['global'],
+        'locale' | 'fontSize' | 'variants'
+      >;
     };
   };
 };
@@ -146,6 +148,12 @@ const defaultSettings: AllComponentsData = {
           global: {
             locale: 'en',
             fontSize: 2, // 2 is nominal; web-app CSS controls font-size
+            variants: {
+              WHNU: {
+                variant: true,
+                allVariants: false,
+              },
+            },
           },
         },
       },

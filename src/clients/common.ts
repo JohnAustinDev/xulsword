@@ -1087,6 +1087,21 @@ export function moduleIncludesStrongs(
   return false;
 }
 
+// Return true if the module supports the SWORD 'Textual Variants' filter.
+export function moduleIncludesVariants(
+  module: string,
+  renderPromise: RenderPromise,
+): boolean {
+  return /Variants/i.test(
+    GI.LibSword.getModuleInformation(
+      '',
+      renderPromise,
+      module,
+      'GlobalOptionFilter',
+    ),
+  );
+}
+
 // LibSword.getMaxChapter returns an erroneous number if vkeytext's
 // book is not part of v11n, so it would be necessary to check here
 // first. But a LibSword call is unnecessary with G.BooksInV11n.

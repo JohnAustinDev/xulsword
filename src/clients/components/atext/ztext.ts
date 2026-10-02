@@ -32,6 +32,7 @@ import type {
   PlaceType,
   ScrollIntoViewArg,
   ScrollType,
+  TextualVariantType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type RenderPromise from '../../renderPromise.ts';
@@ -55,7 +56,7 @@ export function libswordText(
     | 'modkey'
     | 'place'
     | 'show'
-  >,
+  > & { variant?: TextualVariantType },
   n: number,
   renderPromise: RenderPromise,
   xulswordState?: AtextPropsType['xulswordState'],
@@ -66,15 +67,23 @@ export function libswordText(
     notes: '',
     intronotes: '',
   };
-  const { module, ilModule, ilModuleOption, location, modkey, place, show } =
-    props;
+  const {
+    module,
+    ilModule,
+    ilModuleOption,
+    location,
+    modkey,
+    place,
+    show,
+    variant,
+  } = props;
   if (!module || !show) return r;
 
   const { type } = G.Tab[module];
   const moduleLocale = G.Config[module].AssociatedLocale;
 
   // Set SWORD filter options
-  const options = getSwordOptions(show, type);
+  const options = getSwordOptions(show, type, variant);
   if (ilModule) {
     const [, on] = C.SwordFilterValues;
     options["Strong's Numbers"] = on;

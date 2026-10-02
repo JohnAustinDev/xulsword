@@ -219,6 +219,12 @@ audio {
   display: block;
 }
 
+/* Variants are not selectable in the webapp because only WHNU supports them
+and it is always intended to provide its variant NA27/UBS4 */
+.atext .variantselect {
+  display: none;
+}
+
 .cs-OSMHB {
   font-size: 20px;
 }

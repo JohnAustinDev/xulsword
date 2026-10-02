@@ -208,9 +208,14 @@ export type SwordFilterType =
   | 'Verse Numbers'
   | 'Hebrew Cantillation'
   | 'Hebrew Vowel Points'
-  | 'Words of Christ in Red';
+  | 'Words of Christ in Red'
+  | 'Textual Variant'
+  | 'All Textual Variants';
 
 export type SwordFilterValueType = 'Off' | 'On';
+
+// Per-module setting of the SWORD 'Textual Variants' filter.
+export type TextualVariantType = { variant: boolean; allVariants: boolean };
 
 export type ShowType = {
   headings: boolean;

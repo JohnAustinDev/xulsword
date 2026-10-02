@@ -694,6 +694,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         SWBuf type = tag.getAttribute("type");
         outText("<span class=\"", buf, u);
         outText(type, buf, u);
+        if (tag.getAttribute("subType")) {outText(" ", buf, u); outText(tag.getAttribute("subType"), buf, u);}
         outText("\">", buf, u);
       }
       else if (tag.isEndTag()) {

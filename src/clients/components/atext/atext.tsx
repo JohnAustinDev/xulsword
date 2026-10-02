@@ -17,12 +17,13 @@ import {
   doUntilDone,
   getMaxChapter,
   libswordImgSrc,
+  moduleIncludesVariants,
   safeScrollIntoView,
 } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { addClass, topHandle, delayHandler } from '../libxul/xul.tsx';
 import DragSizer from '../libxul/dragsizer.tsx';
-import { Vbox, Hbox, Box } from '../libxul/boxes.tsx';
+import { Vbox, Hbox } from '../libxul/boxes.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import Button from '../libxul/button.tsx';
 import { libswordText, textChange } from './ztext.ts';
@@ -44,6 +45,7 @@ import type {
   PinPropsType,
   AudioPlayerFileVK,
   GType,
+  TextualVariantType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type {
@@ -92,10 +94,18 @@ export type AtextPropsType = Pick<
 
 export type AtextProps = XulProps & AtextPropsType;
 
+// Window arguments for each panel that are used in initial state must be
+// updated here so that a component reset or program restart uses latest
+// window state for each panel.
+const windowState: Array<Partial<AtextStateType>> = [];
+
 export const stateWinPrefs = {
   pin: null as PinPropsType | null,
   versePerLine: false as boolean,
   maxNoteBoxHeight: null as number | null,
+  variants: G.Prefs.getComplexValue(
+    'global.variants',
+  ) as typeof S.prefs.global.variants,
 };
 
 const notStateWinPrefs = {};
@@ -104,10 +114,7 @@ export type AtextStateType = typeof stateWinPrefs &
   typeof notStateWinPrefs &
   RenderPromiseState;
 
-// Window arguments that are used to set initial state must be updated locally
-// and in Prefs, so that a component reset or program restart won't cause
-// reversion to initial state.
-const windowState: Array<Partial<AtextStateType>> = [];
+export type VariantSelectType = 'normal' | 'variant' | 'both';
 
 let ScrollOneTimeID = '';
 
@@ -189,7 +196,7 @@ class Atext
   onUpdate() {
     const { props, state, renderPromise } = this;
     const { columns, isPinned, panelIndex, xulswordState } = props;
-    const { pin, maxNoteBoxHeight } = state;
+    const { pin, maxNoteBoxHeight, variants } = state;
 
     // Decide what needs to be updated...
     // pinProps are the currently active props according to the panel's
@@ -222,13 +229,16 @@ class Atext
       const scrollPropsKey = stringHash(scrollProps);
       // libswordProps are current props that effect LibSword output
       const keepme: ReadonlyArray<keyof AtextPropsType> = C.LibSwordProps[type];
-      const libswordProps = keep(
-        {
-          ...props,
-          ...pinProps,
-        },
-        keepme,
-      );
+      const libswordProps = {
+        ...keep(
+          {
+            ...props,
+            ...pinProps,
+          },
+          keepme,
+        ),
+        variant: variants?.[module],
+      };
       const { scroll } = scrollProps;
       const { location, modkey } = libswordProps;
       const highlightkey = stringHash(selection);
@@ -568,7 +578,7 @@ class Atext
       | 'place'
       | 'show'
       | 'columns'
-    >,
+    > & { variant?: TextualVariantType },
     i: number,
     flag: 'overwrite' | 'prepend' | 'append',
     xulswordState: AtextPropsType['xulswordState'],
@@ -767,7 +777,7 @@ class Atext
 
   render() {
     const { props, state, renderPromise, loadingRef, handler } = this;
-    const { maxNoteBoxHeight, versePerLine } = state;
+    const { maxNoteBoxHeight, versePerLine, variants } = state;
     const {
       columns,
       isPinned,
@@ -804,6 +814,14 @@ class Atext
 
     const moduleAlwaysVersePerLine =
       module && G.FeatureModules.NoParagraphs.includes(module);
+
+    const showVariantSelect =
+      module && moduleIncludesVariants(module, renderPromise);
+    const variant = module ? variants?.[module] : undefined;
+    let variantValue: VariantSelectType = 'normal';
+    if (variant?.allVariants) variantValue = 'both';
+    else if (variant?.variant) variantValue = 'variant';
+
     // Class list
     const classes = [
       'atext',
@@ -824,6 +842,10 @@ class Atext
       if (moduleAlwaysVersePerLine) classes.push('always-vpl');
     }
     if (show.headings) classes.push('headings');
+    if (showVariantSelect) {
+      if (variantValue === 'variant') classes.push('variant');
+      else if (variantValue === 'both') classes.push('both-variants');
+    }
 
     const data: HTMLData = { type: 'text' };
     if (module && ['Dicts', 'Genbks'].includes(G.Tab[module].tabType)) {
@@ -910,6 +932,26 @@ class Atext
                       value={m}
                     >
                       {G.Tab[m].label}
+                    </option>
+                  );
+                })}
+              </select>
+            </Hbox>
+          )}
+          {showVariantSelect && (
+            <Hbox className="variantselect" pack="end">
+              <select
+                key={variantValue}
+                defaultValue={variantValue}
+                onPointerDown={handler}
+                title={GI.i18n.t('', renderPromise, 'Textual variants', {
+                  ns: 'bibleBrowser',
+                })}
+              >
+                {(['normal', 'variant', 'both'] as const).map((v) => {
+                  return (
+                    <option key={v} value={v}>
+                      {GI.i18n.t('', renderPromise, v, { ns: 'bibleBrowser' })}
                     </option>
                   );
                 })}

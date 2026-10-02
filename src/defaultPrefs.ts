@@ -18,6 +18,7 @@ import type {
   Repository,
   ScrollType,
   ShowType,
+  TextualVariantType,
   WindowPrefsType,
 } from './type.ts';
 
@@ -106,6 +107,7 @@ const S = {
       },
       noAutoSearchIndex: [] as string[],
       skin: '' as '' | 'arabesque' | 'dark',
+      variants: {} as { [module: string]: TextualVariantType } | undefined,
     },
 
     xulsword: {

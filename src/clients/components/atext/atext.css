@@ -95,7 +95,8 @@ multi-column LTR general books
   float: right;
 }
 
-.atext .origselect {
+.atext .origselect,
+.atext .variantselect {
   margin: 5px;
 }
 
@@ -322,6 +323,24 @@ lacking either keep the solid-block fallback above. */
 }
 .introtext {
   display: none;
+}
+
+/* Both readings: the primary reading is set off by top corner marks to show
+its extent (an underline would be hidden by Strong's links), and the alternate
+reading follows it in the accent color. */
+.both-variants .x-variant.x-1::before {
+  content: '\231C';
+}
+.both-variants .x-variant.x-1::after {
+  content: '\231D';
+}
+.both-variants .x-variant.x-2 {
+  color: var(--color-primary);
+}
+.both-variants .x-variant::before,
+.both-variants .x-variant::after {
+  color: var(--font-heading-color);
+  opacity: 0.6;
 }
 
 /* Interlinear display */
