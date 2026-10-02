@@ -13,6 +13,7 @@ import type {
   SwordFilterValueType,
   TabType,
   TabTypes,
+  TextualVariantType,
   V11nType,
 } from './type.ts';
 
@@ -429,13 +430,17 @@ const C = {
     'Hebrew Vowel Points': 'hebvowelpoints',
     'Words of Christ in Red': 'redwords',
   } as {
-    [key in Exclude<
-      SwordFilterType,
-      'Textual Variant' | 'All Textual Variants'
-    >]: keyof ShowType;
+    [key in Exclude<SwordFilterType, 'Textual Variants'>]: keyof ShowType;
   },
 
   SwordFilterValues: ['Off', 'On'] as SwordFilterValueType[],
+
+  // SWORD 'Textual Variants' filter values and their UI labels.
+  TextualVariantLabels: {
+    'Primary Reading': 'normal',
+    'Secondary Reading': 'variant',
+    'All Readings': 'both',
+  } as { [key in TextualVariantType]: string },
 
   SwordRepoManifest: 'mods.d.tar.gz',
 

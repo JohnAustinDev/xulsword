@@ -105,9 +105,8 @@ class xulsword {
   bool Strongs;
   bool Morph;
   bool MorphSeg;
-  bool TextVariant;
-  bool AllTextVariants;
   bool FireBibleMode;
+  SWBuf TextualVariants;
   char Outtext[256];
   VerseKey EmptyKey;
   SWBuf MyFootnotes;

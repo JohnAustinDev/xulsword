@@ -999,7 +999,7 @@ export function noAutoSearchIndex(Prefs: GType['Prefs'], module: string) {
 
 // Return requested valid SWORD render options:
 // If show is G, then values of Prefs 'xulsword.show' will be used.
-// If variant is undefined, only the primary textual reading will be used.
+// If variant is undefined, the primary textual reading will be used.
 export function getSwordOptions(
   show: typeof S.prefs.xulsword.show | boolean | Gsafe,
   modType: ModTypes,
@@ -1025,9 +1025,7 @@ export function getSwordOptions(
     if (C.AlwaysOn[modType].includes(sword)) showi = 1;
     options[sword] = C.SwordFilterValues[showi];
   });
-  const [off, on] = C.SwordFilterValues;
-  options['Textual Variant'] = variant?.variant ? on : off;
-  options['All Textual Variants'] = variant?.allVariants ? on : off;
+  options['Textual Variants'] = variant ?? 'Primary Reading';
   return options;
 }
 // Set the number of globally available text panels. If G.Prefs is passed in,

@@ -114,8 +114,6 @@ export type AtextStateType = typeof stateWinPrefs &
   typeof notStateWinPrefs &
   RenderPromiseState;
 
-export type VariantSelectType = 'normal' | 'variant' | 'both';
-
 let ScrollOneTimeID = '';
 
 // XUL Atext
@@ -817,10 +815,8 @@ class Atext
 
     const showVariantSelect =
       module && moduleIncludesVariants(module, renderPromise);
-    const variant = module ? variants?.[module] : undefined;
-    let variantValue: VariantSelectType = 'normal';
-    if (variant?.allVariants) variantValue = 'both';
-    else if (variant?.variant) variantValue = 'variant';
+    const variant: TextualVariantType =
+      (module && variants?.[module]) || 'Primary Reading';
 
     // Class list
     const classes = [
@@ -843,8 +839,8 @@ class Atext
     }
     if (show.headings) classes.push('headings');
     if (showVariantSelect) {
-      if (variantValue === 'variant') classes.push('variant');
-      else if (variantValue === 'both') classes.push('both-variants');
+      if (variant === 'Secondary Reading') classes.push('variant');
+      else if (variant === 'All Readings') classes.push('both-variants');
     }
 
     const data: HTMLData = { type: 'text' };
@@ -941,17 +937,19 @@ class Atext
           {showVariantSelect && (
             <Hbox className="variantselect" pack="end">
               <select
-                key={variantValue}
-                defaultValue={variantValue}
+                key={variant}
+                defaultValue={variant}
                 onPointerDown={handler}
                 title={GI.i18n.t('', renderPromise, 'Textual variants', {
                   ns: 'bibleBrowser',
                 })}
               >
-                {(['normal', 'variant', 'both'] as const).map((v) => {
+                {Object.entries(C.TextualVariantLabels).map(([v, label]) => {
                   return (
                     <option key={v} value={v}>
-                      {GI.i18n.t('', renderPromise, v, { ns: 'bibleBrowser' })}
+                      {GI.i18n.t('', renderPromise, label, {
+                        ns: 'bibleBrowser',
+                      })}
                     </option>
                   );
                 })}

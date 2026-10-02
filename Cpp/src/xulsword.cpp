@@ -264,7 +264,7 @@ void xulsword::updateGlobalOptions(bool disableFootCrossRed) {
   MyManager->setGlobalOption("Strong's Numbers",Strongs ? "On":"Off");
   MyManager->setGlobalOption("Morphological Tags",Morph ? "On":"Off");
   MyManager->setGlobalOption("Morpheme Segmentation",MorphSeg ? "On":"Off");
-  MyManager->setGlobalOption("Textual Variants",AllTextVariants ? "All Readings":(TextVariant ? "Secondary Reading":"Primary Reading"));
+  MyManager->setGlobalOption("Textual Variants",TextualVariants.c_str());
 }
 
 
@@ -410,6 +410,7 @@ xulsword::xulsword(char *path, void (*throwJS)(const char *), char *(*toUpperCas
   SWLog::getSystemLog()->logInformation("XULSWORD CONSTRUCTOR");
 
   ThrowJS = throwJS;
+  TextualVariants.set("Primary Reading");
   if (reportProgress) ReportProgress = reportProgress;
   else ReportProgress = &dummyProgress;
 
@@ -1682,6 +1683,15 @@ SetGlobalOption
 void xulsword::setGlobalOption(const char *option, const char *setting) {
   bool * thisOption;
 
+  // Textual Variants is the only non-boolean global option
+  if (!strcmp(option,"Textual Variants")) {
+    if (!strcmp(setting,"Primary Reading") || !strcmp(setting,"Secondary Reading") || !strcmp(setting,"All Readings")) {
+      TextualVariants.set(setting);
+    }
+    else {xsThrow("SetGlobalOption: setting was not 'Primary Reading', 'Secondary Reading' or 'All Readings', was \"%s\".", setting);}
+    return;
+  }
+
   // Find which global option we are updating
   if      (!strcmp(option,"Headings"))                 {thisOption = &Headings;}
   else if (!strcmp(option,"Footnotes"))                {thisOption = &Footnotes;}
@@ -1694,8 +1704,6 @@ void xulsword::setGlobalOption(const char *option, const char *setting) {
   else if (!strcmp(option,"Strong's Numbers"))         {thisOption = &Strongs;}
   else if (!strcmp(option,"Morphological Tags"))       {thisOption = &Morph;}
   else if (!strcmp(option,"Morpheme Segmentation"))    {thisOption = &MorphSeg;}
-  else if (!strcmp(option,"Textual Variant"))          {thisOption = &TextVariant;}
-  else if (!strcmp(option,"All Textual Variants"))     {thisOption = &AllTextVariants;}
   else {xsThrow("SetGlobalOption: unknown option \"%s\" .", option); return;}
 
   // Now update the global option
@@ -1712,6 +1720,12 @@ const char *xulsword::getGlobalOption(const char *option) {
   bool *thisOption;
   SWBuf rCText;
 
+  // Textual Variants is the only non-boolean global option
+  if (!strcmp(option,"Textual Variants")) {
+    ResultBuf.set(TextualVariants.c_str());
+    return ResultBuf.c_str();
+  }
+
   //Find which global option is being asked for
   if      (!strcmp(option,"Headings"))                 {thisOption = &Headings;}
   else if (!strcmp(option,"Footnotes"))                {thisOption = &Footnotes;}
@@ -1724,8 +1738,6 @@ const char *xulsword::getGlobalOption(const char *option) {
   else if (!strcmp(option,"Strong's Numbers"))         {thisOption = &Strongs;}
   else if (!strcmp(option,"Morphological Tags"))       {thisOption = &Morph;}
   else if (!strcmp(option,"Morpheme Segmentation"))    {thisOption = &MorphSeg;}
-  else if (!strcmp(option,"Textual Variant"))          {thisOption = &TextVariant;}
-  else if (!strcmp(option,"All Textual Variants"))     {thisOption = &AllTextVariants;}
   else {xsThrow("GetGlobalOption: unknown option \"%s\".", option); return NULL;}
 
   // Now return the proper value

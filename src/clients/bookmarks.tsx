@@ -391,8 +391,7 @@ export function getSampleText(
       Object.entries(C.SwordFilters).forEach((entry) => {
         [options[entry[0] as SwordFilterType]] = C.SwordFilterValues;
       });
-      [options['Textual Variant']] = C.SwordFilterValues;
-      [options['All Textual Variants']] = C.SwordFilterValues;
+      options['Textual Variants'] = 'Primary Reading';
       let text = '';
       if (G.Tab[otherMod].type === C.GENBOOK) {
         ({ text } = GI.LibSword.getGenBookChapterText(

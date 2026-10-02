@@ -5,7 +5,6 @@ import C from '../../constant.ts';
 import { G } from '../G.ts';
 import { GCacheKey } from '../../common.ts';
 
-import type { TextualVariantType } from '../../type.ts';
 import type S from '../../defaultPrefs.ts';
 import type { AllComponentsData } from '../web-common.ts';
 import type { PrefsGType } from '../../prefs.ts';
@@ -149,10 +148,7 @@ const defaultSettings: AllComponentsData = {
             locale: 'en',
             fontSize: 2, // 2 is nominal; web-app CSS controls font-size
             variants: {
-              WHNU: {
-                variant: true,
-                allVariants: false,
-              },
+              WHNU: 'Secondary Reading',
             },
           },
         },
