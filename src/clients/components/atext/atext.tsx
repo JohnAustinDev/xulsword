@@ -665,15 +665,15 @@ class Atext
             sb += `<div class="ft">${navlinks(module, renderPromise)}</div>`;
           // Write text to scripture box
           sanitizeHTML(sbe, sb);
-          // Insert audio timing break spans when needed
-          if (audio && !isPinned) {
+          // Insert audio timing break spans if needed
+          if (module && audio?.open && !isPinned) {
             const { file } = audio;
             if (file) {
               const { audioModule, timing } = file;
               if (
-                timing &&
-                module &&
                 audioModule &&
+                timing &&
+                !sbe.querySelector('.verse-sync') &&
                 (G.Tab[module].audioCodes.includes(audioModule) ||
                   module === audioModule)
               )
