@@ -456,13 +456,14 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
         const s = variantselect.element.firstChild as
           | HTMLSelectElement
           | undefined;
-        const { module } = this.props;
-        if (s && module) {
+        const { module, ilModule } = this.props;
+        const variantModule = ilModule || module;
+        if (s && variantModule) {
           const variants = {
             ...(G.Prefs.getComplexValue(
               'global.variants',
             ) as typeof S.prefs.global.variants),
-            [module]: s.value as TextualVariantType,
+            [variantModule]: s.value as TextualVariantType,
           };
           G.Prefs.setComplexValue('global.variants', variants);
           this.setState({ variants });

@@ -137,6 +137,7 @@ multi-column LTR general books
   left: 0px;
   right: auto;
   padding-inline-start: 12px;
+  flex-wrap: balance;
 }
 #root[dir='rtl'] .sbcontrols {
   left: auto;

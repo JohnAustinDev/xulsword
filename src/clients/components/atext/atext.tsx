@@ -225,7 +225,7 @@ class Atext
         newState.maxNoteBoxHeight = maxHeight;
     }
 
-    const { selection, module } = pinProps;
+    const { selection, module, ilModule } = pinProps;
     if (module && atext && sbe && nbe) {
       const { type, isVerseKey } = G.Tab[module];
       const scrollPropsKey = stringHash(scrollProps);
@@ -239,7 +239,7 @@ class Atext
           },
           keepme,
         ),
-        variant: variants?.[module],
+        variant: variants?.[ilModule || module],
       };
       const { scroll } = scrollProps;
       const { location, modkey } = libswordProps;
@@ -650,7 +650,7 @@ class Atext
                 (pes.firstElementChild?.clientWidth ?? 0) <
                 10
             ) {
-              pes.style.marginTop = '2.5em';
+              pes.style.marginTop = `${sbc.offsetHeight}px`;
             } else pes.style.marginTop = '';
             // UI TWEAK: Remove pesky arrows if atext is very narrow.
             if (sbe.parentElement?.offsetWidth < 210) {
@@ -817,10 +817,11 @@ class Atext
     const moduleAlwaysVersePerLine =
       module && G.FeatureModules.NoParagraphs.includes(module);
 
+    const variantModule = ilModule || module;
     const showVariantSelect =
-      module && moduleIncludesVariants(module, renderPromise);
+      variantModule && moduleIncludesVariants(variantModule, renderPromise);
     const variant: TextualVariantType =
-      (module && variants?.[module]) || 'Primary Reading';
+      (variantModule && variants?.[variantModule]) || 'Primary Reading';
 
     // Class list
     const classes = [
