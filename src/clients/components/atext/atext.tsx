@@ -103,9 +103,7 @@ export const stateWinPrefs = {
   pin: null as PinPropsType | null,
   versePerLine: false as boolean,
   maxNoteBoxHeight: null as number | null,
-  variants: G.Prefs.getComplexValue(
-    'global.variants',
-  ) as typeof S.prefs.global.variants,
+  variants: undefined as typeof S.prefs.global.variants,
 };
 
 const notStateWinPrefs = {};
@@ -135,6 +133,12 @@ class Atext
 
   constructor(props: AtextProps) {
     super(props);
+
+    // Set this now rather than outside the component to allow time for web-app
+    // prefs to take on their initial values.
+    stateWinPrefs.variants = G.Prefs.getComplexValue(
+      'global.variants',
+    ) as typeof S.prefs.global.variants;
 
     this.state = {
       ...stateWinPrefs,

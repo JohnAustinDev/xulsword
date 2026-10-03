@@ -135,20 +135,22 @@ socket.on('connect', () => {
       // load. Server settings should always override them to insure a xulsword
       // default value will not permanently override both the user and server
       // settings.
-      (['global.locale', 'global.fontSize', 'xulsword.place'] as const).forEach(
-        (pref) => {
-          let sv = settings;
-          pref.split('.').forEach((p) => {
-            if (sv && typeof sv === 'object' && p in sv && (sv as any)[p]) {
-              sv = (sv as any)[p];
-            }
-          });
-          if (sv !== settings) Prefs.setComplexValue(pref, sv);
-        },
-      );
-      Prefs.setComplexValue('xulsword.place', settings.prefs.xulsword.place);
-      Prefs.setCharPref('global.locale', settings.prefs.global.locale);
-      Prefs.setIntPref('global.fontSize', settings.prefs.global.fontSize);
+      (
+        [
+          'global.locale',
+          'global.fontSize',
+          'global.variants',
+          'xulsword.place',
+        ] as const
+      ).forEach((pref) => {
+        let sv = settings.prefs;
+        pref.split('.').forEach((p) => {
+          if (sv && typeof sv === 'object' && p in sv && (sv as any)[p]) {
+            sv = (sv as any)[p];
+          }
+        });
+        if (sv !== settings.prefs) Prefs.setComplexValue(pref, sv);
+      });
     } else if (preExistingPrefs && applyUserPrefs === 'before') {
       // The server should never be able to change user choices for these prefs
       // So for each storageId, once the user has had a chance to set these
