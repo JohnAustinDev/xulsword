@@ -271,7 +271,7 @@ span.foreign {
 .text *[class^='head'] h2 {
   font-size: inherit;
 }
-.interB *[class^='head'] {
+.interB *[class^='head']:not(.canonical) {
   display: none;
 }
 .canonical {

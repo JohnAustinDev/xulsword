@@ -777,8 +777,9 @@ const char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *v
       readKey.setAutoNormalize(0); // Non-existant calls should return empty string!
       readKey.setText(convertLocation(myVerseKey->getVersificationSystem(), myVerseKey->getOSISRef(), toVS));
 
-      int vFirst = vNum;
-      int vLast = vNum;
+      int vChap = readKey.getChapter();
+      int vFirst = readKey.getVerse();
+      int vLast = vFirst;
 
       readKey.setPersist(true);
       readKey.setAutoNormalize(0);
@@ -809,7 +810,7 @@ const char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *v
       }
       versemod->setKey(EmptyKey);
 
-      chapText.appendFormatted("<span data-title=\"%s.%d.%d.%d.%s\" class=\"vs\">", bk.c_str(), myVerseKey->getChapter(), vFirst, vLast, versemod->getName());
+      chapText.appendFormatted("<span data-title=\"%s.%d.%d.%d.%s\" class=\"vs\">", bk.c_str(), vChap, vFirst, vLast, versemod->getName());
       chapText.append("<sup class=\"versenum\">");
       if (Versenumbers) {
         if (vFirst == vLast) {chapText.appendFormatted("%d", vFirst);}
@@ -1075,6 +1076,8 @@ const char *xulsword::convertLocation(const char *frVS, const char *vkeytext, co
   int map_verse = fromKey.getVerse();
   int map_lastverse = fromKey.getUpperBound().getVerse();
   frSystem->translateVerse(toSystem, &map_book, &map_chapter, &map_verse, &map_lastverse);
+  // translateVerse may return a verse_end of 0 for single verse mappings
+  if (map_lastverse < map_verse) {map_lastverse = map_verse;}
 
   SWBuf result;
   result.appendFormatted("%s.%i.%i.%i", map_book, map_chapter, map_verse, map_lastverse);
