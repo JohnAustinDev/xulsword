@@ -689,7 +689,7 @@ export function getFeatureModules(): FeatureMods {
         xulswordFeatureMods.greek.push(module);
       } else if (
         type === C.BIBLE &&
-        (mlang === 'hbo' || ['OSMHB', 'WLC', 'Aleppo'].includes(module))
+        (mlang === 'hbo' || ['OSHB', 'WLC', 'Aleppo'].includes(module))
       ) {
         xulswordFeatureMods.hebrew.push(module);
       }
