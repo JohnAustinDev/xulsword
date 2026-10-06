@@ -189,8 +189,7 @@ socket.on('connect', () => {
         langcode && C.Locales.some((x) => x[0] === langcode) ? langcode : 'en';
       Prefs.setCharPref('global.locale', locale);
     }
-    const fallback = C.FallbackLanguage[locale];
-    Prefs.setCharPref('global.fallbackLocale', fallback);
+    Prefs.setCharPref('global.fallbackLocale', langcode);
 
     // Determine the number of panels to show initially. If runtime is narrow
     // screen and server settings show a single text, reduce the initial
@@ -209,7 +208,7 @@ socket.on('connect', () => {
     let numPanels = forceSinglePanel ? 1 : panels.length;
     if (numPanels > maxPanels) numPanels = maxPanels;
 
-    cachePreload(locale, fallback)
+    cachePreload(locale, C.FallbackLanguage[locale])
       .then(() => {
         setDefaultBibleBrowserPrefs(Prefs);
         setGlobalPanels(Prefs, numPanels);

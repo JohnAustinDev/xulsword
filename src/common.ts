@@ -977,10 +977,10 @@ export function validateGlobalModulePrefs(
       string[],
     ];
     if (!(f in feature) && Array.isArray(fmods) && fmods.length) {
-      const pref =
-        C.LocalePreferredFeature[
-          G().Prefs.getCharPref('global.locale') === 'en' ? 'en' : 'ru'
-        ][f];
+      const fbloc: 'en' | 'ru' = Build.isWebApp
+        ? (G().Prefs.getCharPref('global.fallbackLocale') as any)
+        : (C.FallbackLanguage[G().Prefs.getCharPref('global.locale')] as any);
+      const pref = C.LocalePreferredFeature[fbloc][f];
       feature[f] = pref?.find((m) => fmods.includes(m)) || fmods[0];
     }
   });
