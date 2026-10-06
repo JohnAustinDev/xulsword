@@ -21,7 +21,7 @@
   width: calc(100% - 30px);
 }
 .printControls .text-options label {
-  white-space: wrap;
+  white-space: normal;
 }
 
 .printContainer * {

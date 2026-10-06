@@ -182,7 +182,7 @@ host's html element onto the shadow #root element. */
   margin-bottom: 10px;
 }
 .cipher-prompt .label {
-  white-space: wrap;
+  white-space: normal;
 }
 .cipher-prompt .textbox {
   width: 250px;
