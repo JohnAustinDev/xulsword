@@ -50,7 +50,7 @@ if (widgets.length) {
       const fallback = locale === 'en' || locale === 'ru' ? locale : 'en';
       Prefs.setCharPref('global.fallbackLocale', fallback);
 
-      cachePreload(locale, fallback, [
+      cachePreload(locale, [
         ['Full publication', { ns: 'widgets' }],
         ['introduction.label', { ns: 'xulsword' }],
       ])

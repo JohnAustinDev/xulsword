@@ -338,8 +338,10 @@ function prepCall(thecall: GCallType): GCallType {
       !method &&
       args?.length === 1
     ) {
-      const fbl = G.Prefs.getCharPref('global.fallbackLocale');
-      const fallback = fbl === 'en' || fbl === 'ru' ? fbl : 'en';
+      // For WebApp, getBooks must be cache preloaded with this fallback.
+      const [l] = args;
+      const fallback =
+        l && l in C.FallbackLanguage ? C.FallbackLanguage[l] : 'en';
       args.push(fallback);
     }
   }
