@@ -65,6 +65,18 @@ const convertToPx = { in: 96, mm: 96 / 25.4 };
 
 const scaleLimit = { min: 25, max: 150 };
 
+// WebKit browsers (Safari on macOS, and every browser on iOS) print through a
+// native page setup UI which ignores @page size, so paper size and orientation
+// are chosen there instead. WebKit also always prints a single column. So
+// these controls are hidden (see printSettings.css), and the preview is kept
+// to the portrait single column layout which will actually be printed. NOTE:
+// @page margins are respected by WebKit, so margin controls remain. Chromium
+// based browsers also report AppleWebKit, but not without Chrome/.
+const isWebKitPrint =
+  Build.isWebApp &&
+  /AppleWebKit\//.test(navigator.userAgent) &&
+  !/(Chrome|Chromium)\//.test(navigator.userAgent);
+
 const dark: Partial<ControllerState> = {
   modal: 'darkened',
   progress: 'indefinite',
@@ -127,6 +139,10 @@ export default class PrintSettings extends React.Component<
       ...(getStatePref('prefs', 'print') as typeof S.prefs.print),
       ...notStatePref,
     };
+    if (isWebKitPrint) {
+      s.landscape = false;
+      s.twoColumns = false;
+    }
     this.state = s;
 
     this.handler = this.handler.bind(this);
@@ -655,7 +671,9 @@ export default class PrintSettings extends React.Component<
           (margins.left * convertToPx.mm) / i.pageToContentScale
         }px;
       }
-      .userFontBase {
+      /* #root is required to override the web-app's dynamic stylesheet
+      .userFontBase rule, which follows this one in the shadow root. */
+      #root .userFontBase {
         font-size: ${scale / 100}em;
       }
       .pageable .printContainer {
@@ -703,7 +721,12 @@ export default class PrintSettings extends React.Component<
         (printContainerRef.current?.clientWidth ?? 0);
 
     return (
-      <Vbox {...addClass('printsettings', this.props)}>
+      <Vbox
+        {...addClass(
+          ['printsettings', isWebKitPrint ? 'native-page-setup' : ''],
+          this.props,
+        )}
+      >
         {/* PRINT CONTAINER */}
         {pageViewRef?.current &&
           showpaging &&
@@ -759,7 +782,7 @@ export default class PrintSettings extends React.Component<
           domref={settingsRef}
         >
           <Vbox pack="center" align="center">
-            <Hbox align="center">
+            <Hbox className="page-format" align="center">
               <Menulist
                 id="pageSize"
                 value={pageSize}

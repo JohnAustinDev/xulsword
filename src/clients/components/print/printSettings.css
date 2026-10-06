@@ -24,6 +24,12 @@
   width: 40px;
 }
 
+/* Paper size, orientation and columns are not available to WebKit printouts
+(see isWebKitPrint in printSettings.tsx). */
+.printsettings.native-page-setup .page-format {
+  display: none;
+}
+
 .printsettings .groupbox,
 .printsettings .button {
   z-index: 1; /* required during full screen for some reason */
