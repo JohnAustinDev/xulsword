@@ -108,6 +108,7 @@ const S = {
       noAutoSearchIndex: [] as string[],
       skin: '' as '' | 'arabesque' | 'dark',
       variants: {} as { [module: string]: TextualVariantType } | undefined,
+      interlinear: {} as { ot?: string; nt?: string } | undefined,
     },
 
     xulsword: {

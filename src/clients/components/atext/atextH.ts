@@ -443,6 +443,23 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           | undefined;
         const module = s?.value;
         if (module) {
+          // Remember the user's choice for the current testament. Choosing the
+          // default (first) option clears the choice, so that whatever is the
+          // default at the time will be used.
+          const { location, ilModuleOption } = this.props;
+          const book = location?.book;
+          const Book = G.getBook(G.i18n.language);
+          const bookGroup = book && book in Book ? Book[book].bookGroup : null;
+          if (bookGroup === 'ot' || bookGroup === 'nt') {
+            const interlinear = {
+              ...(G.Prefs.getComplexValue('global.interlinear') as
+                | typeof S.prefs.global.interlinear
+                | undefined),
+            };
+            if (module === ilModuleOption[0]) delete interlinear[bookGroup];
+            else interlinear[bookGroup] = module;
+            G.Prefs.setComplexValue('global.interlinear', interlinear);
+          }
           xulswordState((prevState) => {
             let { ilModules } = prevState;
             ilModules = clone(ilModules);

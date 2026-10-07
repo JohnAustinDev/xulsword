@@ -855,6 +855,7 @@ class Atext
       data.location = { ...location, vkMod: module ?? undefined };
 
     const showSelect =
+      !isPinned &&
       module &&
       G.Tab[module].type === C.BIBLE &&
       ilModule &&
@@ -924,7 +925,11 @@ class Atext
           )}
           {showSelect && (
             <Hbox className="origselect" pack="end">
-              <select defaultValue={ilModule} onPointerDown={handler}>
+              <select
+                key={ilModule}
+                defaultValue={ilModule}
+                onPointerDown={handler}
+              >
                 {ilModuleOption.map((m) => {
                   return (
                     <option

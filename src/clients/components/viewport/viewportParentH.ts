@@ -27,6 +27,7 @@ import type {
   OSISBookType,
   GType,
 } from '../../../type.ts';
+import type S from '../../../defaultPrefs.ts';
 import type Xulsword from '../xulsword/xulsword.tsx';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
 import type { DragSizerVal } from '../libxul/dragsizer.tsx';
@@ -419,14 +420,29 @@ export default function handler(
           ) {
             if (type === 'ilt-tab') {
               (this as Xulsword).setState((prevState) => {
-                const { ilModules } = prevState;
+                const { ilModules, location } = prevState;
                 const s = {
                   ilModules: ilModules.slice(),
                   focusPanel: index, // for genbkchooser scroll-to
                   vpreset: Math.random(), // for genbkchooser scroll-to
                 };
                 if (!s.ilModules) s.ilModules = [];
-                s.ilModules[index] = ilModules[index] ? '' : m;
+                // When activating, prefer the user's last chosen module for the
+                // testament (Viewport will fall back to the default if it is
+                // not valid).
+                let ilm = m;
+                const Book = G.getBook(G.i18n.language);
+                const bookGroup =
+                  location?.book && location.book in Book
+                    ? Book[location.book].bookGroup
+                    : null;
+                if (bookGroup === 'ot' || bookGroup === 'nt') {
+                  const interlinear = G.Prefs.getComplexValue(
+                    'global.interlinear',
+                  ) as typeof S.prefs.global.interlinear | undefined;
+                  ilm = interlinear?.[bookGroup] || m;
+                }
+                s.ilModules[index] = ilModules[index] ? '' : ilm;
                 return s;
               });
             } else {

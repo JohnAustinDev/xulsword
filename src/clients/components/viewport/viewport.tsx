@@ -261,24 +261,42 @@ export default class Viewport
     //   (see logic above). Otherwise:
     // It is visible and disabled if selected module/bookGroup does
     //   not support ilModuleOption.
-    // It is visible and active if ilModule is set to an ilModuleOption.
+    // It is visible and active if ilModule is set (to any module). The active
+    //   module is then:
+    //   - ilModule itself, if it is an ilModuleOption, or else
+    //   - the user's last chosen module for the testament (global.interlinear
+    //     pref), if it is an ilModuleOption, or else
+    //   - the first (default) ilModuleOption.
     // It is visible but inactive otherwise.
+    const interlinear = G.Prefs.getComplexValue('global.interlinear') as
+      | typeof S.prefs.global.interlinear
+      | undefined;
+    const bookGroup =
+      location?.book && location.book in Book
+        ? Book[location.book].bookGroup
+        : null;
+    const ilChosen =
+      bookGroup === 'ot' || bookGroup === 'nt'
+        ? interlinear?.[bookGroup]
+        : undefined;
     const ilModules = ilModules0.slice();
     panels.forEach((panel, i) => {
-      ilModules[i] = ''; // visible and inactive (or hidden if no ilModuleOption)
-      let ilpref = ilModules0[i];
-      if (ilpref === 'disabled') ilpref = null;
+      const options = ilModuleOptions[i];
+      const ilpref = ilModules0[i] === 'disabled' ? null : ilModules0[i];
       if (
         panelHasILOptions[i] &&
-        (!ilModuleOptions[i] || (panel && G.Tab[panel].type !== C.BIBLE))
+        (panel && G.Tab[panel].type !== C.BIBLE)
       ) {
         ilModules[i] = 'disabled'; // visible and disabled
-      } else if (
-        ilpref &&
-        ilModuleOptions[i][0] &&
-        ilModuleOptions[i].includes(ilpref)
-      ) {
-        ilModules[i] = ilpref; // visible and active
+      } else if (ilpref && options[0]) {
+        // visible and active
+        if (options.includes(ilpref)) {
+          ilModules[i] = ilpref;
+        } else if (ilChosen && options.includes(ilChosen)) {
+          ilModules[i] = ilChosen;
+        } else [ilModules[i]] = options;
+      } else {
+        ilModules[i] = ''; // visible and inactive (or hidden if no options)
       }
     });
 
