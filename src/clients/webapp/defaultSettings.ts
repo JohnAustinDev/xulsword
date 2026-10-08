@@ -95,7 +95,7 @@ export function setDefaultBibleBrowserPrefs(
 
 const defaultSettings: AllComponentsData = {
   react: {
-    bibleBrowser_1: {
+    react_bible_browser: {
       component: 'bibleBrowser',
       langcode: 'en',
       settings: {

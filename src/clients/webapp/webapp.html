@@ -9,6 +9,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" media="all" href="/src/clients/webapp/head.css" />
     <link rel="stylesheet" media="all" href="/src/clients/webapp/test.css" />
+    <% if (htmlWebpackPlugin.options.drupalSettingsProxy) { %>
+    <script>
+      // Retrieve drupalSettings using either the third-party URL (api) or a 
+      // host page URL (ibt) depending on this Bible Browser's context.
+      document.write(
+        '<script src="/drupalSettings/' +
+          (window.self !== window.top ? 'api' : 'ibt') +
+          '.js' +
+          location.search +
+          '"><\/script>',
+      );
+    </script>
+    <% } %>
     <style>
       button {
         background-color: #e0e0e0;
@@ -38,7 +51,7 @@
       </p>
 
       <div id="root">
-        <div id="bibleBrowser_1" data-react-component="bibleBrowser"></div>
+        <div id="react_bible_browser" data-react-component="bibleBrowser"></div>
       </div>
 
       <p>

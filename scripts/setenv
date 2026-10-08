@@ -13,6 +13,9 @@
 
 # export WEBAPP_PORT=3576
 
+# export WEBAPP_API_URL='https://localhost:8443/bible-browser'
+# export WEBAPP_IBT_URL=''
+
 # export WEBAPP_SERVERROOT_DIR=[xulsword]/profile_webapp/web
 
 # Semicolon delimited list of public URLs relative to WEBAPP_SERVERROOT_DIR; each starting with slash.

@@ -21,7 +21,13 @@
         vulputate, sem sed rhoncus tempor, ipsum diam sollicitudin ex, ac dictum
         felis sem a lorem.
       </p>
-      <iframe width="100%" src="http://localhost:1212/webapp.html"></iframe>
+      <iframe width="100%"></iframe>
+      <script>
+        // Pass this page's query params to the Bible Browser, as a third-party
+        // website would in its iframe src.
+        document.currentScript.previousElementSibling.src =
+          'http://localhost:1212/webapp.html' + location.search;
+      </script>
       <p>
         Nullam non purus ut diam finibus placerat convallis sed magna. Curabitur
         sed tempor massa, nec congue turpis. Phasellus elementum, neque quis

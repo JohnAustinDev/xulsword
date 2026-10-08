@@ -9,6 +9,7 @@ import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import * as sass from 'sass';
 import CompressionPlugin from 'compression-webpack-plugin';
 import projectPaths from './scripts/projectPaths.mjs';
+import drupalSettingsProxy from './scripts/drupalSettingsProxy.mjs';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 
 // Webpack entry points to build, grouped by target.
@@ -534,6 +535,7 @@ export default function (opts) {
                   widgets: path.join(srcPath, 'clients', name, `${name}.html`),
                 }[build],
                 chunks: [name],
+                drupalSettingsProxy: development && build === 'webapp',
               });
             }
             return null;
@@ -552,7 +554,8 @@ export default function (opts) {
               hot: true,
               publicPath: '/', // required for app development server
               headers: { 'Access-Control-Allow-Origin': '*' },
-              before() {
+              before(app) {
+                if (build === 'webapp') drupalSettingsProxy(app);
                 const start =
                   build === 'appClients' ? 'start:appSrv' : 'start:webappSrv';
                 console.log(
