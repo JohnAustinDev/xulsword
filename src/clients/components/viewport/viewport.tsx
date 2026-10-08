@@ -85,6 +85,8 @@ export default class Viewport
 
   popupRef: React.RefObject<Popup>;
 
+  tabrowObserver: MutationObserver;
+
   constructor(props: ViewportProps) {
     super(props);
 
@@ -102,9 +104,21 @@ export default class Viewport
     this.loadingRef = React.createRef();
     this.popupRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
+    this.tabrowObserver = new MutationObserver(() => this.syncTabrow());
   }
 
   componentDidMount() {
+    // Tabs components change their tabs after their own state updates (and
+    // even hide tabs imperatively) which do not update Viewport.
+    const tabrow = this.loadingRef.current?.querySelector('.tabrow');
+    if (Build.isWebApp && tabrow) {
+      this.tabrowObserver.observe(tabrow, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style'],
+      });
+    }
     this.syncClasses();
   }
 
@@ -123,6 +137,7 @@ export default class Viewport
 
   componentWillUnmount() {
     clearPending(this, ['popupDelayTO', 'popupUnblockTO']);
+    this.tabrowObserver.disconnect();
     getRootElement()?.classList.remove('multi-panel');
   }
 
@@ -134,6 +149,7 @@ export default class Viewport
   // - .nb.popup-open marks whichever notebox (if any) the open note popup
   //   portal is currently nested in, since the portal target is an
   //   imperatively-tracked hover target, not a render-time prop.
+  // - .tabrow.no-visible-tabs (see syncTabrow()).
   syncClasses() {
     const viewportEl = this.loadingRef.current;
     if (!viewportEl) return;
@@ -147,6 +163,25 @@ export default class Viewport
       .querySelectorAll('.nb.popup-open')
       .forEach((nb) => nb.classList.remove('popup-open'));
     this.state.popupParent?.closest('.nb')?.classList.add('popup-open');
+    this.syncTabrow();
+  }
+
+  // Web App only: hide the tabrow when none of its tabs are visible. Tabs may
+  // be hidden by CSS (including third-party CSS) so the computed display of
+  // each tab and its ancestors, up to the tabrow, is checked.
+  syncTabrow() {
+    if (!Build.isWebApp) return;
+    const tabrow = this.loadingRef.current?.querySelector('.tabrow');
+    if (!tabrow) return;
+    const isDisplayed = (el: Element | null): boolean =>
+      !el ||
+      el === tabrow ||
+      (getComputedStyle(el).display !== 'none' &&
+        isDisplayed(el.parentElement));
+    const hasVisibleTab = Array.from(
+      tabrow.querySelectorAll('.tabs > .tab'),
+    ).some((tab) => isDisplayed(tab));
+    tabrow.classList.toggle('no-visible-tabs', !hasVisibleTab);
   }
 
   audioHandler(

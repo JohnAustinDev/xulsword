@@ -305,6 +305,10 @@ class Tabs
       prefixes[t.module] = tbs && tbs.includes(t.module) ? '- ' : '+ ';
     });
 
+    // Pinned tab banks never show the multi-tab, so multiTabs is irrelevant.
+    const singleWebAppTextTab =
+      Build.isWebApp && tabs.length === 1 && (isPinned || !multiTabs.length);
+
     return (
       <div
         ref={loadingRef}
@@ -314,6 +318,7 @@ class Tabs
       >
         {module &&
           isPinned &&
+          !singleWebAppTextTab &&
           this.getTab(module, 'reg-tab', 'active', null, renderPromise)}
         {!isPinned && tabcntl && (
           <div
@@ -333,11 +338,12 @@ class Tabs
             </div>
           </div>
         )}
-        {tabs.map((m: string) => {
-          if (isPinned || !m || multiTabs.includes(m)) return null;
-          const selected = m === module ? 'active' : '';
-          return this.getTab(m, 'reg-tab', selected, null, renderPromise);
-        })}
+        {!singleWebAppTextTab &&
+          tabs.map((m: string) => {
+            if (isPinned || !m || multiTabs.includes(m)) return null;
+            const selected = m === module ? 'active' : '';
+            return this.getTab(m, 'reg-tab', selected, null, renderPromise);
+          })}
         {!isPinned &&
           multiTabs.length > 0 &&
           mtMod &&

@@ -20,6 +20,12 @@
   white-space: nowrap;
   z-index: 6; /* so mts-tab drop down covers text-pin */
 }
+/* Collapsed rather than display:none, so the width of each Tabs element
+   (used by its ResizeObserver to fit tabs) is unaffected. */
+.viewport .tabrow.no-visible-tabs {
+  height: 0;
+  overflow: hidden;
+}
 .viewport .textarea {
   min-width: 1px; /* allows textarea to shrink below minimum content size */
 }
