@@ -73,6 +73,7 @@ export { MenuOpen } from '@blueprintjs/icons/lib/esm/generated/components/menu-o
 export { More } from '@blueprintjs/icons/lib/esm/generated/components/more.js';
 export { OneColumn } from '@blueprintjs/icons/lib/esm/generated/components/one-column.js';
 export { OpenApplication } from '@blueprintjs/icons/lib/esm/generated/components/open-application.js';
+export { Pin } from '@blueprintjs/icons/lib/esm/generated/components/pin.js';
 export { Plus } from '@blueprintjs/icons/lib/esm/generated/components/plus.js';
 export { Print } from '@blueprintjs/icons/lib/esm/generated/components/print.js';
 export { Properties } from '@blueprintjs/icons/lib/esm/generated/components/properties.js';
@@ -87,6 +88,7 @@ export { SymbolCross } from '@blueprintjs/icons/lib/esm/generated/components/sym
 export { Tick } from '@blueprintjs/icons/lib/esm/generated/components/tick.js';
 export { TwoColumns } from '@blueprintjs/icons/lib/esm/generated/components/two-columns.js';
 export { Undo } from '@blueprintjs/icons/lib/esm/generated/components/undo.js';
+export { Unpin } from '@blueprintjs/icons/lib/esm/generated/components/unpin.js';
 export { VolumeUp } from '@blueprintjs/icons/lib/esm/generated/components/volume-up.js';
 export { WarningSign } from '@blueprintjs/icons/lib/esm/generated/components/warning-sign.js';
 export { WidgetHeader } from '@blueprintjs/icons/lib/esm/generated/components/widget-header.js';

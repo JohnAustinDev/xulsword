@@ -883,7 +883,14 @@ class Atext
         data-data={JSON_attrib_stringify(data)}
       >
         <Hbox className="sbcontrols">
-          {isVerseKey && <div className="text-pin" />}
+          {isVerseKey && (
+            <Button
+              className="text-pin"
+              checked={!!isPinned}
+              icon={isPinned ? 'unpin' : 'pin'}
+              iconSize={webAppIconSize}
+            />
+          )}
           {xulswordHandler &&
             typeof showChooser !== 'undefined' &&
             window.innerWidth > C.UI.WebApp.mobileW && (

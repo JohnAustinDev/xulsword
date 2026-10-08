@@ -35,6 +35,7 @@ through. The popup is tinted in popup.css and the tab in tabs.css. */
 
 .atext .hd {
   height: 40px;
+  flex-shrink: 0;
   margin-bottom: 10px;
 }
 .atext .hd,
@@ -60,28 +61,7 @@ multi-column LTR general books
 }
 /* ---------------------------- */
 .atext .text-pin {
-  transform: scaleX(-1);
-  float: left;
-  width: 28px;
-  height: 37px;
-  position: relative;
-  top: -15px;
-  left: -8px;
-  margin-inline-end: -8px;
-  background: url(../../images/pushpin0.png);
   z-index: 5;
-}
-#root[dir='rtl'] .atext .text-pin {
-  transform: none;
-  float: right;
-  left: auto;
-  right: -8px;
-}
-.atext.pinned .text-pin {
-  background: url(../../images/pushpin1.png);
-}
-.atext .text-pin:hover {
-  background: url(../../images/pushpin2.png);
 }
 .atext.Dicts .text-pin,
 .atext.Genbks .text-pin {

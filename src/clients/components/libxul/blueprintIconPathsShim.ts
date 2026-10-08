@@ -77,6 +77,7 @@ export { default as MenuOpen } from '@blueprintjs/icons/lib/esm/generated/20px/p
 export { default as More } from '@blueprintjs/icons/lib/esm/generated/20px/paths/more.js';
 export { default as OneColumn } from '@blueprintjs/icons/lib/esm/generated/20px/paths/one-column.js';
 export { default as OpenApplication } from '@blueprintjs/icons/lib/esm/generated/20px/paths/open-application.js';
+export { default as Pin } from '@blueprintjs/icons/lib/esm/generated/20px/paths/pin.js';
 export { default as Plus } from '@blueprintjs/icons/lib/esm/generated/20px/paths/plus.js';
 export { default as Print } from '@blueprintjs/icons/lib/esm/generated/20px/paths/print.js';
 export { default as Properties } from '@blueprintjs/icons/lib/esm/generated/20px/paths/properties.js';
@@ -91,6 +92,7 @@ export { default as SymbolCross } from '@blueprintjs/icons/lib/esm/generated/20p
 export { default as Tick } from '@blueprintjs/icons/lib/esm/generated/20px/paths/tick.js';
 export { default as TwoColumns } from '@blueprintjs/icons/lib/esm/generated/20px/paths/two-columns.js';
 export { default as Undo } from '@blueprintjs/icons/lib/esm/generated/20px/paths/undo.js';
+export { default as Unpin } from '@blueprintjs/icons/lib/esm/generated/20px/paths/unpin.js';
 export { default as VolumeUp } from '@blueprintjs/icons/lib/esm/generated/20px/paths/volume-up.js';
 export { default as WarningSign } from '@blueprintjs/icons/lib/esm/generated/20px/paths/warning-sign.js';
 export { default as WidgetHeader } from '@blueprintjs/icons/lib/esm/generated/20px/paths/widget-header.js';
