@@ -39,9 +39,6 @@ justify-content: safe flex-end, it works in older browsers. */
   border-left: 2px solid var(--border-light);
   border-right: 2px solid var(--border-light);
   border-bottom: 2px solid var(--border-light);
-  border-top: 1px solid transparent;
-  border-top-right-radius: 4px;
-  border-top-left-radius: 4px;
   cursor: pointer;
 }
 .tabs .tab .border {
@@ -99,7 +96,6 @@ changed */
 }
 .tabs .mts-tab .anchorbutton .menupopup .tab {
   max-width: calc(50vw - 10px);
-  border-bottom: none;
 }
 a.anchorbutton .tab:hover {
   background-color: var(--bg-interface-selection);
@@ -128,18 +124,6 @@ a.anchorbutton .tab:hover {
     var(--overlay-text-pinned)
   );
   border-bottom-color: transparent;
-}
-.tabs .tabTexts {
-  border-top-color: var(--color-primary);
-}
-.tabs .tabComms {
-  border-top-color: var(--color-secondary2);
-}
-.tabs .tabDicts {
-  border-top-color: var(--color-secondary);
-}
-.tabs .tabGenbks {
-  border-top-color: var(--color-secondary3);
 }
 .tabs .tabTexts > .border {
   border-top-color: var(--color-primary);
