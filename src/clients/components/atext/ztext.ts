@@ -298,8 +298,8 @@ export function libswordText(
     r.intronotes = headInfo.intronotes;
   }
 
-  // Add versePerLineButton
-  if (G.Tab[module].tabType === 'Texts') {
+  // Add versePerLineButton (verse-per-line is misleading without verse numbers)
+  if (G.Tab[module].tabType === 'Texts' && show.versenums) {
     r.textHTML = r.textHTML.replace(
       /(<span[^>]*class="vs\b[^>]*>)/,
       '$1<span class="versePerLineButton"><div></div></span>',

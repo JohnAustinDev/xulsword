@@ -38,7 +38,6 @@ import {
 } from './history.tsx';
 import './xulsword.css';
 
-import type { BibleBrowserControllerGlobal } from '../../webapp/webapp.tsx';
 import type { OSISBookType } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
@@ -340,6 +339,16 @@ export default class Xulsword
 
     const webAppIconSize = Build.isWebApp ? 28 : C.UI.BluePrint.IconSize.LARGE;
 
+    const maxWebAppColumns = Math.max(
+      2,
+      Math.round(
+        ((getRootElement()?.offsetWidth ?? 0) -
+          (window.innerWidth > C.UI.WebApp.mobileW ? 105 : 0)) /
+          300,
+      ),
+    );
+    const allowMoreWebAppColumns = panels.length < maxWebAppColumns;
+
     const historyComponent = (
       <Hbox id="historyButtons" flex="1" pack="start" align="center">
         <Box
@@ -461,11 +470,11 @@ export default class Xulsword
             title={GI.i18n.t('', renderPromise, 'menu.printPassage')}
           />
         )}
-        {(window as BibleBrowserControllerGlobal).browserMaxPanels && (
+        {Build.isWebApp && (
           <>
             <Button
               id="addcolumn"
-              disabled={panels.length >= (window as any).browserMaxPanels}
+              disabled={!allowMoreWebAppColumns}
               icon="add-column-right"
               iconSize={webAppIconSize}
               onPointerDown={xulswordHandler}
@@ -601,7 +610,7 @@ export default class Xulsword
 
         <Hbox id="textnav" align="center">
           <Button
-            id="chooserButton"
+            className="chooserButton"
             checked={showChooser}
             icon={showChooser ? 'menu-closed' : 'menu-open'}
             iconSize={webAppIconSize}

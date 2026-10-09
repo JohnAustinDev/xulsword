@@ -40,8 +40,14 @@ export default function xulswordHandler(
   if (isBlockedEvent(e)) return;
   const { state } = this;
   const { target, currentTarget } = e;
+  // Controls which may appear more than once in the document are identified
+  // by class name rather than by id.
+  const classIds = ['chooserButton', 'showControls'];
   const currentId =
-    currentTarget instanceof HTMLElement ? currentTarget.id : undefined;
+    currentTarget instanceof HTMLElement
+      ? currentTarget.id ||
+        classIds.find((c) => currentTarget.classList.contains(c))
+      : undefined;
   switch (e.type) {
     case 'pointerdown': {
       switch (currentId) {

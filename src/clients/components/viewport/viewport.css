@@ -26,11 +26,24 @@
   height: 0;
   overflow: hidden;
 }
+/* Keep the top and bottom of the chooser aligned with the textrow. */
+.viewport.no-visible-tabs .chooser .fadetop,
+.multi-panel .viewport.no-visible-tabs .chooser .fadebot {
+  display: none;
+}
+.viewport.no-visible-tabs .genbook-chooser {
+  margin-top: 0;
+}
 .viewport .textarea {
   min-width: 1px; /* allows textarea to shrink below minimum content size */
 }
 .viewport .textrow {
   width: 100%;
+  overflow-wrap: anywhere;
+}
+.viewport .textrow .atext:not(:first-child) .chooserButton,
+.viewport .textrow .atext:not(:first-child) .showControls {
+  display: none;
 }
 .viewport.ownWindow .atext {
   margin: 0;

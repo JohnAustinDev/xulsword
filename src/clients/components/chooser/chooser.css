@@ -26,7 +26,7 @@
   background-color: var(--bg-bp6-light);
   cursor: pointer;
   flex-shrink: 1;
-  max-height: 760px; /* NT height */
+  max-height: 787px; /* NT height */
 }
 .chooser .bookgroup {
   position: relative;

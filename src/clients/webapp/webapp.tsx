@@ -26,10 +26,6 @@ import type { PrefRoot, PrefValue } from '../../type.ts';
 
 window.WebAppClient = 'BibleBrowser';
 
-export type BibleBrowserControllerGlobal = {
-  browserMaxPanels?: number;
-} & typeof window;
-
 const socket = socketConnect(
   Number(process.env.WEBAPP_PORT),
   process.env.WEBAPP_DOMAIN,
@@ -196,8 +192,6 @@ socket.on('connect', () => {
     // number of panels to 1.
     let maxPanels = Math.ceil(window.innerWidth / 300);
     if (maxPanels < 2) maxPanels = 2;
-    else if (maxPanels > 6) maxPanels = 6;
-    (window as BibleBrowserControllerGlobal).browserMaxPanels = maxPanels;
     const panels = Prefs.getComplexValue(
       'xulsword.panels',
     ) as typeof S.prefs.xulsword.panels;

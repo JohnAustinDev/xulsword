@@ -149,7 +149,8 @@ export default class Viewport
   // - .nb.popup-open marks whichever notebox (if any) the open note popup
   //   portal is currently nested in, since the portal target is an
   //   imperatively-tracked hover target, not a render-time prop.
-  // - .tabrow.no-visible-tabs (see syncTabrow()).
+  // - .tabrow.no-visible-tabs and .viewport.no-visible-tabs (see
+  //   syncTabrow()).
   syncClasses() {
     const viewportEl = this.loadingRef.current;
     if (!viewportEl) return;
@@ -168,11 +169,14 @@ export default class Viewport
 
   // Web App only: hide the tabrow when none of its tabs are visible. Tabs may
   // be hidden by CSS (including third-party CSS) so the computed display of
-  // each tab and its ancestors, up to the tabrow, is checked.
+  // each tab and its ancestors, up to the tabrow, is checked. The class is
+  // also set on the viewport so the chooser, which precedes the textarea,
+  // can stay aligned with the textrow.
   syncTabrow() {
     if (!Build.isWebApp) return;
-    const tabrow = this.loadingRef.current?.querySelector('.tabrow');
-    if (!tabrow) return;
+    const viewportEl = this.loadingRef.current;
+    const tabrow = viewportEl?.querySelector('.tabrow');
+    if (!viewportEl || !tabrow) return;
     const isDisplayed = (el: Element | null): boolean =>
       !el ||
       el === tabrow ||
@@ -182,6 +186,7 @@ export default class Viewport
       tabrow.querySelectorAll('.tabs > .tab'),
     ).some((tab) => isDisplayed(tab));
     tabrow.classList.toggle('no-visible-tabs', !hasVisibleTab);
+    viewportEl.classList.toggle('no-visible-tabs', !hasVisibleTab);
   }
 
   audioHandler(

@@ -575,8 +575,7 @@ export default class Prefs {
       }
     } else if (!this.isType(type, value)) {
       const msg = `Prefs was given the wrong type: ${store}.${key}=${JSON_stringify(value)}, expected='${type}'`;
-      if (type === 'complex') this.log?.warn(msg);
-      else throw new Error(msg);
+      if (type !== 'complex') throw new Error(msg);
     }
     // Get (or create) the parent object of the key.
     let k = key;

@@ -197,8 +197,8 @@ class Atext
   // storing it there insures the hashes are invalidated at the same time.
   onUpdate() {
     const { props, state, renderPromise } = this;
-    const { columns, isPinned, panelIndex, xulswordState } = props;
-    const { pin, maxNoteBoxHeight, variants } = state;
+    const { columns, isPinned, panelIndex, show, xulswordState } = props;
+    const { pin, maxNoteBoxHeight, variants, versePerLine } = state;
 
     // Decide what needs to be updated...
     // pinProps are the currently active props according to the panel's
@@ -210,6 +210,9 @@ class Atext
     let newState = (
       diff(pin, pinProps) ? { pin: pinProps } : {}
     ) as AtextStateType;
+
+    // Verse-per-line is misleading without verse numbers, so turn it off.
+    if (versePerLine && !show.versenums) newState.versePerLine = false;
 
     const { sbref, nbref } = this;
     const sbe = sbref !== null ? sbref.current : null;
@@ -836,7 +839,7 @@ class Atext
     if (module && G.Tab[module].direction === 'rtl') classes.push('rtl');
     if (isPinned) classes.push('pinned');
     if (doMaximizeNB) classes.push('noteboxMaximized');
-    if (versePerLine || moduleAlwaysVersePerLine) {
+    if ((versePerLine && show.versenums) || moduleAlwaysVersePerLine) {
       if (!module || G.Tab[module].tabType === 'Texts') {
         classes.push('verse-per-line');
       } else classes.push('verse-per-line-com');
@@ -887,7 +890,7 @@ class Atext
             typeof showChooser !== 'undefined' &&
             window.innerWidth > C.UI.WebApp.mobileW && (
               <Button
-                id="chooserButton"
+                className="chooserButton"
                 checked={showChooser}
                 icon={showChooser ? 'menu-closed' : 'menu-open'}
                 iconSize={webAppIconSize}
@@ -902,7 +905,7 @@ class Atext
             )}
           {xulswordHandler && typeof showControls !== 'undefined' && (
             <Button
-              id="showControls"
+              className="showControls"
               icon="cog"
               onPointerDown={xulswordHandler}
               checked={showControls ?? false}

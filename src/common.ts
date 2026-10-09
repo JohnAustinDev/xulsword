@@ -49,7 +49,6 @@ import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
 import type { SelectORMType } from './clients/components/libxul/selectOR.tsx';
 import type RenderPromise from './clients/renderPromise.ts';
 import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
-import type { BibleBrowserControllerGlobal } from './clients/webapp/webapp.tsx';
 import type Window from './servers/app/components/window.ts';
 
 // This file contains functions that are used in common with both xulsword
@@ -1049,10 +1048,8 @@ export function setGlobalPanels(
     if (!('panels' in xs)) (xs as any).panels = [''];
   }
   const { panels } = xs;
-  const maxN = (window as BibleBrowserControllerGlobal).browserMaxPanels || 4;
   let newN = numPanels || panels.length + delta;
   if (newN < 1) newN = 1;
-  if (newN > maxN) newN = maxN;
   C.PanelPrefArrays.forEach((pref) => {
     if (!(pref in xs)) {
       xs[pref] = S.prefs.xulsword[pref] as any[];

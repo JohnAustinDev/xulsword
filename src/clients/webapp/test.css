@@ -9,16 +9,18 @@ body {
   align-items: center;
   box-sizing: border-box;
 }
+body,
+.third-party-container,
+.container {
+  width: 100%;
+}
 html:not(.ownsDocument) .container {
-  max-width: 1150px;
+  max-width: 1170px;
   flex-grow: 1;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 30px;
-}
-.container {
-  width: 100%;
 }
 h1 {
   color: green;
