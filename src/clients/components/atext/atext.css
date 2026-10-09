@@ -86,8 +86,14 @@ multi-column LTR general books
 }
 
 .atext .sb {
+  --sb-padding: 30px;
+}
+
+.atext .sb {
   flex-basis: 0px;
-  padding: 0px 30px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-inline: var(--sb-padding);
   display: flow-root;
   overflow-wrap: anywhere;
 }
@@ -96,7 +102,7 @@ multi-column LTR general books
 }
 .atext:not(.columns1) .sb {
   overflow: hidden;
-  column-gap: calc(2.5 * var(--reading-inset));
+  column-gap: calc(2.5 * var(--reading-inset, var(--sb-padding)));
   column-rule: 4px solid var(--border-light);
   column-fill: auto;
 }
