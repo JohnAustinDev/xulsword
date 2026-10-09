@@ -3,8 +3,9 @@
   top: 2px;
   height: 25px;
   overflow: hidden;
-  display: inline-block;
-  text-align: end;
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
   vertical-align: bottom;
   white-space: nowrap;
   z-index: 4;
@@ -16,9 +17,18 @@
 .tabs.open {
   overflow: visible;
 }
+/* Pushes the tabs to the end side. Unlike justify-content: flex-end, any
+overflow goes to the end side (as text-align: end did), and unlike
+justify-content: safe flex-end, it works in older browsers. */
+.tabs::before {
+  content: '';
+  margin-inline-start: auto;
+}
 
 .tabs .tab {
-  display: inline-block;
+  /* Tabs must keep their natural width, since tabs.tsx measures them to
+  decide which ones to move into the multi-tab. */
+  flex: none;
   cursor: default;
   font-size: 0.86em;
   height: 25px;
@@ -35,6 +45,8 @@
   cursor: pointer;
 }
 .tabs .tab .border {
+  display: flex;
+  align-items: center;
   border-top: 2px solid transparent;
   padding: 0px 5px;
 }
@@ -149,5 +161,5 @@ a.anchorbutton .tab:hover {
   overflow: hidden;
 }
 .tabs .border > * {
-  display: inline-block;
+  flex: none;
 }
