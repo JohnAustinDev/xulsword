@@ -41,6 +41,16 @@ justify-content: safe flex-end, it works in older browsers. */
   border-bottom: 2px solid var(--border-light);
   cursor: pointer;
 }
+/* Inactive tabs stop at the top edge of the panel's border, rather than
+overlapping it with a bottom border of their own. On fractional device pixel
+ratios, browsers round border widths to whole device pixels (a 2px border may
+be drawn 1.9px wide) but not the 2px .tabs offset, therefore an overlapping tab
+border ends up a device pixel lower than the panel's border. */
+.tabs > .tab:not(.active) {
+  height: 23px;
+  margin-bottom: 2px;
+  border-bottom: none;
+}
 .tabs .tab .border {
   display: flex;
   align-items: center;
