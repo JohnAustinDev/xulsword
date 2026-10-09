@@ -924,10 +924,11 @@ export function pageChange(
     }
   } else {
     let lastVerse: HTMLElement | undefined;
-    // Usually the last visible verse is chosen, so it will become the first
-    // visible verse after the page change. However, if the last visible verse
-    // includes an image, then the next visible verse (if there is one) must
-    // instead be chosen, or tall images will 'stick' and prevent page changes!
+    // A next verse must be chosen to become the first visible verse after the
+    // page change. Usually the last visible verse is chosen. However, if the
+    // last visible verse includes an image, then the next visible verse (if
+    // there is one) must instead be chosen to prevent sticking at the image!
+    // Also, if there are no visible verses, then choose the first hidden one.
     let pv: null | Element = null;
     Array.from(atext.getElementsByClassName('vs'))
       .reverse()
@@ -937,6 +938,7 @@ export function pageChange(
         }
         pv = v;
       });
+    if (!lastVerse && pv) lastVerse = pv;
     if (lastVerse) {
       const edata = getElementData(lastVerse);
       const { context, location } = edata;

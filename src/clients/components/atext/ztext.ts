@@ -433,7 +433,7 @@ export function textChange(
     : null;
   if (type === C.BIBLE && columns > 1) {
     scroll = next
-      ? { ...(scroll ?? {}), verseAt: 'top' }
+      ? { ...(scroll ?? {}), verseAt: 'top-first-verse' }
       : {
           ...(scroll ?? {}),
           verseAt: 'bottom',

@@ -385,8 +385,10 @@ class Atext
                 } else {
                   // MULTI-COLUMN SCROLL TO VERSE
                   // verseAt determines which sibling is placed at the top.
-                  if (verse === 1 && scroll?.verseAt === 'top') {
+                  if (verse === 1 && scroll?.verseAt.startsWith('top')) {
+                    let topFirstVerse: HTMLElement | null = null;
                     for (;;) {
+                      if (v.classList.contains('vs')) topFirstVerse = v;
                       const prevSib = (v?.previousElementSibling ||
                         null) as HTMLElement | null;
                       const prevChap =
@@ -400,7 +402,10 @@ class Atext
                         v = prevSib;
                       } else break;
                     }
-                    v = sbe.firstChild as HTMLElement | null;
+                    v =
+                      scroll.verseAt === 'top-first-verse'
+                        ? topFirstVerse
+                        : (sbe.firstChild as HTMLElement | null);
                   } else if (scroll?.verseAt === 'center') {
                     let d = 4;
                     while (d && v) {

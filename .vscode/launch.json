@@ -23,7 +23,7 @@
       "runtimeExecutable": "yarn",
       "runtimeArgs": ["start:webapp"],
       "skipFiles": ["<node_internals>/**"],
-      "outFiles": ["${workspaceFolder}/build/webapp/dist/**/*"]
+      "outFiles": ["${workspaceFolder}/build/webapp/release/server/**/*.cjs"]
     },
     {
       "type": "node",
@@ -34,7 +34,7 @@
       "preLaunchTask": "Build webapp server",
       "env": { "LD_LIBRARY_PATH": "./Cpp/lib" },
       "skipFiles": ["<node_internals>/**"],
-      "outFiles": ["${workspaceFolder}/build/webapp/dist/**/*"]
+      "outFiles": ["${workspaceFolder}/build/webapp/release/server/**/*.cjs"]
     },
     {
       "name": "Attach to Process",

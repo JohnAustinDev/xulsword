@@ -179,7 +179,7 @@ export type ModalType =
 // - skipWindowUpdate prevents temporary states from being saved to Prefs or broadcast
 // to other windows.
 export type ScrollType = {
-  verseAt: 'top' | 'center' | 'bottom';
+  verseAt: 'top' | 'top-first-verse' | 'center' | 'bottom';
   scrollIntoView?: ScrollIntoViewArg;
   skipWindowUpdate?: boolean;
 } | null;
