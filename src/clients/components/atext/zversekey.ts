@@ -526,39 +526,59 @@ export function versekeyScroll(
 // Implement Atext verse scroll for multi-column Bible panels, which page by
 // scrolling horizontally just like multi-column general books. The column
 // where the verse begins is scrolled to the start of the page, or the first
-// page is shown if the verse is on it or is verse 1 (so the chapter heading
-// and any images before verse 1 are shown). If the verse is already showing,
-// nothing changes unless force is true. For verseAt 'bottom', the page-aligned
-// page containing the verse is shown instead, and the location of the first
-// verse which begins on it is returned.
+// page is shown if the verse is on it. Verse 1 is shown along with whatever
+// precedes it in its chapter (the chapter heading and any images). If the
+// verse is already showing, nothing changes unless force is true.
 export function multiColumnVerseScroll(
   sbe: HTMLElement,
   location: LocationVKType,
-  verseAt: NonNullable<ScrollType>['verseAt'],
   force: boolean,
-  renderPromise: RenderPromise,
-): LocationVKType | null {
+) {
   const m = columnMetrics(sbe);
-  if (!m) return null;
-  const v = findVerseElement(sbe, location.chapter, location.verse || 1);
-  const column = (v && columnOf(sbe, m, v)) ?? 0;
-  if (verseAt === 'bottom') {
-    // The last verse continues to the end of the chapter.
-    const verses = sbe.getElementsByClassName('vs');
-    const last = !v || v === verses[verses.length - 1];
-    scrollToColumn(
-      sbe,
-      m,
-      pageStart(m, last ? lastContentColumn(sbe, m) : column),
-    );
-    const atext = sbe.parentElement;
-    return atext ? getScrollVerse(atext, renderPromise) : null;
-  }
+  if (!m) return;
+  const verse = location.verse || 1;
+  const v = findVerseElement(sbe, location.chapter, verse);
+  let column = (v && columnOf(sbe, m, v)) ?? 0;
   if (force || !columnIsShowing(sbe, m, column)) {
-    const top = column < m.columns || (location.verse || 1) === 1;
-    scrollToColumn(sbe, m, top ? 0 : column);
+    if (verse === 1) {
+      let e = v?.previousElementSibling;
+      for (; e && !e.classList.contains('vs'); e = e.previousElementSibling) {
+        column = columnOf(sbe, m, e) ?? column;
+      }
+    }
+    scrollToColumn(sbe, m, column < m.columns ? 0 : column);
   }
-  return null;
+}
+
+// Returns true if the page of a multi-column Bible already shows a location,
+// so that neither its text nor its page need change. A page turn leaves the
+// location at the first verse which begins on the page, and that verse may be
+// in another chapter than the first chapter of the text. But verse 1 which is
+// to be at the top must be the first verse on the page, so that choosing a
+// chapter shows that chapter from its start.
+export function pageShowsLocation(
+  sbe: HTMLElement,
+  location: LocationVKType,
+  scroll: ScrollType,
+): boolean {
+  const m = columnMetrics(sbe);
+  if (!m) return false;
+  const showing = (v: Element | null): boolean => {
+    const column = v && columnOf(sbe, m, v);
+    return typeof column === 'number' && columnIsShowing(sbe, m, column);
+  };
+  let first = sbe.firstElementChild;
+  while (first && !(first.classList.contains('vs') && showing(first))) {
+    first = first.nextElementSibling;
+  }
+  if (!first) return false;
+  // The verse is inconsequential when scroll is null.
+  if (!scroll) {
+    return getElementData(first).location?.chapter === location.chapter;
+  }
+  const verse = location.verse || 1;
+  const v = findVerseElement(sbe, location.chapter, verse);
+  return verse === 1 && scroll.verseAt === 'top' ? v === first : showing(v);
 }
 
 function aTextWheelScroll2(

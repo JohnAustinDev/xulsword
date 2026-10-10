@@ -180,18 +180,16 @@ export default class ViewportWin
   persistState(prevState: ViewportWinState, state: ViewportWinState) {
     const windowState = keep(state, vpWindowState) as VPWindowState;
     const { scroll } = state;
-    if (!scroll?.skipWindowUpdate) {
-      setStatePref(
-        'prefs',
-        'xulsword',
-        prevState,
-        state,
-        Object.keys(statePrefDefault),
-      );
-      const newWindowState = diff(prevState, windowState);
-      if (newWindowState) {
-        G.Window.mergeValue('xulswordState', newWindowState);
-      }
+    setStatePref(
+      'prefs',
+      'xulsword',
+      prevState,
+      state,
+      Object.keys(statePrefDefault),
+    );
+    const newWindowState = diff(prevState, windowState);
+    if (newWindowState) {
+      G.Window.mergeValue('xulswordState', newWindowState);
     }
     this.setState(diff(prevState, state) ?? null);
   }

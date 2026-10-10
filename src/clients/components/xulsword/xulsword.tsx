@@ -163,19 +163,17 @@ export default class Xulsword
       });
     }
 
-    if (!scroll?.skipWindowUpdate) {
-      const statex = clone({ ...state, historyMenupopup: undefined });
-      setStatePref('prefs', 'xulsword', prevState, statex);
-      // Add page to history after a short delay
-      if (location) {
-        delayHandler(
-          this,
-          () => this.addHistory(),
-          [],
-          C.UI.Xulsword.historyDelay,
-          'historyTO',
-        );
-      }
+    const statex = clone({ ...state, historyMenupopup: undefined });
+    setStatePref('prefs', 'xulsword', prevState, statex);
+    // Add page to history after a short delay
+    if (location) {
+      delayHandler(
+        this,
+        () => this.addHistory(),
+        [],
+        C.UI.Xulsword.historyDelay,
+        'historyTO',
+      );
     }
 
     // Update audio player if it's open and the context chapter has
@@ -692,10 +690,10 @@ export default class Xulsword
       </>
     );
 
-    this.atextRefs = [];
-    panels.forEach(() => {
-      this.atextRefs.push(React.createRef());
-    });
+    // (refs must not be replaced by StrictMode's second render)
+    this.atextRefs = panels.map(
+      (_panel, i) => this.atextRefs[i] ?? React.createRef(),
+    );
 
     return (
       <Vbox

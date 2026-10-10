@@ -97,17 +97,77 @@ export function columnOf(
   return r ? columnOfRect(sb, m, r) : null;
 }
 
+// The boxes of an element which have content, in text order (an inline
+// element which ends at a line break has an empty box on the next line).
+function boxes(e: Element): DOMRect[] {
+  return Array.from(e.getClientRects()).filter((r) => r.width && r.height);
+}
+
 // The index of the last column having content.
 export function lastContentColumn(sb: HTMLElement, m: ColumnMetrics): number {
   for (let e = sb.lastElementChild; e; e = e.previousElementSibling) {
     if (!e.classList.contains('col-spacer')) {
-      const rects = Array.from(e.getClientRects()).filter(
-        (r) => r.width || r.height,
-      );
+      const rects = boxes(e);
       if (rects.length) return columnOfRect(sb, m, rects[rects.length - 1]);
     }
   }
   return 0;
+}
+
+// A place in the text of sb: one of the boxes of one of its children. Unlike
+// a column index, it stays with the text when other text is added before it,
+// because that only moves an element's boxes to other columns.
+export type TextAnchor = {
+  element: Element;
+  box: number;
+  boxes: number; // how many boxes the element had
+};
+
+// The place in the text where a column begins, or null if there is no text in
+// or after the column.
+export function columnAnchor(
+  sb: HTMLElement,
+  m: ColumnMetrics,
+  column: number,
+): TextAnchor | null {
+  for (let e = sb.firstElementChild; e; e = e.nextElementSibling) {
+    if (!e.classList.contains('col-spacer')) {
+      const rects = boxes(e);
+      const box = rects.findIndex((r) => columnOfRect(sb, m, r) >= column);
+      if (box !== -1) return { element: e, box, boxes: rects.length };
+    }
+  }
+  return null;
+}
+
+// The index of the column where the text before an anchor ends, or -1 if
+// there is no text before it.
+export function columnBeforeAnchor(
+  sb: HTMLElement,
+  m: ColumnMetrics,
+  anchor: TextAnchor,
+): number {
+  const rects = boxes(anchor.element);
+  // If the element was not just moved, the start of the element must do.
+  const box = rects.length === anchor.boxes ? anchor.box : 0;
+  if (box > 0) return columnOfRect(sb, m, rects[box - 1]);
+  let e = anchor.element.previousElementSibling;
+  for (; e; e = e.previousElementSibling) {
+    const r = boxes(e);
+    if (r.length) return columnOfRect(sb, m, r[r.length - 1]);
+  }
+  return -1;
+}
+
+// The index of the column where an anchor now is.
+export function columnOfAnchor(
+  sb: HTMLElement,
+  m: ColumnMetrics,
+  anchor: TextAnchor,
+): number {
+  const rects = boxes(anchor.element);
+  const r = rects[rects.length === anchor.boxes ? anchor.box : 0];
+  return r ? columnOfRect(sb, m, r) : 0;
 }
 
 // The text-column index of the first column of the page containing the given

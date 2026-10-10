@@ -21,7 +21,7 @@ import {
   chapterChange,
   getScrollVerse,
 } from '../atext/zversekey.ts';
-import { scrollPage } from '../atext/zcolumns.ts';
+import { columnMetrics, scrollPage } from '../atext/zcolumns.ts';
 
 import type React from 'react';
 import type { ReactElement } from 'react';
@@ -211,10 +211,20 @@ function pageTurn(
   scrollIntoView?: ScrollIntoViewArg,
 ) {
   const sb = atext.querySelector('.sb') as HTMLElement | null;
-  const { module } = atext.dataset;
+  const { module, index } = atext.dataset;
+  const isBible = module && G.Tab[module].type === C.BIBLE;
+  // Multi-column Bibles show as many chapters as it takes to fill their page.
+  // So a page back may need preceding chapters, which Atext must add.
+  if (sb && !next && isBible && columnMetrics(sb)) {
+    const atextcomp = comp.atextRefs[Number(index)]?.current;
+    if (atextcomp) {
+      atextcomp.pageBack();
+      return;
+    }
+  }
   if (sb && scrollPage(sb, next)) {
     // A Bible's location follows the page.
-    if (module && G.Tab[module].type === C.BIBLE) {
+    if (isBible) {
       doUntilDone((renderPromise2) => {
         if (renderPromise2) {
           const location = getScrollVerse(atext, renderPromise2);

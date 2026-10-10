@@ -16,7 +16,6 @@ import VerseKey from '../../../verseKey.ts';
 import { getElementData } from '../../htmlData.ts';
 import { G, GI } from '../../G.ts';
 import { dString } from '../../../common.ts';
-import { getMaxVerse } from '../../common.ts';
 import addBookmarks from '../../bookmarks.tsx';
 import analytics from '../../analytics.ts';
 import { getNoteHTML, getChapterHeader, chapterChange } from './zversekey.ts';
@@ -374,27 +373,15 @@ export function textChange(
     case C.BIBLE:
     case C.COMMENTARY: {
       let location;
-      const [firstVerse] = Array.from(
-        sbe.getElementsByClassName('vs'),
-      ) as Array<HTMLElement | undefined>;
-      if (firstVerse) {
-        const p = getElementData(firstVerse);
-        const { location: l } = p;
-        if (l) {
-          if (next) {
-            location = chapterChange(l, 1, renderPromise);
-          } else {
-            location = chapterChange(l, -1, renderPromise);
-            // Multi-column Bibles go to the last page of the previous chapter.
-            if (location?.v11n && type === C.BIBLE && columns > 1) {
-              location.verse = getMaxVerse(
-                location.v11n,
-                `${location.book}.${location.chapter}`,
-                renderPromise,
-              );
-            }
-          }
-        }
+      // Multi-column Bibles show more than one chapter, so the next chapter
+      // follows the last verse, and the previous precedes the first.
+      const verses = sbe.getElementsByClassName('vs');
+      const verse = verses[next ? verses.length - 1 : 0] as
+        | HTMLElement
+        | undefined;
+      if (verse) {
+        const { location: l } = getElementData(verse);
+        if (l) location = chapterChange(l, next ? 1 : -1, renderPromise);
       }
       if (location) {
         newPartialPinProps.location = location;
@@ -440,15 +427,7 @@ export function textChange(
   let scroll: ScrollType = scrollIntoView
     ? { verseAt: 'top', scrollIntoView }
     : null;
-  if (type === C.BIBLE && columns > 1) {
-    scroll = next
-      ? { ...(scroll ?? {}), verseAt: 'top' }
-      : {
-          ...(scroll ?? {}),
-          verseAt: 'bottom',
-          skipWindowUpdate: true,
-        };
-  } else if (type === C.BIBLE || type === C.COMMENTARY) {
+  if (type === C.BIBLE || type === C.COMMENTARY) {
     scroll = { ...(scroll ?? {}), verseAt: 'top' };
   }
   newPinProps.scroll = scroll;

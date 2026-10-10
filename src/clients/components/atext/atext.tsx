@@ -16,6 +16,7 @@ import {
   clearPending,
   createResizeObserver,
   doUntilDone,
+  getMaxChapter,
   libswordImgSrc,
   moduleIncludesVariants,
   safeScrollIntoView,
@@ -28,14 +29,23 @@ import Spacer from '../libxul/spacer.tsx';
 import Button from '../libxul/button.tsx';
 import { libswordText, textChange } from './ztext.ts';
 import {
+  getScrollVerse,
   highlight,
   multiColumnVerseScroll,
+  pageShowsLocation,
   versekeyScroll,
   trimNotes,
 } from './zversekey.ts';
 import {
+  columnAnchor,
+  columnBeforeAnchor,
+  columnMetrics,
+  columnOfAnchor,
+  firstColumn,
+  lastContentColumn,
   restoreColumn,
   scrollPage,
+  scrollToColumn,
   scrollToFirstPage,
   scrollToLastPage,
   showLastPage,
@@ -63,6 +73,7 @@ import type {
 import type { HTMLData } from '../../htmlData.ts';
 import type { XulProps } from '../libxul/xul.tsx';
 import type { LibSwordResponse } from './ztext.ts';
+import type { TextAnchor } from './zcolumns.ts';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
 import type { popupParentHandler } from '../popup/popupParentH.ts';
 
@@ -101,6 +112,21 @@ export type AtextPropsType = Pick<
 };
 
 export type AtextProps = XulProps & AtextPropsType;
+
+// The Atext props which effect LibSword output.
+type LibSwordPropsType = Pick<
+  AtextPropsType,
+  | 'module'
+  | 'ilModule'
+  | 'ilModuleOption'
+  | 'location'
+  | 'modkey'
+  | 'isPinned'
+  | 'audio'
+  | 'place'
+  | 'show'
+  | 'columns'
+> & { variant?: TextualVariantType };
 
 // Window arguments for each panel that are used in initial state must be
 // updated here so that a component reset or program restart uses latest
@@ -148,6 +174,10 @@ class Atext
   loadingRef: React.RefObject<HTMLDivElement>;
 
   resizeObserver: ResizeObserver;
+
+  // Where the showing page of a multi-column Bible began, while it is being
+  // turned back a page (see turnPageBack).
+  pageBackFrom: TextAnchor | null = null;
 
   constructor(props: AtextProps) {
     super(props);
@@ -220,12 +250,13 @@ class Atext
   onUpdate() {
     const { props, state, renderPromise } = this;
     const { columns, isPinned, panelIndex, show, xulswordState } = props;
-    const { pin, maxNoteBoxHeight, variants, versePerLine } = state;
+    const { pin, maxNoteBoxHeight, versePerLine } = state;
 
     // Decide what needs to be updated...
     // pinProps are the currently active props according to the panel's
-    // isPinned prop value.
-    const pinProps = keep(pin && isPinned ? pin : props, C.PinProps);
+    // isPinned prop value, and libswordProps are those effecting LibSword
+    // output.
+    const { pinProps, libswordProps } = this.activeProps();
     // scrollProps are current props that effect scrolling
     const scrollProps = keep({ ...props, ...pinProps }, C.ScrollPropsVK);
 
@@ -260,161 +291,167 @@ class Atext
       }
     }
 
-    const { selection, module, ilModule } = pinProps;
+    const { selection, module } = pinProps;
     if (module && atext && sbe && nbe) {
       const { type, isVerseKey } = G.Tab[module];
       const scrollPropsKey = stringHash(scrollProps);
-      // libswordProps contains current values effecting LibSword output
-      const keepme: ReadonlyArray<keyof AtextPropsType> = C.LibSwordProps[type];
-      const libswordProps = {
-        ...keep(
-          {
-            ...props,
-            ...pinProps,
-          },
-          keepme,
-        ),
-        variant: variants?.[ilModule || module],
-      };
       const { scroll } = scrollProps;
       const { location, modkey } = libswordProps;
       const highlightkey = stringHash(selection);
-      const libswordKey = this.libswordKey(libswordProps, panelIndex);
-      const skipUpdate =
-        scroll?.verseAt === 'bottom' && (columns === 1 || type !== C.BIBLE);
-      if (libswordProps && !skipUpdate) {
-        const update = libswordKey !== sbe.dataset.libsword;
-        if (update) {
-          this.writeLibSword2DOM(
-            libswordProps,
-            panelIndex,
-            xulswordState,
-            renderPromise,
+      const multiColumnBible = columns > 1 && type === C.BIBLE;
+      let update =
+        this.textKey(libswordProps, panelIndex) !== sbe.dataset.libsword;
+      // A multi-column Bible shows as many chapters as it takes to fill its
+      // page. So when its location changes to another chapter than its first,
+      // its text is written again unless its page already shows the location.
+      if (
+        !update &&
+        multiColumnBible &&
+        location &&
+        scrollPropsKey !== sbe.dataset.scroll
+      ) {
+        update =
+          location.chapter !== this.chapters(sbe)[0] &&
+          !(
+            'scroll' in sbe.dataset && pageShowsLocation(sbe, location, scroll)
           );
-          updateColumnSpacer(sbe);
-        }
-        // Newly written text has not been positioned. Multi-column page
-        // positions depend on image sizes, so they wait for images to load.
-        const positioned = 'scroll' in sbe.dataset;
-        const imagesLoading =
-          columns > 1 && !positioned && this.waitForImages(sbe);
-        // SCROLL (newly written multi-column Bibles are always positioned)
-        const multiColumnBible = columns > 1 && type === C.BIBLE;
-        const doScrollVerseKey =
-          isVerseKey &&
-          !imagesLoading &&
-          (scroll || (multiColumnBible && !positioned)) &&
-          (!positioned || scrollPropsKey !== sbe.dataset.scroll);
-        if (doScrollVerseKey) {
-          // Multi-column Bibles...
-          if (!renderPromise.waiting()) {
-            if (multiColumnBible && location) {
-              const firstloc = multiColumnVerseScroll(
-                sbe,
-                location,
-                scroll?.verseAt ?? 'top',
-                !positioned,
-                renderPromise,
-              );
-              // A previous page change into the previous chapter shows its
-              // last page. Then the location becomes the first verse on that
-              // page, as with any other page change.
-              if (firstloc) {
-                const s = {
-                  location: firstloc,
-                  scroll: { verseAt: 'top' },
-                } as const;
-                if (isPinned) {
-                  newState = { ...newState, pin: { ...pinProps, ...s } };
-                } else xulswordState(s);
+      }
+      if (update) {
+        this.writeLibSword2DOM(
+          libswordProps,
+          panelIndex,
+          xulswordState,
+          renderPromise,
+        );
+        updateColumnSpacer(sbe);
+      }
+      // Newly written text has not been positioned. Multi-column page
+      // positions depend on image sizes, so they wait for images to load.
+      const positioned = 'scroll' in sbe.dataset;
+      const imagesLoading =
+        columns > 1 && !positioned && this.waitForImages(sbe);
+      // SCROLL (newly written multi-column Bibles are always positioned)
+      const doScrollVerseKey =
+        isVerseKey &&
+        !imagesLoading &&
+        (scroll || (multiColumnBible && !positioned)) &&
+        (!positioned || scrollPropsKey !== sbe.dataset.scroll);
+      if (doScrollVerseKey) {
+        // Multi-column Bibles...
+        if (!renderPromise.waiting()) {
+          if (multiColumnBible && location) {
+            multiColumnVerseScroll(sbe, location, !positioned);
+          } else {
+            if (Build.isWebApp) {
+              const { userScrolled } = window.WebAppTextScroll;
+              // If we got here because the user scrolled, don't update the
+              // text that was scrolled.
+              if (userScrolled !== panelIndex) {
+                // versekeyScroll will set sbe.scrollTop, which will fire a
+                // native 'scroll' event on sbe. Guard re-handling with
+                // WebAppTextScroll until that event is finished.
+                window.WebAppTextScroll.scriptScrolled = true;
+                versekeyScroll(sbe, scrollProps);
+                requestAnimationFrame(() => {
+                  window.WebAppTextScroll.scriptScrolled = false;
+                });
               }
             } else {
-              if (Build.isWebApp) {
-                const { userScrolled } = window.WebAppTextScroll;
-                // If we got here because the user scrolled, don't update the
-                // text that was scrolled.
-                if (userScrolled !== panelIndex) {
-                  // versekeyScroll will set sbe.scrollTop, which will fire a
-                  // native 'scroll' event on sbe. Guard re-handling with
-                  // WebAppTextScroll until that event is finished.
-                  window.WebAppTextScroll.scriptScrolled = true;
-                  versekeyScroll(sbe, scrollProps);
-                  requestAnimationFrame(() => {
-                    window.WebAppTextScroll.scriptScrolled = false;
-                  });
-                }
-              } else {
-                versekeyScroll(sbe, scrollProps);
-              }
+              versekeyScroll(sbe, scrollProps);
             }
-            if (!renderPromise.waiting()) sbe.dataset.scroll = scrollPropsKey;
           }
-        } else if (
-          !imagesLoading &&
-          !positioned &&
-          type === C.GENBOOK &&
-          columns > 1
-        ) {
-          // Show the first page, or the last page after a previous page
-          // change into the previous entry.
-          if (showLastPage.delete(panelIndex)) scrollToLastPage(sbe);
-          else scrollToFirstPage(sbe);
-          sbe.dataset.scroll = '';
-        } else if (update && type === C.DICTIONARY) {
-          const id = `${stringHash(modkey)}.${panelIndex}`;
-          const keyelem = getRootNode().getElementById(id);
-          if (Build.isElectronApp && keyelem) {
-            safeScrollIntoView(keyelem, nbe, undefined, 40);
-            const dictlist = keyelem.parentNode
-              ?.parentNode as HTMLElement | null;
-            if (dictlist) {
-              const dki = dictlist.getElementsByClassName(
-                'dictkeyinput',
-              ) as unknown as HTMLInputElement[] | null;
-              if (dki) {
-                dki[0].focus();
-                dki[0].select();
-              }
+          if (!renderPromise.waiting()) sbe.dataset.scroll = scrollPropsKey;
+        }
+      } else if (
+        !imagesLoading &&
+        !positioned &&
+        type === C.GENBOOK &&
+        columns > 1
+      ) {
+        // Show the first page, or the last page after a previous page
+        // change into the previous entry.
+        if (showLastPage.delete(panelIndex)) scrollToLastPage(sbe);
+        else scrollToFirstPage(sbe);
+        sbe.dataset.scroll = '';
+      } else if (update && type === C.DICTIONARY) {
+        const id = `${stringHash(modkey)}.${panelIndex}`;
+        const keyelem = getRootNode().getElementById(id);
+        if (Build.isElectronApp && keyelem) {
+          safeScrollIntoView(keyelem, nbe, undefined, 40);
+          const dictlist = keyelem.parentNode?.parentNode as HTMLElement | null;
+          if (dictlist) {
+            const dki = dictlist.getElementsByClassName(
+              'dictkeyinput',
+            ) as unknown as HTMLInputElement[] | null;
+            if (dki) {
+              dki[0].focus();
+              dki[0].select();
             }
           }
         }
+      }
 
-        if (!renderPromise.waiting()) {
-          // HIGHLIGHT
-          if (
-            (update || highlightkey !== sbe.dataset.highlightkey) &&
-            !isPinned &&
-            type === C.BIBLE
-          ) {
-            doUntilDone((rp) => {
-              if (rp) highlight(sbe, selection, scroll, rp);
-              if (!rp?.waiting()) sbe.dataset.highlightkey = highlightkey;
-            });
-          }
-          // TRIM NOTES (whether the notebox shows is decided when text is
-          // written, so that page layout doesn't change from page to page)
-          if (columns > 1 && (update || doScrollVerseKey)) trimNotes(sbe, nbe);
-          // PREV / NEXT LINKS
-          this.updatePrevNextLinks(atext, sbe);
-          // SCROLL INTO VIEW
-          if (Build.isWebApp && update) {
-            const { scrollIntoView } = scroll ?? {};
-            const { selector, oneTimeID } = scrollIntoView ?? {};
-            if (
-              selector &&
-              scrollIntoView &&
-              oneTimeID &&
-              ScrollOneTimeID !== oneTimeID
-            ) {
-              ScrollOneTimeID = oneTimeID;
-              setTimeout(
-                () =>
-                  getRootNode()
-                    .querySelector(selector)
-                    ?.scrollIntoView(scrollIntoView),
-                100,
-              );
+      if (!renderPromise.waiting()) {
+        // PAGE (multi-column Bibles add chapters to fill their page. This
+        // must not delay what follows, while it's waiting for a chapter)
+        let added = false;
+        if (multiColumnBible && 'scroll' in sbe.dataset) {
+          // A previous page change turns back a page. Then the location
+          // becomes the first verse on that page, as with any other page
+          // change.
+          if (this.turnPageBack(sbe, nbe, libswordProps, renderPromise)) {
+            added = true;
+            const firstloc = getScrollVerse(atext, renderPromise);
+            if (firstloc) {
+              const s = {
+                location: firstloc,
+                scroll: { verseAt: 'top' },
+              } as const;
+              if (isPinned) {
+                newState = { ...newState, pin: { ...pinProps, ...s } };
+              } else xulswordState(s);
             }
+          }
+          if (this.fillPage(sbe, nbe, libswordProps, renderPromise)) {
+            added = true;
+          }
+        }
+        // HIGHLIGHT
+        if (
+          (update || highlightkey !== sbe.dataset.highlightkey) &&
+          !isPinned &&
+          type === C.BIBLE
+        ) {
+          doUntilDone((rp) => {
+            if (rp) highlight(sbe, selection, scroll, rp);
+            if (!rp?.waiting()) sbe.dataset.highlightkey = highlightkey;
+          });
+        }
+        // TRIM NOTES (whether the notebox shows is decided when text is
+        // written, so that page layout doesn't change from page to page)
+        if (columns > 1 && (update || doScrollVerseKey || added)) {
+          trimNotes(sbe, nbe);
+        }
+        // PREV / NEXT LINKS
+        this.updatePrevNextLinks(atext, sbe);
+        // SCROLL INTO VIEW
+        if (Build.isWebApp && update) {
+          const { scrollIntoView } = scroll ?? {};
+          const { selector, oneTimeID } = scrollIntoView ?? {};
+          if (
+            selector &&
+            scrollIntoView &&
+            oneTimeID &&
+            ScrollOneTimeID !== oneTimeID
+          ) {
+            ScrollOneTimeID = oneTimeID;
+            setTimeout(
+              () =>
+                getRootNode()
+                  .querySelector(selector)
+                  ?.scrollIntoView(scrollIntoView),
+              100,
+            );
           }
         }
       }
@@ -426,21 +463,63 @@ class Atext
     return true;
   }
 
+  // The props which are currently active according to the panel's isPinned
+  // prop value, and those of them which effect LibSword output.
+  activeProps() {
+    const { props, state, renderPromise } = this;
+    const { columns, isPinned } = props;
+    const { pin, variants } = state;
+    const pinProps = keep(pin && isPinned ? pin : props, C.PinProps);
+    const { module, ilModule } = pinProps;
+    const { type = null, v11n = null } = (module && G.Tab[module]) || {};
+    const keepme: ReadonlyArray<keyof AtextPropsType> = type
+      ? C.LibSwordProps[type]
+      : [];
+    const libswordProps = {
+      ...keep(
+        {
+          ...props,
+          ...pinProps,
+        },
+        keepme,
+      ),
+      variant: module ? variants?.[ilModule || module] : undefined,
+    };
+    // A multi-column Bible shows other chapters besides that of its location,
+    // so it is always located according to the versification of its module.
+    const { location } = libswordProps;
+    if (columns > 1 && type === C.BIBLE && location) {
+      libswordProps.location = new VerseKey(location, renderPromise).location(
+        v11n || null,
+      );
+    }
+    return { pinProps, libswordProps };
+  }
+
+  // Read a LibSword response from the cache, or else from LibSword.
+  libswordResponse(
+    libswordProps: LibSwordPropsType,
+    i: number,
+    renderPromise: RenderPromise,
+    xulswordState?: AtextPropsType['xulswordState'],
+  ): LibSwordResponse {
+    const libswordKey = this.libswordKey(libswordProps as AtextProps, i);
+    if (Cache.has(libswordKey)) {
+      return Cache.read(libswordKey) as LibSwordResponse;
+    }
+    const response = libswordText(
+      libswordProps,
+      i,
+      renderPromise,
+      xulswordState,
+    );
+    if (!renderPromise.waiting()) Cache.write(response, libswordKey);
+    return response;
+  }
+
   // Write a LibSword response to the DOM.
   writeLibSword2DOM(
-    libswordProps: Pick<
-      AtextPropsType,
-      | 'module'
-      | 'ilModule'
-      | 'ilModuleOption'
-      | 'location'
-      | 'modkey'
-      | 'isPinned'
-      | 'audio'
-      | 'place'
-      | 'show'
-      | 'columns'
-    > & { variant?: TextualVariantType },
+    libswordProps: LibSwordPropsType,
     i: number,
     xulswordState: AtextPropsType['xulswordState'],
     renderPromise: RenderPromise,
@@ -450,14 +529,12 @@ class Atext
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
     if (sbe && nbe) {
-      const libswordKey = this.libswordKey(libswordProps as AtextProps, i);
-      let response;
-      if (!Cache.has(libswordKey)) {
-        response = libswordText(libswordProps, i, renderPromise, xulswordState);
-        if (!renderPromise.waiting()) Cache.write(response, libswordKey);
-      } else {
-        response = Cache.read(libswordKey) as LibSwordResponse;
-      }
+      const response = this.libswordResponse(
+        libswordProps,
+        i,
+        renderPromise,
+        xulswordState,
+      );
       if (!renderPromise.waiting()) {
         const isDict =
           libswordProps.module &&
@@ -513,18 +590,8 @@ class Atext
               addTimingSpans(sbe, timing);
           }
         }
-        // Tag elements that CSS would otherwise need :has() to match.
-        sbe
-          .querySelectorAll<HTMLElement>('.x-navmenu .item .x-right')
-          .forEach((el) => {
-            if (el.nextElementSibling?.tagName === 'SPAN') {
-              el.classList.add('has-next-span');
-            }
-          });
         sbe.classList.toggle('has-sync', !!sbe.querySelector('.verse-sync'));
-        // Update all image paths
-        libswordImgSrc(sbe);
-        this.hoverLinks(sbe);
+        this.readyText(sbe);
         sanitizeHTML(nbe, nb);
         libswordImgSrc(nbe);
         this.hoverLinks(nbe);
@@ -534,13 +601,179 @@ class Atext
         else nbc.classList.remove('noteboxEmpty');
 
         if (!renderPromise.waiting()) {
-          sbe.dataset.libsword = libswordKey;
+          const chapter = libswordProps.location?.chapter ?? 0;
+          sbe.dataset.libsword = this.textKey(libswordProps, i);
+          sbe.dataset.chapters = `${chapter}-${chapter}`;
           delete sbe.dataset.scroll;
           delete sbe.dataset.column;
           delete sbe.dataset.highlightkey;
         }
       }
     }
+  }
+
+  // Ready LibSword text which has just been written to an element.
+  readyText(div: HTMLElement) {
+    // Tag elements that CSS would otherwise need :has() to match.
+    div
+      .querySelectorAll<HTMLElement>('.x-navmenu .item .x-right')
+      .forEach((el) => {
+        if (el.nextElementSibling?.tagName === 'SPAN') {
+          el.classList.add('has-next-span');
+        }
+      });
+    // Update all image paths
+    libswordImgSrc(div);
+    this.hoverLinks(div);
+  }
+
+  // The first and last chapters of the text in the sb of a multi-column
+  // Bible, which shows as many chapters as it takes to fill its page.
+  chapters(sbe: HTMLElement): [number, number] {
+    const [first, last] = (sbe.dataset.chapters ?? '').split('-').map(Number);
+    return [first || 0, last || 0];
+  }
+
+  // Add the chapter which follows (or else precedes) the text of a multi-
+  // column Bible. Returns the nodes which were added, or null if there is no
+  // such chapter, or if its text is not available yet.
+  addChapter(
+    sbe: HTMLElement,
+    nbe: HTMLElement,
+    libswordProps: LibSwordPropsType,
+    next: boolean,
+    renderPromise: RenderPromise,
+  ): ChildNode[] | null {
+    const { location } = libswordProps;
+    const [first, last] = this.chapters(sbe);
+    if (!location?.v11n || !first || renderPromise.waiting()) return null;
+    // (a box which is not laid out has no columns to fill, and so would take
+    // every chapter of the book)
+    if (!sbe.clientWidth || !sbe.clientHeight) return null;
+    const { book, v11n } = location;
+    const chapter = next ? last + 1 : first - 1;
+    if (chapter < 1 || chapter > getMaxChapter(v11n, book, renderPromise)) {
+      return null;
+    }
+    const response = this.libswordResponse(
+      { ...libswordProps, location: { book, chapter, verse: 1, v11n } },
+      this.props.panelIndex,
+      renderPromise,
+    );
+    if (renderPromise.waiting()) return null;
+    const text = sanitizeHTML(document.createElement('div'), response.textHTML);
+    this.readyText(text);
+    const notes = sanitizeHTML(
+      document.createElement('div'),
+      response.noteHTML,
+    );
+    libswordImgSrc(notes);
+    this.hoverLinks(notes);
+    const textNodes = Array.from(text.childNodes);
+    const noteNodes = Array.from(notes.childNodes);
+    const fntable = nbe.firstElementChild;
+    if (next) {
+      // (text goes before the column spacer)
+      const spacer = sbe.lastElementChild;
+      if (spacer?.classList.contains('col-spacer')) spacer.before(...textNodes);
+      else sbe.append(...textNodes);
+      fntable?.append(...noteNodes);
+    } else {
+      sbe.prepend(...textNodes);
+      fntable?.prepend(...noteNodes);
+    }
+    if (notes.textContent) {
+      nbe.parentElement?.classList.remove('noteboxEmpty');
+    }
+    sbe.dataset.chapters = next ? `${first}-${chapter}` : `${chapter}-${last}`;
+    delete sbe.dataset.highlightkey;
+    return [...textNodes, ...noteNodes];
+  }
+
+  // Add chapters to the text of a multi-column Bible until its page is filled,
+  // or the end of the book is reached. Returns true if any were added.
+  fillPage(
+    sbe: HTMLElement,
+    nbe: HTMLElement,
+    libswordProps: LibSwordPropsType,
+    renderPromise: RenderPromise,
+  ): boolean {
+    const m = columnMetrics(sbe);
+    let added = false;
+    while (
+      m &&
+      lastContentColumn(sbe, m) < firstColumn(sbe, m) + m.columns &&
+      this.addChapter(sbe, nbe, libswordProps, true, renderPromise)
+    ) {
+      added = true;
+    }
+    return added;
+  }
+
+  // Begin turning a multi-column Bible back a page (see turnPageBack).
+  pageBack() {
+    const sbe = this.sbref.current;
+    const m = sbe && columnMetrics(sbe);
+    if (sbe && m) {
+      this.pageBackFrom = columnAnchor(sbe, m, firstColumn(sbe, m));
+      this.forceUpdate();
+    }
+  }
+
+  // Turn a multi-column Bible back to the page which ends where the showing
+  // page began, adding as many preceding chapters as it takes to fill that
+  // page. Text added before the showing page moves it to other columns, so
+  // nothing is to change until the new page is ready: if a chapter is not
+  // available yet, those already added are removed again until it is.
+  // Returns true once the page has been turned.
+  turnPageBack(
+    sbe: HTMLElement,
+    nbe: HTMLElement,
+    libswordProps: LibSwordPropsType,
+    renderPromise: RenderPromise,
+  ): boolean {
+    const { pageBackFrom: from } = this;
+    if (!from) return false;
+    const m = columnMetrics(sbe);
+    const nbc = nbe.parentElement;
+    if (!m || !nbc || !sbe.contains(from.element)) {
+      this.pageBackFrom = null;
+      return false;
+    }
+    const { chapters } = sbe.dataset;
+    const noteboxEmpty = nbc.classList.contains('noteboxEmpty');
+    const showing = firstColumn(sbe, m);
+    const added: ChildNode[] = [];
+    // The new page ends with the column where the text before the showing
+    // page ends.
+    const column = () => columnBeforeAnchor(sbe, m, from) - m.columns + 1;
+    while (column() < 0) {
+      const nodes = this.addChapter(
+        sbe,
+        nbe,
+        libswordProps,
+        false,
+        renderPromise,
+      );
+      if (!nodes) break;
+      added.push(...nodes);
+    }
+    if (renderPromise.waiting()) {
+      added.forEach((node) => node.remove());
+      sbe.dataset.chapters = chapters;
+      nbc.classList.toggle('noteboxEmpty', noteboxEmpty);
+      scrollToColumn(sbe, m, showing);
+      return false;
+    }
+    // The new page's columns depend on image sizes. So keep showing the same
+    // text until images have loaded.
+    if (this.waitForImages(sbe)) {
+      scrollToColumn(sbe, m, columnOfAnchor(sbe, m, from));
+      return false;
+    }
+    this.pageBackFrom = null;
+    scrollToColumn(sbe, m, column());
+    return added.length > 0 || firstColumn(sbe, m) !== showing;
   }
 
   // Returns true if any images in sbe are still loading, and arranges for
@@ -572,37 +805,44 @@ class Atext
   // Multi-column panels keep their columns aligned to the page, and Bibles
   // keep their location verse showing, when the scripture box is resized.
   onResize() {
-    const { props, state, sbref, renderPromise } = this;
+    const { props, sbref } = this;
     const sbe = sbref.current;
     if (sbe && sbe.dataset.libsword) {
       setSbHeight(sbe);
       updateColumnSpacer(sbe);
       if (props.columns > 1) {
         restoreColumn(sbe);
-        const { pin } = state;
-        const { isPinned } = props;
-        const { module, location, scroll } = pin && isPinned ? pin : props;
-        // (after 'bottom', the restored column is the page to keep)
-        if (
-          module &&
-          G.Tab[module].type === C.BIBLE &&
-          location &&
-          scroll?.verseAt !== 'bottom'
-        ) {
-          multiColumnVerseScroll(sbe, location, 'top', false, renderPromise);
+        const { module, location } = this.activeProps().libswordProps;
+        if (module && G.Tab[module].type === C.BIBLE && location) {
+          multiColumnVerseScroll(sbe, location, false);
         }
+        this.onPageScroll();
       }
     }
   }
 
   // Multi-column panels page by scrolling, so update their notes and prev/next
-  // links whenever they scroll.
+  // links whenever they scroll (or their text is laid out again). And Bibles
+  // must add chapters whenever their page is no longer filled.
   onPageScroll() {
-    const { props, sbref, nbref } = this;
+    const { props, sbref, nbref, renderPromise } = this;
+    const { columns, panelIndex } = props;
     const sbe = sbref.current;
     const nbe = nbref.current;
     const atext = sbe?.parentElement;
-    if (sbe && nbe && atext && props.columns > 1) {
+    if (sbe && nbe && atext && columns > 1) {
+      const { libswordProps } = this.activeProps();
+      const { module } = libswordProps;
+      if (
+        module &&
+        G.Tab[module].type === C.BIBLE &&
+        'scroll' in sbe.dataset &&
+        this.textKey(libswordProps, panelIndex) === sbe.dataset.libsword
+      ) {
+        this.fillPage(sbe, nbe, libswordProps, renderPromise);
+        // (if a chapter was not available, onUpdate will add it when it is)
+        renderPromise.dispatch();
+      }
       trimNotes(sbe, nbe);
       this.updatePrevNextLinks(atext, sbe);
     }
@@ -666,6 +906,21 @@ class Atext
       },
       panelIndex,
     );
+  }
+
+  // The key of the text in sb. A multi-column Bible shows as many chapters as
+  // it takes to fill its page, so its key is the same for every location in a
+  // book.
+  textKey(libswordProps: LibSwordPropsType, panelIndex: number): string {
+    const { module, columns, location } = libswordProps;
+    if (module && G.Tab[module].type === C.BIBLE && columns > 1 && location) {
+      const { book, v11n } = location;
+      return stringHash(
+        { ...libswordProps, location: { book, v11n } },
+        panelIndex,
+      );
+    }
+    return this.libswordKey(libswordProps as AtextProps, panelIndex);
   }
 
   navlinks(
