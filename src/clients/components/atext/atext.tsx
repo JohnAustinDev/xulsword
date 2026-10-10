@@ -14,8 +14,8 @@ import { G, GI } from '../../G.ts';
 import {
   addHoverLinks,
   clearPending,
+  createResizeObserver,
   doUntilDone,
-  getMaxChapter,
   libswordImgSrc,
   moduleIncludesVariants,
   safeScrollIntoView,
@@ -29,10 +29,18 @@ import Button from '../libxul/button.tsx';
 import { libswordText, textChange } from './ztext.ts';
 import {
   highlight,
+  multiColumnVerseScroll,
   versekeyScroll,
   trimNotes,
-  findVerseElement,
 } from './zversekey.ts';
+import {
+  restoreColumn,
+  scrollPage,
+  scrollToFirstPage,
+  scrollToLastPage,
+  showLastPage,
+  updateColumnSpacer,
+} from './zcolumns.ts';
 import { addTimingSpans } from '../../audioTiming.ts';
 import handlerH from './atextH.ts';
 import audioIcon from '../audioIcon/audioIcon.tsx';
@@ -114,6 +122,14 @@ export type AtextStateType = typeof stateWinPrefs &
 
 let ScrollOneTimeID = '';
 
+// Publish the scripture box height to CSS, which uses it to limit the height
+// of images (CSS percentages cannot refer to a multi-column box's height).
+function setSbHeight(sbe: HTMLElement) {
+  const height = `${sbe.clientHeight}px`;
+  if (sbe.style.getPropertyValue('--sb-height') !== height)
+    sbe.style.setProperty('--sb-height', height);
+}
+
 // XUL Atext
 class Atext
   extends React.Component<AtextProps, AtextStateType>
@@ -130,6 +146,8 @@ class Atext
   renderPromise: RenderPromiseComponent['renderPromise'];
 
   loadingRef: React.RefObject<HTMLDivElement>;
+
+  resizeObserver: ResizeObserver;
 
   constructor(props: AtextProps) {
     super(props);
@@ -156,10 +174,12 @@ class Atext
 
     this.loadingRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
+    this.resizeObserver = createResizeObserver(() => this.onResize());
   }
 
   componentDidMount() {
-    const { renderPromise } = this;
+    const { renderPromise, resizeObserver, sbref } = this;
+    if (sbref.current) resizeObserver.observe(sbref.current);
     if (!renderPromise.waiting()) this.onUpdate();
     renderPromise.dispatch();
   }
@@ -180,6 +200,8 @@ class Atext
   }
 
   componentWillUnmount() {
+    const { resizeObserver, sbref } = this;
+    if (sbref.current) resizeObserver.unobserve(sbref.current);
     clearPending(this, 'wheelScrollTO');
   }
 
@@ -218,21 +240,31 @@ class Atext
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
 
+    // Image height limits must be known before text is written and paged.
+    if (sbe) setSbHeight(sbe);
+
     // Adjust maxNoteBoxHeight height if needed
     const atext = sbe?.parentNode as HTMLElement | null | undefined;
-    if (atext) {
-      const sb = atext.querySelector('.sb') as HTMLElement;
-      let maxHeight = sb.offsetHeight;
+    if (atext && sbe) {
+      let maxHeight = sbe.offsetHeight;
       if (columns === 1) maxHeight -= C.UI.Atext.bbSingleColTopMargin;
-      else if (maxHeight !== maxNoteBoxHeight)
-        newState.maxNoteBoxHeight = maxHeight;
+      else {
+        // The notebox is below the text columns. Its maximum takes the same
+        // area as one column.
+        const nbc = atext.querySelector('.nbc') as HTMLElement | null;
+        maxHeight = Math.round(
+          (maxHeight + (nbc?.offsetHeight ?? 0)) / columns,
+        );
+        if (Math.abs(maxHeight - (maxNoteBoxHeight ?? 0)) > 2)
+          newState.maxNoteBoxHeight = maxHeight;
+      }
     }
 
     const { selection, module, ilModule } = pinProps;
     if (module && atext && sbe && nbe) {
       const { type, isVerseKey } = G.Tab[module];
       const scrollPropsKey = stringHash(scrollProps);
-      // libswordProps are current props that effect LibSword output
+      // libswordProps contains current values effecting LibSword output
       const keepme: ReadonlyArray<keyof AtextPropsType> = C.LibSwordProps[type];
       const libswordProps = {
         ...keep(
@@ -256,208 +288,47 @@ class Atext
           this.writeLibSword2DOM(
             libswordProps,
             panelIndex,
-            'overwrite',
             xulswordState,
             renderPromise,
           );
+          updateColumnSpacer(sbe);
         }
-        // SCROLL
+        // Newly written text has not been positioned. Multi-column page
+        // positions depend on image sizes, so they wait for images to load.
+        const positioned = 'scroll' in sbe.dataset;
+        const imagesLoading =
+          columns > 1 && !positioned && this.waitForImages(sbe);
+        // SCROLL (newly written multi-column Bibles are always positioned)
+        const multiColumnBible = columns > 1 && type === C.BIBLE;
         const doScrollVerseKey =
           isVerseKey &&
-          scroll &&
-          (update || scrollPropsKey !== sbe.dataset.scroll);
+          !imagesLoading &&
+          (scroll || (multiColumnBible && !positioned)) &&
+          (!positioned || scrollPropsKey !== sbe.dataset.scroll);
         if (doScrollVerseKey) {
           // Multi-column Bibles...
           if (!renderPromise.waiting()) {
-            if (columns > 1 && type === C.BIBLE && location) {
-              const rtl = G.Config[module].direction === 'rtl';
-              const verse = location.verse || 1;
-              let v = findVerseElement(sbe, location.chapter, verse);
-              if (v) {
-                let sib: HTMLElement | null;
-                if (scroll?.verseAt === 'bottom') {
-                  // MULTI-COLUMN SCROLL TO END, THEN UPDATE
-                  // Insure all verses are visible
-                  if (!update) {
-                    sib = sbe.firstChild as HTMLElement | null;
-                    while (sib) {
-                      if ('style' in sib) sib.style.display = '';
-                      sib = sib.nextSibling as HTMLElement | null;
-                    }
-                  }
-                  // Prepend chapters until the selected verse is off the page.
-                  sib = sbe.firstChild as HTMLElement | null;
-                  while (
-                    sib &&
-                    !('classList' in sib && sib.classList.contains('vs'))
-                  ) {
-                    sib = sib.nextSibling as HTMLElement | null;
-                  }
-                  let prepend = 0;
-                  if (sib) {
-                    const i = getElementData(sib);
-                    if (i.location) {
-                      prepend = i.location.chapter - 1;
-                    }
-                  }
-                  while (
-                    !renderPromise.waiting() &&
-                    v &&
-                    prepend > 0 &&
-                    ((!rtl && v.offsetLeft < sbe.offsetWidth) ||
-                      (rtl && v.offsetLeft >= 0))
-                  ) {
-                    const pre = {
-                      ...libswordProps,
-                      location: { ...location, chapter: prepend },
-                    };
-                    this.writeLibSword2DOM(
-                      pre,
-                      panelIndex,
-                      'prepend',
-                      xulswordState,
-                      renderPromise,
-                    );
-                    v = findVerseElement(sbe, location.chapter, verse);
-                    prepend -= 1;
-                  }
-                  // Hide starting verses until the selected verse is visible above the notebox.
-                  if (!renderPromise.waiting()) {
-                    sib = sbe.firstChild as HTMLElement | null;
-                    const nbc = nbe.parentNode as HTMLElement;
-                    while (v && sib) {
-                      const offpage =
-                        (!rtl && v.offsetLeft > sbe.offsetWidth) ||
-                        (rtl && v.offsetLeft <= 0);
-                      const undernb =
-                        v.offsetLeft >
-                          sbe.offsetWidth - 1.1 * nbe.offsetWidth &&
-                        v.offsetTop > atext.offsetHeight - nbc.offsetHeight;
-                      if (!offpage && !undernb) break;
-                      let finished;
-                      do {
-                        if (sib && 'style' in sib) sib.style.display = 'none';
-                        finished =
-                          !sib ||
-                          ('classList' in sib && sib.classList.contains('vs'));
-                        sib = sib?.nextSibling as HTMLElement | null;
-                      } while (!finished);
-                    }
-                    // Change state to first visible verse.
-                    if (!sib) sib = sbe.firstChild as HTMLElement | null;
-                    while (
-                      sib &&
-                      !(
-                        'classList' in sib &&
-                        sib.classList.contains('vs') &&
-                        sib.style.display !== 'none'
-                      )
-                    ) {
-                      sib = sib.nextSibling as HTMLElement | null;
-                    }
-                    const info = (sib && getElementData(sib)) || null;
-                    if (info?.location) {
-                      const { book, chapter, verse: vs } = info.location;
-                      const locationVK = new VerseKey(
-                        {
-                          parse: [book, chapter, vs].join('.'),
-                          v11n: location.v11n ?? 'KJV',
-                        },
-                        renderPromise,
-                      ).location();
-                      if (isPinned) {
-                        newState = {
-                          ...newState,
-                          pin: {
-                            ...pinProps,
-                            location: locationVK,
-                            scroll: { verseAt: 'top' },
-                          },
-                        };
-                      } else {
-                        xulswordState({
-                          location: locationVK,
-                          scroll: { verseAt: 'top' },
-                        });
-                      }
-                    }
-                  }
-                } else {
-                  // MULTI-COLUMN SCROLL TO VERSE
-                  // verseAt determines which sibling is placed at the top.
-                  if (verse === 1 && scroll?.verseAt.startsWith('top')) {
-                    let topFirstVerse: HTMLElement | null = null;
-                    for (;;) {
-                      if (v.classList.contains('vs')) topFirstVerse = v;
-                      const prevSib = (v?.previousElementSibling ||
-                        null) as HTMLElement | null;
-                      const prevChap =
-                        (prevSib &&
-                          getElementData(prevSib)?.location?.chapter) ||
-                        0;
-                      if (
-                        prevSib &&
-                        (prevChap === 0 || prevChap === location.chapter)
-                      ) {
-                        v = prevSib;
-                      } else break;
-                    }
-                    v =
-                      scroll.verseAt === 'top-first-verse'
-                        ? topFirstVerse
-                        : (sbe.firstChild as HTMLElement | null);
-                  } else if (scroll?.verseAt === 'center') {
-                    let d = 4;
-                    while (d && v) {
-                      v = v.previousSibling as HTMLElement | null;
-                      if (v && 'classList' in v && v.classList.contains('vs'))
-                        d -= 1;
-                    }
-                    if (!v) v = sbe.firstChild as HTMLElement | null;
-                  }
-                  // Hide all siblings preceding the selected one, to make it
-                  // appear at the top.
-                  sib = sbe.firstChild as HTMLElement | null;
-                  let hide = true;
-                  let lastv;
-                  while (sib) {
-                    if (sib === v) hide = false;
-                    if ('style' in sib) sib.style.display = hide ? 'none' : '';
-                    if ('classList' in sib && sib.classList.contains('vs'))
-                      lastv = sib;
-                    sib = sib.nextSibling as HTMLElement | null;
-                  }
-                  // Append chapters until text overflows
-                  let append = C.MAXCHAPTER + 1;
-                  if (lastv) {
-                    const i = getElementData(lastv);
-                    if (i?.location) append = i.location.chapter + 1;
-                  }
-                  const v11n = G.Tab[module].v11n || null;
-                  const max = v11n
-                    ? getMaxChapter(v11n, location.book, renderPromise)
-                    : 0;
-                  while (
-                    !renderPromise.waiting() &&
-                    append <= max &&
-                    sbe.scrollWidth <= sbe.offsetWidth
-                  ) {
-                    const app = {
-                      ...libswordProps,
-                      location: { ...location, chapter: append },
-                    };
-                    this.writeLibSword2DOM(
-                      app,
-                      panelIndex,
-                      'append',
-                      xulswordState,
-                      renderPromise,
-                    );
-                    append += 1;
-                  }
-                }
+            if (multiColumnBible && location) {
+              const firstloc = multiColumnVerseScroll(
+                sbe,
+                location,
+                scroll?.verseAt ?? 'top',
+                !positioned,
+                renderPromise,
+              );
+              // A previous page change into the previous chapter shows its
+              // last page. Then the location becomes the first verse on that
+              // page, as with any other page change.
+              if (firstloc) {
+                const s = {
+                  location: firstloc,
+                  scroll: { verseAt: 'top' },
+                } as const;
+                if (isPinned) {
+                  newState = { ...newState, pin: { ...pinProps, ...s } };
+                } else xulswordState(s);
               }
-            } else if (!renderPromise.waiting()) {
+            } else {
               if (Build.isWebApp) {
                 const { userScrolled } = window.WebAppTextScroll;
                 // If we got here because the user scrolled, don't update the
@@ -478,8 +349,17 @@ class Atext
             }
             if (!renderPromise.waiting()) sbe.dataset.scroll = scrollPropsKey;
           }
-        } else if (update && type === C.GENBOOK && columns > 1 && sbe) {
-          sbe.scrollLeft = 0;
+        } else if (
+          !imagesLoading &&
+          !positioned &&
+          type === C.GENBOOK &&
+          columns > 1
+        ) {
+          // Show the first page, or the last page after a previous page
+          // change into the previous entry.
+          if (showLastPage.delete(panelIndex)) scrollToLastPage(sbe);
+          else scrollToFirstPage(sbe);
+          sbe.dataset.scroll = '';
         } else if (update && type === C.DICTIONARY) {
           const id = `${stringHash(modkey)}.${panelIndex}`;
           const keyelem = getRootNode().getElementById(id);
@@ -511,39 +391,11 @@ class Atext
               if (!rp?.waiting()) sbe.dataset.highlightkey = highlightkey;
             });
           }
-          // TRIM NOTES
-          if (columns > 1 && (update || doScrollVerseKey)) {
-            const empty = !trimNotes(sbe, nbe);
-            const nbc = nbe.parentNode as any;
-            if (
-              (empty || !nbc.innerText) &&
-              type !== 'Lexicons / Dictionaries'
-            ) {
-              nbc.classList.add('noteboxEmpty');
-            } else nbc.classList.remove('noteboxEmpty');
-          }
+          // TRIM NOTES (whether the notebox shows is decided when text is
+          // written, so that page layout doesn't change from page to page)
+          if (columns > 1 && (update || doScrollVerseKey)) trimNotes(sbe, nbe);
           // PREV / NEXT LINKS
-          delayHandler(
-            this,
-            () => {
-              doUntilDone((rp) => {
-                if (rp) {
-                  const prev = textChange(atext, false, rp);
-                  const next = textChange(atext, true, rp);
-                  if (!rp.waiting()) {
-                    if (prev) atext.classList.remove('prev-disabled');
-                    else atext.classList.add('prev-disabled');
-                    if (next || sbe.scrollWidth > sbe.clientWidth)
-                      atext.classList.remove('next-disabled');
-                    else atext.classList.add('next-disabled');
-                  }
-                }
-              });
-            },
-            [],
-            C.UI.Atext.prevNextDelay,
-            'prevNextLinkUpdate',
-          );
+          this.updatePrevNextLinks(atext, sbe);
           // SCROLL INTO VIEW
           if (Build.isWebApp && update) {
             const { scrollIntoView } = scroll ?? {};
@@ -590,7 +442,6 @@ class Atext
       | 'columns'
     > & { variant?: TextualVariantType },
     i: number,
-    flag: 'overwrite' | 'prepend' | 'append',
     xulswordState: AtextPropsType['xulswordState'],
     renderPromise: RenderPromise,
   ) {
@@ -611,113 +462,176 @@ class Atext
         const isDict =
           libswordProps.module &&
           G.Tab[libswordProps.module].type === C.DICTIONARY;
-        let fntable = (!isDict ? nbe.firstChild : null) as HTMLElement | null;
-        let sb;
-        let nb;
-        switch (flag) {
-          case 'overwrite':
-            sb = response.textHTML;
-            nb = response.noteHTML;
-            break;
-          case 'prepend': {
-            if (fntable) {
-              sb = response.textHTML + sbe.innerHTML;
-              nb = response.noteHTML + fntable.innerHTML;
-            }
-            break;
-          }
-          case 'append': {
-            if (fntable) {
-              sb = sbe.innerHTML + response.textHTML;
-              nb = fntable.innerHTML + response.noteHTML;
-            }
-            break;
-          }
-          default:
-            throw Error('writeLibSword unrecognized flag');
-        }
-        if (nb !== undefined && !isDict) {
-          nb = `<div class="fntable">${nb}</div>`;
-        }
-        if (sb !== undefined) {
-          // Write nav-links to header
-          const pes = sbe.parentElement?.querySelector(
-            '.hd',
+        let sb = response.textHTML;
+        let nb = response.noteHTML;
+        if (!isDict) nb = `<div class="fntable">${nb}</div>`;
+        // Write nav-links to header
+        const pes = sbe.parentElement?.querySelector(
+          '.hd',
+        ) as HTMLElement | null;
+        if (module && pes && sbe.parentElement) {
+          sanitizeHTML(pes, `${navlinks(module, renderPromise, true)}`);
+          this.hoverLinks(pes);
+          // UI TWEAK: Adjust nav-links down if they encroach on the controls
+          const sbc = sbe.parentElement?.querySelector(
+            '.sbcontrols',
           ) as HTMLElement | null;
-          if (module && pes && sbe.parentElement) {
-            sanitizeHTML(pes, `${navlinks(module, renderPromise, true)}`);
-            this.hoverLinks(pes);
-            // UI TWEAK: Adjust nav-links down if they encroach on the controls
-            const sbc = sbe.parentElement?.querySelector(
-              '.sbcontrols',
-            ) as HTMLElement | null;
+          if (
+            sbc &&
+            sbe.parentElement.offsetWidth -
+              2 * sbc.clientWidth -
+              (pes.firstElementChild?.clientWidth ?? 0) <
+              10
+          ) {
+            pes.style.marginTop = `${sbc.offsetHeight}px`;
+          } else pes.style.marginTop = '';
+          // UI TWEAK: Remove pesky arrows if atext is very narrow.
+          if (sbe.parentElement?.offsetWidth < 210) {
+            Array.from(
+              pes.querySelectorAll('.prevchaplink, .nextchaplink'),
+            ).forEach((e) => ((e as HTMLElement).style.display = 'none'));
+          }
+        }
+        // Write nav-links to footer
+        const { columns } = libswordProps;
+        if (module && (typeof columns === 'undefined' || columns === 1))
+          sb += `<div class="ft">${navlinks(module, renderPromise)}</div>`;
+        // Write text to scripture box
+        sanitizeHTML(sbe, sb);
+        // Insert audio timing break spans if needed
+        if (module && audio?.open && !isPinned) {
+          const { file } = audio;
+          if (file) {
+            const { audioModule, timing } = file;
             if (
-              sbc &&
-              sbe.parentElement.offsetWidth -
-                2 * sbc.clientWidth -
-                (pes.firstElementChild?.clientWidth ?? 0) <
-                10
-            ) {
-              pes.style.marginTop = `${sbc.offsetHeight}px`;
-            } else pes.style.marginTop = '';
-            // UI TWEAK: Remove pesky arrows if atext is very narrow.
-            if (sbe.parentElement?.offsetWidth < 210) {
-              Array.from(
-                pes.querySelectorAll('.prevchaplink, .nextchaplink'),
-              ).forEach((e) => ((e as HTMLElement).style.display = 'none'));
-            }
+              audioModule &&
+              timing &&
+              !sbe.querySelector('.verse-sync') &&
+              (G.Tab[module].audioCodes.includes(audioModule) ||
+                module === audioModule)
+            )
+              addTimingSpans(sbe, timing);
           }
-          // Write nav-links to footer
-          const { columns } = libswordProps;
-          if (module && (typeof columns === 'undefined' || columns === 1))
-            sb += `<div class="ft">${navlinks(module, renderPromise)}</div>`;
-          // Write text to scripture box
-          sanitizeHTML(sbe, sb);
-          // Insert audio timing break spans if needed
-          if (module && audio?.open && !isPinned) {
-            const { file } = audio;
-            if (file) {
-              const { audioModule, timing } = file;
-              if (
-                audioModule &&
-                timing &&
-                !sbe.querySelector('.verse-sync') &&
-                (G.Tab[module].audioCodes.includes(audioModule) ||
-                  module === audioModule)
-              )
-                addTimingSpans(sbe, timing);
+        }
+        // Tag elements that CSS would otherwise need :has() to match.
+        sbe
+          .querySelectorAll<HTMLElement>('.x-navmenu .item .x-right')
+          .forEach((el) => {
+            if (el.nextElementSibling?.tagName === 'SPAN') {
+              el.classList.add('has-next-span');
             }
-          }
-          // Tag elements that CSS would otherwise need :has() to match.
-          sbe
-            .querySelectorAll<HTMLElement>('.x-navmenu .item .x-right')
-            .forEach((el) => {
-              if (el.nextElementSibling?.tagName === 'SPAN') {
-                el.classList.add('has-next-span');
-              }
-            });
-          sbe.classList.toggle('has-sync', !!sbe.querySelector('.verse-sync'));
-          // Update all image paths
-          libswordImgSrc(sbe);
-          this.hoverLinks(sbe);
-        }
-        if (nb !== undefined) {
-          sanitizeHTML(nbe, nb);
-          libswordImgSrc(nbe);
-          this.hoverLinks(nbe);
-        }
+          });
+        sbe.classList.toggle('has-sync', !!sbe.querySelector('.verse-sync'));
+        // Update all image paths
+        libswordImgSrc(sbe);
+        this.hoverLinks(sbe);
+        sanitizeHTML(nbe, nb);
+        libswordImgSrc(nbe);
+        this.hoverLinks(nbe);
         const nbc = nbe.parentNode as any;
-        fntable = nbe.firstChild as HTMLElement | null;
+        const fntable = nbe.firstChild as HTMLElement | null;
         if (!fntable?.innerText && !isDict) nbc.classList.add('noteboxEmpty');
         else nbc.classList.remove('noteboxEmpty');
 
-        if (!renderPromise.waiting() && flag === 'overwrite') {
+        if (!renderPromise.waiting()) {
           sbe.dataset.libsword = libswordKey;
-          sbe.dataset.scroll = undefined;
-          sbe.dataset.highlightkey = undefined;
+          delete sbe.dataset.scroll;
+          delete sbe.dataset.column;
+          delete sbe.dataset.highlightkey;
         }
       }
     }
+  }
+
+  // Returns true if any images in sbe are still loading, and arranges for
+  // onUpdate to run again once they have all loaded (or failed).
+  waitForImages(sbe: HTMLElement): boolean {
+    const loading = Array.from(sbe.getElementsByTagName('img')).filter(
+      (img) => !img.complete,
+    );
+    if (!loading.length) return false;
+    const { libsword } = sbe.dataset;
+    if (sbe.dataset.imagesLoading !== libsword) {
+      sbe.dataset.imagesLoading = libsword;
+      let count = loading.length;
+      const done = () => {
+        count -= 1;
+        if (!count && sbe.dataset.imagesLoading === libsword) {
+          delete sbe.dataset.imagesLoading;
+          if (this.sbref.current === sbe) this.forceUpdate();
+        }
+      };
+      loading.forEach((img) => {
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+      });
+    }
+    return true;
+  }
+
+  // Multi-column panels keep their columns aligned to the page, and Bibles
+  // keep their location verse showing, when the scripture box is resized.
+  onResize() {
+    const { props, state, sbref, renderPromise } = this;
+    const sbe = sbref.current;
+    if (sbe && sbe.dataset.libsword) {
+      setSbHeight(sbe);
+      updateColumnSpacer(sbe);
+      if (props.columns > 1) {
+        restoreColumn(sbe);
+        const { pin } = state;
+        const { isPinned } = props;
+        const { module, location, scroll } = pin && isPinned ? pin : props;
+        // (after 'bottom', the restored column is the page to keep)
+        if (
+          module &&
+          G.Tab[module].type === C.BIBLE &&
+          location &&
+          scroll?.verseAt !== 'bottom'
+        ) {
+          multiColumnVerseScroll(sbe, location, 'top', false, renderPromise);
+        }
+      }
+    }
+  }
+
+  // Multi-column panels page by scrolling, so update their notes and prev/next
+  // links whenever they scroll.
+  onPageScroll() {
+    const { props, sbref, nbref } = this;
+    const sbe = sbref.current;
+    const nbe = nbref.current;
+    const atext = sbe?.parentElement;
+    if (sbe && nbe && atext && props.columns > 1) {
+      trimNotes(sbe, nbe);
+      this.updatePrevNextLinks(atext, sbe);
+    }
+  }
+
+  // Enable or disable the prev/next links, after a delay.
+  updatePrevNextLinks(atext: HTMLElement, sbe: HTMLElement) {
+    delayHandler(
+      this,
+      () => {
+        doUntilDone((rp) => {
+          if (rp) {
+            const prev =
+              scrollPage(sbe, false, true) || textChange(atext, false, rp);
+            const next =
+              scrollPage(sbe, true, true) || textChange(atext, true, rp);
+            if (!rp.waiting()) {
+              if (prev) atext.classList.remove('prev-disabled');
+              else atext.classList.add('prev-disabled');
+              if (next) atext.classList.remove('next-disabled');
+              else atext.classList.add('next-disabled');
+            }
+          }
+        });
+      },
+      [],
+      C.UI.Atext.prevNextDelay,
+      'prevNextLinkUpdate',
+    );
   }
 
   hoverLinks(div: HTMLElement) {
@@ -995,15 +909,7 @@ class Atext
           onScroll={handler}
         />
 
-        <Vbox
-          className="nbc"
-          height={realNoteBoxHeight}
-          style={
-            columns > 1
-              ? { width: `calc(${100 / columns}% - ${14 + 2 * columns}px)` }
-              : undefined
-          }
-        >
+        <Vbox className="nbc" height={realNoteBoxHeight}>
           <Hbox pack={'center'}>
             <DragSizer
               onDragStart={() => realNoteBoxHeight}

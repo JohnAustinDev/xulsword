@@ -16,14 +16,11 @@ import VerseKey from '../../../verseKey.ts';
 import { getElementData } from '../../htmlData.ts';
 import { G, GI } from '../../G.ts';
 import { dString } from '../../../common.ts';
+import { getMaxVerse } from '../../common.ts';
 import addBookmarks from '../../bookmarks.tsx';
 import analytics from '../../analytics.ts';
-import {
-  getNoteHTML,
-  getChapterHeader,
-  chapterChange,
-  pageChange,
-} from './zversekey.ts';
+import { getNoteHTML, getChapterHeader, chapterChange } from './zversekey.ts';
+import { showLastPage } from './zcolumns.ts';
 import { dictKeyToday, getDictEntryHTML } from './zdictionary.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
@@ -377,20 +374,24 @@ export function textChange(
     case C.BIBLE:
     case C.COMMENTARY: {
       let location;
-      if (type === C.BIBLE && columns > 1) {
-        location = pageChange(atext, next, renderPromise);
-      } else {
-        const [firstVerse] = Array.from(
-          sbe.getElementsByClassName('vs'),
-        ) as Array<HTMLElement | undefined>;
-        if (firstVerse) {
-          const p = getElementData(firstVerse);
-          const { location: l } = p;
-          if (l) {
-            if (next) {
-              location = chapterChange(l, 1, renderPromise);
-            } else {
-              location = chapterChange(l, -1, renderPromise);
+      const [firstVerse] = Array.from(
+        sbe.getElementsByClassName('vs'),
+      ) as Array<HTMLElement | undefined>;
+      if (firstVerse) {
+        const p = getElementData(firstVerse);
+        const { location: l } = p;
+        if (l) {
+          if (next) {
+            location = chapterChange(l, 1, renderPromise);
+          } else {
+            location = chapterChange(l, -1, renderPromise);
+            // Multi-column Bibles go to the last page of the previous chapter.
+            if (location?.v11n && type === C.BIBLE && columns > 1) {
+              location.verse = getMaxVerse(
+                location.v11n,
+                `${location.book}.${location.chapter}`,
+                renderPromise,
+              );
             }
           }
         }
@@ -410,6 +411,14 @@ export function textChange(
           const key = genbookChange(m, k, next, renderPromise);
           if (key) {
             newPartialPinProps.modkey = key;
+            // Multi-column general books go to the last page of the previous
+            // entry. Since scroll state is shared by all panels, this is
+            // recorded for the panel instead.
+            if (prevState && columns > 1) {
+              const panel = Number(atext.dataset.index);
+              if (next) showLastPage.delete(panel);
+              else showLastPage.add(panel);
+            }
           } else return null;
         }
       }
@@ -433,7 +442,7 @@ export function textChange(
     : null;
   if (type === C.BIBLE && columns > 1) {
     scroll = next
-      ? { ...(scroll ?? {}), verseAt: 'top-first-verse' }
+      ? { ...(scroll ?? {}), verseAt: 'top' }
       : {
           ...(scroll ?? {}),
           verseAt: 'bottom',

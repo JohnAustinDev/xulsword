@@ -16,13 +16,19 @@ import {
 import log from '../../log.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { textChange } from '../atext/ztext.ts';
-import { aTextWheelScroll, chapterChange } from '../atext/zversekey.ts';
+import {
+  aTextWheelScroll,
+  chapterChange,
+  getScrollVerse,
+} from '../atext/zversekey.ts';
+import { scrollPage } from '../atext/zcolumns.ts';
 
 import type React from 'react';
 import type { ReactElement } from 'react';
 import type {
   BookGroupType,
   PinPropsType,
+  ScrollIntoViewArg,
   V11nType,
   OSISBookType,
   GType,
@@ -102,11 +108,13 @@ export function bbDragEnd(
 
 // Set viewportParent state or, if the target panel is pinned, the panel's
 // Atext.pin state will be updated instead. This setState should be called
-// any time the event handler modifies a C.PinProps state.
+// any time the event handler modifies a C.PinProps state. Unless
+// resetViewport is false, the viewport is also reset (re-mounted).
 function setState(
   comp: Xulsword | ViewportWin,
   atext: HTMLElement,
   func: (prevState: PinPropsType) => Partial<PinPropsType> | null,
+  resetViewport = true,
 ) {
   const { index, ispinned } = atext.dataset;
   const panelIndex = Number(index);
@@ -136,8 +144,10 @@ function setState(
       const newPinProps = func(pinProps);
       if (newPinProps) {
         const s = {} as XulswordState;
-        s.focusPanel = panelIndex; // for genbkchooser scroll-to
-        s.vpreset = Math.random(); // for genbkchooser scroll-to
+        if (resetViewport) {
+          s.focusPanel = panelIndex; // for genbkchooser scroll-to
+          s.vpreset = Math.random(); // for genbkchooser scroll-to
+        }
         C.PinProps.forEach((key) => {
           if (key in newPinProps) {
             switch (key) {
@@ -192,6 +202,46 @@ function setState(
   }
 }
 
+// Turn a page of a text panel. Multi-column panels page through a chapter or
+// entry by scrolling, and only change chapter or entry at either end.
+function pageTurn(
+  comp: Xulsword | ViewportWin,
+  atext: HTMLElement,
+  next: boolean,
+  scrollIntoView?: ScrollIntoViewArg,
+) {
+  const sb = atext.querySelector('.sb') as HTMLElement | null;
+  const { module } = atext.dataset;
+  if (sb && scrollPage(sb, next)) {
+    // A Bible's location follows the page.
+    if (module && G.Tab[module].type === C.BIBLE) {
+      doUntilDone((renderPromise2) => {
+        if (renderPromise2) {
+          const location = getScrollVerse(atext, renderPromise2);
+          if (location && !renderPromise2.waiting()) {
+            setState(
+              comp,
+              atext,
+              () => ({ location, scroll: { verseAt: 'top' } }),
+              false,
+            );
+          }
+        }
+      });
+    }
+    return;
+  }
+  doUntilDone((renderPromise2) => {
+    if (!renderPromise2?.waiting()) {
+      setState(comp, atext, (prevState: PinPropsType) =>
+        textChange(atext, next, renderPromise2, prevState, scrollIntoView),
+      );
+    }
+  });
+}
+
+let WheelPages = 0;
+
 export default function handler(
   this: Xulsword | ViewportWin,
   e: React.SyntheticEvent | PointerEvent,
@@ -210,7 +260,6 @@ export default function handler(
   const isps = atext ? atext.dataset.ispinned : tabs?.dataset.ispinned;
   const isPinned = isps === 'true';
   const panel = panels[index];
-  const modType = panel ? G.Tab[panel].type : null;
   switch (e.type) {
     case 'pointerdown': {
       const targ = ofClass(
@@ -467,84 +516,21 @@ export default function handler(
         }
         case 'prevchaplink':
         case 'nextchaplink': {
-          const sb = atext?.querySelector('.sb') as HTMLElement | null;
-          if (
-            modType === C.GENBOOK &&
-            atext &&
-            sb &&
-            sb.scrollWidth > sb.clientWidth
-          ) {
-            // TODO: This click-scrolling math does not currently work on RTL
-            // Genbk modules (so RTL click-scroll has been disabled in CSS).
-            const isNext = type === 'nextchaplink';
-            const currentScroll = sb.scrollLeft;
-            // margin between pages used when scrolling
-            const margin = window.innerWidth > C.UI.WebApp.mobileW ? 20 : 4;
-
-            // Prevent any previously-visible column(s) from lingering after a
-            // click, by determining a number of empty columns to append such
-            // that the total number of columns is always a multiple of the
-            // columns-per-page value specified by CSS.
-            let columnsPerPage = 1;
-            const computedStyle = window.getComputedStyle(sb);
-            const colCountStr = computedStyle.columnCount;
-            if (colCountStr && colCountStr !== 'auto') {
-              columnsPerPage = parseInt(colCountStr, 10) || 1;
-            }
-            const totalColumns = Math.round(
-              columnsPerPage * (sb.scrollWidth / sb.clientWidth),
+          if (atext) {
+            pageTurn(
+              this,
+              atext,
+              type === 'nextchaplink',
+              ofClass('ft', target)
+                ? {
+                    selector: '#textTop',
+                    behavior: 'smooth',
+                    block: 'start',
+                    oneTimeID: randomID(),
+                  }
+                : undefined,
             );
-            const extraColumns = totalColumns % columnsPerPage;
-            if (extraColumns && !sb.querySelector('.col-spacer')) {
-              const addColumns = columnsPerPage - extraColumns;
-              for (let x = addColumns; x; x--) {
-                const spacer = document.createElement('div');
-                spacer.className = 'col-spacer';
-                spacer.innerHTML = '&nbsp;';
-                sb.firstChild?.appendChild(spacer);
-              }
-            }
-
-            const scrollDistance = sb.clientWidth + margin;
-            let newScroll: number;
-            if (isNext) {
-              newScroll = currentScroll + scrollDistance;
-            } else {
-              newScroll = currentScroll - scrollDistance;
-            }
-            newScroll = Math.max(0, newScroll);
-            newScroll = Math.min(sb.scrollWidth - sb.clientWidth, newScroll);
-            if (
-              (isNext && sb.scrollLeft < newScroll - 10) ||
-              (!isNext && sb.scrollLeft > newScroll + 10)
-            ) {
-              sb.scrollLeft = newScroll;
-              if (newScroll) atext.classList.remove('prev-disabled');
-              if (newScroll < sb.scrollWidth - sb.clientWidth)
-                atext.classList.remove('next-disabled');
-              break;
-            }
           }
-          doUntilDone((renderPromise2) => {
-            if (atext && !renderPromise2?.waiting()) {
-              setState(this, atext, (prevState: PinPropsType) => {
-                return textChange(
-                  atext,
-                  type === 'nextchaplink',
-                  renderPromise2,
-                  prevState,
-                  ofClass('ft', target)
-                    ? {
-                        selector: '#textTop',
-                        behavior: 'smooth',
-                        block: 'start',
-                        oneTimeID: randomID(),
-                      }
-                    : undefined,
-                );
-              });
-            }
-          });
           break;
         }
         case 'dt':
@@ -654,14 +640,31 @@ export default function handler(
 
     case 'wheel': {
       const ew = e as React.WheelEvent;
-      if (!isPinned && atext && modType && !ofClass(['nbc'], target)) {
-        if ([C.BIBLE, C.COMMENTARY].includes(modType)) {
+      const { module, columns } = atext?.dataset ?? {};
+      const wheelType = module && G.Tab[module].type;
+      if (atext && wheelType && !ofClass(['nbc'], target)) {
+        if (
+          Number(columns) > 1 &&
+          (wheelType === C.BIBLE || wheelType === C.GENBOOK)
+        ) {
+          // The multi-column wheel turns pages like the prev/next links,
+          // whether the panel is pinned or not.
+          WheelPages += ew.deltaY;
+          delayHandler(
+            this,
+            () => {
+              if (WheelPages) pageTurn(this, atext, WheelPages > 0);
+              WheelPages = 0;
+            },
+            [],
+            C.UI.Atext.multiColWheelScrollDelay,
+            'wheelScrollTO',
+          );
+        } else if (
+          !isPinned &&
+          (wheelType === C.BIBLE || wheelType === C.COMMENTARY)
+        ) {
           aTextWheelScroll(ew, atext, this);
-        } else if (modType === C.GENBOOK) {
-          const sb = atext.getElementsByClassName('sb');
-          if (sb.length) {
-            sb[0].scrollLeft += ew.deltaY;
-          }
         }
       }
       break;

@@ -130,19 +130,21 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           if (pointerType === 'mouse') {
             // When an image-viewport is clicked, the viewport's current width and height
             // will become fixed and it will be made the relative ancestor of the scroll-
-            // container, which will become absolutely positioned. With the mouse cursor
-            // position in the viewport recorded as (Xt, Yt) the image is resized to its
-            // natural width and height and the scroll-container top and left are set to
-            // calculated (Xn, Yn) such that the image pixel that was under the cursor when
+            // container, which will become absolutely positioned. The image is resized
+            // to its natural width and height and the scroll-container top and left are
+            // set to (Xn, Yn) such that the image pixel that was under the cursor when
             // it was clicked will remain under the cursor after the image is resized to
-            // its natural size. If clicked again, the image will be resized back to the
-            // viewport width with scroll-container top and left set to 0.
-            // Yn = Y(1 - (Wi/Wv))
+            // its natural size. If clicked again, the image and viewport are returned
+            // to their CSS determined size and position.
+            // Xn = X - Xi(Wn/Wi)
             // WHERE:
-            // Yn = CSS top value of the image container with respect to viewport
-            // Y = Y coordinate of the cursor within the viewport (containing the fit image)
-            // Wi = Width of the natural image
-            // Wv = Width of the viewport
+            // Xn = CSS left value of the image container with respect to viewport
+            // X = X coordinate of the cursor within the viewport
+            // Xi = X coordinate of the cursor within the fit image (which may be
+            //   narrower than the viewport if its height is limited)
+            // Wn = Width of the natural image
+            // Wi = Width of the fit image
+            // (and likewise for Yn)
             const viewport = elem as HTMLDivElement;
             const scrollcn = viewport.firstChild as HTMLDivElement;
             const img = scrollcn?.firstChild as HTMLImageElement | undefined;
@@ -152,6 +154,8 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
               img &&
               ['zoom-in', 'zoom-out'].includes(img.style.cursor)
             ) {
+              const vbox = viewport.getBoundingClientRect();
+              const ibox = img.getBoundingClientRect();
               const scrollcnS = window.getComputedStyle(scrollcn, null);
               if (scrollcnS.position === 'absolute') {
                 expandShrink = img.style.width !== `${img.naturalWidth}px`;
@@ -168,22 +172,28 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
               }
               if (expandShrink !== undefined) {
                 if (expandShrink) {
-                  const cbox = viewport.getBoundingClientRect();
-                  const Y = ep.clientY - cbox.top;
-                  const top = Y * (1 - img.naturalWidth / viewport.offsetWidth);
-                  const X = ep.clientX - cbox.left;
+                  const scale = img.naturalWidth / ibox.width;
+                  const top =
+                    ep.clientY - vbox.top - (ep.clientY - ibox.top) * scale;
                   const left =
-                    X * (1 - img.naturalHeight / viewport.offsetHeight);
+                    ep.clientX - vbox.left - (ep.clientX - ibox.left) * scale;
                   scrollcn.style.top = `${top}px`;
                   scrollcn.style.left = `${left}px`;
                   img.style.width = `${img.naturalWidth}px`;
                   img.style.maxWidth = 'unset';
+                  img.style.maxHeight = 'unset';
                   img.style.cursor = 'zoom-out';
                 } else {
-                  scrollcn.style.top = '0';
-                  scrollcn.style.left = '0';
-                  img.style.width = `${viewport.offsetWidth}px`;
+                  viewport.style.height = '';
+                  viewport.style.width = '';
+                  viewport.style.position = '';
+                  viewport.style.overflow = '';
+                  scrollcn.style.position = '';
+                  scrollcn.style.top = '';
+                  scrollcn.style.left = '';
+                  img.style.width = '';
                   img.style.maxWidth = '';
+                  img.style.maxHeight = '';
                   img.style.cursor = 'zoom-in';
                 }
               } else img.style.cursor = '';
@@ -355,8 +365,9 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
 
     case 'wheel': {
       const ew = e as React.WheelEvent;
-      const { isPinned, module } = this.props;
-      if (isPinned && module) {
+      const { isPinned, module, columns } = this.props;
+      // (the multi-column wheel turns pages, which viewportParentH handles)
+      if (isPinned && module && columns === 1) {
         const atext = ew.currentTarget as HTMLElement;
         const { type } = G.Tab[module];
         if (atext && type !== C.DICTIONARY && !ofClass(['nbc'], ew.target)) {
@@ -367,11 +378,15 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
       return;
     }
 
-    // This handler is only intended for web-app user scrolling of atext, NOT
-    // programmatic scrolling of any kind. Also it should never effect the
-    // atext element which the user scrolled, only the others. Note: scroll
-    // events don't bubble!
     case 'scroll': {
+      if (this.props.columns > 1) {
+        this.onPageScroll();
+        break;
+      }
+      // This handler is only intended for web-app user scrolling of atext, NOT
+      // programmatic scrolling of any kind. Also it should never effect the
+      // atext element which the user scrolled, only the others. Note: scroll
+      // events don't bubble!
       const { userScrolled, scriptScrolled } = window.WebAppTextScroll;
       if (Build.isWebApp && userScrolled === -1 && !scriptScrolled) {
         const { isPinned, module, location, panelIndex, xulswordState } =

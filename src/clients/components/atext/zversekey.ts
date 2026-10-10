@@ -19,6 +19,14 @@ import {
 import { G, GI } from '../../G.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { getRootNode } from '../../rootNode.ts';
+import {
+  columnIsShowing,
+  columnMetrics,
+  columnOf,
+  lastContentColumn,
+  pageStart,
+  scrollToColumn,
+} from './zcolumns.ts';
 
 import type {
   LocationVKType,
@@ -390,20 +398,15 @@ export function getChapterHeader(
   return { textHTML: html, intronotes: intro.intronotes };
 }
 
-// Returns true if v is a visible verse element, false otherwise. If
-// ignoreNotebox is true, v is considered visible even if it's behind
-// the notebox (useful for multi-column scrolling to prevent notebox
-// flashing).
-function verseIsVisible(vx: Element, ignoreNotebox = false): boolean {
+// Returns true if v is a verse element which begins in the visible part of
+// the scripture box, false otherwise.
+function verseIsVisible(vx: Element): boolean {
   const v = vx as HTMLElement;
   // return false if we're not a verse
   if (!v?.classList?.contains('vs') || !('parentElement' in v)) return false;
   const sb = v.parentElement as HTMLElement;
-  const nbc = sb?.nextElementSibling as HTMLElement;
-  const nb = nbc?.lastElementChild as HTMLElement;
   const atext = sb?.parentElement as HTMLElement;
-  if (!sb || !nbc || !nb || !atext || !atext.classList.contains('atext'))
-    return false;
+  if (!sb || !atext || !atext.classList.contains('atext')) return false;
   const { module, columns: clx } = atext.dataset;
   const columns = Number(clx);
   if (!module) return false;
@@ -422,41 +425,10 @@ function verseIsVisible(vx: Element, ignoreNotebox = false): boolean {
     );
   }
 
-  // multi-column windows...
-  if (G.Config[module].direction === 'ltr') {
-    // we are LTR
-    // are we outside the visible columns?
-    if (v.offsetLeft > sb.offsetWidth) return false;
-
-    // are we in the last visible column but under the footnote box?
-    const partialVerse = true;
-    if (
-      !ignoreNotebox &&
-      v.offsetLeft > sb.offsetWidth - 1.1 * nb.offsetWidth &&
-      v.offsetTop + (partialVerse ? 0 : v.offsetHeight) >
-        atext.offsetHeight - nbc.offsetHeight - (hd?.offsetHeight ?? 0)
-    ) {
-      return false;
-    }
-
-    // then we must be visible
-    return true;
-  }
-
-  // we are RTL
-  // are we outside the visible columns?
-  if (v.offsetLeft < 0) return false;
-
-  // are we in the last visible column but under the footnote box?
-  if (
-    v.offsetLeft < 0.9 * nb.offsetWidth &&
-    v.offsetTop + v.offsetHeight > atext.offsetHeight - nbc.offsetHeight
-  ) {
-    return false;
-  }
-
-  // then we must be visible
-  return true;
+  // multi-column windows: do we begin in a showing column?
+  const m = columnMetrics(sb);
+  const column = m && columnOf(sb, m, v);
+  return !!m && column !== null && columnIsShowing(sb, m, column);
 }
 
 // Implement Atext verse scroll for single column panels.
@@ -551,8 +523,45 @@ export function versekeyScroll(
   }
 }
 
+// Implement Atext verse scroll for multi-column Bible panels, which page by
+// scrolling horizontally just like multi-column general books. The column
+// where the verse begins is scrolled to the start of the page, or the first
+// page is shown if the verse is on it or is verse 1 (so the chapter heading
+// and any images before verse 1 are shown). If the verse is already showing,
+// nothing changes unless force is true. For verseAt 'bottom', the page-aligned
+// page containing the verse is shown instead, and the location of the first
+// verse which begins on it is returned.
+export function multiColumnVerseScroll(
+  sbe: HTMLElement,
+  location: LocationVKType,
+  verseAt: NonNullable<ScrollType>['verseAt'],
+  force: boolean,
+  renderPromise: RenderPromise,
+): LocationVKType | null {
+  const m = columnMetrics(sbe);
+  if (!m) return null;
+  const v = findVerseElement(sbe, location.chapter, location.verse || 1);
+  const column = (v && columnOf(sbe, m, v)) ?? 0;
+  if (verseAt === 'bottom') {
+    // The last verse continues to the end of the chapter.
+    const verses = sbe.getElementsByClassName('vs');
+    const last = !v || v === verses[verses.length - 1];
+    scrollToColumn(
+      sbe,
+      m,
+      pageStart(m, last ? lastContentColumn(sbe, m) : column),
+    );
+    const atext = sbe.parentElement;
+    return atext ? getScrollVerse(atext, renderPromise) : null;
+  }
+  if (force || !columnIsShowing(sbe, m, column)) {
+    const top = column < m.columns || (location.verse || 1) === 1;
+    scrollToColumn(sbe, m, top ? 0 : column);
+  }
+  return null;
+}
+
 function aTextWheelScroll2(
-  count: number,
   atext: HTMLElement,
   prevState: XulswordState | ViewportWinState | AtextStateType,
   renderPromise: RenderPromise,
@@ -565,21 +574,16 @@ function aTextWheelScroll2(
       : (null as XulswordState | ViewportWinState | null);
   const location = atextstate?.pin?.location || parentstate?.location;
   if (location) {
-    const columns = Number(atext.dataset.columns);
-    let newloc;
-    // Multi-column wheel scroll simply adds a verse delta to verse state.
-    if (columns > 1) newloc = verseChange(location, count, renderPromise);
-    // Single-column wheel scroll allows default browser smooth scroll for
-    // a certain period before updating verse state to the new top verse.
-    else {
-      // get first verse which begins in window
-      newloc = getScrollVerse(atext, renderPromise);
-    }
+    // Wheel scroll allows default browser smooth scroll for a certain period
+    // before updating verse state to the new top verse. (The multi-column
+    // wheel turns pages instead; see viewportParentH.)
+    const newloc = getScrollVerse(atext, renderPromise);
     if (newloc) {
+      const scroll: ScrollType = { verseAt: 'top' };
       if (parentstate) {
         return {
           location: newloc,
-          scroll: { verseAt: 'top' },
+          scroll,
         };
       }
       if (atextstate?.pin) {
@@ -587,7 +591,7 @@ function aTextWheelScroll2(
           pin: {
             ...atextstate.pin,
             location: newloc,
-            scroll: { verseAt: 'top' },
+            scroll,
           },
         };
       }
@@ -610,12 +614,7 @@ export function aTextWheelScroll(
       () => {
         const { renderPromise } = caller;
         (caller as Xulsword).setState((prevState) => {
-          const s = aTextWheelScroll2(
-            WheelSteps,
-            atext,
-            prevState,
-            renderPromise,
-          );
+          const s = aTextWheelScroll2(atext, prevState, renderPromise);
           WheelSteps = 0;
           return s as XulswordState;
         });
@@ -747,15 +746,13 @@ export function trimNotes(sbe: HTMLElement, nbe: HTMLElement): boolean {
 
   // get first chapter/verse
   let vf = sbe.firstElementChild;
-  while (vf && !verseIsVisible(vf, true)) {
+  while (vf && !verseIsVisible(vf)) {
     vf = vf.nextElementSibling;
   }
 
   // get last chapter/verse
-  const atext = sbe.parentElement as HTMLElement;
-  const multicol = atext.dataset.columns !== '1';
   let vl = sbe.lastElementChild;
-  while (vl && !verseIsVisible(vl, !multicol)) {
+  while (vl && !verseIsVisible(vl)) {
     vl = vl.previousElementSibling;
   }
 
@@ -771,7 +768,8 @@ export function trimNotes(sbe: HTMLElement, nbe: HTMLElement): boolean {
       const vi = getElementData(nti);
       const v = vi?.location || null;
       if (v) {
-        let display = '';
+        // No verse begins in the window, so no verse notes are shown.
+        let display = !f && !l ? 'none' : '';
         if (
           f &&
           v.chapter &&
@@ -881,87 +879,4 @@ export function verseChange(
     verse,
     v11n,
   };
-}
-
-//
-// Atext previous/next functions:
-//
-
-// For multi-column Bibles only.
-export function pageChange(
-  atext: HTMLElement,
-  next: boolean,
-  renderPromise: RenderPromise,
-): LocationVKType | null {
-  if (!next) {
-    let firstVerse: HTMLElement | undefined;
-    // Usually the first visible verse is chosen, so it will become the last
-    // visible verse after the page change. However, if the first visible verse
-    // follows an image, then the preceeding visible verse (if there is one) must
-    // instead be chosen, or tall images will 'stick' and prevent page changes!
-    let pv: null | Element = null;
-    Array.from(atext.getElementsByClassName('vs')).forEach((v) => {
-      if (!firstVerse && verseIsVisible(v)) {
-        firstVerse = (!pv || !pv.querySelector('img') ? v : pv) as HTMLElement;
-      }
-      pv = v;
-    });
-    if (firstVerse) {
-      const ei = getElementData(firstVerse);
-      const { context, location } = ei;
-      if (context && location) {
-        const { book, chapter, verse } = location;
-        const t = (context in G.Tab && G.Tab[context]) || null;
-        if (t && book && (chapter !== 1 || verse !== 1)) {
-          return {
-            book,
-            chapter,
-            verse,
-            v11n: t.v11n || null,
-          };
-        }
-      }
-    }
-  } else {
-    let lastVerse: HTMLElement | undefined;
-    // A next verse must be chosen to become the first visible verse after the
-    // page change. Usually the last visible verse is chosen. However, if the
-    // last visible verse includes an image, then the next visible verse (if
-    // there is one) must instead be chosen to prevent sticking at the image!
-    // Also, if there are no visible verses, then choose the first hidden one.
-    let pv: null | Element = null;
-    Array.from(atext.getElementsByClassName('vs'))
-      .reverse()
-      .forEach((v) => {
-        if (!lastVerse && verseIsVisible(v)) {
-          lastVerse = (!v.querySelector('img') || !pv ? v : pv) as HTMLElement;
-        }
-        pv = v;
-      });
-    if (!lastVerse && pv) lastVerse = pv;
-    if (lastVerse) {
-      const edata = getElementData(lastVerse);
-      const { context, location } = edata;
-      if (context && location) {
-        const { book, chapter, verse } = location;
-        const t = (context in G.Tab && G.Tab[context]) || null;
-        const v11n = t?.v11n || null;
-        if (v11n && book) {
-          const vk = new VerseKey(
-            {
-              book,
-              chapter,
-              verse,
-              v11n,
-            },
-            renderPromise,
-          );
-          if (vk.chapter <= getMaxChapter(v11n, vk.osisRef(), renderPromise)) {
-            return vk.location();
-          }
-        }
-      }
-    }
-  }
-  return null;
 }
