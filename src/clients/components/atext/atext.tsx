@@ -416,7 +416,7 @@ class Atext
         // TRIM NOTES (whether the notebox shows is decided when text is
         // written, so that page layout doesn't change from page to page)
         if (columns > 1 && (update || doScrollVerseKey || added)) {
-          trimNotes(sbe, nbe);
+          this.trimPageNotes(sbe, nbe);
         }
         // PREV / NEXT LINKS
         this.updatePrevNextLinks(atext, sbe);
@@ -855,9 +855,17 @@ class Atext
         // (if a chapter was not available, onUpdate will add it when it is)
         renderPromise.dispatch();
       }
-      trimNotes(sbe, nbe);
+      this.trimPageNotes(sbe, nbe);
       this.updatePrevNextLinks(atext, sbe);
     }
+  }
+
+  // Trim the notes of a multi-column panel to those of its showing page. If
+  // that leaves none, the notebox is flagged so that its bar can be hidden
+  // while it is minimized.
+  trimPageNotes(sbe: HTMLElement, nbe: HTMLElement) {
+    const haveNotes = trimNotes(sbe, nbe);
+    nbe.parentElement?.classList.toggle('noteboxPageEmpty', !haveNotes);
   }
 
   // Enable or disable the prev/next links, after a delay.

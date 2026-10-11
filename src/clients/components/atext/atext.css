@@ -163,6 +163,11 @@ columns rather than covering text. */
 .atext.noteboxMinimized .nbc > :not(.nbbar) {
   display: none;
 }
+/* A multi-column panel's minimized notebox bar is hidden while its page shows
+no notes. It keeps its space, so that page layout doesn't change when it hides. */
+.atext.noteboxMinimized:not(.columns1) .nbc.noteboxPageEmpty {
+  visibility: hidden;
+}
 .atext.Dicts .notebox-maximizer {
   display: none;
 }
