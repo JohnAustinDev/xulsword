@@ -156,15 +156,11 @@ columns rather than covering text. */
   right: auto;
   left: 42px;
 }
-/* A minimized notebox has no height, so its maximizer goes above it, at the
-bottom of the text. */
+/* A minimized notebox is only its bar, which can be dragged to open it. */
 .atext.noteboxMinimized .notebox-maximizer {
   background: url(../../images/norm.png);
-  top: auto;
-  bottom: 4px;
 }
-.atext.noteboxMinimized .nbc > :not(.nbbar),
-.atext.noteboxMinimized .nbc .dragsizer {
+.atext.noteboxMinimized .nbc > :not(.nbbar) {
   display: none;
 }
 .atext.Dicts .notebox-maximizer {

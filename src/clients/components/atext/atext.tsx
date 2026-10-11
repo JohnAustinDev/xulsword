@@ -1172,10 +1172,16 @@ class Atext
           onScroll={handler}
         />
 
-        <Vbox className="nbc" height={doMinimizeNB ? 0 : realNoteBoxHeight}>
+        <Vbox
+          className="nbc"
+          height={doMinimizeNB ? undefined : realNoteBoxHeight}
+        >
           <Hbox className="nbbar" pack={'center'}>
             <DragSizer
-              onDragStart={() => realNoteBoxHeight}
+              // A minimized notebox is only as high as its bar.
+              onDragStart={() =>
+                doMinimizeNB ? C.UI.Atext.bbBottomMargin : realNoteBoxHeight
+              }
               onDragEnd={bbDragEnd}
               min={C.UI.Atext.bbBottomMargin}
               max={maxNoteBoxHeight}

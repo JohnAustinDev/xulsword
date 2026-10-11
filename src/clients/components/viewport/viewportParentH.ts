@@ -96,9 +96,10 @@ export function bbDragEnd(
       let { noteBoxHeight } = prevState;
       const minimizeNoteBox =
         prevState.minimizeNoteBox?.slice() ?? prevState.panels.map(() => false);
-      // Dragging below the minimum height minimizes the notebox, and leaves
-      // the user selected height as it was, to be restored later.
-      minimizeNoteBox[index] = value.isMinMax === false;
+      // Dragging to the minimum height, where only the bar is left, minimizes
+      // the notebox and leaves the user selected height as it was, to be
+      // restored later.
+      minimizeNoteBox[index] = value.sizerPos <= C.UI.Atext.bbBottomMargin;
       if (!minimizeNoteBox[index]) {
         noteBoxHeight = noteBoxHeight.slice();
         noteBoxHeight[index] = value.sizerPos;
