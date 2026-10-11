@@ -57,7 +57,7 @@ export const vpWindowState = [
   'mtModules',
   'isPinned',
   'noteBoxHeight',
-  'maximizeNoteBox',
+  'minimizeNoteBox',
 ] as const;
 
 export function closeMenupopups(component: Xulsword | ViewportWin) {
@@ -93,14 +93,19 @@ export function bbDragEnd(
 
   if (atext && !Number.isNaN(Number(index))) {
     (this as Xulsword).setState((prevState) => {
-      let { noteBoxHeight, maximizeNoteBox } = prevState;
-      noteBoxHeight = noteBoxHeight.slice();
-      maximizeNoteBox = maximizeNoteBox.slice();
-      maximizeNoteBox[index] = value.isMinMax === true;
-      noteBoxHeight[index] = value.sizerPos;
+      let { noteBoxHeight } = prevState;
+      const minimizeNoteBox =
+        prevState.minimizeNoteBox?.slice() ?? prevState.panels.map(() => false);
+      // Dragging below the minimum height minimizes the notebox, and leaves
+      // the user selected height as it was, to be restored later.
+      minimizeNoteBox[index] = value.isMinMax === false;
+      if (!minimizeNoteBox[index]) {
+        noteBoxHeight = noteBoxHeight.slice();
+        noteBoxHeight[index] = value.sizerPos;
+      }
       return {
         noteBoxHeight,
-        maximizeNoteBox,
+        minimizeNoteBox,
       };
     });
   }
@@ -451,17 +456,11 @@ export default function handler(
         case 'notebox-maximizer': {
           if (atext) {
             (this as Xulsword).setState((prevState) => {
-              let { maximizeNoteBox, noteBoxHeight } = prevState;
-              maximizeNoteBox = clone(maximizeNoteBox);
-              noteBoxHeight = clone(noteBoxHeight);
-              maximizeNoteBox[index] = !maximizeNoteBox[index];
-              if (
-                !maximizeNoteBox[index] &&
-                noteBoxHeight[index] > C.UI.Atext.initialNoteboxHeight
-              ) {
-                noteBoxHeight[index] = C.UI.Atext.initialNoteboxHeight;
-              }
-              return { maximizeNoteBox, noteBoxHeight };
+              const minimizeNoteBox =
+                prevState.minimizeNoteBox?.slice() ??
+                prevState.panels.map(() => false);
+              minimizeNoteBox[index] = !minimizeNoteBox[index];
+              return { minimizeNoteBox };
             });
           }
           break;

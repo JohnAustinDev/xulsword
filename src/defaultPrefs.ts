@@ -156,7 +156,7 @@ const S = {
 
       isPinned: [false] as boolean[],
       noteBoxHeight: [200] as number[],
-      maximizeNoteBox: [false] as boolean[],
+      minimizeNoteBox: [false] as boolean[] | undefined,
       tabcntl: true as boolean,
     },
 
@@ -684,7 +684,7 @@ export function completePanelPrefDefaultArrays(numPanels: number) {
   C.PanelPrefArrays.forEach((p) => {
     const vf = [];
     for (let i = 0; i < numPanels; i++) {
-      let [v] = S.prefs.xulsword[p];
+      let [v] = S.prefs.xulsword[p] ?? [];
       if (p === 'panels' && i > 1) v = null;
       vf.push(v);
     }

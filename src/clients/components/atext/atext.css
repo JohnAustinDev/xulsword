@@ -102,7 +102,7 @@ through. The popup is tinted in popup.css and the tab in tabs.css. */
 }
 /* Atext sets --sb-height to the scripture box height. */
 .atext:not(.columns1) .sb .image-viewport img {
-  max-height: calc(0.8 * var(--sb-height));
+  max-height: calc(0.4 * var(--sb-height));
 }
 .atext .sbcontrols {
   position: absolute;
@@ -130,19 +130,23 @@ through. The popup is tinted in popup.css and the tab in tabs.css. */
   width: calc(100% - 16px);
 }
 /* Multi-column panels page by scrolling, so their notebox goes below the
-columns rather than covering text. It positions the maximizer. */
+columns rather than covering text. */
 .atext:not(.columns1) .nbc {
+  position: relative;
+}
+/* The bar above the notebox positions the maximizer. */
+.atext .nbbar {
   position: relative;
 }
 .atext .nbc.noteboxEmpty {
   display: none;
 }
 .atext .dragsizer.horizontal {
-  width: 88%;
+  width: calc(100% - 70px);
 }
 .atext .notebox-maximizer {
   position: absolute;
-  background: url(../../images/max.png);
+  background: url(../../images/min.png);
   width: 15px;
   height: 14px;
   top: 0px;
@@ -152,10 +156,18 @@ columns rather than covering text. It positions the maximizer. */
   right: auto;
   left: 42px;
 }
-.atext.noteboxMaximized .notebox-maximizer {
+/* A minimized notebox has no height, so its maximizer goes above it, at the
+bottom of the text. */
+.atext.noteboxMinimized .notebox-maximizer {
   background: url(../../images/norm.png);
+  top: auto;
+  bottom: 4px;
 }
-.atext.columns1 .notebox-maximizer {
+.atext.noteboxMinimized .nbc > :not(.nbbar),
+.atext.noteboxMinimized .nbc .dragsizer {
+  display: none;
+}
+.atext.Dicts .notebox-maximizer {
   display: none;
 }
 

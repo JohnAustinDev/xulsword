@@ -61,6 +61,7 @@ import './atext.css';
 import type {
   AudioPlayerFileGB,
   PinPropsType,
+  PlaceType,
   AudioPlayerFileVK,
   GType,
   TextualVariantType,
@@ -92,7 +93,7 @@ export type AtextPropsType = Pick<
 
   isPinned: boolean;
   noteBoxHeight: number;
-  maximizeNoteBox: boolean;
+  minimizeNoteBox?: boolean;
 
   panelIndex: number;
   columns: number;
@@ -274,22 +275,7 @@ class Atext
     // Image height limits must be known before text is written and paged.
     if (sbe) setSbHeight(sbe);
 
-    // Adjust maxNoteBoxHeight height if needed
     const atext = sbe?.parentNode as HTMLElement | null | undefined;
-    if (atext && sbe) {
-      let maxHeight = sbe.offsetHeight;
-      if (columns === 1) maxHeight -= C.UI.Atext.bbSingleColTopMargin;
-      else {
-        // The notebox is below the text columns. Its maximum takes the same
-        // area as one column.
-        const nbc = atext.querySelector('.nbc') as HTMLElement | null;
-        maxHeight = Math.round(
-          (maxHeight + (nbc?.offsetHeight ?? 0)) / columns,
-        );
-        if (Math.abs(maxHeight - (maxNoteBoxHeight ?? 0)) > 2)
-          newState.maxNoteBoxHeight = maxHeight;
-      }
-    }
 
     const { selection, module } = pinProps;
     if (module && atext && sbe && nbe) {
@@ -456,6 +442,16 @@ class Atext
         }
       }
     }
+    if (atext && sbe) {
+      // Height has fixed maximum because single panel height resizes
+      // to accomodate any notebox height!
+      const maxHeight = Math.min(
+        600,
+        Math.round((sbe.parentElement?.offsetHeight ?? 200) / 2),
+      );
+      if (Math.abs(maxHeight - (maxNoteBoxHeight ?? 0)) > 2)
+        newState.maxNoteBoxHeight = maxHeight;
+    }
     const d = diff(state, newState);
     if (Object.keys(newState).length && d) {
       this.setState(d);
@@ -494,6 +490,22 @@ class Atext
       );
     }
     return { pinProps, libswordProps };
+  }
+
+  // The notebox of a dictionary is its key list, which is never minimized.
+  noteboxMinimized(): boolean {
+    const { module, minimizeNoteBox } = this.props;
+    return (
+      !!minimizeNoteBox && !(module && G.Tab[module].type === C.DICTIONARY)
+    );
+  }
+
+  // Where each type of note is shown. The notes of a minimized notebox cannot
+  // be seen, so they are all shown in popups.
+  notePlace(place: PlaceType): PlaceType {
+    return this.noteboxMinimized()
+      ? { footnotes: 'popup', crossrefs: 'popup', usernotes: 'popup' }
+      : place;
   }
 
   // Read a LibSword response from the cache, or else from LibSword.
@@ -967,7 +979,6 @@ class Atext
       audio,
       ownWindow,
       noteBoxHeight,
-      maximizeNoteBox,
       showChooser,
       showControls,
       ilModuleOption,
@@ -983,12 +994,9 @@ class Atext
     const isVerseKey = module && G.Tab[module].isVerseKey;
 
     // Notebox height
-    const doMaximizeNB = columns !== 1 && maximizeNoteBox;
+    const doMinimizeNB = this.noteboxMinimized();
     let realNoteBoxHeight = noteBoxHeight;
-    if (
-      maxNoteBoxHeight &&
-      (doMaximizeNB || realNoteBoxHeight > maxNoteBoxHeight)
-    )
+    if (maxNoteBoxHeight && realNoteBoxHeight > maxNoteBoxHeight)
       realNoteBoxHeight = maxNoteBoxHeight;
 
     const moduleAlwaysVersePerLine =
@@ -1012,7 +1020,7 @@ class Atext
     if (module) classes.push(`${G.Tab[module].tabType}`);
     if (module && G.Tab[module].direction === 'rtl') classes.push('rtl');
     if (isPinned) classes.push('pinned');
-    if (doMaximizeNB) classes.push('noteboxMaximized');
+    if (doMinimizeNB) classes.push('noteboxMinimized');
     if ((versePerLine && show.versenums) || moduleAlwaysVersePerLine) {
       if (!module || G.Tab[module].tabType === 'Texts') {
         classes.push('verse-per-line');
@@ -1164,8 +1172,8 @@ class Atext
           onScroll={handler}
         />
 
-        <Vbox className="nbc" height={realNoteBoxHeight}>
-          <Hbox pack={'center'}>
+        <Vbox className="nbc" height={doMinimizeNB ? 0 : realNoteBoxHeight}>
+          <Hbox className="nbbar" pack={'center'}>
             <DragSizer
               onDragStart={() => realNoteBoxHeight}
               onDragEnd={bbDragEnd}

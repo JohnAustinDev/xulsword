@@ -270,7 +270,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
       const { props } = this;
       const { isPinned, module, panelIndex: index, place: pl } = props;
       const { pin } = this.state;
-      const place = isPinned && pin ? pin.place : pl;
+      const place = this.notePlace(isPinned && pin ? pin.place : pl);
       const atext = ofClass(['atext'], target)?.element;
       const modtype = module ? G.Tab[module].type : '';
       const p = getElementData(element);

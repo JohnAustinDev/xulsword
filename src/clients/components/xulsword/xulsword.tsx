@@ -286,7 +286,7 @@ export default class Xulsword
       scroll,
       isPinned,
       noteBoxHeight,
-      maximizeNoteBox,
+      minimizeNoteBox,
       showChooser,
       showControls,
       bsreset,
@@ -779,7 +779,7 @@ export default class Xulsword
             scroll={scroll}
             isPinned={isPinned}
             noteBoxHeight={noteBoxHeight}
-            maximizeNoteBox={maximizeNoteBox}
+            minimizeNoteBox={minimizeNoteBox}
             showChooser={showChooser}
             showControls={Build.isWebApp ? (showControls ?? false) : undefined}
             ownWindow={false}

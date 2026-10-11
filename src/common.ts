@@ -1051,10 +1051,10 @@ export function setGlobalPanels(
   let newN = numPanels || panels.length + delta;
   if (newN < 1) newN = 1;
   C.PanelPrefArrays.forEach((pref) => {
-    if (!(pref in xs)) {
+    if (!xs[pref]) {
       xs[pref] = S.prefs.xulsword[pref] as any[];
     }
-    const a = xs[pref];
+    const a = xs[pref] as any[];
     while (a.length !== newN) {
       if (newN > a.length) {
         (a as any).push(a[a.length - 1]);

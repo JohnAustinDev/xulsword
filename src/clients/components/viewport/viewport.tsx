@@ -51,7 +51,7 @@ type ViewportProps = ViewportPopupProps &
     ilModules: typeof S.prefs.xulsword.ilModules;
     mtModules: typeof S.prefs.xulsword.mtModules;
     noteBoxHeight: typeof S.prefs.xulsword.noteBoxHeight;
-    maximizeNoteBox: typeof S.prefs.xulsword.maximizeNoteBox;
+    minimizeNoteBox: typeof S.prefs.xulsword.minimizeNoteBox;
     ownWindow: boolean;
 
     eHandler: (e: React.SyntheticEvent) => void;
@@ -234,7 +234,7 @@ export default class Viewport
       scroll,
       isPinned: isPinned0,
       noteBoxHeight,
-      maximizeNoteBox,
+      minimizeNoteBox,
       showChooser,
       showControls,
       ownWindow,
@@ -524,7 +524,7 @@ export default class Viewport
             scroll={scroll}
             isPinned={isPinned[i]}
             noteBoxHeight={noteBoxHeight[i]}
-            maximizeNoteBox={maximizeNoteBox[i]}
+            minimizeNoteBox={minimizeNoteBox?.[i]}
             showChooser={Build.isWebApp ? showChooser : undefined}
             showControls={showControls}
             ownWindow={ownWindow}

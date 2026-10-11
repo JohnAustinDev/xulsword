@@ -57,23 +57,8 @@ export function setDefaultBibleBrowserPrefs(
     }
   }
 
-  if (!xulsword.place || !Object.keys(xulsword.place).length) {
-    xulsword.place =
-      window.innerWidth > C.UI.WebApp.mobileW
-        ? {
-            footnotes: 'notebox',
-            crossrefs: 'notebox',
-            usernotes: 'popup',
-          }
-        : {
-            footnotes: 'popup',
-            crossrefs: 'popup',
-            usernotes: 'popup',
-          };
-  }
-
   if (!xulsword.noteBoxHeight || xulsword.noteBoxHeight[0] === -1) {
-    const h = window.innerWidth <= C.UI.WebApp.mobileW ? 200 : 300;
+    const h = window.innerWidth <= C.UI.WebApp.mobileW ? 150 : 200;
     xulsword.noteBoxHeight = [h];
     if (xulsword.panels?.length) {
       xulsword.noteBoxHeight = xulsword.panels.map(() => h);
@@ -130,7 +115,13 @@ const defaultSettings: AllComponentsData = {
               hebvowelpoints: true,
               redwords: true,
             },
-            place: {} as any, // leave as {} to update at runtime
+            place: {
+              footnotes: 'notebox',
+              crossrefs: 'notebox',
+              usernotes: 'notebox',
+            },
+            noteBoxHeight: [-1, -1], // leave at -1 to update at runtime
+            minimizeNoteBox: [false, false],
 
             showChooser: null as unknown as boolean, // leave as null to set at runtime
             showControls: false,
@@ -140,8 +131,6 @@ const defaultSettings: AllComponentsData = {
             mtModules: [null, null],
 
             isPinned: [false, false],
-            noteBoxHeight: [-1, -1], // leave at -1 to update at runtime
-            maximizeNoteBox: [false, false],
             tabcntl: true,
           },
           global: {

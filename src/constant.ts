@@ -139,7 +139,6 @@ const C = {
       multiColWheelScrollDelay: 100,
       prevNextDelay: 500, // ms before prev/next chapter links are rendered
       initialNoteboxHeight: 200, // px
-      bbSingleColTopMargin: 100, // px an arbitrary extra margin value
       bbBottomMargin: 20, // px
     },
     Manager: {
@@ -626,7 +625,7 @@ const C = {
     'tabs',
     'isPinned',
     'noteBoxHeight',
-    'maximizeNoteBox',
+    'minimizeNoteBox',
   ] as const,
 };
 export default C;

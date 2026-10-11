@@ -240,7 +240,7 @@ export default class ViewportWin
       scroll,
       isPinned,
       noteBoxHeight,
-      maximizeNoteBox,
+      minimizeNoteBox,
       showChooser,
       vpreset,
     } = state;
@@ -277,7 +277,7 @@ export default class ViewportWin
             scroll={scroll}
             isPinned={isPinned}
             noteBoxHeight={noteBoxHeight}
-            maximizeNoteBox={maximizeNoteBox}
+            minimizeNoteBox={minimizeNoteBox}
             showChooser={false}
             ownWindow
             atextRefs={atextRefs}
