@@ -60,6 +60,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           'image-viewport',
           'dictkeyinput',
           'versenum',
+          'notebox-maximizer',
         ],
         target,
       );
@@ -207,6 +208,13 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           input.select();
           break;
         }
+
+        case 'notebox-maximizer':
+          // (viewportParentH handles the other types of panel, by pref)
+          if (this.isDictionary()) {
+            this.minimizeDictNotebox(!this.noteboxMinimized());
+          }
+          break;
 
         case 'versenum': {
           // Skip any title read at the start of the verse (see audioTiming).
@@ -393,25 +401,24 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           this.props;
         if (!isPinned && module && location) {
           let atext: HTMLElement | null = null;
-          const singleColumnScrollSyncs: number[] = [];
+          const scrollSyncs: number[] = [];
           (
             Array.from(
               getRootNode().querySelectorAll('.atext'),
             ) as HTMLElement[]
           ).forEach((txt) => {
-            const { index: i, module: mod, columns, ispinned } = txt.dataset;
+            const { index: i, module: mod, ispinned } = txt.dataset;
             if (
               mod &&
               mod in G.Tab &&
               G.Tab[mod].isVerseKey &&
-              Number(columns) === 1 &&
               ispinned === 'false'
             ) {
-              singleColumnScrollSyncs.push(Number(i));
+              scrollSyncs.push(Number(i));
               if (Number(i) === panelIndex) atext = txt;
             }
           });
-          if (atext && singleColumnScrollSyncs.length > 1) {
+          if (atext && scrollSyncs.length > 1) {
             delayHandler(
               this,
               () => {

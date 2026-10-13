@@ -73,6 +73,7 @@ import type {
 } from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
 import type { XulProps } from '../libxul/xul.tsx';
+import type { DragSizerVal } from '../libxul/dragsizer.tsx';
 import type { LibSwordResponse } from './ztext.ts';
 import type { TextAnchor } from './zcolumns.ts';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
@@ -141,7 +142,23 @@ export const stateWinPrefs = {
   variants: undefined as typeof S.prefs.global.variants,
 };
 
-const notStateWinPrefs = {};
+const notStateWinPrefs = {
+  // The dictionary module whose notebox is minimized, if any.
+  minimizedDict: null as string | null,
+};
+
+// The minimizedDict state of each panel must survive a component reset, but
+// it is not kept between sessions.
+const minimizedDicts: Array<string | null> = [];
+
+// A dictionary's notebox is open whenever its tab is selected, so a panel's
+// minimizedDict is forgotten once the panel shows another module. Viewport
+// does this, because a panel has no Atext while another panel spans it.
+export function forgetMinimizedDicts(panels: Array<string | null>) {
+  minimizedDicts.forEach((m, i) => {
+    if (m && m !== panels[i]) minimizedDicts[i] = null;
+  });
+}
 
 export type AtextStateType = typeof stateWinPrefs &
   typeof notStateWinPrefs &
@@ -189,10 +206,13 @@ class Atext
       'global.variants',
     ) as typeof S.prefs.global.variants;
 
+    const { panelIndex, module } = props;
+    const minimizedDict = minimizedDicts[panelIndex] || null;
     this.state = {
       ...stateWinPrefs,
       ...notStateWinPrefs,
-      ...windowState[props.panelIndex],
+      ...windowState[panelIndex],
+      minimizedDict: minimizedDict === module ? minimizedDict : null,
       renderPromiseID: 0,
     };
 
@@ -200,6 +220,7 @@ class Atext
     this.nbref = React.createRef();
 
     this.onUpdate = this.onUpdate.bind(this);
+    this.noteboxDragEnd = this.noteboxDragEnd.bind(this);
     this.writeLibSword2DOM = this.writeLibSword2DOM.bind(this);
     this.handler = handlerH.bind(this);
 
@@ -226,6 +247,11 @@ class Atext
     if (Build.isElectronApp && changedState) {
       (G as GType).Window.mergeValue(`atext${panelIndex}State`, changedState);
     }
+    // A dictionary's notebox is open whenever its tab is selected.
+    const { minimizedDict } = state;
+    const minimized = !!minimizedDict && minimizedDict === props.module;
+    if (minimizedDict && !minimized) this.setState({ minimizedDict: null });
+    minimizedDicts[panelIndex] = minimized ? minimizedDict : null;
     if (!renderPromise.waiting()) this.onUpdate();
     renderPromise.dispatch();
   }
@@ -316,16 +342,17 @@ class Atext
       const positioned = 'scroll' in sbe.dataset;
       const imagesLoading =
         columns > 1 && !positioned && this.waitForImages(sbe);
-      // SCROLL (newly written multi-column Bibles are always positioned)
+      // SCROLL (newly written multi-column Bibles and commentaries are always
+      // positioned)
       const doScrollVerseKey =
         isVerseKey &&
         !imagesLoading &&
-        (scroll || (multiColumnBible && !positioned)) &&
+        (scroll || (columns > 1 && !positioned)) &&
         (!positioned || scrollPropsKey !== sbe.dataset.scroll);
       if (doScrollVerseKey) {
-        // Multi-column Bibles...
         if (!renderPromise.waiting()) {
-          if (multiColumnBible && location) {
+          // Multi-column Bibles and commentaries...
+          if (columns > 1 && location) {
             multiColumnVerseScroll(sbe, location, !positioned);
           } else {
             if (Build.isWebApp) {
@@ -337,13 +364,13 @@ class Atext
                 // native 'scroll' event on sbe. Guard re-handling with
                 // WebAppTextScroll until that event is finished.
                 window.WebAppTextScroll.scriptScrolled = true;
-                versekeyScroll(sbe, scrollProps);
+                versekeyScroll(sbe, scrollProps, !positioned);
                 requestAnimationFrame(() => {
                   window.WebAppTextScroll.scriptScrolled = false;
                 });
               }
             } else {
-              versekeyScroll(sbe, scrollProps);
+              versekeyScroll(sbe, scrollProps, !positioned);
             }
           }
           if (!renderPromise.waiting()) sbe.dataset.scroll = scrollPropsKey;
@@ -360,21 +387,7 @@ class Atext
         else scrollToFirstPage(sbe);
         sbe.dataset.scroll = '';
       } else if (update && type === C.DICTIONARY) {
-        const id = `${stringHash(modkey)}.${panelIndex}`;
-        const keyelem = getRootNode().getElementById(id);
-        if (Build.isElectronApp && keyelem) {
-          safeScrollIntoView(keyelem, nbe, undefined, 40);
-          const dictlist = keyelem.parentNode?.parentNode as HTMLElement | null;
-          if (dictlist) {
-            const dki = dictlist.getElementsByClassName(
-              'dictkeyinput',
-            ) as unknown as HTMLInputElement[] | null;
-            if (dki) {
-              dki[0].focus();
-              dki[0].select();
-            }
-          }
-        }
+        this.showDictKey(nbe, modkey);
       }
 
       if (!renderPromise.waiting()) {
@@ -443,11 +456,11 @@ class Atext
       }
     }
     if (atext && sbe) {
-      // Height has fixed maximum because single panel height resizes
+      // Height has fixed maximum because single panel height will resize
       // to accomodate any notebox height!
       const maxHeight = Math.min(
         600,
-        Math.round((sbe.parentElement?.offsetHeight ?? 200) / 2),
+        Math.round((sbe.parentElement?.offsetHeight ?? 200) / 2.5),
       );
       if (Math.abs(maxHeight - (maxNoteBoxHeight ?? 0)) > 2)
         newState.maxNoteBoxHeight = maxHeight;
@@ -492,12 +505,60 @@ class Atext
     return { pinProps, libswordProps };
   }
 
-  // The notebox of a dictionary is its key list, which is never minimized.
+  // Show the selected key of a dictionary's key list, and ready its key input
+  // for typing.
+  showDictKey(nbe: HTMLElement, modkey: string | null | undefined) {
+    const { panelIndex } = this.props;
+    const id = `${stringHash(modkey)}.${panelIndex}`;
+    const keyelem = getRootNode().getElementById(id);
+    if (Build.isElectronApp && keyelem) {
+      safeScrollIntoView(keyelem, nbe, undefined, 40);
+      const dictlist = keyelem.parentNode?.parentNode as HTMLElement | null;
+      if (dictlist) {
+        const dki = dictlist.getElementsByClassName(
+          'dictkeyinput',
+        ) as unknown as HTMLInputElement[] | null;
+        if (dki) {
+          dki[0].focus();
+          dki[0].select();
+        }
+      }
+    }
+  }
+
+  isDictionary(): boolean {
+    const { module } = this.props;
+    return !!module && G.Tab[module].type === C.DICTIONARY;
+  }
+
+  // The notebox of a dictionary is its key list. It does not follow its
+  // panel's minimizeNoteBox pref: it is open whenever the dictionary's tab is
+  // selected, and from then on it is minimized by local state.
   noteboxMinimized(): boolean {
     const { module, minimizeNoteBox } = this.props;
-    return (
-      !!minimizeNoteBox && !(module && G.Tab[module].type === C.DICTIONARY)
-    );
+    if (this.isDictionary()) return this.state.minimizedDict === module;
+    return !!minimizeNoteBox;
+  }
+
+  // Minimize or open the notebox of a dictionary. A key list which was hidden
+  // could not be scrolled to its selected key, so that is done when it opens.
+  minimizeDictNotebox(minimize: boolean) {
+    const { module, modkey } = this.props;
+    if (!module || minimize === this.noteboxMinimized()) return;
+    this.setState({ minimizedDict: minimize ? module : null }, () => {
+      const nbe = this.nbref.current;
+      if (!minimize && nbe) this.showDictKey(nbe, modkey);
+    });
+  }
+
+  // Dragging a notebox to its minimum height, where only the bar is left,
+  // minimizes it. The parent does that for other types of panel, by pref.
+  noteboxDragEnd(e: PointerEvent, value: DragSizerVal) {
+    const { bbDragEnd } = this.props;
+    if (this.isDictionary()) {
+      this.minimizeDictNotebox(value.sizerPos <= C.UI.Atext.bbBottomMargin);
+    }
+    bbDragEnd(e, value);
   }
 
   // Where each type of note is shown. The notes of a minimized notebox cannot
@@ -581,10 +642,18 @@ class Atext
             ).forEach((e) => ((e as HTMLElement).style.display = 'none'));
           }
         }
-        // Write nav-links to footer
+        // Write nav-links to footer. A single column panel's footer follows
+        // its text, but a multi-column panel's footer is below its columns,
+        // where every page shows it (CSS hides whichever is not in use).
+        // Dictionaries have no footer nav-links, because their entries
+        // usually end with their own prev/next links.
         const { columns } = libswordProps;
-        if (module && (typeof columns === 'undefined' || columns === 1))
-          sb += `<div class="ft">${navlinks(module, renderPromise)}</div>`;
+        const ftlinks =
+          module && !isDict ? navlinks(module, renderPromise) : '';
+        if (ftlinks && (typeof columns === 'undefined' || columns === 1))
+          sb += `<div class="ft">${ftlinks}</div>`;
+        const pft = sbe.nextElementSibling as HTMLElement | null;
+        if (module && pft?.classList.contains('ft')) sanitizeHTML(pft, ftlinks);
         // Write text to scripture box
         sanitizeHTML(sbe, sb);
         // Insert audio timing break spans if needed
@@ -815,7 +884,8 @@ class Atext
   }
 
   // Multi-column panels keep their columns aligned to the page, and Bibles
-  // keep their location verse showing, when the scripture box is resized.
+  // and commentaries keep their location verse showing, when the scripture box
+  // is resized.
   onResize() {
     const { props, sbref } = this;
     const sbe = sbref.current;
@@ -825,7 +895,7 @@ class Atext
       if (props.columns > 1) {
         restoreColumn(sbe);
         const { module, location } = this.activeProps().libswordProps;
-        if (module && G.Tab[module].type === C.BIBLE && location) {
+        if (module && G.Tab[module].isVerseKey && location) {
           multiColumnVerseScroll(sbe, location, false);
         }
         this.onPageScroll();
@@ -916,13 +986,13 @@ class Atext
     addHoverLinks(div, ['cr', 'fn', 'sn', 'un', 'image-viewport'], handler);
   }
 
-  // IMPORTANT: verse doesn't effect libsword output, so always remove
-  // it from stringHash for a big speedup.
+  // IMPORTANT: verse and lastverse don't effect libsword output, so always
+  // remove them from stringHash for a big speedup.
   libswordKey(libswordProps: AtextProps, panelIndex: number): string {
     return stringHash(
       {
         ...libswordProps,
-        location: { ...libswordProps.location, verse: 0 },
+        location: { ...libswordProps.location, verse: 0, lastverse: 0 },
       },
       panelIndex,
     );
@@ -994,7 +1064,6 @@ class Atext
       show,
       selection,
       onAudioClick,
-      bbDragEnd,
       xulswordHandler,
     } = props;
 
@@ -1180,6 +1249,8 @@ class Atext
           onScroll={handler}
         />
 
+        <Hbox align="center" className="ft" />
+
         <Vbox
           className="nbc"
           height={doMinimizeNB ? undefined : realNoteBoxHeight}
@@ -1190,7 +1261,7 @@ class Atext
               onDragStart={() =>
                 doMinimizeNB ? C.UI.Atext.bbBottomMargin : realNoteBoxHeight
               }
-              onDragEnd={bbDragEnd}
+              onDragEnd={this.noteboxDragEnd}
               min={C.UI.Atext.bbBottomMargin}
               max={maxNoteBoxHeight}
               shrink

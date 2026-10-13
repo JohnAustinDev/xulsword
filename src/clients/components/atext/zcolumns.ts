@@ -185,6 +185,15 @@ export function columnIsShowing(
   return column >= first && column < first + m.columns;
 }
 
+// Returns true if any part of element e is in a showing column.
+export function elementIsShowing(
+  sb: HTMLElement,
+  m: ColumnMetrics,
+  e: Element,
+): boolean {
+  return boxes(e).some((r) => columnIsShowing(sb, m, columnOfRect(sb, m, r)));
+}
+
 // Scrolling requires empty columns after the content, so that any content
 // column can be scrolled to the start of the page. A trailing spacer, a page
 // tall, provides them (break-before: column is not supported in older

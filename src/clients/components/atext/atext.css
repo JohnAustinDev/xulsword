@@ -43,6 +43,16 @@ through. The popup is tinted in popup.css and the tab in tabs.css. */
   text-align: center;
   justify-content: space-around;
 }
+/* A single column panel's footer follows its text. But multi-column panels
+page by scrolling, so their footer goes below the columns, where every page
+shows it. */
+.atext > .ft {
+  flex-shrink: 0;
+}
+.atext.columns1 > .ft,
+.atext:not(.columns1) .sb .ft {
+  display: none;
+}
 .atext .text-pin {
   z-index: 5;
 }
@@ -104,6 +114,9 @@ through. The popup is tinted in popup.css and the tab in tabs.css. */
 .atext:not(.columns1) .sb .image-viewport img {
   max-height: calc(0.4 * var(--sb-height));
 }
+.atext:not(.columns1) .sb .npopup .image-viewport img {
+  max-height: none;
+}
 .atext .sbcontrols {
   position: absolute;
   top: 0px;
@@ -138,6 +151,9 @@ columns rather than covering text. */
 .atext .nbbar {
   position: relative;
 }
+.atext:not(.columns1) .nbbar {
+  margin-top: -10px;
+}
 .atext .nbc.noteboxEmpty {
   display: none;
 }
@@ -167,9 +183,6 @@ columns rather than covering text. */
 no notes. It keeps its space, so that page layout doesn't change when it hides. */
 .atext.noteboxMinimized:not(.columns1) .nbc.noteboxPageEmpty {
   visibility: hidden;
-}
-.atext.Dicts .notebox-maximizer {
-  display: none;
 }
 
 .atext .nb {
@@ -222,7 +235,7 @@ lacking either keep the solid-block fallback above. */
   color: var(--color-primary);
 }
 .ft .navlink {
-  margin: 10px;
+  margin: 0 10px 10px 10px;
 }
 .aboutlink {
   text-decoration: underline;

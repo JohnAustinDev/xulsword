@@ -23,6 +23,7 @@ import {
   columnIsShowing,
   columnMetrics,
   columnOf,
+  elementIsShowing,
   lastContentColumn,
   pageStart,
   scrollToColumn,
@@ -39,6 +40,7 @@ import type Xulsword from '../xulsword/xulsword.tsx';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
 import type Atext from './atext.tsx';
 import type { AtextPropsType, AtextStateType } from './atext.tsx';
+import type { ColumnMetrics } from './zcolumns.ts';
 import type ViewportWin from '../../app/viewportWin/viewportWin.tsx';
 import type { ViewportWinState } from '../../app/viewportWin/viewportWin.tsx';
 
@@ -398,6 +400,12 @@ export function getChapterHeader(
   return { textHTML: html, intronotes: intro.intronotes };
 }
 
+// Returns true if a scripture box is that of a commentary.
+function isCommentary(sbe: Element): boolean {
+  const { module } = sbe.parentElement?.dataset ?? {};
+  return !!module && G.Tab[module].type === C.COMMENTARY;
+}
+
 // Returns true if v is a verse element which begins in the visible part of
 // the scripture box, false otherwise.
 function verseIsVisible(vx: Element): boolean {
@@ -431,10 +439,13 @@ function verseIsVisible(vx: Element): boolean {
   return !!m && column !== null && columnIsShowing(sb, m, column);
 }
 
-// Implement Atext verse scroll for single column panels.
+// Implement Atext verse scroll for single column panels. If the text has no
+// such verse (not even within a verse range) it is left as it is, unless it
+// is newText which was just written. Then its chapter start is shown.
 export function versekeyScroll(
   sbe: HTMLElement,
   scrollProps: Pick<AtextPropsType, (typeof C.ScrollPropsVK)[number]>,
+  newText: boolean,
 ) {
   const { module, location, scroll } = scrollProps;
   if (!location) return;
@@ -467,8 +478,8 @@ export function versekeyScroll(
     av = av.nextElementSibling;
   }
 
-  // if not found, use first verse in current chapter
-  if (!v) v = vf;
+  // if not found, new text uses first verse in current chapter
+  if (!v && newText) v = vf;
 
   // if neither verse nor chapter has been found, return null
   if (!v) return;
@@ -523,12 +534,13 @@ export function versekeyScroll(
   }
 }
 
-// Implement Atext verse scroll for multi-column Bible panels, which page by
-// scrolling horizontally just like multi-column general books. The column
-// where the verse begins is scrolled to the start of the page, or the first
-// page is shown if the verse is on it. Verse 1 is shown along with whatever
-// precedes it in its chapter (the chapter heading and any images). If the
-// verse is already showing, nothing changes unless force is true.
+// Implement Atext verse scroll for multi-column Bible and commentary panels,
+// which page by scrolling horizontally just like multi-column general books.
+// The column where the verse begins is scrolled to the start of the page, or
+// the first page is shown if the verse is on it. Verse 1 is shown along with
+// whatever precedes it in its chapter (the chapter heading and any images). If
+// the verse is already showing, or the text has no such verse (not even within
+// a verse range), nothing changes unless force is true.
 export function multiColumnVerseScroll(
   sbe: HTMLElement,
   location: LocationVKType,
@@ -538,8 +550,15 @@ export function multiColumnVerseScroll(
   if (!m) return;
   const verse = location.verse || 1;
   const v = findVerseElement(sbe, location.chapter, verse);
+  if (!v && !force) return;
   let column = (v && columnOf(sbe, m, v)) ?? 0;
-  if (force || !columnIsShowing(sbe, m, column)) {
+  // The commentary on a verse may fill several pages, so its verse is showing
+  // if any part of it is. But a Bible verse is showing if it begins on the page.
+  const showing =
+    v && isCommentary(sbe)
+      ? elementIsShowing(sbe, m, v)
+      : columnIsShowing(sbe, m, column);
+  if (force || !showing) {
     if (verse === 1) {
       let e = v?.previousElementSibling;
       for (; e && !e.classList.contains('vs'); e = e.previousElementSibling) {
@@ -620,6 +639,15 @@ function aTextWheelScroll2(
   return null;
 }
 
+// Returns the multi-column panel whose pages a wheel event with this target
+// turns (see viewportParentH), or null if there is none. Noteboxes and popups
+// scroll as usual.
+export function wheelPagePanel(target: EventTarget | null): HTMLElement | null {
+  const atext = ofClass(['atext'], target)?.element;
+  if (!atext || ofClass(['nbc', 'npopup'], target)) return null;
+  return Number(atext.dataset.columns) > 1 ? atext : null;
+}
+
 let WheelSteps = 0;
 export function aTextWheelScroll(
   e: React.WheelEvent,
@@ -628,7 +656,6 @@ export function aTextWheelScroll(
 ) {
   WheelSteps += Math.round(e.deltaY / 80);
   if (WheelSteps) {
-    const { columns } = atext.dataset;
     delayHandler(
       caller,
       () => {
@@ -640,9 +667,7 @@ export function aTextWheelScroll(
         });
       },
       [],
-      columns === '1'
-        ? C.UI.Atext.wheelScrollDelay
-        : C.UI.Atext.multiColWheelScrollDelay,
+      C.UI.Atext.wheelScrollDelay,
       'wheelScrollTO',
     );
   }
@@ -659,6 +684,22 @@ export function getScrollVerse(
     let v = sb.firstElementChild;
     while (v && !verseIsVisible(v)) {
       v = v.nextElementSibling;
+    }
+    // The commentary on a verse may fill several pages. So if no verse begins
+    // on the page of a multi-column commentary, the verse is the one which
+    // continues there.
+    const m = !v && isCommentary(sb) && columnMetrics(sb as HTMLElement);
+    if (m) {
+      v = sb.firstElementChild;
+      while (
+        v &&
+        !(
+          v.classList.contains('vs') &&
+          elementIsShowing(sb as HTMLElement, m, v)
+        )
+      ) {
+        v = v.nextElementSibling;
+      }
     }
     if (v) {
       const p = getElementData(v);
@@ -761,8 +802,36 @@ export function highlight(
   }
 }
 
+// Returns whether each note of a multi-column scripture box has its marker on
+// the showing page. Notes are keyed as their notebox row ids are, less the
+// panel prefix.
+function pageNoteMarkers(
+  sbe: HTMLElement,
+  m: ColumnMetrics,
+): Map<string, boolean> {
+  const types = ['fn', 'cr', 'un'];
+  const onPage = new Map<string, boolean>();
+  sbe.querySelectorAll<HTMLElement>('.fn, .cr, .un').forEach((e) => {
+    const { title } = e.dataset;
+    const type = types.find((t) => e.classList.contains(t));
+    const column = columnOf(sbe, m, e);
+    if (title && type && column !== null) {
+      const key = `${type}.${title}`;
+      onPage.set(key, onPage.get(key) || columnIsShowing(sbe, m, column));
+    }
+  });
+  return onPage;
+}
+
+// Hide the notes of a notebox which don't belong to the showing text, and
+// return true if any notes are left showing. A multi-column page may begin or
+// end within a verse, so there a note shows if its marker is on the page.
+// Otherwise (or if a note has no marker) a note shows if its verse begins in
+// the showing text.
 export function trimNotes(sbe: HTMLElement, nbe: HTMLElement): boolean {
   let havefn = false;
+  const m = columnMetrics(sbe);
+  const onPage = m ? pageNoteMarkers(sbe, m) : null;
 
   // get first chapter/verse
   let vf = sbe.firstElementChild;
@@ -785,6 +854,12 @@ export function trimNotes(sbe: HTMLElement, nbe: HTMLElement): boolean {
   if (nbe.innerHTML) {
     const nt = Array.from(nbe.getElementsByClassName('fnrow')) as HTMLElement[];
     nt.forEach((nti) => {
+      const markerOnPage = onPage?.get(nti.id.replace(/^w\d+\.footnote\./, ''));
+      if (typeof markerOnPage === 'boolean') {
+        nti.style.display = markerOnPage ? '' : 'none';
+        if (markerOnPage) havefn = true;
+        return;
+      }
       const vi = getElementData(nti);
       const v = vi?.location || null;
       if (v) {

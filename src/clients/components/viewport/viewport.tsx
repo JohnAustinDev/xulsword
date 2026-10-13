@@ -16,7 +16,7 @@ import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Chooser from '../chooser/chooser.tsx';
 import GenbookChooser from '../genbookChooser/genbookChooser.tsx';
 import Tabs from '../tabs/tabs.tsx';
-import Atext from '../atext/atext.tsx';
+import Atext, { forgetMinimizedDicts } from '../atext/atext.tsx';
 import './viewport.css';
 
 import type { SyntheticEvent } from 'react';
@@ -120,10 +120,11 @@ export default class Viewport
       });
     }
     this.syncClasses();
+    forgetMinimizedDicts(this.props.panels);
   }
 
   componentDidUpdate() {
-    const { state, renderPromise } = this;
+    const { props, state, renderPromise } = this;
     const { popupParent, elemdata } = state;
     if (popupParent && !getRootNode().contains(popupParent)) {
       this.setState({ popupParent: null });
@@ -132,6 +133,7 @@ export default class Viewport
       popupParent.getElementsByClassName('npopup')[0]?.classList.remove('hide');
     }
     this.syncClasses();
+    forgetMinimizedDicts(props.panels);
     renderPromise.dispatch();
   }
 

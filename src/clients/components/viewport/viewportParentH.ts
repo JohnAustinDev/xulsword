@@ -20,6 +20,7 @@ import {
   aTextWheelScroll,
   chapterChange,
   getScrollVerse,
+  wheelPagePanel,
 } from '../atext/zversekey.ts';
 import { columnMetrics, scrollPage } from '../atext/zcolumns.ts';
 
@@ -82,6 +83,13 @@ export function closeMenupopups(component: Xulsword | ViewportWin) {
   }
 }
 
+// The notebox of a dictionary panel is minimized by its Atext's own state,
+// and not by the panel's minimizeNoteBox pref.
+function isDictionaryPanel(atext: HTMLElement): boolean {
+  const { module } = atext.dataset;
+  return !!module && G.Tab[module].type === C.DICTIONARY;
+}
+
 export function bbDragEnd(
   this: Xulsword | ViewportWin,
   e: PointerEvent,
@@ -92,15 +100,19 @@ export function bbDragEnd(
   const index = Number(atext?.dataset.index);
 
   if (atext && !Number.isNaN(Number(index))) {
+    const isDictionary = isDictionaryPanel(atext);
     (this as Xulsword).setState((prevState) => {
-      let { noteBoxHeight } = prevState;
-      const minimizeNoteBox =
-        prevState.minimizeNoteBox?.slice() ?? prevState.panels.map(() => false);
+      let { noteBoxHeight, minimizeNoteBox } = prevState;
       // Dragging to the minimum height, where only the bar is left, minimizes
       // the notebox and leaves the user selected height as it was, to be
       // restored later.
-      minimizeNoteBox[index] = value.sizerPos <= C.UI.Atext.bbBottomMargin;
-      if (!minimizeNoteBox[index]) {
+      const minimize = value.sizerPos <= C.UI.Atext.bbBottomMargin;
+      if (!isDictionary) {
+        minimizeNoteBox =
+          minimizeNoteBox?.slice() ?? prevState.panels.map(() => false);
+        minimizeNoteBox[index] = minimize;
+      }
+      if (!minimize) {
         noteBoxHeight = noteBoxHeight.slice();
         noteBoxHeight[index] = value.sizerPos;
       }
@@ -229,8 +241,8 @@ function pageTurn(
     }
   }
   if (sb && scrollPage(sb, next)) {
-    // A Bible's location follows the page.
-    if (isBible) {
+    // The location of a Bible or commentary follows the page.
+    if (module && G.Tab[module].isVerseKey) {
       doUntilDone((renderPromise2) => {
         if (renderPromise2) {
           const location = getScrollVerse(atext, renderPromise2);
@@ -455,7 +467,7 @@ export default function handler(
           break;
         }
         case 'notebox-maximizer': {
-          if (atext) {
+          if (atext && !isDictionaryPanel(atext)) {
             (this as Xulsword).setState((prevState) => {
               const minimizeNoteBox =
                 prevState.minimizeNoteBox?.slice() ??
@@ -650,13 +662,10 @@ export default function handler(
 
     case 'wheel': {
       const ew = e as React.WheelEvent;
-      const { module, columns } = atext?.dataset ?? {};
+      const { module } = atext?.dataset ?? {};
       const wheelType = module && G.Tab[module].type;
       if (atext && wheelType && !ofClass(['nbc'], target)) {
-        if (
-          Number(columns) > 1 &&
-          (wheelType === C.BIBLE || wheelType === C.GENBOOK)
-        ) {
+        if (wheelPagePanel(target)) {
           // The multi-column wheel turns pages like the prev/next links,
           // whether the panel is pinned or not.
           WheelPages += ew.deltaY;

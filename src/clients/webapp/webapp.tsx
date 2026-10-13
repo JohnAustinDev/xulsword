@@ -8,6 +8,7 @@ import log from '../log.ts';
 import { getRootElement, getStyleParent } from '../rootNode.ts';
 import renderToRoot from '../controller.tsx';
 import Xulsword from '../components/xulsword/xulsword.tsx';
+import { wheelPagePanel } from '../components/atext/zversekey.ts';
 import socketConnect from '../web-preload.ts';
 import Prefs from '../web-prefs.ts';
 import {
@@ -31,13 +32,30 @@ const socket = socketConnect(
   process.env.WEBAPP_DOMAIN,
 );
 
-// Without wheelCapture the web-app could see either 'wheel' or 'scroll' (or
-// both) React Synthetic Events, depending on the client. So for simplicity,
+// Without wheelCapture the web-app, depending on the client, could see either
+// 'wheel' or 'scroll' (or both) React Synthetic Events. So for simplicity,
 // the web-app will only see 'scroll' events and Electron will only see 'wheel'
-// events ('scroll' in atextH.ts is only handled if isWebApp is true).
+// events ('scroll' in atextH.ts is only handled if isWebApp is true). The
+// exception is multi-column panels whose pages are turned by the wheel: these
+// don't scroll, so the web-app sees their 'wheel' events just as Electron does.
 const wheelCapture = (e: React.SyntheticEvent<any>): void => {
-  if (Build.isWebApp) e.stopPropagation();
+  if (Build.isWebApp && !wheelPagePanel(e.target)) e.stopPropagation();
 };
+
+// A wheel which turns pages must not scroll the document as well. React's
+// wheel listeners are passive, so this takes a non-passive listener, which
+// captures the event before its propagation is stopped by a handler. And the
+// listener is on the document, so e.target is retargeted to the shadow host
+// when the web-app is in a shadow root. composedPath() still starts from the
+// real target.
+document.addEventListener(
+  'wheel',
+  (e: WheelEvent) => {
+    const [target] = e.composedPath();
+    if (wheelPagePanel(target)) e.preventDefault();
+  },
+  { capture: true, passive: false },
+);
 
 // connect is called even on reconnect, so only initialize once.
 let initialized = false;
