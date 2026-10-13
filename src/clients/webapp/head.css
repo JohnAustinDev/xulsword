@@ -34,12 +34,13 @@ html.ownsDocument *:not(#root, :has(#root)) {
 
 #root {
   /* This is the minimum height a hosted webapp will take. The 290px is the
-  webpage header, so the webapp fills the rest of the page. */
-  --min-height: max(400px, calc(100vh - 290px));
+  webpage header, so the webapp fills the rest of the page. 470px fills
+  a 600px tablet height (basic minimum in the wild) with header scrolled away. */
+  --min-height: max(470px, calc(100vh - 290px));
 }
 @media (max-width: 767px) {
   #root {
-    --min-height: max(400px, calc(100vh - 190px));
+    --min-height: max(470px, calc(100vh - 190px));
   }
 }
 html.ownsDocument #root {
