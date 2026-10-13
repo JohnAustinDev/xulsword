@@ -50,14 +50,14 @@ phone) is that column inset itself, which is why no heading adds its own. */
   --input-height: 32px;
 }
 
-#root {
-  height: unset;
-}
-/* root descendent containers are 100% height for multi-panel, otherwise unset */
+#root,
 #root.multi-panel > #reset,
 #root.multi-panel > #reset > .xulsword {
   height: 100%;
   width: 100%;
+}
+#root.ownsDocument {
+  height: unset;
 }
 #root > #reset,
 #root > #reset > .xulsword,
@@ -71,14 +71,15 @@ phone) is that column inset itself, which is why no heading adds its own. */
   overflow-y: hidden;
 }
 
-/* viewport height is iframe height (with closed controls)
-minus 10px(bottom-margin) - 4px(safety margin) -
-2px(tab-top-border) */
 #root .viewport {
-  min-height: calc(var(--min-height) - 16px);
   margin: 0 10px 10px 10px;
 }
-#root.multi-panel .viewport {
+/* Set iframe viewport height and thus iframe height (with closed controls).
+Hosted viewport height */
+#root.ownsDocument .viewport {
+  min-height: calc(var(--min-height) - 16px);
+}
+#root.ownsDocument.multi-panel .viewport {
   height: calc(var(--min-height) - 16px);
 }
 

@@ -8,7 +8,7 @@ import Popup from '../popup/popup.tsx';
 import * as H from '../popup/popupParentH.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { getRootElement, getRootNode } from '../../rootNode.ts';
+import { getRootElement, getRootNode, getShadowHost } from '../../rootNode.ts';
 import log from '../../log.ts';
 import { clearPending } from '../../common.ts';
 import { addClass, topHandle } from '../libxul/xul.tsx';
@@ -64,6 +64,8 @@ type ViewportState = PopupParentState &
   RenderPromiseState & {
     reset: number;
   };
+
+const shadowHostHeight: { multi?: string; single?: string } = {};
 
 export default class Viewport
   extends React.Component<ViewportProps, ViewportState>
@@ -141,11 +143,13 @@ export default class Viewport
     clearPending(this, ['popupDelayTO', 'popupUnblockTO']);
     this.tabrowObserver.disconnect();
     getRootElement()?.classList.remove('multi-panel');
+    this.syncShadowHost(false);
   }
 
   // Mirrors DOM state that CSS would otherwise need :has() to react to:
   // - #root.multi-panel follows the .textarea element's own multi/single
-  //   panel class (computed in render()).
+  //   panel class (computed in render()). The Web App's shadow host follows
+  //   it too (see syncShadowHost()).
   // - .viewport.has-audio follows whether any .audio-icon was rendered
   //   anywhere in the viewport (panels or the chooser).
   // - .nb.popup-open marks whichever notebox (if any) the open note popup
@@ -158,6 +162,7 @@ export default class Viewport
     if (!viewportEl) return;
     const isMultiPanel = !!viewportEl.querySelector('.textarea.multi-panel');
     getRootElement()?.classList.toggle('multi-panel', isMultiPanel);
+    this.syncShadowHost(isMultiPanel);
     viewportEl.classList.toggle(
       'has-audio',
       !!viewportEl.querySelector('.audio-icon'),
@@ -167,6 +172,26 @@ export default class Viewport
       .forEach((nb) => nb.classList.remove('popup-open'));
     this.state.popupParent?.closest('.nb')?.classList.add('popup-open');
     this.syncTabrow();
+  }
+
+  // The multi-column web app height is fixed and user selectable. But single
+  // column height varies according to textual content.
+  syncShadowHost(isMultiPanel: boolean) {
+    const host = getShadowHost();
+    if (!(host instanceof HTMLElement)) return;
+    if (host.classList.contains('multi-panel') === isMultiPanel) return;
+    // Resizability may itself depend on the multi-panel class.
+    const isResizable = () =>
+      ['vertical', 'both'].includes(getComputedStyle(host).resize);
+    const wasResizable = isResizable();
+    host.classList.toggle('multi-panel', isMultiPanel);
+    if (!wasResizable && !isResizable()) return;
+    const { style } = host;
+    const [from, to] = isMultiPanel
+      ? (['single', 'multi'] as const)
+      : (['multi', 'single'] as const);
+    shadowHostHeight[from] = style.height;
+    style.height = shadowHostHeight[to] ?? '';
   }
 
   // Web App only: hide the tabrow when none of its tabs are visible. Tabs may

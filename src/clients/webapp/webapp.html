@@ -11,7 +11,7 @@
     <link rel="stylesheet" media="all" href="/src/clients/webapp/test.css" />
     <% if (htmlWebpackPlugin.options.drupalSettingsProxy) { %>
     <script>
-      // Retrieve drupalSettings using either the third-party URL (api) or a 
+      // Retrieve drupalSettings using either the third-party URL (api) or a
       // host page URL (ibt) depending on this Bible Browser's context.
       document.write(
         '<script src="/drupalSettings/' +
@@ -36,6 +36,11 @@
       }
       html.ownsDocument {
         --loader-url: url('/src/clients/images/loader.gif');
+      }
+      #root.multi-panel {
+        height: var(--min-height);
+        resize: vertical;
+        overflow: auto;
       }
     </style>
   </head>
