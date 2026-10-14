@@ -104,13 +104,12 @@ export function popupParentHandler(
       const index = Number(atext?.element?.dataset.index) || 0;
       const atr = ((atext && atextRefs?.[index].current) ||
         null) as PopupParent | null;
-      // The notes of a minimized notebox cannot be seen, so they all open in
-      // popups.
-      const place: PlaceType | undefined = atext?.element?.classList.contains(
-        'noteboxMinimized',
-      )
-        ? undefined
-        : (atr && isPinned && isPinned[index] && atr.state.pin.place) || pl;
+      // The notes of a minimized notebox cannot be seen, and the notebox is
+      // often offscreen in the web app, so these all open in popups.
+      const place: PlaceType | undefined =
+        Build.isWebApp || atext?.element?.classList.contains('noteboxMinimized')
+          ? undefined
+          : (atr && isPinned && isPinned[index] && atr.state.pin.place) || pl;
       const show: ShowType | undefined =
         (atr && isPinned && isPinned[index] && atr.state.pin.show) || sh;
       let openPopup = false;

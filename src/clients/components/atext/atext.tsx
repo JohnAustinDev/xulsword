@@ -619,10 +619,10 @@ class Atext
     bbDragEnd(e, value);
   }
 
-  // Where each type of note is shown. The notes of a minimized notebox cannot
-  // be seen, so they are all shown in popups.
+  // Where each type of note is shown. The web app's notebox is often
+  // offscreen, so its notes are always shown in popups.
   notePlace(place: PlaceType): PlaceType {
-    return this.noteboxMinimized()
+    return Build.isWebApp || this.noteboxMinimized()
       ? { footnotes: 'popup', crossrefs: 'popup', usernotes: 'popup' }
       : place;
   }

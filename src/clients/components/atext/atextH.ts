@@ -77,6 +77,8 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
       switch (targ.type) {
         case 'cr':
         case 'crtwisty':
+          // A web app cross-reference opens a popup, not its notebox row.
+          if (Build.isWebApp && targ.type === 'cr') break;
           if (!popupParent && module) {
             let row;
             let id;

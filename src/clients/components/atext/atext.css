@@ -197,17 +197,6 @@ no notes. It keeps its space, so that page layout doesn't change when it hides. 
 .atext.nb-popup-open .nb {
   position: unset; /* required for popup placement to work! */
 }
-@media (max-width: 767px) {
-  /* Dictionary nb must have max-width for mobile multi-panel
-  or long dict entries will cause the entire display to skew.
-  50vw works because multi-panel is always 2 on mobile. */
-  .multi-panel .atext .nb {
-    max-width: calc(50vw - 22px);
-  }
-  .atext .dictlist {
-    padding: 0;
-  }
-}
 
 /* Fallback for browsers that can't do the moving bar below. */
 .nowreading {
