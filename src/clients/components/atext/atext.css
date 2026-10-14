@@ -194,7 +194,7 @@ no notes. It keeps its space, so that page layout doesn't change when it hides. 
   border-radius: 8px;
   padding: 0px 5px 0px 5px;
 }
-.atext .nb.popup-open {
+.atext.nb-popup-open .nb {
   position: unset; /* required for popup placement to work! */
 }
 @media (max-width: 767px) {

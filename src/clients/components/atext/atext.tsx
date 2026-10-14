@@ -139,6 +139,9 @@ export const stateWinPrefs = {
   pin: null as PinPropsType | null,
   versePerLine: false as boolean,
   maxNoteBoxHeight: null as number | null,
+  // A notebox which was opened by its maximizer button may take its maximum
+  // height, rather than its noteBoxHeight pref, until its bar is moved.
+  noteBoxMaximized: false as boolean,
   variants: undefined as typeof S.prefs.global.variants,
 };
 
@@ -172,6 +175,26 @@ function setSbHeight(sbe: HTMLElement) {
   const height = `${sbe.clientHeight}px`;
   if (sbe.style.getPropertyValue('--sb-height') !== height)
     sbe.style.setProperty('--sb-height', height);
+}
+
+// The height a notebox container must have for all of its notes to show
+// without scrolling, or 0 if its notes are not showing (it is minimized or
+// empty).
+function noteboxNaturalHeight(nbe: HTMLElement): number {
+  const nbc = nbe.parentElement;
+  const first = nbe.firstElementChild;
+  const last = nbe.lastElementChild;
+  if (!nbc || !first || !last || !nbe.getClientRects().length) return 0;
+  const notes =
+    last.getBoundingClientRect().bottom - first.getBoundingClientRect().top;
+  // Everything else in the container: its bar, the notebox border etc.
+  const border = nbe.offsetHeight - nbe.clientHeight;
+  const other =
+    nbc.getBoundingClientRect().height -
+    nbe.getBoundingClientRect().height +
+    border;
+  // (the extra pixel keeps sub-pixel rounding from leaving a scrollbar)
+  return Math.ceil(notes + other) + 1;
 }
 
 // XUL Atext
@@ -277,7 +300,7 @@ class Atext
   onUpdate() {
     const { props, state, renderPromise } = this;
     const { columns, isPinned, panelIndex, show, xulswordState } = props;
-    const { pin, maxNoteBoxHeight, versePerLine } = state;
+    const { pin, versePerLine, noteBoxMaximized } = state;
 
     // Decide what needs to be updated...
     // pinProps are the currently active props according to the panel's
@@ -455,15 +478,10 @@ class Atext
         }
       }
     }
-    if (atext && sbe) {
-      // Height has fixed maximum because single panel height will resize
-      // to accomodate any notebox height!
-      const maxHeight = Math.min(
-        600,
-        Math.round((sbe.parentElement?.offsetHeight ?? 200) / 2.5),
-      );
-      if (Math.abs(maxHeight - (maxNoteBoxHeight ?? 0)) > 2)
-        newState.maxNoteBoxHeight = maxHeight;
+    const maxHeight = this.noteboxMaxHeight();
+    if (maxHeight !== null) newState.maxNoteBoxHeight = maxHeight;
+    if (noteBoxMaximized && !this.resizesToFit()) {
+      newState.noteBoxMaximized = false;
     }
     const d = diff(state, newState);
     if (Object.keys(newState).length && d) {
@@ -531,6 +549,45 @@ class Atext
     return !!module && G.Tab[module].type === C.DICTIONARY;
   }
 
+  // A single column panel whose scripture box does not scroll will resize to
+  // accomodate all its text, and any notebox height.
+  resizesToFit(): boolean {
+    const sbe = this.sbref.current;
+    return (
+      !!sbe &&
+      this.props.columns === 1 &&
+      window.getComputedStyle(sbe).overflowY === 'hidden'
+    );
+  }
+
+  // The maximum height of the notebox, or null if it has not changed. A
+  // multi-column panel's notebox may be 40% of the panel's height. A single
+  // column panel's notebox may be as high as its notes, so that they need not
+  // scroll.
+  noteboxMaxHeight(): number | null {
+    const { columns } = this.props;
+    const { maxNoteBoxHeight } = this.state;
+    const sbe = this.sbref.current;
+    const nbe = this.nbref.current;
+    if (!sbe) return null;
+    let maxHeight = Math.round((sbe.parentElement?.offsetHeight ?? 200) / 2.5);
+    let grow = 2;
+    if (columns === 1) {
+      const natural =
+        nbe && !this.isDictionary() ? noteboxNaturalHeight(nbe) : 0;
+      if (natural) {
+        maxHeight = this.resizesToFit()
+          ? natural
+          : Math.min(natural, maxHeight);
+        grow = 0;
+      } else {
+        maxHeight = Math.min(600, maxHeight);
+      }
+    }
+    const change = maxHeight - (maxNoteBoxHeight ?? 0);
+    return change > grow || change < -2 ? maxHeight : null;
+  }
+
   // The notebox of a dictionary is its key list. It does not follow its
   // panel's minimizeNoteBox pref: it is open whenever the dictionary's tab is
   // selected, and from then on it is minimized by local state.
@@ -555,6 +612,7 @@ class Atext
   // minimizes it. The parent does that for other types of panel, by pref.
   noteboxDragEnd(e: PointerEvent, value: DragSizerVal) {
     const { bbDragEnd } = this.props;
+    if (this.state.noteBoxMaximized) this.setState({ noteBoxMaximized: false });
     if (this.isDictionary()) {
       this.minimizeDictNotebox(value.sizerPos <= C.UI.Atext.bbBottomMargin);
     }
@@ -900,6 +958,8 @@ class Atext
         }
         this.onPageScroll();
       }
+      const maxNoteBoxHeight = this.noteboxMaxHeight();
+      if (maxNoteBoxHeight !== null) this.setState({ maxNoteBoxHeight });
     }
   }
 
@@ -1046,7 +1106,8 @@ class Atext
 
   render() {
     const { props, state, renderPromise, loadingRef, handler } = this;
-    const { maxNoteBoxHeight, versePerLine, variants } = state;
+    const { maxNoteBoxHeight, noteBoxMaximized, versePerLine, variants } =
+      state;
     const {
       columns,
       isPinned,
@@ -1073,7 +1134,10 @@ class Atext
     // Notebox height
     const doMinimizeNB = this.noteboxMinimized();
     let realNoteBoxHeight = noteBoxHeight;
-    if (maxNoteBoxHeight && realNoteBoxHeight > maxNoteBoxHeight)
+    if (
+      maxNoteBoxHeight &&
+      (noteBoxMaximized || realNoteBoxHeight > maxNoteBoxHeight)
+    )
       realNoteBoxHeight = maxNoteBoxHeight;
 
     const moduleAlwaysVersePerLine =

@@ -152,9 +152,6 @@ export default class Viewport
   //   it too (see syncShadowHost()).
   // - .viewport.has-audio follows whether any .audio-icon was rendered
   //   anywhere in the viewport (panels or the chooser).
-  // - .nb.popup-open marks whichever notebox (if any) the open note popup
-  //   portal is currently nested in, since the portal target is an
-  //   imperatively-tracked hover target, not a render-time prop.
   // - .tabrow.no-visible-tabs and .viewport.no-visible-tabs (see
   //   syncTabrow()).
   syncClasses() {
@@ -167,10 +164,6 @@ export default class Viewport
       'has-audio',
       !!viewportEl.querySelector('.audio-icon'),
     );
-    viewportEl
-      .querySelectorAll('.nb.popup-open')
-      .forEach((nb) => nb.classList.remove('popup-open'));
-    this.state.popupParent?.closest('.nb')?.classList.add('popup-open');
     this.syncTabrow();
   }
 
@@ -526,6 +519,13 @@ export default class Viewport
       return null;
     });
 
+    // The panel (if any) whose notebox the open popup is nested in. Its atext
+    // is marked during render, so that the class is there before the popup
+    // mounts and positions itself.
+    const nbPopupPanel = popupParent?.closest('.nb')
+      ? Number(popupParent.closest<HTMLElement>('.atext')?.dataset.index ?? -1)
+      : -1;
+
     const panelElements = panels.map((panel: string | null, i: number) => {
       const panelWidth = panelWidths[i];
       const column = columns[i];
@@ -533,6 +533,7 @@ export default class Viewport
         return (
           <Atext
             key={[i, reset].join('.')}
+            className={i === nbPopupPanel ? 'nb-popup-open' : undefined}
             style={{
               flexGrow: `${panelWidths[i]}`,
               flexShrink: `${numPanels - panelWidth}`,

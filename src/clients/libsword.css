@@ -610,11 +610,6 @@ span.foreign {
   text-decoration: underline;
   cursor: pointer;
 }
-.sr:before,
-.sr:after {
-  /* ISV uses inline sr without surrounding whitespace */
-  content: ' ';
-}
 .dtl,
 .dt {
   text-decoration: underline;

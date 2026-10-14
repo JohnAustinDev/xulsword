@@ -213,6 +213,12 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           // (viewportParentH handles the other types of panel, by pref)
           if (this.isDictionary()) {
             this.minimizeDictNotebox(!this.noteboxMinimized());
+          } else {
+            // The notebox of a panel which resizes to fit opens to its
+            // maximum height.
+            this.setState({
+              noteBoxMaximized: this.noteboxMinimized() && this.resizesToFit(),
+            });
           }
           break;
 
