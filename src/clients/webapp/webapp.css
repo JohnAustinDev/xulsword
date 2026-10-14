@@ -76,7 +76,7 @@ phone) is that column inset itself, which is why no heading adds its own. */
 }
 /* Set iframe viewport height and thus iframe height (with closed controls).
 Hosted viewport height */
-#root.ownsDocument .viewport {
+#root .viewport {
   min-height: calc(var(--min-height) - 16px);
 }
 #root.ownsDocument.multi-panel .viewport {

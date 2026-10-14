@@ -65,8 +65,6 @@ type ViewportState = PopupParentState &
     reset: number;
   };
 
-const shadowHostHeight: { multi?: string; single?: string } = {};
-
 export default class Viewport
   extends React.Component<ViewportProps, ViewportState>
   implements PopupParent
@@ -89,6 +87,10 @@ export default class Viewport
 
   tabrowObserver: MutationObserver;
 
+  shadowHostObserver: MutationObserver;
+
+  shadowHostResizeEnd: (() => void) | null;
+
   constructor(props: ViewportProps) {
     super(props);
 
@@ -107,6 +109,10 @@ export default class Viewport
     this.popupRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
     this.tabrowObserver = new MutationObserver(() => this.syncTabrow());
+    this.shadowHostObserver = new MutationObserver(() =>
+      this.waitShadowHostResizeEnd(),
+    );
+    this.shadowHostResizeEnd = null;
   }
 
   componentDidMount() {
@@ -120,6 +126,14 @@ export default class Viewport
         attributes: true,
         attributeFilter: ['class', 'style'],
       });
+    }
+    const host = getShadowHost();
+    if (host instanceof HTMLElement) {
+      this.shadowHostObserver.observe(host, {
+        attributes: true,
+        attributeFilter: ['style'],
+      });
+      this.syncShadowHostHeight();
     }
     this.syncClasses();
     forgetMinimizedDicts(this.props.panels);
@@ -142,14 +156,16 @@ export default class Viewport
   componentWillUnmount() {
     clearPending(this, ['popupDelayTO', 'popupUnblockTO']);
     this.tabrowObserver.disconnect();
+    this.shadowHostObserver.disconnect();
+    this.removeShadowHostResizeEnd();
     getRootElement()?.classList.remove('multi-panel');
-    this.syncShadowHost(false);
+    getShadowHost()?.classList.remove('multi-panel');
   }
 
   // Mirrors DOM state that CSS would otherwise need :has() to react to:
   // - #root.multi-panel follows the .textarea element's own multi/single
   //   panel class (computed in render()). The Web App's shadow host follows
-  //   it too (see syncShadowHost()).
+  //   it too, so host page CSS can style it.
   // - .viewport.has-audio follows whether any .audio-icon was rendered
   //   anywhere in the viewport (panels or the chooser).
   // - .tabrow.no-visible-tabs and .viewport.no-visible-tabs (see
@@ -159,7 +175,7 @@ export default class Viewport
     if (!viewportEl) return;
     const isMultiPanel = !!viewportEl.querySelector('.textarea.multi-panel');
     getRootElement()?.classList.toggle('multi-panel', isMultiPanel);
-    this.syncShadowHost(isMultiPanel);
+    getShadowHost()?.classList.toggle('multi-panel', isMultiPanel);
     viewportEl.classList.toggle(
       'has-audio',
       !!viewportEl.querySelector('.audio-icon'),
@@ -167,24 +183,63 @@ export default class Viewport
     this.syncTabrow();
   }
 
-  // The multi-column web app height is fixed and user selectable. But single
-  // column height varies according to textual content.
-  syncShadowHost(isMultiPanel: boolean) {
+  // Web App only: when the user resizes the shadow host (the host page may
+  // give it CSS resize), the browser sets an explicit height on it. That
+  // height is moved to the host's --min-height variable (see head.css), but
+  // never below the host's --min-height-floor.
+  syncShadowHostHeight() {
     const host = getShadowHost();
     if (!(host instanceof HTMLElement)) return;
-    if (host.classList.contains('multi-panel') === isMultiPanel) return;
-    // Resizability may itself depend on the multi-panel class.
-    const isResizable = () =>
-      ['vertical', 'both'].includes(getComputedStyle(host).resize);
-    const wasResizable = isResizable();
-    host.classList.toggle('multi-panel', isMultiPanel);
-    if (!wasResizable && !isResizable()) return;
     const { style } = host;
-    const [from, to] = isMultiPanel
-      ? (['single', 'multi'] as const)
-      : (['multi', 'single'] as const);
-    shadowHostHeight[from] = style.height;
-    style.height = shadowHostHeight[to] ?? '';
+    if (!style.height) return;
+    const resizedHeight = host.getBoundingClientRect().height;
+    style.removeProperty('height');
+    const delta = resizedHeight - host.getBoundingClientRect().height;
+    // Resolve the variables (which may be CSS expressions) to px. An unset
+    // variable resolves to 0.
+    const probe = document.createElement('div');
+    getRootNode().appendChild(probe);
+    const resolve = (variable: string) => {
+      probe.style.cssText = `position: absolute; visibility: hidden; height: var(${variable});`;
+      return probe.getBoundingClientRect().height;
+    };
+    const minHeight = resolve('--min-height');
+    const floor = resolve('--min-height-floor');
+    probe.remove();
+    style.setProperty(
+      '--min-height',
+      `${Math.max(floor, minHeight + delta)}px`,
+    );
+  }
+
+  // While the user drags the resize handle, the browser keeps changing the
+  // host's explicit height, so syncShadowHostHeight() waits until the drag
+  // ends rather than relaying out the Web App at every pointer move.
+  waitShadowHostResizeEnd() {
+    const host = getShadowHost();
+    if (
+      !(host instanceof HTMLElement) ||
+      !host.style.height ||
+      this.shadowHostResizeEnd
+    )
+      return;
+    const resizeEnd = () => {
+      this.removeShadowHostResizeEnd();
+      this.syncShadowHostHeight();
+    };
+    this.shadowHostResizeEnd = resizeEnd;
+    ['pointerup', 'mouseup'].forEach((type) =>
+      window.addEventListener(type, resizeEnd, true),
+    );
+  }
+
+  removeShadowHostResizeEnd() {
+    const { shadowHostResizeEnd } = this;
+    if (!shadowHostResizeEnd) return;
+    ['pointerup', 'mouseup'].forEach((type) =>
+      window.removeEventListener(type, shadowHostResizeEnd, true),
+    );
+    this.shadowHostResizeEnd = null;
   }
 
   // Web App only: hide the tabrow when none of its tabs are visible. Tabs may

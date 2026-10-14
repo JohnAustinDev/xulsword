@@ -21,7 +21,8 @@ html.ownsDocument.auto-height body {
   overflow: clip;
 }
 
-/* fitToContent is set on #root by controller.tsx (used by webapp?) */
+/* fitToContent is set on #root by controller.tsx (set by some Electron
+windows) */
 html.ownsDocument:has(#root.fitToContent),
 html.ownsDocument:has(#root.fitToContent) body {
   width: fit-content;
@@ -35,12 +36,15 @@ html.ownsDocument *:not(#root, :has(#root)) {
 #root {
   /* This is the minimum height a hosted webapp will take. The 290px is the
   webpage header, so the webapp fills the rest of the page. 470px fills
-  a 600px tablet height (basic minimum in the wild) with header scrolled away. */
-  --min-height: max(470px, calc(100vh - 290px));
+  a 600px tablet height (basic minimum in the wild) with header scrolled away.
+  A user resized height is never less than --min-height-floor (see
+  viewport.tsx syncShadowHostHeight()). */
+  --min-height-floor: 470px;
+  --min-height: max(var(--min-height-floor), calc(100vh - 290px));
 }
 @media (max-width: 767px) {
   #root {
-    --min-height: max(470px, calc(100vh - 190px));
+    --min-height: max(var(--min-height-floor), calc(100vh - 190px));
   }
 }
 html.ownsDocument #root {
