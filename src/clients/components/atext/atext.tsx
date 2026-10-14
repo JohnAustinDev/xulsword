@@ -167,6 +167,12 @@ export type AtextStateType = typeof stateWinPrefs &
   typeof notStateWinPrefs &
   RenderPromiseState;
 
+// The scripture box height of each panel whose Atext was unmounted while
+// resizing to fit its text. A location change may re-mount the viewport, and
+// until the new text arrives the new scripture box keeps this height, rather
+// than collapsing and then growing again.
+const unmountedSbHeights: Array<number | undefined> = [];
+
 let ScrollOneTimeID = '';
 
 // Publish the scripture box height to CSS, which uses it to limit the height
@@ -253,9 +259,16 @@ class Atext
   }
 
   componentDidMount() {
-    const { renderPromise, resizeObserver, sbref } = this;
-    if (sbref.current) resizeObserver.observe(sbref.current);
+    const { props, renderPromise, resizeObserver, sbref } = this;
+    const sbe = sbref.current;
+    if (sbe) resizeObserver.observe(sbe);
     if (!renderPromise.waiting()) this.onUpdate();
+    // Keep the previous scripture box height until text is written.
+    const height = unmountedSbHeights[props.panelIndex];
+    unmountedSbHeights[props.panelIndex] = undefined;
+    if (sbe && height && !sbe.dataset.libsword && this.resizesToFit()) {
+      sbe.style.minHeight = `${height}px`;
+    }
     renderPromise.dispatch();
   }
 
@@ -280,8 +293,14 @@ class Atext
   }
 
   componentWillUnmount() {
-    const { resizeObserver, sbref } = this;
-    if (sbref.current) resizeObserver.unobserve(sbref.current);
+    const { props, resizeObserver, sbref } = this;
+    const sbe = sbref.current;
+    if (sbe) {
+      resizeObserver.unobserve(sbe);
+      if (this.resizesToFit()) {
+        unmountedSbHeights[props.panelIndex] = sbe.clientHeight;
+      }
+    }
     clearPending(this, 'wheelScrollTO');
   }
 
@@ -712,8 +731,9 @@ class Atext
           sb += `<div class="ft">${ftlinks}</div>`;
         const pft = sbe.nextElementSibling as HTMLElement | null;
         if (module && pft?.classList.contains('ft')) sanitizeHTML(pft, ftlinks);
-        // Write text to scripture box
+        // Write text to scripture box, which then takes its own height
         sanitizeHTML(sbe, sb);
+        sbe.style.removeProperty('min-height');
         // Insert audio timing break spans if needed
         if (module && audio?.open && !isPinned) {
           const { file } = audio;
