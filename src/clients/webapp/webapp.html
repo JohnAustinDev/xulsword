@@ -37,7 +37,7 @@
       html.ownsDocument {
         --loader-url: url('/src/clients/images/loader.gif');
       }
-      #root.multi-panel {
+      html:not(.ownsDocument) #root.multi-panel {
         height: var(--min-height);
         resize: vertical;
         overflow: auto;
