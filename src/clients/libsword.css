@@ -552,6 +552,10 @@ span.foreign {
 .sb.has-sync .hl {
   color: unset;
 }
+/* Timing makes verse numbers clickable (see audioTiming) */
+.sb.has-sync .versenum {
+  cursor: pointer;
+}
 .cr,
 .fn,
 .un,

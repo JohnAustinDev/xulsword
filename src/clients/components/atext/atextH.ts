@@ -20,7 +20,7 @@ import {
 import log from '../../log.ts';
 import { getElementData } from '../../htmlData.ts';
 import { getRootNode, getSelection } from '../../rootNode.ts';
-import { onClick as onVerseSyncClick } from '../../audioTiming.ts';
+import { onVersenumClick } from '../../audioTiming.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { aTextWheelScroll, getScrollVerse } from './zversekey.ts';
 
@@ -225,12 +225,9 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           break;
 
         case 'versenum': {
-          // Skip any title read at the start of the verse (see audioTiming).
-          const sync: HTMLElement | null =
-            elem.parentElement?.querySelector(
-              '.verse-sync:not([data-id^="title_"])',
-            ) ?? null;
-          if (sync) onVerseSyncClick(sync);
+          const { audio, isPinned } = props;
+          if (module && audio.open && !isPinned)
+            onVersenumClick(elem, module, audio);
           break;
         }
 

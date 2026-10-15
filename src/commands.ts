@@ -209,13 +209,18 @@ export function setXulswordPanels(
   return result;
 }
 
+// Opens the audio player to play a file, and goes to its location unless
+// keepLocation is true (as when a multi-column page already shows it).
 export async function playAudio(
   file: AudioPlayerType['file'],
   defaults?: AudioPlayerType['defaults'],
+  keepLocation = false,
 ) {
   const audio: Partial<typeof S.prefs.xulsword.audio> = {};
   if (file) {
-    if (
+    if (keepLocation) {
+      // The location does not change.
+    } else if (
       'book' in file &&
       Object.values(C.SupportedBooks).some((bg: any) => bg.includes(file.book))
     ) {

@@ -15,6 +15,7 @@ import {
 } from '../../common.ts';
 import { getRootNode } from '../../rootNode.ts';
 import log from '../../log.ts';
+import { pagesShowChapter } from '../../audioTiming.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
 import { genbookChange } from '../atext/ztext.ts';
 
@@ -472,10 +473,18 @@ export default function xulswordHandler(
                 sels.sort((a) =>
                   a.conf.module === defaults[swordModule] ? -1 : 0,
                 );
+              // The location stays where a multi-column page already shows
+              // the next chapter (otherwise the page turns when the audio
+              // plays off its end; see audioTiming).
               void playAudio(
                 // null closes the player
                 sels[0]?.selection ?? null,
                 defaults,
+                !!selection &&
+                  'book' in selection &&
+                  !!selection.book &&
+                  !!selection.chapter &&
+                  pagesShowChapter(selection.book, selection.chapter),
               );
             }
           }

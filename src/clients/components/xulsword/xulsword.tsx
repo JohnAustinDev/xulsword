@@ -25,6 +25,7 @@ import Textbox from '../libxul/textbox.tsx';
 import SelectOR from '../libxul/selectOR.tsx';
 import SelectVK from '../libxul/selectVK.tsx';
 import AudioPlayer from '../audioPlayer/audioPlayer.tsx';
+import { pageFollowedAudio } from '../../audioTiming.ts';
 import Viewport from '../viewport/viewport.tsx';
 import viewportParentH, {
   closeMenupopups,
@@ -177,17 +178,24 @@ export default class Xulsword
     }
 
     // Update audio player if it's open and the context chapter has
-    // changed.
+    // changed. A multi-column page may show other chapters than that of its
+    // location, so the audio's chapter may differ from the location's (until
+    // the location changes to another chapter, other than by turning the page
+    // to follow the audio).
     if (audio && location) {
       const a = clone(audio);
       const { open, file } = a;
       if (open && file) {
         if ('book' in file) {
           const { book, chapter } = file;
+          const { location: prevLocation } = prevState;
           if (
             book &&
             chapter &&
-            (book !== location?.book || chapter !== location.chapter)
+            (book !== location?.book || chapter !== location.chapter) &&
+            (location.book !== prevLocation?.book ||
+              location.chapter !== prevLocation.chapter) &&
+            !pageFollowedAudio(location)
           ) {
             file.book = location.book;
             file.chapter = location.chapter;

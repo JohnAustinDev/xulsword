@@ -1,10 +1,26 @@
-import { clone, ofClass } from '../common.ts';
+import { clone, diff, ofClass } from '../common.ts';
 import S from '../defaultPrefs.ts';
 import C from '../constant.ts';
+import { playAudio } from '../commands.ts';
+import { audioSelections, doUntilDone } from './common.ts';
+import { G } from './G.ts';
+import { getElementData } from './htmlData.ts';
 import log from './log.ts';
 import { getRootNode } from './rootNode.ts';
+import {
+  columnIsShowing,
+  columnMetrics,
+  columnOf,
+  elementIsShowing,
+  firstColumn,
+  scrollPage,
+} from './components/atext/zcolumns.ts';
+import {
+  findVerseElement,
+  getScrollVerse,
+} from './components/atext/zversekey.ts';
 
-import type { AudioPlayerType } from '../type.ts';
+import type { AudioPlayerType, LocationVKType } from '../type.ts';
 import type { XulswordState } from './components/xulsword/xulsword.tsx';
 
 type TimingEntry = {
@@ -38,6 +54,14 @@ const Highlight = {
 
 const CurrentActiveIds = new Set<string>();
 
+// A clicked verse to cue the audio to, once the audio and timing of its
+// chapter have loaded (see onVersenumClick).
+let PendingCue: { book: string; chapter: number; verse: number } | null = null;
+
+// The location to which a page last turned to follow the audio (see
+// pageFollowedAudio).
+let FollowedLocation: LocationVKType | null = null;
+
 // Timing file ids of titles that are read aloud: a prefix naming the SFM
 // marker of the title, followed by the title's order among those of its kind
 // in the text (whatever their levels). So s1, s2 etc. are the first, second
@@ -63,6 +87,7 @@ function doHighlight(
   el: HTMLElement,
   item: TimingEntry,
   currentTime: number,
+  file: AudioPlayerType['file'],
   xulswordState: React.Component<any, XulswordState>['setState'],
 ) {
   if (Highlight.verse) {
@@ -81,30 +106,32 @@ function doHighlight(
         },
         { verse: 999, lastverse: 0 },
       );
-    const atext = ofClass(['atext'], el);
-    if (atext && lastverse) {
-      const { verse: vs } = atext.element.dataset;
-      const v = Number(vs);
-      // Compare it to the selected verse of the atext element.
-      if (verse && verse !== v) {
-        // Scrolling with the current UI is not nice. Until the player can
-        // be a static dispay, it's possible to block the user where audio
-        // cannot be stopped! Also the scrolling causes activated input
-        // elements to instantly deactivate, annoyingly.
-        xulswordState((prevState) => {
-          const { location: s } = prevState;
-          const selection = clone(s);
-          if (selection) {
-            selection.verse = verse;
-            selection.lastverse = lastverse;
-            return {
-              selection,
-              scroll: null,
-            };
+    if (ofClass(['atext'], el) && verse && lastverse) {
+      // Scrolling with the current UI is not nice. Until the player can
+      // be a static dispay, it's possible to block the user where audio
+      // cannot be stopped! Also the scrolling causes activated input
+      // elements to instantly deactivate, annoyingly.
+      xulswordState((prevState) => {
+        const { location, selection: prevSelection } = prevState;
+        const selection = clone(location);
+        if (selection) {
+          // A multi-column page may show the audio's chapter while the
+          // location is another chapter.
+          if (file && 'book' in file && file.book && file.chapter) {
+            selection.book = file.book;
+            selection.chapter = file.chapter;
+            selection.v11n = G.Tab[file.swordModule]?.v11n || null;
           }
-          return null;
-        });
-      }
+          selection.verse = verse;
+          selection.lastverse = lastverse;
+          if (!diff(prevSelection, selection)) return null;
+          return {
+            selection,
+            scroll: null,
+          };
+        }
+        return null;
+      });
     }
   }
   if (Highlight.phrase) el.classList.add('nowreading');
@@ -150,6 +177,23 @@ export function onTimeUpdate(
   const { current: player } = audioDOM;
   if (timing && player) {
     const { times } = timing;
+
+    // Cue the audio to a clicked verse of its chapter (see onVersenumClick).
+    if (
+      PendingCue &&
+      file &&
+      'book' in file &&
+      file.book === PendingCue.book &&
+      file.chapter === PendingCue.chapter
+    ) {
+      const start = verseStart(times, PendingCue.verse);
+      PendingCue = null;
+      if (start !== null) {
+        player.currentTime = start;
+        return;
+      }
+    }
+
     const { currentTime } = player;
 
     // Find any item(s) matching the current playback time
@@ -159,6 +203,7 @@ export function onTimeUpdate(
 
     // Only update the DOM if the active verse has actually changed
     if (activeItems.length) {
+      const prevIds = Array.from(CurrentActiveIds);
       // Clear previous highlights
       CurrentActiveIds.forEach((id) => {
         if (!activeItems.find((i) => i.id === id)) {
@@ -172,12 +217,16 @@ export function onTimeUpdate(
           ? S.prefs.xulsword.audio.tracking
           : tracking;
       if (trackingIsOn) {
+        const newIds = activeItems
+          .map((i) => i.id)
+          .filter((id) => !prevIds.includes(id));
+        if (newIds.length) followPage(prevIds, newIds, xulswordState);
         activeItems.forEach((item) => {
           getRootNode()
             .querySelectorAll(`div.sb span[data-id~="${item.id}"]`)
             .forEach((e) => {
               const el = e as HTMLElement;
-              doHighlight(el, item, currentTime, xulswordState);
+              doHighlight(el, item, currentTime, file, xulswordState);
               CurrentActiveIds.add(item.id);
               // Scrolling with the current UI is not nice. Until the player can
               // be a static dispay, it's otherwise possible to block the user
@@ -196,7 +245,7 @@ export function onTimeUpdate(
   }
 }
 
-export function onClick(elem: HTMLElement) {
+function onClick(elem: HTMLElement) {
   const player: HTMLAudioElement | undefined = getRootNode()
     .getElementById('player')
     ?.getElementsByTagName('audio')[0];
@@ -209,7 +258,174 @@ export function onClick(elem: HTMLElement) {
   }
 }
 
-export function addTimingSpans(
+// Cues the open audio to the verse of a clicked verse number of a module's
+// text. A multi-column panel may show more than one chapter, but only the
+// chapter of the audio has timing spans. So a verse of another chapter first
+// loads that chapter's audio, and is cued once its timing is available (see
+// onTimeUpdate).
+export function onVersenumClick(
+  versenum: HTMLElement,
+  module: string,
+  audio: AudioPlayerType,
+) {
+  const { file } = audio;
+  const vs = ofClass(['vs'], versenum)?.element;
+  const { location } = vs ? getElementData(vs) : {};
+  if (
+    file &&
+    'book' in file &&
+    location &&
+    (location.book !== file.book || location.chapter !== file.chapter)
+  ) {
+    if (!showsAudio(module, file)) return;
+    const { audioModule } = file;
+    const { book, chapter, verse } = location;
+    doUntilDone((rp) => {
+      const sels = audioSelections({ swordModule: module, book, chapter }, rp);
+      if (!rp?.waiting()) {
+        // Keep playing the same audio code, if it has the chapter.
+        const sel = sels.find((s) => s.conf.module === audioModule) ?? sels[0];
+        if (sel) {
+          PendingCue = { book, chapter, verse: verse ?? 1 };
+          // The clicked verse is showing, so the location does not change.
+          void playAudio(sel.selection, audio.defaults, true);
+        }
+      }
+    });
+    return;
+  }
+  // Skip any title read at the start of the verse.
+  const sync: HTMLElement | null =
+    versenum.parentElement?.querySelector(
+      '.verse-sync:not([data-id^="title_"])',
+    ) ?? null;
+  if (sync) {
+    PendingCue = null;
+    onClick(sync);
+  }
+}
+
+// Returns the start time of the first timing entry of a verse, or null if
+// the timing has none.
+function verseStart(times: TimingEntry[], verse: number): number | null {
+  const entry = times.find((t) => {
+    if (parseTitleID(t.id)) return false;
+    const [v1, v2] = verseRange(parseTimingID(t.id).zoneid);
+    return verse >= v1 && verse <= v2;
+  });
+  return entry ? entry.start : null;
+}
+
+// Returns true if the text of a module shows the timing of an audio file.
+function showsAudio(
+  module: string,
+  file: NonNullable<AudioPlayerType['file']>,
+): boolean {
+  const { audioModule } = file;
+  return (
+    !!audioModule &&
+    module in G.Tab &&
+    (G.Tab[module].audioCodes.includes(audioModule) || module === audioModule)
+  );
+}
+
+// Adds timing spans to newly written text of a panel's module, if the audio
+// is of that text. A multi-column Bible panel shows as many chapters as it
+// takes to fill its page, but its text is written a chapter at a time, so
+// only the audio's chapter gets them.
+export function addAudioTimingSpans(
+  div: HTMLDivElement,
+  module: string,
+  audio: AudioPlayerType | undefined,
+  isPinned: boolean,
+) {
+  const { file } = audio ?? {};
+  if (!audio?.open || isPinned || !file?.timing || !showsAudio(module, file))
+    return;
+  if (div.querySelector('.verse-sync')) return;
+  if ('book' in file) {
+    const vs = div.querySelector(':scope > .vs');
+    const { location } = vs ? getElementData(vs) : {};
+    if (location?.book !== file.book || location?.chapter !== file.chapter)
+      return;
+  }
+  addTimingSpans(div, file.timing);
+}
+
+// Returns true if every panel showing the audio's timing is a multi-column
+// page on which a chapter already begins, so that the audio of the chapter
+// need not change the location.
+export function pagesShowChapter(book: string, chapter: number): boolean {
+  const sbs = Array.from(
+    getRootNode().querySelectorAll<HTMLElement>('div.sb'),
+  ).filter((sb) => sb.querySelector('.verse-sync'));
+  return (
+    sbs.length > 0 &&
+    sbs.every((sb) => {
+      const m = columnMetrics(sb);
+      const v = m && findVerseElement(sb, chapter, 1);
+      const column = m && v && columnOf(sb, m, v);
+      return (
+        !!m &&
+        !!v &&
+        getElementData(v).location?.book === book &&
+        typeof column === 'number' &&
+        columnIsShowing(sb, m, column)
+      );
+    })
+  );
+}
+
+// Returns true if a new location is the one to which a page turned to follow
+// the audio (see followPage), which unlike other location changes is not to
+// change the audio's chapter. The page may begin with the next chapter while
+// the audio is still reading a verse which began on the previous page.
+export function pageFollowedAudio(location: LocationVKType): boolean {
+  const followed = FollowedLocation;
+  FollowedLocation = null;
+  return !!followed && !diff(followed, location);
+}
+
+// A multi-column page turns when the audio plays off the end of it: when
+// newly active timing spans begin after the page while those before them were
+// on it. The location then follows the page, as with any other page turn.
+function followPage(
+  prevIds: string[],
+  newIds: string[],
+  xulswordState: React.Component<any, XulswordState>['setState'],
+) {
+  const spans = (sb: HTMLElement, ids: string[]) =>
+    ids.flatMap((id) =>
+      Array.from(sb.querySelectorAll(`span[data-id~="${id}"]`)),
+    );
+  getRootNode()
+    .querySelectorAll<HTMLElement>('div.sb')
+    .forEach((sb) => {
+      const m = columnMetrics(sb);
+      const atext = ofClass(['atext'], sb)?.element;
+      if (!m || !atext) return;
+      const [next] = spans(sb, newIds);
+      const column = next ? columnOf(sb, m, next) : null;
+      if (
+        column === null ||
+        column < firstColumn(sb, m) + m.columns ||
+        !spans(sb, prevIds).some((e) => elementIsShowing(sb, m, e))
+      )
+        return;
+      while (!columnIsShowing(sb, m, column)) {
+        if (!scrollPage(sb, true)) break;
+      }
+      doUntilDone((rp) => {
+        const location = rp && getScrollVerse(atext, rp);
+        if (location && !rp?.waiting()) {
+          FollowedLocation = location;
+          xulswordState({ location, scroll: { verseAt: 'top' } });
+        }
+      });
+    });
+}
+
+function addTimingSpans(
   divElement: HTMLDivElement,
   timing: ReturnType<typeof parseTimingFile>,
 ) {
@@ -236,13 +452,6 @@ export function addTimingSpans(
   const times = allTimes.filter((t) => !parseTitleID(t.id));
 
   let timingIndex = 0;
-
-  // Timing makes versenum clickable, so add pointer cursor to them.
-  if (timing.times.length && zones.length) {
-    const style = document.createElement('style');
-    style.innerHTML = '.versenum:hover { cursor: pointer; }';
-    divElement.prepend(style);
-  }
 
   zones.forEach((zone) => {
     if (timingIndex >= times.length) return;
@@ -806,15 +1015,22 @@ function wrapTextRange(
       return;
     }
 
-    const entry = spanFor(blockAncestor, map.node);
-    const { span } = entry;
-
     const localStart = overlapStart - map.startIdx;
     const localEnd = overlapEnd - map.startIdx;
 
     const fullText = map.node.nodeValue ?? '';
 
     const segmentText = fullText.substring(localStart, localEnd);
+
+    // Whitespace directly within a block container (such as that between
+    // poetry line divs) is left alone. Between blocks it is not rendered, but
+    // a span of it would be, and would change the layout (and so change the 
+    // column breaks of a multi-column panel).
+    if (!segmentText.trim()) return;
+
+    const entry = spanFor(blockAncestor, map.node);
+    const { span } = entry;
+
     const textNode = doc.createTextNode(segmentText);
 
     if (entry.firstInserted) {

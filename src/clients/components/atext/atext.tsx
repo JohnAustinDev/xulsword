@@ -51,7 +51,7 @@ import {
   showLastPage,
   updateColumnSpacer,
 } from './zcolumns.ts';
-import { addTimingSpans } from '../../audioTiming.ts';
+import { addAudioTimingSpans } from '../../audioTiming.ts';
 import handlerH from './atextH.ts';
 import audioIcon from '../audioIcon/audioIcon.tsx';
 import { getRootNode } from '../../rootNode.ts';
@@ -735,20 +735,7 @@ class Atext
         sanitizeHTML(sbe, sb);
         sbe.style.removeProperty('min-height');
         // Insert audio timing break spans if needed
-        if (module && audio?.open && !isPinned) {
-          const { file } = audio;
-          if (file) {
-            const { audioModule, timing } = file;
-            if (
-              audioModule &&
-              timing &&
-              !sbe.querySelector('.verse-sync') &&
-              (G.Tab[module].audioCodes.includes(audioModule) ||
-                module === audioModule)
-            )
-              addTimingSpans(sbe, timing);
-          }
-        }
+        if (module) addAudioTimingSpans(sbe, module, audio, isPinned);
         sbe.classList.toggle('has-sync', !!sbe.querySelector('.verse-sync'));
         this.readyText(sbe);
         sanitizeHTML(nbe, nb);
@@ -822,6 +809,8 @@ class Atext
     if (renderPromise.waiting()) return null;
     const text = sanitizeHTML(document.createElement('div'), response.textHTML);
     this.readyText(text);
+    const { module, audio, isPinned } = libswordProps;
+    if (module) addAudioTimingSpans(text, module, audio, isPinned);
     const notes = sanitizeHTML(
       document.createElement('div'),
       response.noteHTML,
@@ -845,6 +834,7 @@ class Atext
       nbe.parentElement?.classList.remove('noteboxEmpty');
     }
     sbe.dataset.chapters = next ? `${first}-${chapter}` : `${chapter}-${last}`;
+    sbe.classList.toggle('has-sync', !!sbe.querySelector('.verse-sync'));
     delete sbe.dataset.highlightkey;
     return [...textNodes, ...noteNodes];
   }
