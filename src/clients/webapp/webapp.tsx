@@ -10,7 +10,7 @@ import renderToRoot from '../controller.tsx';
 import Xulsword from '../components/xulsword/xulsword.tsx';
 import { wheelPagePanel } from '../components/atext/zversekey.ts';
 import socketConnect from '../web-preload.ts';
-import Prefs from '../web-prefs.ts';
+import Prefs, { disablePrefsStorage } from '../web-prefs.ts';
 import {
   writeSettingsToPrefsStores,
   getComponentSettings,
@@ -141,7 +141,7 @@ socket.on('connect', () => {
       if (!Prefs.storeExists('prefs', storageId)) {
         applyUserPrefs = 'before';
       } else preExistingPrefs = true;
-    }
+    } else disablePrefsStorage();
     // EXCEPTIONS to storage ID rules:
     if (applyUserPrefs === 'after') {
       // These user prefs cannot be changed by the user. Perhaps there is no UI

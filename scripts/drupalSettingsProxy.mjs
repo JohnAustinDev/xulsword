@@ -45,6 +45,31 @@ function get(url, redirects = 5) {
   });
 }
 
+// Runs in the browser (serialized into the response): shows msg in a banner.
+// The banner goes in the web-app's shadow root, beside its #root, because a
+// page that owns its document (an iframe, such as test.html's) hides all
+// light DOM outside #root, and React replaces the children of the shadow
+// root's #root. The shadow root is only attached once the web-app starts
+// rendering, so wait for it, but use the body if it never appears.
+function showBanner(msg) {
+  const div = document.createElement('div');
+  div.textContent = msg;
+  div.title = 'Click to dismiss';
+  div.style.cssText =
+    'position:fixed;top:0;left:0;right:0;z-index:2147483647;' +
+    'padding:8px 12px;background:#b00020;color:#fff;' +
+    'font:14px/1.4 sans-serif;cursor:pointer;';
+  div.addEventListener('click', () => div.remove());
+  let tries = 600; // 60 seconds
+  const place = () => {
+    const shadowRoot = document.getElementById('root')?.shadowRoot;
+    if (shadowRoot) shadowRoot.appendChild(div);
+    else if ((tries -= 1) > 0) setTimeout(place, 100);
+    else document.body.appendChild(div);
+  };
+  place();
+}
+
 export default function drupalSettingsProxy(app) {
   app.get('/drupalSettings/:target(api|ibt).js', async (req, res) => {
     res.type('application/javascript');
@@ -72,9 +97,19 @@ export default function drupalSettingsProxy(app) {
           `console.log('drupalSettings from', ${JSON.stringify(url)}, window.drupalSettings);\n`,
       );
     } catch (er) {
-      const msg = `drupalSettings request failed: ${url}: ${er.message}`;
+      // A refused connection to localhost is an AggregateError with an empty
+      // message, so fall back to its code.
+      const msg =
+        `drupalSettings request failed: ${url}: ` +
+        `${er.message || er.code || er}. The web-app will use ` +
+        'defaultSettings.ts, so query parameters such as storeid are ignored.';
       console.error(msg);
-      res.send(`console.error(${JSON.stringify(msg)});\n`);
+      // Also show the failure on the page, since the web-app still loads and
+      // the fallback is otherwise easy to miss.
+      res.send(
+        `console.error(${JSON.stringify(msg)});\n` +
+          `(${showBanner.toString()})(${JSON.stringify(msg)});\n`,
+      );
     }
   });
 }

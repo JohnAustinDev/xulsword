@@ -96,4 +96,11 @@ const Prefs = new Rprefs(
   true,
 );
 
+// Keep prefs in memory only, so nothing is written to persistent storage and
+// each page load starts from default prefs. Any prefs read so far are dropped.
+export function disablePrefsStorage() {
+  Prefs.storage.type = 'none';
+  Prefs.stores = {};
+}
+
 export default Prefs as PrefsGType;
