@@ -177,13 +177,23 @@ class Popup
         const parentStart = parent.getBoundingClientRect().top;
         popup.style.top = `${parentStart - popupStart}px`;
 
-        // Adjust the popup upward if it would extend beyond the bottom of the text area.
+        // Adjust the popup upward if it would extend beyond the bottom of the
+        // text area. First limit its height to the text area's, so the upward
+        // adjustment never pushes its top above the text area.
         const margin = 10;
         const box = popup.firstChild as HTMLElement | null;
         const text = ofClass(['atext', 'resultBox'], popup);
         if (box && text) {
+          const textBox = text.element.getBoundingClientRect();
+          box.style.maxHeight = '';
+          const excess =
+            box.getBoundingClientRect().height - (textBox.height - 2 * margin);
+          if (excess > 0) {
+            const height = parseFloat(getComputedStyle(box).height);
+            box.style.maxHeight = `${Math.max(0, Math.floor(height - excess))}px`;
+          }
           const pupbottom = box.getBoundingClientRect().bottom;
-          const textbottom = text.element.getBoundingClientRect().bottom;
+          const textbottom = textBox.bottom;
           if (pupbottom > textbottom - margin) {
             const adjustment = Math.round(textbottom - pupbottom - margin);
             drag.adjustment = adjustment;

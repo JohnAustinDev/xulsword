@@ -361,12 +361,22 @@ export default function handler(
     case 'pointermove': {
       const { drag } = this.state;
       if (!drag || !drag.dragging) return;
+      // Don't drag the popup's top above the viewport, which would clip it.
+      let minY = -Infinity;
+      const box = this.loadingRef.current?.firstChild as HTMLElement | null;
+      const viewport = box?.closest('.viewport');
+      if (box && viewport) {
+        const topRoom =
+          box.getBoundingClientRect().top -
+          viewport.getBoundingClientRect().top;
+        minY = (drag.y[1] || 0) - topRoom;
+      }
       this.setState((prevState) => {
         let { drag: ndrag } = prevState;
         ndrag = clone(ndrag);
         if (!ndrag || !ndrag.dragging) return null;
         ndrag.x[1] = ep.clientX;
-        ndrag.y[1] = ep.clientY;
+        ndrag.y[1] = Math.max(ep.clientY, minY);
         return { drag: ndrag };
       });
       if (e.cancelable) e.preventDefault();
