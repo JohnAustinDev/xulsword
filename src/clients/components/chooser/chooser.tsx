@@ -92,7 +92,7 @@ class Chooser
     if (!bookGroups.includes(bookGroup)) [bookGroup] = bookGroups;
 
     const slideIndex: any = {};
-    bookGroups.forEach((g) => {
+    C.SupportedBookGroups.forEach((g) => {
       slideIndex[g] = 0;
     });
 
