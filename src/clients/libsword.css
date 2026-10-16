@@ -590,6 +590,18 @@ span.foreign {
   color: var(--color-primary);
   font-size: smaller !important;
 }
+/* Enlarge note symbol touch targets without affecting layout: negative
+margins cancel the horizontal padding, vertical padding of an inline never
+affects line height, and position: relative puts the padding above
+neighboring text so it gets the hits. */
+.cr:after,
+.fn:after,
+.un:after,
+.gfn {
+  position: relative;
+  padding: 6px 5px;
+  margin: 0 -5px;
+}
 .gfn:before {
   content: '[';
 }
@@ -608,6 +620,8 @@ span.foreign {
 }
 .no-symbol .un:after {
   content: '';
+  padding: 0;
+  margin: 0;
 }
 .sr {
   color: var(--color-primary);

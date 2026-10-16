@@ -230,10 +230,16 @@ lacking either keep the solid-block fallback above. */
   text-decoration: underline;
   cursor: pointer;
 }
+/* The padding enlarges the touch target, and negative margins cancel its
+effect on layout (vertical padding of an inline never affects line height).
+position: relative puts the padding above neighboring text so it gets the
+hits. */
 .prevchaplink,
 .nextchaplink {
   cursor: pointer;
   font-size: 16px;
+  position: relative;
+  padding: 10px 12px;
 }
 .atext.prev-disabled .prevchaplink,
 .atext.next-disabled .nextchaplink {
@@ -241,16 +247,18 @@ lacking either keep the solid-block fallback above. */
   cursor: default;
 }
 .prevchaplink {
-  margin-inline-end: 10px;
+  margin-inline-start: -12px;
+  margin-inline-end: -2px; /* 10px - padding */
 }
 .nextchaplink {
-  margin-inline-start: 10px;
+  margin-inline-start: -2px; /* 10px - padding */
+  margin-inline-end: -12px;
 }
 .ft .prevchaplink {
-  margin-inline-end: 20px;
+  margin-inline-end: 8px; /* 20px - padding */
 }
 .ft .nextchaplink {
-  margin-inline-start: 20px;
+  margin-inline-start: 8px; /* 20px - padding */
 }
 
 /* Bible & Commentary chapter/page header */
