@@ -85,6 +85,7 @@ const C = {
       longTouchTO: 500, // ms pointerDown before pointerDownLong event triggers
       shortTouchTO: 250,
       touchMaxMove: 2, // pointerdown is canceled if pointermove delta > this
+      resizeEndDelay: 300, // ms without shadow host height change ends resize
     },
     AcceleratorKey: {
       openModuleManager: 'F2',

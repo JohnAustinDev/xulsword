@@ -91,6 +91,8 @@ export default class Viewport
 
   shadowHostResizeEnd: (() => void) | null;
 
+  shadowHostResizeTO: ReturnType<typeof setTimeout> | undefined;
+
   constructor(props: ViewportProps) {
     super(props);
 
@@ -113,6 +115,7 @@ export default class Viewport
       this.waitShadowHostResizeEnd(),
     );
     this.shadowHostResizeEnd = null;
+    this.shadowHostResizeTO = undefined;
   }
 
   componentDidMount() {
@@ -214,15 +217,19 @@ export default class Viewport
 
   // While the user drags the resize handle, the browser keeps changing the
   // host's explicit height, so syncShadowHostHeight() waits until the drag
-  // ends rather than relaying out the Web App at every pointer move.
+  // ends rather than relaying out the Web App at every pointer move. A mouse
+  // drag ends with pointerup, but a touch drag of the resize handle (Chrome
+  // Android) sends the page no pointer, touch or mouse events at all. So the
+  // drag is also taken to have ended once the height stops changing.
   waitShadowHostResizeEnd() {
     const host = getShadowHost();
-    if (
-      !(host instanceof HTMLElement) ||
-      !host.style.height ||
-      this.shadowHostResizeEnd
-    )
-      return;
+    if (!(host instanceof HTMLElement) || !host.style.height) return;
+    clearPending(this, 'shadowHostResizeTO');
+    this.shadowHostResizeTO = setTimeout(
+      () => this.shadowHostResizeEnd?.(),
+      C.UI.WebApp.resizeEndDelay,
+    );
+    if (this.shadowHostResizeEnd) return;
     const resizeEnd = () => {
       this.removeShadowHostResizeEnd();
       this.syncShadowHostHeight();
@@ -234,6 +241,7 @@ export default class Viewport
   }
 
   removeShadowHostResizeEnd() {
+    clearPending(this, 'shadowHostResizeTO');
     const { shadowHostResizeEnd } = this;
     if (!shadowHostResizeEnd) return;
     ['pointerup', 'mouseup'].forEach((type) =>

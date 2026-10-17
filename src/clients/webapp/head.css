@@ -35,17 +35,12 @@ html.ownsDocument *:not(#root, :has(#root)) {
 
 #root {
   /* This is the minimum height a hosted webapp will take. The 290px is the
-  webpage header, so the webapp fills the rest of the page. 470px fills
+  webpage header, so the webapp fills the rest of the page. 540px fills most of
   a 600px tablet height (basic minimum in the wild) with header scrolled away.
   A user resized height is never less than --min-height-floor (see
   viewport.tsx syncShadowHostHeight()). */
-  --min-height-floor: 470px;
-  --min-height: max(var(--min-height-floor), calc(100vh - 290px));
-}
-@media (max-width: 767px) {
-  #root {
-    --min-height: max(var(--min-height-floor), calc(100vh - 190px));
-  }
+  --min-height-floor: 540px;
+  --min-height: max(var(--min-height-floor), min(750px, calc(100vh - 40px)));
 }
 html.ownsDocument #root {
   /* This is the minimum height an iframed webapp will take.
