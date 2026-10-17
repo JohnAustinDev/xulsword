@@ -40,7 +40,7 @@ html.ownsDocument *:not(#root, :has(#root)) {
   A user resized height is never less than --min-height-floor (see
   viewport.tsx syncShadowHostHeight()). */
   --min-height-floor: 540px;
-  --min-height: max(var(--min-height-floor), min(750px, calc(100vh - 40px)));
+  --min-height: max(var(--min-height-floor), calc(100vh - 290px));
 }
 html.ownsDocument #root {
   /* This is the minimum height an iframed webapp will take.
