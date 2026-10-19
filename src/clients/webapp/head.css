@@ -31,7 +31,7 @@ html.ownsDocument:has(#root.fitToContent) body {
 
 /* Chained :not()s and [id="root"] keep the css-has-pseudo output valid in
 browsers without :not() selector lists (Chrome 85-87, Firefox 78-83). */
-html.ownsDocument *:not(#root):not(:has([id="root"])) {
+html.ownsDocument *:not(#root):not(:has([id='root'])) {
   display: none;
 }
 

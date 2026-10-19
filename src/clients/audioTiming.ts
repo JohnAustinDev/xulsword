@@ -1024,7 +1024,7 @@ function wrapTextRange(
 
     // Whitespace directly within a block container (such as that between
     // poetry line divs) is left alone. Between blocks it is not rendered, but
-    // a span of it would be, and would change the layout (and so change the 
+    // a span of it would be, and would change the layout (and so change the
     // column breaks of a multi-column panel).
     if (!segmentText.trim()) return;
 

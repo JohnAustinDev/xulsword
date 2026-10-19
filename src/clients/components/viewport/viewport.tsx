@@ -406,10 +406,7 @@ export default class Viewport
     panels.forEach((panel, i) => {
       const options = ilModuleOptions[i];
       const ilpref = ilModules0[i] === 'disabled' ? null : ilModules0[i];
-      if (
-        panelHasILOptions[i] &&
-        (panel && G.Tab[panel].type !== C.BIBLE)
-      ) {
+      if (panelHasILOptions[i] && panel && G.Tab[panel].type !== C.BIBLE) {
         ilModules[i] = 'disabled'; // visible and disabled
       } else if (ilpref && options[0]) {
         // visible and active
