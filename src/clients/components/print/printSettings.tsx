@@ -61,6 +61,44 @@ export const paperSizes = [
   { type: 'Tabloid', w: 11, h: 17, u: 'in' },
 ] as const;
 
+// Regions which use Letter rather than A4 paper (from CLDR).
+const letterRegions = [
+  'US',
+  'CA',
+  'MX',
+  'BZ',
+  'CL',
+  'CO',
+  'CR',
+  'GT',
+  'NI',
+  'PA',
+  'PH',
+  'PR',
+  'SV',
+  'VE',
+];
+
+// The web-app cannot read the native print defaults, so its pageSize pref
+// defaults to empty, which is replaced by Letter or A4 according to the region
+// of the browser's preferred locale.
+function localePageSize(): (typeof paperSizes)[number]['type'] {
+  const locales = navigator.languages?.length
+    ? navigator.languages
+    : [navigator.language];
+  const region = locales
+    .map((l) =>
+      l
+        .split(/[-_]/)
+        .slice(1)
+        .find((s) => /^[A-Za-z]{2}$/.test(s)),
+    )
+    .find(Boolean);
+  return region && letterRegions.includes(region.toUpperCase())
+    ? 'Letter'
+    : 'A4';
+}
+
 const convertToPx = { in: 96, mm: 96 / 25.4 };
 
 const scaleLimit = { min: 25, max: 150 };
@@ -102,7 +140,9 @@ const notStatePref = {
   pages: 0 as number,
 };
 
-export type PrintSettingsState = typeof S.prefs.print & typeof notStatePref;
+export type PrintSettingsState = Omit<typeof S.prefs.print, 'pageSize'> & {
+  pageSize: (typeof paperSizes)[number]['type'];
+} & typeof notStatePref;
 
 const renderPromise = rootRenderPromise();
 
@@ -135,8 +175,10 @@ export default class PrintSettings extends React.Component<
   constructor(props: PrintSettingsProps) {
     super(props);
 
+    const p = getStatePref('prefs', 'print') as typeof S.prefs.print;
     const s: PrintSettingsState = {
-      ...(getStatePref('prefs', 'print') as typeof S.prefs.print),
+      ...p,
+      pageSize: p.pageSize || localePageSize(),
       ...notStatePref,
     };
     if (isWebKitPrint) {
