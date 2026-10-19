@@ -270,7 +270,10 @@ and it is always intended to provide its variant NA27/UBS4 */
   #back,
   #forward,
   #addcolumn,
-  #printPassage {
+  .printSettings .margins .bp6-icon {
     display: none;
+  }
+  .printSettings .margins .spacer {
+    width: 1em;
   }
 }

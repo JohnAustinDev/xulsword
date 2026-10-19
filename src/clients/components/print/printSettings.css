@@ -24,6 +24,15 @@
   width: 40px;
 }
 
+.page-format {
+  flex-wrap: wrap;
+}
+@supports (flex-wrap: balance) {
+  .page-format {
+    flex-wrap: balance;
+  }
+}
+
 /* Paper size, orientation and columns are not available to WebKit printouts
 (see isWebKitPrint in printSettings.tsx). */
 .printsettings.native-page-setup .page-format {

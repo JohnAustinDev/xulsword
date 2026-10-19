@@ -782,7 +782,7 @@ export default class PrintSettings extends React.Component<
           domref={settingsRef}
         >
           <Vbox pack="center" align="center">
-            <Hbox className="page-format" align="center">
+            <Hbox className="page-format" pack="center" align="center">
               <Menulist
                 id="pageSize"
                 value={pageSize}
@@ -794,33 +794,37 @@ export default class PrintSettings extends React.Component<
                 onChange={handler}
               />
               <Spacer width="15" />
-              <Button
-                id="portrait"
-                checked={!landscape}
-                icon="document"
-                onPointerDown={handler}
-              />
-              <Button
-                id="landscape"
-                checked={landscape}
-                icon="document"
-                onPointerDown={handler}
-              />
+              <Hbox>
+                <Button
+                  id="portrait"
+                  checked={!landscape}
+                  icon="document"
+                  onPointerDown={handler}
+                />
+                <Button
+                  id="landscape"
+                  checked={landscape}
+                  icon="document"
+                  onPointerDown={handler}
+                />
+              </Hbox>
               {pageable && (
                 <>
                   <Spacer width="10" />
-                  <Button
-                    id="columns.1"
-                    checked={!twoColumns}
-                    icon="one-column"
-                    onPointerDown={handler}
-                  />
-                  <Button
-                    id="columns.2"
-                    checked={twoColumns}
-                    icon="two-columns"
-                    onPointerDown={handler}
-                  />
+                  <Hbox>
+                    <Button
+                      id="columns.1"
+                      checked={!twoColumns}
+                      icon="one-column"
+                      onPointerDown={handler}
+                    />
+                    <Button
+                      id="columns.2"
+                      checked={twoColumns}
+                      icon="two-columns"
+                      onPointerDown={handler}
+                    />
+                  </Hbox>
                 </>
               )}
             </Hbox>
