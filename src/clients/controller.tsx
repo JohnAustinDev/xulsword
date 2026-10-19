@@ -93,9 +93,12 @@ let descriptor: WindowDescriptorPrefType | null = null;
 let dynamicStyleSheet: DynamicStyleSheet | null = null;
 const delayHandlerThis = {};
 
+// The window.history state object is shared by the controller (key
+// 'controller') and the xulsword component (key 'xulsword'). Each writes
+// only its own key and keeps any others.
 window.addEventListener('popstate', (event) => {
-  const { state } = event;
-  if (state) Subscription.publish.setControllerState(state, false);
+  const controller = event.state?.controller as ControllerState | undefined;
+  if (controller) Subscription.publish.setControllerState(controller, false);
 });
 
 function addStateToHistory(state: ControllerState) {
@@ -107,8 +110,13 @@ function addStateToHistory(state: ControllerState) {
   const { card } = controllerState;
   const { name } = card ?? {};
   const url = document.location.href + (name ? `/${name}` : '');
-  if (!history.state) history.replaceState(controllerState, '', url);
-  else history.pushState(controllerState, '', url);
+  if (!history.state?.controller) {
+    history.replaceState(
+      { ...history.state, controller: controllerState },
+      '',
+      url,
+    );
+  } else history.pushState({ controller: controllerState }, '', url);
 }
 
 let didFinishRenderTO: NodeJS.Timeout | null | undefined;
@@ -213,7 +221,8 @@ function Controller(props: ControllerProps) {
         }
         const fullState = {} as ControllerState;
         stateKeys.forEach((me) => ([(fullState as any)[me]] = s[me]));
-        if (addToHistory && !history.state) addStateToHistory(fullState);
+        if (addToHistory && !history.state?.controller)
+          addStateToHistory(fullState);
         Object.entries(partialState).forEach((entry) => {
           const [sp, v] = entry;
           const S = sp as keyof ControllerState;
@@ -671,7 +680,11 @@ export default async function renderToRoot(
 
   window.onbeforeunload = () => {
     if (typeof onunload === 'function') onunload();
-    Cache.clear();
+    // A web-app page may be restored from the browser's back-forward cache
+    // (or stay open if another beforeunload listener cancels leaving), and it
+    // cannot render without its preloaded Cache. The Cache is only in memory,
+    // so it is discarded with the page anyway.
+    if (!Build.isWebApp) Cache.clear();
   };
 
   if (typeof onload === 'function') onload();

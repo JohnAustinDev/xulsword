@@ -35,6 +35,7 @@ import xulswordHandlerH from './xulswordH.ts';
 import {
   addHistory as addHistoryH,
   setHistory as setHistoryH,
+  onPopState as onPopStateH,
   historyMenu as historyMenuH,
 } from './history.tsx';
 import './xulsword.css';
@@ -79,6 +80,8 @@ export default class Xulsword
 
   setHistory: typeof setHistoryH;
 
+  onPopState: OmitThisParameter<typeof onPopStateH>;
+
   historyMenu: typeof historyMenuH;
 
   historyTO: NodeJS.Timeout | undefined;
@@ -117,6 +120,7 @@ export default class Xulsword
     this.xulswordState = this.xulswordState.bind(this);
     this.addHistory = addHistoryH.bind(this);
     this.setHistory = setHistoryH.bind(this);
+    this.onPopState = onPopStateH.bind(this);
     this.historyMenu = historyMenuH.bind(this);
 
     this.destroy = [];
@@ -131,6 +135,13 @@ export default class Xulsword
   componentDidMount() {
     const { renderPromise } = this;
     this.destroy.push(registerUpdateStateFromPref('prefs', 'xulsword', this));
+    if (Build.isWebApp) {
+      const { onPopState } = this;
+      window.addEventListener('popstate', onPopState);
+      this.destroy.push(() =>
+        window.removeEventListener('popstate', onPopState),
+      );
+    }
     this.xulswordHeightObserver.sync();
     this.syncRootClasses();
     renderPromise.dispatch();

@@ -12,11 +12,24 @@ import { G } from '../../G.ts';
 import Menupopup from '../libxul/menupopup.tsx';
 import { Box } from '../libxul/boxes.tsx';
 
-import type { HistoryVKType } from '../../../type.ts';
+import type { HistoryVKType, LocationVKType } from '../../../type.ts';
 import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 
-// array size will be limited to maxHistoryMenuLength.
+// Return true if a and b are the same chapter. Since v11n may switch with a
+// module having a different v11n, a is converted to b's v11n before comparing.
+function sameChapter(
+  a: LocationVKType,
+  b: LocationVKType,
+  renderPromise: Xulsword['renderPromise'],
+): boolean {
+  const avk = new VerseKey(a, renderPromise).location(b.v11n);
+  return avk.book === b.book && avk.chapter === b.chapter;
+}
+
+// array size will be limited to maxHistoryMenuLength. In the web-app, chapter
+// changes are also added to window.history so that the browser or device's
+// native back and forward controls will navigate them.
 export function addHistory(this: Xulsword, add?: HistoryVKType): void {
   const { state, renderPromise } = this;
   const { location, selection, history, historyIndex } = state;
@@ -25,17 +38,28 @@ export function addHistory(this: Xulsword, add?: HistoryVKType): void {
     location,
     selection,
   };
-  // Don't record multiple entries for the same chapter, and convert vlln
-  // before comparing so duplicate history is not recorded when v11n
-  // switches with a module having a different v11n.
-  if (history[historyIndex]) {
-    const locvk = new VerseKey(
-      history[historyIndex].location,
-      renderPromise,
-    ).location(location.v11n);
-    if (location.book === locvk.book && location.chapter === locvk.chapter)
-      return;
+  // The current entry gets the chapter if it has none (and is not a card),
+  // otherwise a new entry is pushed. After popstate, window.history.state is
+  // already the current chapter, so nothing more is recorded.
+  if (Build.isWebApp) {
+    const ws = window.history.state;
+    const prev = ws?.xulsword as HistoryVKType | undefined;
+    const card = !!ws?.controller?.card;
+    if (!prev && !card) {
+      window.history.replaceState({ ...ws, xulsword: newhist }, '');
+    } else if (
+      card ||
+      (prev && !sameChapter(prev.location, location, renderPromise))
+    ) {
+      window.history.pushState({ xulsword: newhist }, '');
+    }
   }
+  // Don't record multiple entries for the same chapter.
+  if (
+    history[historyIndex] &&
+    sameChapter(history[historyIndex].location, location, renderPromise)
+  )
+    return;
   this.setState((prevState) => {
     const newhistory = clone(prevState.history);
     newhistory.splice(prevState.historyIndex, 0, newhist);
@@ -87,6 +111,32 @@ export function setHistory(
       };
     }
     return null;
+  });
+}
+
+// Web-app window popstate listener: show the chapter of a window.history
+// entry which was recorded by addHistory.
+export function onPopState(this: Xulsword, e: PopStateEvent): void {
+  const { state, renderPromise } = this;
+  const { location, history } = state;
+  const entry = e.state?.xulsword as HistoryVKType | undefined;
+  // A card entry will unmount xulsword, so leave it to the controller.
+  if (!entry || e.state?.controller?.card || !location) return;
+  // Use the history menu entry if there is one, so the menu stays in sync.
+  const index = history.findIndex((h) =>
+    sameChapter(h.location, entry.location, renderPromise),
+  );
+  if (index !== -1) {
+    this.setHistory(index);
+    return;
+  }
+  const { location: hloc, selection: hsel } = entry;
+  this.setState({
+    location: new VerseKey(hloc, renderPromise).location(location.v11n),
+    selection: hsel
+      ? new VerseKey(hsel, renderPromise).location(location.v11n)
+      : null,
+    scroll: { verseAt: 'center' },
   });
 }
 
