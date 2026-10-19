@@ -1,6 +1,16 @@
 {
+  "About this text": "Ushbu matn haqida",
   "Theme": "Tema",
   "Classic": "Klassik",
   "Dark": "Qorong'u",
-  "Light": "Yorqin"
+  "Light": "Yorqin",
+  "Toggle Full Screen": "To‘liq ekran rejimini yoqish/o‘chirish",
+  "Add a tab, or remove a tab.": "Yorliq qo‘shish yoki yorliqni olib tashlash.",
+  "Show or hide the verse chooser tool.": "Oyat tanlash vositasini ko‘rsatish yoki yashirish.",
+  "Add another column of text.": "Matnning yana bir ustunini qo‘shish.",
+  "Remove a column of text.": "Matn ustunini olib tashlash.",
+  "Textual variants": "Matn variantlari",
+  "normal": "asosiy",
+  "variant": "variant",
+  "both": "ikkalasi"
 }

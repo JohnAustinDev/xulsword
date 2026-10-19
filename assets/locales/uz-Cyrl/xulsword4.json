@@ -1,6 +1,16 @@
 {
+  "About this text": "Ушбу матн ҳақида",
   "Theme": "Тема",
   "Classic": "Классик",
   "Dark": "Қоронғу",
-  "Light": "Ёрқин"
+  "Light": "Ёрқин",
+  "Toggle Full Screen": "Тўлиқ экран режимини ёқиш/ўчириш",
+  "Add a tab, or remove a tab.": "Ёрлиқ қўшиш ёки ёрлиқни олиб ташлаш.",
+  "Show or hide the verse chooser tool.": "Оят танлаш воситасини кўрсатиш ёки яшириш.",
+  "Add another column of text.": "Матннинг яна бир устунини қўшиш.",
+  "Remove a column of text.": "Матн устунини олиб ташлаш.",
+  "Textual variants": "Матн вариантлари",
+  "normal": "асосий",
+  "variant": "вариант",
+  "both": "иккаласи"
 }

@@ -1106,7 +1106,7 @@ class Atext
         context: module,
       })}
       >
-        ${GI.i18n.t('', renderPromise, 'About this text', { ns: 'bibleBrowser' })}
+        ${GI.i18n.t('', renderPromise, 'About this text', { ns: 'xulsword4' })}
       </span>`
         : '') +
       `<span class="nextchaplink">${nextArrow}</span>
@@ -1232,7 +1232,7 @@ class Atext
                   '',
                   renderPromise,
                   'Show or hide the verse chooser tool.',
-                  { ns: 'bibleBrowser' },
+                  { ns: 'xulsword4' },
                 )}
               />
             )}
@@ -1294,14 +1294,14 @@ class Atext
                 defaultValue={variant}
                 onPointerDown={handler}
                 title={GI.i18n.t('', renderPromise, 'Textual variants', {
-                  ns: 'bibleBrowser',
+                  ns: 'xulsword4',
                 })}
               >
                 {Object.entries(C.TextualVariantLabels).map(([v, label]) => {
                   return (
                     <option key={v} value={v}>
                       {GI.i18n.t('', renderPromise, label, {
-                        ns: 'bibleBrowser',
+                        ns: 'xulsword4',
                       })}
                     </option>
                   );

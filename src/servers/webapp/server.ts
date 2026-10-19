@@ -302,12 +302,12 @@ async function i18nInit(lng: string) {
 
       ns: [
         'xulsword',
-        'widgets',
-        'bibleBrowser',
+        'xulsword4',
         'branding',
         'config',
         'books',
         'numbers',
+        'widgets',
       ],
       defaultNS: 'xulsword',
 

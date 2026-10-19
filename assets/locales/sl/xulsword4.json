@@ -1,6 +1,16 @@
 {
+  "About this text": "O tem besedilu",
   "Theme": "Tema",
   "Classic": "Klasična",
   "Dark": "Temna",
-  "Light": "Svetla"
+  "Light": "Svetla",
+  "Toggle Full Screen": "Preklopi celozaslonski način",
+  "Add a tab, or remove a tab.": "Dodaj zavihek ali odstrani zavihek.",
+  "Show or hide the verse chooser tool.": "Pokaži ali skrij orodje za izbiro vrstice.",
+  "Add another column of text.": "Dodaj še en stolpec besedila.",
+  "Remove a column of text.": "Odstrani stolpec besedila.",
+  "Textual variants": "Različna branja",
+  "normal": "osnovno",
+  "variant": "različica",
+  "both": "oboje"
 }

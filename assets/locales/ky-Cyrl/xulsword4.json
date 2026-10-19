@@ -1,0 +1,15 @@
+{
+  "About this text": "Бул текст жөнүндө",
+  "Theme": "Тема",
+  "Classic": "Классикалык",
+  "Dark": "Караңгы",
+  "Light": "Жарык",
+  "Toggle Full Screen": "Толук экран режимин күйгүзүү/өчүрүү",
+  "Show or hide the verse chooser tool.": "Аят тандоо куралын көрсөтүү же жашыруу.",
+  "Add another column of text.": "Тексттин дагы бир тилкесин кошуу.",
+  "Remove a column of text.": "Текст тилкесин алып салуу.",
+  "Textual variants": "Тексттин варианттары",
+  "normal": "негизги",
+  "variant": "вариант",
+  "both": "экөө тең"
+}

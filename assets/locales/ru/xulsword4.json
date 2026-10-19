@@ -1,6 +1,16 @@
 {
+  "About this text": "об этом тексте",
   "Theme": "Тема",
   "Classic": "Классический",
   "Dark": "Тёмная",
-  "Light": "Светлая"
+  "Light": "Светлая",
+  "Toggle Full Screen": "Полноэкранный режим",
+  "Add a tab, or remove a tab.": "Добавьте вкладку или удалите вкладку.",
+  "Show or hide the verse chooser tool.": "Показать или скрыть инструмент выбора стиха.",
+  "Add another column of text.": "Добавьте еще один столбец текста.",
+  "Remove a column of text.": "Удалить столбец текста.",
+  "Textual variants": "Разночтения",
+  "normal": "основной",
+  "variant": "разночтение",
+  "both": "оба"
 }

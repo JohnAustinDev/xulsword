@@ -324,7 +324,7 @@ class Tabs
           <div
             className={`tabPlus tab active`}
             title={GI.i18n.t('', renderPromise, 'Add a tab, or remove a tab.', {
-              ns: 'bibleBrowser',
+              ns: 'xulsword4',
             })}
           >
             <div className="border">

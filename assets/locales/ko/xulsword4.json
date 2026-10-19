@@ -1,6 +1,16 @@
 {
+  "About this text": "이 텍스트에 대하여",
   "Theme": "테마",
   "Classic": "클래식",
   "Dark": "다크",
-  "Light": "라이트"
+  "Light": "라이트",
+  "Toggle Full Screen": "전체 화면 전환",
+  "Add a tab, or remove a tab.": "탭을 추가하거나 제거합니다.",
+  "Show or hide the verse chooser tool.": "구절 선택 도구를 표시하거나 숨깁니다.",
+  "Add another column of text.": "텍스트 열을 하나 더 추가합니다.",
+  "Remove a column of text.": "텍스트 열을 하나 제거합니다.",
+  "Textual variants": "이문",
+  "normal": "기본",
+  "variant": "이문",
+  "both": "둘 다"
 }
