@@ -419,6 +419,8 @@ class Popup
                         );
                       }
                     }
+                    // A selector with only one choice is useless.
+                    if (fmods.length < 2) return null;
                     return this.selector(fmods, selmod, undefined, feature);
                   }
                 }
