@@ -27,7 +27,7 @@ import RenderPromise from './renderPromise.ts';
 import analytics from './analytics.ts';
 import { getElementData, HTMLData } from './htmlData.ts';
 import log from './log.ts';
-import { getRootElement, getRootNode } from './rootNode.ts';
+import { getRootElement, getRootNode, getStyleParent } from './rootNode.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
@@ -526,56 +526,96 @@ export function iframeAutoHeightObserver(selector: string): {
   };
 }
 
-const Hilight = {
-  strongsCSS: [] as { sheet: CSSStyleSheet; index: number }[],
-};
+type StrongsHilightType = 'GH' | 'M' | 'P' | 'L';
 
+// Strong's numbers: S_G976, S_H07225
+const StrongsNumberRE = /^S_[GH]\d+$/;
+
+// The Greek definite article 'the', in any padding.
+const GreekArticleRE = /^S_G0*3588$/;
+
+// The type of a Strong's class is the first one whose regex matches. The
+// classes are written by the Cpp xhtml filters (see osisxhtml_xs.cpp).
+const StrongsClassTypes: [StrongsHilightType, RegExp][] = [
+  ['GH', StrongsNumberRE],
+  // Strong's numbered morphology: SM_TH8804, SM_G5656
+  ['M', /^SM_[A-Z]*\d+$/],
+  // Parse codes: RM_V-AAI-3S (Robinson), SM_N-DSF (Packard)
+  ['P', /^(RM|SM)_/],
+  // Other lemmas: S_εγεννησεν (lemma.TR), S_DSS_*, S_MT_*
+  ['L', /^S_/],
+];
+
+// Hilight rules are written in this order, so where an element has classes
+// of more than one type, the later type's color wins.
+const StrongsHilightOrder: StrongsHilightType[] = ['L', 'P', 'M', 'GH'];
+
+const Hilight: {
+  style: HTMLStyleElement | null;
+  declarations: Partial<Record<StrongsHilightType, string>>;
+} = { style: null, declarations: {} };
+
+// Each Strong's module pads its numbers differently, so match every padding
+// for situations such as parallel texts or interlinear.
+function strongsNumberPaddings(sclass: string): string[] {
+  const m = sclass.match(/^(S_[GH])(\d+)$/);
+  if (!m) return [sclass];
+  const n = Number(m[2]);
+  return Array.from(
+    new Set([1, 2, 3, 4, 5].map((len) => `${m[1]}${pad(n, len, 0)}`)),
+  );
+}
+
+// The CSS declarations of a type's .matchingStrongs<type> rule in atext.css.
+function hilightDeclarations(type: StrongsHilightType): string {
+  let decl = Hilight.declarations[type];
+  if (!decl) {
+    const r = getCSS(`.matchingStrongs${type} {`, getRootNode().styleSheets);
+    decl = r && r.rule instanceof CSSStyleRule ? r.rule.style.cssText : '';
+    if (decl) Hilight.declarations[type] = decl;
+  }
+  return decl;
+}
+
+// The <style> element holding the current Strong's hilight rules.
+function hilightStyle(): HTMLStyleElement {
+  if (!Hilight.style) {
+    Hilight.style = document.createElement('style');
+    Hilight.style.id = 'strongs-hilights';
+  }
+  if (!Hilight.style.isConnected) getStyleParent().appendChild(Hilight.style);
+  return Hilight.style;
+}
+
+// Replace any current Strong's hilights by hilighting every element that has
+// one of these Strong's classes, in the color of that class's type.
 export function strongsHilights(classes: string[]) {
-  classes
-    .filter((c) => /^S_\w*\d+$/.test(c))
-    .forEach((sclass, xx) => {
-      const x = xx > 2 ? 2 : xx;
-      const { styleSheets } = getRootNode();
-      const sheet = styleSheets[styleSheets.length - 1];
-      const cssRuleTemplate = getCSS(`.matchingStrongs${x} {`, styleSheets);
-      if (cssRuleTemplate) {
-        // Each Strong's module uses classes with different number
-        // padding, so multiple rules are required for situations
-        // such as parallel texts or interlinear.
-        const sclasses: string[] = [];
-        const sn = sclass.match(/\d+/);
-        if (sn) {
-          const sni = Number(sn[0]);
-          sclasses.push(
-            ...[2, 3, 4, 5]
-              .map((n) => pad(sni, n, 0))
-              .filter((n, i, a) => !a.slice(i + 1).includes(n))
-              .map((n) => sclass.replace(/\d+/, n)),
-          );
-        } else sclasses.push(sclass);
-        cancelStrongsHiLights();
-        sclasses.forEach((cls) => {
-          const i2 = sheet.insertRule(
-            cssRuleTemplate.rule.cssText.replace(`matchingStrongs${x}`, cls),
-            sheet.cssRules.length,
-          );
-          Hilight.strongsCSS.push({ sheet, index: i2 });
-        });
-      }
-    });
+  // The Greek article appears so often that its hilights would hide those of
+  // any other Strong's number, so skip it when there is another number.
+  const skipArticle = classes.some(
+    (c) => StrongsNumberRE.test(c) && !GreekArticleRE.test(c),
+  );
+  const selectors: Partial<Record<StrongsHilightType, Set<string>>> = {};
+  classes.forEach((cls) => {
+    if (skipArticle && GreekArticleRE.test(cls)) return;
+    const type = StrongsClassTypes.find(([, re]) => re.test(cls))?.[0];
+    if (type) {
+      const set = selectors[type] ?? new Set<string>();
+      selectors[type] = set;
+      strongsNumberPaddings(cls).forEach((c) => set.add(`.${CSS.escape(c)}`));
+    }
+  });
+  hilightStyle().textContent = StrongsHilightOrder.map((type) => {
+    const set = selectors[type];
+    const decl = set ? hilightDeclarations(type) : '';
+    return set && decl ? `${Array.from(set).join(', ')} { ${decl} }` : '';
+  })
+    .filter(Boolean)
+    .join('\n');
 }
 
 export function cancelStrongsHiLights() {
-  Hilight.strongsCSS
-    .sort((a, b) => b.index - a.index)
-    .forEach((r) => {
-      try {
-        r.sheet.deleteRule(r.index);
-      } catch (er) {
-        /* empty */
-      }
-    });
-  Hilight.strongsCSS = [];
+  if (Hilight.style) Hilight.style.textContent = '';
 }
 
 // The various types of mouse events are fired inconsistently across browsers

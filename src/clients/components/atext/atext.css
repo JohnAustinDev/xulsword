@@ -357,17 +357,27 @@ reading follows it in the accent color. */
   margin-top: 4px;
   margin-bottom: 4px;
 }
-.matchingStrongs2 {
+/* Strong's hilight colors, by class type. strongsHilights() in common.ts
+copies these declarations to the Strong's classes being hilighted. */
+/* Strong's numbers (S_G976, S_H07225) */
+.matchingStrongsGH {
   border-radius: 4px;
-  background-color: hsla(298, 100%, 50%, 0.5);
+  background-color: hsla(60, 100%, 50%, 0.5);
 }
-.matchingStrongs1 {
+/* Strong's numbered morphology (SM_TH8804, SM_G5656) */
+.matchingStrongsM {
   border-radius: 4px;
   background-color: hsla(123, 100%, 50%, 0.5);
 }
-.matchingStrongs0 {
+/* Parse codes (RM_V-AAI-3S, SM_N-DSF) */
+.matchingStrongsP {
   border-radius: 4px;
-  background-color: hsla(60, 100%, 50%, 0.5);
+  background-color: hsla(298, 100%, 50%, 0.5);
+}
+/* Other lemmas (S_εγεννησεν, S_DSS_*, S_MT_*) */
+.matchingStrongsL {
+  border-radius: 4px;
+  background-color: hsla(200, 100%, 50%, 0.5);
 }
 
 .atext.Texts .bmnote {

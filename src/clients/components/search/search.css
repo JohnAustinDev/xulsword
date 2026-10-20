@@ -175,10 +175,6 @@
 #searchResults .searchterm {
   color: red;
 }
-/* This rule is dynamically copied by Javascript */
-.resultBox .matchingStrongs {
-  color: red;
-}
 .resultBox .slist {
   white-space: nowrap;
 }
