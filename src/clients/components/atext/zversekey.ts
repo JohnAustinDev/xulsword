@@ -157,6 +157,9 @@ export function getNoteHTML(
 
   // Start building our html
   let html = '';
+  // A note may be listed more than once (as by an interlinear linked verse),
+  // but is only shown once.
+  const done = new Set<string>();
 
   note.forEach((anote) => {
     const p = getElementData(anote);
@@ -188,8 +191,9 @@ export function getNoteHTML(
             type = undefined;
           }
         });
-        if (type) {
-          const fnid = `w${index}.footnote.${nlistTitle}`;
+        const fnid = `w${index}.footnote.${nlistTitle}`;
+        if (type && !done.has(fnid)) {
+          done.add(fnid);
           const rowcls = openCRs ? ' cropened' : '';
           // Display this note as a row in the main table
           const fnrdata = JSON_attrib_stringify({

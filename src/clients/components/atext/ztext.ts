@@ -42,6 +42,51 @@ export type LibSwordResponse = {
   intronotes: string;
 };
 
+// Interlinear text repeats a verse which covers a range of verses (a linked
+// verse) once for each verse of the range. But LibSword gives the note markers
+// of each repeat the reference of its own verse, while the module keeps the
+// notes only at the first verse of the range, so the notes of the repeats
+// cannot be found. So point the markers of every repeat, and their notes, to
+// the first verse of the range (the notes are then de-duplicated by
+// getNoteHTML).
+function linkedVerseNotes(
+  text: string,
+  notes: string,
+): { text: string; notes: string } {
+  const retitle: Record<string, string> = {};
+  const text2 = text
+    .split(/(?=<span data-title="[^"]+" class="vs">)/)
+    .map((verse) => {
+      const vs = verse.match(
+        /^<span data-title="([^".]+)\.(\d+)\.(\d+)\.(\d+)\.([^"]+)" class="vs">/,
+      );
+      if (!vs || vs[3] === vs[4]) return verse;
+      const [, bk, ch, first, last, mod] = vs;
+      return verse.replace(
+        /(class="(fn|cr)" data-title=")((\d+)\.([^".]+)\.(\d+)\.(\d+)\.([^"]+))"/g,
+        (m, pre, ntype, title, nid, nbk, nch, nvs, nmod) => {
+          if (
+            nbk !== bk ||
+            nch !== ch ||
+            nmod !== mod ||
+            Number(nvs) <= Number(first) ||
+            Number(nvs) > Number(last)
+          )
+            return m;
+          const title2 = [nid, bk, ch, first, mod].join('.');
+          retitle[`${ntype}.${title}`] = `${ntype}.${title2}`;
+          return `${pre}${title2}"`;
+        },
+      );
+    })
+    .join('');
+  const notes2 = notes.replace(
+    /(class="nlist" data-title=")([^"]+)"/g,
+    (m, pre, title) => (title in retitle ? `${pre}${retitle[title]}"` : m),
+  );
+  return { text: text2, notes: notes2 };
+}
+
 export function libswordText(
   props: Pick<
     AtextPropsType,
@@ -81,9 +126,14 @@ export function libswordText(
   // Set SWORD filter options
   const options = getSwordOptions(show, type, variant);
   if (ilModule) {
-    const [, on] = C.SwordFilterValues;
+    const [off, on] = C.SwordFilterValues;
     options["Strong's Numbers"] = on;
     options['Morphological Tags'] = on;
+    // Interlinear always shows study notes (and only study notes), since they
+    // often explain where a text deviates from its own versification system.
+    options.Footnotes = on;
+    options['Cross-references'] = off;
+    options['Words of Christ in Red'] = off;
   }
 
   // Read Libsword according to module type
@@ -95,12 +145,12 @@ export function libswordText(
           renderPromise,
         ).location(G.Tab[module].v11n || null);
         if (ilModule) {
-          const { text } = GI.LibSword.getChapterTextMulti(
+          const { text, notes } = GI.LibSword.getChapterTextMulti(
             { text: '', notes: '' },
             renderPromise,
             `${module},${ilModule}`,
             `${book}.${chapter}`,
-            false,
+            true,
             options,
           );
           if (!renderPromise?.waiting()) {
@@ -109,7 +159,9 @@ export function libswordText(
               module: `${module},${ilModule}`,
               locationvk: `${book}.${chapter}`,
             });
-            r.textHTML += text.replace(/interV2/gm, `cs-${ilModule}`);
+            const linked = linkedVerseNotes(text, notes);
+            r.textHTML += linked.text.replace(/interV2/gm, `cs-${ilModule}`);
+            r.notes += linked.notes;
           }
         } else if (
           GI.getBooksInVKModule([], renderPromise, module).includes(book)
@@ -238,7 +290,8 @@ export function libswordText(
   }
 
   // Add bookmarks to text and notes
-  if (show.usernotes) addBookmarks(r, props, renderPromise);
+  const isInterlinear = !!ilModule && type === C.BIBLE;
+  if (show.usernotes && !isInterlinear) addBookmarks(r, props, renderPromise);
 
   // handle footnotes.
   if (G.Tab[module].isVerseKey) {
@@ -249,7 +302,8 @@ export function libswordText(
     ];
     const shownb = {} as Record<(typeof notetypes)[number], boolean>;
     notetypes.forEach((nt) => {
-      shownb[nt] = show[nt] && place && place[nt] === 'notebox';
+      const shown = isInterlinear ? nt === 'footnotes' : show[nt];
+      shownb[nt] = shown && !!place && place[nt] === 'notebox';
     });
     if (
       Object.keys(shownb).some((s) => {
