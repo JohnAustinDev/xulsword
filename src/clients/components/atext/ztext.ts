@@ -428,14 +428,17 @@ export function textChange(
     case C.COMMENTARY: {
       let location;
       // Multi-column Bibles show more than one chapter, so the next chapter
-      // follows the last verse, and the previous precedes the first.
-      const verses = sbe.getElementsByClassName('vs');
-      const verse = verses[next ? verses.length - 1 : 0] as
-        | HTMLElement
-        | undefined;
-      if (verse) {
-        const { location: l } = getElementData(verse);
-        if (l) location = chapterChange(l, next ? 1 : -1, renderPromise);
+      // follows the last verse, and the previous precedes the first. Only
+      // the module's own verses count, since interlinear verses may be in
+      // another v11n and so in another chapter.
+      const verses = Array.from(sbe.getElementsByClassName('vs'));
+      if (next) verses.reverse();
+      for (const v of verses) {
+        const { context, location: l } = getElementData(v as HTMLElement);
+        if (context === module && l) {
+          location = chapterChange(l, next ? 1 : -1, renderPromise);
+          break;
+        }
       }
       if (location) {
         newPartialPinProps.location = location;
