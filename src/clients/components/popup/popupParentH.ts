@@ -163,7 +163,7 @@ export function popupParentHandler(
           updateDataAttribute(el, dt);
           this.setState({
             elemdata: [dt],
-            gap: gp,
+            gap: interlinearGap(el) ?? gp,
             popupParent: el,
           });
         };
@@ -546,6 +546,20 @@ export function popupHandler(
   }
 
   eventHandled(e);
+}
+
+// A popup opens with its top at its target element's top plus the gap. In
+// interlinear mode, return the gap that opens the popup just below the target's
+// whole verse (the translation and the original language), so the popup does
+// not cover the verse being examined. Return null if not interlinear.
+function interlinearGap(element: HTMLElement): number | null {
+  const verse = ofClass(['interB'], element)?.element;
+  if (!verse) return null;
+  return Math.round(
+    verse.getBoundingClientRect().bottom -
+      element.getBoundingClientRect().top +
+      C.UI.Popup.interlinearOpenGap,
+  );
 }
 
 // Cancel any pending open-popup, block handlers for a length of time, and

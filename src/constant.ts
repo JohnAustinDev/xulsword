@@ -128,6 +128,7 @@ const C = {
     Popup: {
       openGap: 0, // open popup px below target element
       strongsOpenGap: 80, // px
+      interlinearOpenGap: 14, // open popup px below target's interlinear verse
       openDelay: 100, // ms between hover and popup opening
       strongsOpenDelay: 550, // ms
     },
