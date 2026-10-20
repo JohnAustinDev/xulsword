@@ -526,13 +526,21 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       outText(" osis2mod\"></div>", buf, u);
     }
 
-    // <reference> tag (this TEI filter also handles <ref> with "target" attributes treated as osisRefs)
+    // <reference> tag (this TEI filter also handles <ref>). An osisRef is a
+    // Scripture reference, but, as in SWORD's own TEI filter, a TEI target is
+    // a dictionary link: "Module:Key", "self:Key" or a bare "Key" in this
+    // module (Robinson uses bare keys like "V-RAN", StrongsHebrew uses
+    // "StrongsHebrew:1").
     else if (!strcmp(tag.getName(), "reference") || !strcmp(tag.getName(), "ref")) {
       if (!u->inXRefNote) { // only show these if we're not in an xref note
         if ((!tag.isEndTag()) && (!tag.isEmpty())) {
           SWBuf referenceInfo = "";
+          bool targetLink = false;
           if ((tag.getAttribute("osisRef"))) referenceInfo = tag.getAttribute("osisRef");
-          else if ((tag.getAttribute("target")))  referenceInfo = tag.getAttribute("target");
+          else if ((tag.getAttribute("target"))) {
+            referenceInfo = tag.getAttribute("target");
+            targetLink = true;
+          }
           else if ((tag.getAttribute("passage"))) referenceInfo = tag.getAttribute("passage");
           SWBuf referenceClass;
           if (referenceInfo == "" && !strcmp(tag.getName(), "ref")) {
@@ -546,8 +554,8 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
               referenceClass.append(" "); referenceClass.append(tag.getAttribute("subType"));
             }
           }
-          else if (tag.getAttribute("type") && !strcmp("x-glosslink", tag.getAttribute("type")) ||
-            (tag.getAttribute("target") && !strncmp("self:", tag.getAttribute("target"), 5))) {
+          else if ((tag.getAttribute("type") && !strcmp("x-glosslink", tag.getAttribute("type"))) ||
+            targetLink) {
             u->referenceTag = "span";
             referenceClass = "dtl";
             if (tag.getAttribute("subType") && !strcmp("x-target_self", tag.getAttribute("subType"))) {
@@ -589,8 +597,9 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
             else if (lenAfterTrim < lenBeforeTrim) buf += ' ';
           }
           // "self:" appears in at least the BDBGlosses_Strongs module
-          if (referenceInfo.startsWith("self:")) {
-            referenceInfo << 5;
+          bool selfLink = referenceInfo.startsWith("self:");
+          if (selfLink) referenceInfo << 5;
+          if (selfLink || (targetLink && !strchr(referenceInfo.c_str(), ':'))) {
             // Don't output links to the current entry (circular links)
             if (referenceInfo == userData->module->getKeyText()) {
               u->referenceTag = "";
