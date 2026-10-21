@@ -222,6 +222,7 @@ lacking either keep the solid-block fallback above. */
 /* Header Links */
 .navlink {
   color: var(--color-primary);
+  flex-grow: 1;
 }
 .ft .navlink {
   margin: 0 10px 10px 10px;
