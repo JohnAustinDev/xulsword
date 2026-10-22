@@ -13,6 +13,8 @@ Cpp/clucene*
 Cpp/sword*
 !Cpp/sword-versification-maps
 Cpp/build*
+Cpp/MacOSX*.sdk
+Cpp/darwin-bin
 Cpp/phpsword
 setenv
 

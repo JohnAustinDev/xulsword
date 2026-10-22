@@ -37,9 +37,6 @@ PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
 # for VM build
 if [[ "$VAGRANT" == "guest" ]]; then PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1 libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev libasound2"; fi
 
-# BUILD DEPENDENCIES (for cross compiling libxulsword as MacOS dylib)
-# PKG_DEPS="$PKG_DEPS llvm-12 llvm-12-linker-tools llvm-12-tools clang-12 lldb-12 lld-12"
-
 if [ "$(dpkg -l $PKG_DEPS 2>&1 | grep "no packages" | wc -m)" -ne 0 ]; then
   echo "INSTALLING LINUX BUILD DEPENDENCIES"
   if [[ "$VAGRANT" == "guest" ]]; then
@@ -85,6 +82,7 @@ source "./setenv"
 # Vagrant is only used to create the Ubuntu 22 libxulsword.so file
 if [[ "$VAGRANT" == "guest" ]]; then
   WINMACHINE=no
+  MACMACHINE=no
   LIBXULSWORD_ONLY=yes
 fi
 
@@ -110,6 +108,21 @@ if [[ "$WINMACHINE" != "no" ]]; then
       exit;
     fi
   fi
+fi
+
+# BUILD DEPENDENCIES (for cross compiling libxulsword to MacOS)
+if [[ "$MACMACHINE" != "no" ]]; then
+  MAC_DEPS="clang lld llvm xz-utils"
+  if [ "$(dpkg -l $MAC_DEPS 2>&1 | grep "no packages" | wc -m)" -ne 0 ]; then
+    echo "You need to install missing MacOS x-compile packages with:"
+    echo .
+    echo "sudo apt-get install ${MAC_DEPS}"
+    echo .
+    echo "Then run this script again."
+    exit;
+  fi
+  LLVM_BIN="$(llvm-config --bindir)"
+  export LLVM_BIN
 fi
 
 CPP="$XULSWORD/Cpp"
@@ -206,6 +219,59 @@ function getSource() {
   echo "Finished getSource $dirin"
 }
 
+########################################################################
+# MACOS SDK AND TOOLS
+if [[ "$MACMACHINE" != "no" ]]; then
+  # The MacOS SDK cannot be downloaded automatically.
+  MACSDK="$CPP/$MACOS_SDK"
+  if [ ! -e "$MACSDK" ]; then
+    if [ ! -e "$ARCHIVEDIR/$MACOS_SDK.tar.xz" ]; then
+      echo "The MacOS SDK is needed to cross-compile for MacOS, but this file is missing:"
+      echo "$ARCHIVEDIR/$MACOS_SDK.tar.xz"
+      echo .
+      echo "Make it with one of these osxcross scripts (https://github.com/tpoechtrager/osxcross):"
+      echo "- On Linux: download an Xcode .xip from https://developer.apple.com/download/all/"
+      echo "  (Xcode 15.4 has MacOSX14.5.sdk) and run: tools/gen_sdk_package_pbzx.sh <xcode>.xip"
+      echo "- On a Mac with Xcode or its Command Line Tools: run tools/gen_sdk_package.sh"
+      echo .
+      echo "Place the .sdk.tar.xz file in the xulsword/archive directory. If its SDK version"
+      echo "differs, set MACOS_SDK in setenv to match. Then run this script again."
+      exit 1
+    fi
+    tar -xJf "$ARCHIVEDIR/$MACOS_SDK.tar.xz" -C "$CPP"
+    if [ ! -e "$MACSDK/usr/lib/libSystem.tbd" ]; then
+      echo "ERROR: $ARCHIVEDIR/$MACOS_SDK.tar.xz did not contain $MACOS_SDK"
+      exit 1
+    fi
+  fi
+
+  # rcodesign signs (and notarizes) the MacOS app from Linux.
+  DARWINBIN="$CPP/darwin-bin"
+  if [ ! -e "$DARWINBIN" ]; then mkdir "$DARWINBIN"; fi
+  if [ ! -e "$DARWINBIN/rcodesign" ]; then
+    RCODESIGN_VERSION=0.29.0
+    RCODESIGN_ARCH="$(uname -m)"
+    if [[ "$RCODESIGN_ARCH" == "x86_64" ]]; then
+      RCODESIGN_SHA256=dbe85cedd8ee4217b64e9a0e4c2aef92ab8bcaaa41f20bde99781ff02e600002
+    elif [[ "$RCODESIGN_ARCH" == "aarch64" ]]; then
+      RCODESIGN_SHA256=4af92c87ddf52f5f2d1258a3b4e56c7dcb8f1b2468df744976c5f139e031961f
+    else
+      echo "ERROR: rcodesign is not available for $RCODESIGN_ARCH"
+      exit 1
+    fi
+    RCODESIGN="apple-codesign-${RCODESIGN_VERSION}-${RCODESIGN_ARCH}-unknown-linux-musl"
+    if [ ! -e "$ARCHIVEDIR/$RCODESIGN.tar.gz" ]; then
+      curl -L -o "$ARCHIVEDIR/$RCODESIGN.tar.gz" "https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign/${RCODESIGN_VERSION}/$RCODESIGN.tar.gz"
+    fi
+    if ! echo "$RCODESIGN_SHA256  $ARCHIVEDIR/$RCODESIGN.tar.gz" | sha256sum -c -; then
+      echo "ERROR: $ARCHIVEDIR/$RCODESIGN.tar.gz has the wrong checksum"
+      exit 1
+    fi
+    tar -xzf "$ARCHIVEDIR/$RCODESIGN.tar.gz" -C "$DARWINBIN" --strip-components=1 "$RCODESIGN/rcodesign"
+  fi
+fi
+########################################################################
+
 
 ########################################################################
 # COMPILE ZLIB
@@ -226,6 +292,21 @@ if [[ "$WINMACHINE" != "no" ]]; then
     cmake "$DBG" -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" ..
     make DESTDIR="$CPP/install.$XCWD" install
   fi
+fi
+# CROSS COMPILE ZLIB TO MACOS
+if [[ "$MACMACHINE" != "no" ]]; then
+  for MACARCH in $MACOS_ARCHS; do
+    export MACARCH
+    dirout="zlib.darwin-$MACARCH"
+    if [ ! -e "$CPP/$dirout" ]; then
+      getSource
+      # zlib 1.2.8 defines fdopen as NULL when TARGET_OS_MAC is defined, which
+      # breaks the SDK's stdio.h (fixed in zlib 1.2.12 the same way).
+      sed -i 's/defined(MACOS) || defined(TARGET_OS_MAC)/defined(MACOS)/' "$CPP/$dirout/zutil.h"
+      cmake "$DBG" -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$CPP/darwin/toolchain.cmake" ..
+      make DESTDIR="$CPP/install.darwin-$MACARCH" install
+    fi
+  done
 fi
 ########################################################################
 
@@ -280,6 +361,23 @@ if [[ "$WINMACHINE" != "no" ]]; then
     make DESTDIR="$CPP/install.$XCWD" install
   fi
 fi
+# CROSS COMPILE LIBCLUCENE TO MACOS
+if [[ "$MACMACHINE" != "no" ]]; then
+  for MACARCH in $MACOS_ARCHS; do
+    export MACARCH
+    dirout="clucene.darwin-$MACARCH"
+    if [ ! -e "$CPP/$dirout" ]; then
+      getSource
+      MACINST="$CPP/install.darwin-$MACARCH/usr/local"
+      # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
+      sed -i 's/!allowLeadingWildcard/!true/g' "$CPP/$dirout/src/core/CLucene/queryParser/QueryParser.cpp"
+      sed -i '11i #include <ctime>' "$CPP/$dirout/src/core/CLucene/document/DateTools.cpp"
+      patch -s -p1 -d "$CPP/$dirout" < "$CPP/darwin/patch-src-shared-CLucene-LuceneThreads.h.diff"
+      cmake "$DBG" -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$CPP/darwin/toolchain.cmake" -C "$CPP/darwin/clucene-TryRunResult.cmake" -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$MACINST/include" -D ZLIB_LIBRARY="$MACINST/lib/libz.a" ..
+      make DESTDIR="$CPP/install.darwin-$MACARCH" install
+    fi
+  done
+fi
 ########################################################################
 
 
@@ -314,6 +412,25 @@ if [[ "$WINMACHINE" != "no" ]]; then
     make DESTDIR="$CPP/install.$XCWD" install
   fi
 fi
+# CROSS COMPILE LIBSWORD TO MACOS
+if [[ "$MACMACHINE" != "no" ]]; then
+  for MACARCH in $MACOS_ARCHS; do
+    export MACARCH
+    dirout="sword.darwin-$MACARCH"
+    if [ ! -e "$CPP/$dirout" ]; then
+      getSource
+      MACINST="$CPP/install.darwin-$MACARCH/usr/local"
+      # Use custom Versification maps
+      cp -r "$CPP/sword-versification-maps/sword/"* "$CPP/$dirout"
+      # ftplib only knows __unix__, which MacOS does not define.
+      sed -i 's/defined(__unix__)/(defined(__unix__) || defined(__APPLE__))/' "$CPP/$dirout/src/utilfuns/ftplib.c" "$CPP/$dirout/include/ftplib.h"
+      # SWORD's CMake installs to /opt/local on APPLE, and would also find
+      # curl, bzip2 and xz in the SDK, which the Linux build does not use.
+      cmake "$DBG" -D CMAKE_TOOLCHAIN_FILE="$CPP/darwin/toolchain.cmake" -D CMAKE_INSTALL_PREFIX="/usr/local" -D SWORD_NO_ICU="Yes" -D SWORD_NO_CURL="Yes" -D SWORD_NO_BZIP2="Yes" -D SWORD_NO_XZ="Yes" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$MACINST/lib/libclucene-core-static.a;$MACINST/lib/libclucene-shared-static.a" -D ZLIB_LIBRARY="$MACINST/lib/libz.a" -D CLUCENE_LIBRARY_DIR="$MACINST/include" -D CLUCENE_INCLUDE_DIR="$MACINST/include" -D ZLIB_INCLUDE_DIR="$MACINST/include" -DSWORD_BUILD_UTILS="No" ..
+      make DESTDIR="$CPP/install.darwin-$MACARCH" install
+    fi
+  done
+fi
 ########################################################################
 
 
@@ -333,6 +450,19 @@ if [[ "$WINMACHINE" != "no" ]]; then
     cmake "$DBG" -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="Yes" -D CMAKE_INCLUDE_PATH="$CPP/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install.$XCWD/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install.$XCWD/usr/local/lib" ..
     make install
   fi
+fi
+# CROSS COMPILE LIBXULSWORD TO MACOS
+if [[ "$MACMACHINE" != "no" ]]; then
+  for MACARCH in $MACOS_ARCHS; do
+    export MACARCH
+    if [ ! -e "$CPP/build.darwin-$MACARCH" ]; then
+      mkdir "$CPP/build.darwin-$MACARCH"
+      cd "$CPP/build.darwin-$MACARCH" || exit 5
+      MACINST="$CPP/install.darwin-$MACARCH/usr/local"
+      cmake "$DBG" -D CMAKE_TOOLCHAIN_FILE="$CPP/darwin/toolchain.cmake" -D SWORD_NO_ICU="Yes" -D CMAKE_INCLUDE_PATH="$MACINST/include" -D CMAKE_LIBRARY_PATH="$MACINST/lib" -D LIB_INSTALL_DIR="$MACINST/lib" ..
+      make install
+    fi
+  done
 fi
 ########################################################################
 
@@ -382,6 +512,42 @@ if [[ "$WINMACHINE" != "no" ]]; then
   fi
 fi
 
+if [[ "$MACMACHINE" != "no" ]]; then
+  # Merge the MacOS architectures into a universal dylib. Also build the
+  # libxulsword.node addon here, since node-gyp cannot cross-compile, and
+  # merge it into a universal binary. The addon finds the dylib through
+  # @loader_path, so the two must be installed side by side (install.mjs).
+  # Nothing is stripped afterwards, since that would break the arm64 ad-hoc
+  # code signature which the linker adds (local symbols are stripped by -x).
+  LIBDIR="$CPP/lib.darwin"
+  if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
+  mkdir "$LIBDIR"
+  ADDONDIR="$XULSWORD/libxulsword/bin/darwin-universal-89"
+  if [ ! -e "$ADDONDIR" ]; then mkdir -p "$ADDONDIR"; fi
+  NODE_INC="$(node -p "require('path').join(process.execPath, '../../include/node')")"
+  NAPI_INC="$(cd "$XULSWORD/libxulsword" && node -p "require('path').resolve(require('node-addon-api').include_dir)")"
+  DYLIBS=()
+  ADDONS=()
+  for MACARCH in $MACOS_ARCHS; do
+    MACINST="$CPP/install.darwin-$MACARCH/usr/local"
+    ADDON="$CPP/build.darwin-$MACARCH/libxulsword.node"
+    "$LLVM_BIN/clang++" --target="$MACARCH-apple-macos$MACOS_DEPLOYMENT_TARGET" -isysroot "$MACSDK" -fuse-ld=lld \
+      -std=gnu++17 -O2 -fvisibility=hidden -DNODE_GYP_MODULE_NAME=libxulsword -DBUILDING_NODE_EXTENSION \
+      -I"$NODE_INC" -I"$NAPI_INC" -I"$CPP/src/include" -I"$CPP/sword.darwin-$MACARCH/include" \
+      "$XULSWORD/libxulsword/src/libxulsword.cpp" \
+      -bundle -undefined dynamic_lookup -Wl,-x -L"$MACINST/lib" -lxulsword-static -Wl,-rpath,@loader_path \
+      -o "$ADDON" || exit 1
+    DYLIBS+=("$MACINST/lib/libxulsword-static.dylib")
+    ADDONS+=("$ADDON")
+  done
+  "$LLVM_BIN/llvm-lipo" -create "${DYLIBS[@]}" -output "$LIBDIR/libxulsword-static.dylib" || exit 1
+  "$LLVM_BIN/llvm-lipo" -create "${ADDONS[@]}" -output "$ADDONDIR/libxulsword.node" || exit 1
+  for f in "$LIBDIR/libxulsword-static.dylib" "$ADDONDIR/libxulsword.node"; do
+    "$LLVM_BIN/llvm-lipo" -info "$f"
+    "$LLVM_BIN/llvm-otool" -L "$f"
+  done
+fi
+
 if [[ "$LIBXULSWORD_ONLY" == "yes" ]]; then exit 0; fi
 
 ########################################################################
@@ -408,21 +574,4 @@ fi
 #sudo snap install snapcraft --classic
 ##sudo snap install lxd
 ##lxd init
-
-# Old Darwin Clucene
-#if [ $(uname | grep Darwin) ]; then
-#  # patch clucene for OSX build (https://stackoverflow.com/questions/28113556/error-while-making-clucene-for-max-os-x-10-10/28175358#28175358)
-#  pushd "$XULSWORD/Cpp/clucene/src/shared/CLucene"
-#  patch < $XULSWORD/Cpp/patch/patch-src-shared-CLucene-LuceneThreads.h.diff
-#  cd config
-#  patch < $XULSWORD/Cpp/patch/patch-src-shared-CLucene-config-repl_tchar.h.diff
-#  popd
-#fi
-
-# Old Darwin libxulsword
-#  if [ $(uname | grep Darwin) ]; then
-#    # patch untgz MAC compile problem
-#    perl -p -i -e 's/#ifdef unix/#if defined(unix) || defined(__APPLE__)/g' ./sword/src/utilfuns/zlib/untgz.c
-#  fi
-
 

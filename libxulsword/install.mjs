@@ -16,7 +16,9 @@ if (
 )
   throw new Error(`Set environment variables by running: 'source ./setenv'`);
 
-const os = process.platform == 'win32' ? process.env.XCWD : 'linux';
+let os = 'linux';
+if (process.platform == 'win32') os = process.env.XCWD;
+else if (process.platform == 'darwin') os = 'darwin';
 const machine = process.env.PKLIB || os;
 
 const build = path.join(dirname, 'build');
@@ -28,6 +30,7 @@ console.log(`Installing ${machine} xulsword.node binary.`);
 let bindir = 'linux-x64-89';
 if (machine === '32win') bindir = 'win32-ia32-89';
 else if (machine === '64win') bindir = 'win32-x64-89';
+else if (machine === 'darwin') bindir = 'darwin-universal-89';
 const binfile = path.join(dirname, 'bin', bindir, 'libxulsword.node');
 console.log(`Copying Node-API binary xulsword.node to ${release}`);
 if (!fs.existsSync(binfile))
@@ -37,8 +40,10 @@ fs.copyFileSync(binfile, tofile);
 
 // Although Linux dynamic libraries need to be installed alongside the main electron executable
 // and so need to be installed by electron-builder according to the package.json build section,
-// Windows dynamic libraries are installed to the libxulsword addon alongside xulsword.node.
-if (machine.includes('win')) {
+// Windows and MacOS dynamic libraries are installed to the libxulsword addon alongside xulsword.node.
+const isWindows = machine === '32win' || machine === '64win';
+const isMac = machine === 'darwin';
+if (isWindows || isMac) {
   const shared = path.join(xulsword, 'Cpp', `lib.${machine}`);
   if (shared && fs.existsSync(shared) && fs.statSync(shared).isDirectory()) {
     fs.readdirSync(shared).forEach((name) => {
@@ -47,7 +52,12 @@ if (machine.includes('win')) {
       );
       fs.copyFileSync(path.join(shared, name), path.join(release, name));
     });
-  } else
+  } else if (isMac)
+    throw new Error(
+      `MacOS libxulsword dylib has not been built:
+    Run xulsword init.sh after setting MACMACHINE=universal in xulsword/setenv`,
+    );
+  else
     throw new Error(
       `Windows ${machine} libxulsword DLL has not been built:
     Run xulsword init.sh after setting WINMACHINE=${machine === '64win' ? 'x64' : 'x86'} in xulsword/setenv`,

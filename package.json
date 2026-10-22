@@ -26,10 +26,12 @@
     "package-linux": "cross-env PKLIB=linux yarn install-libxulsword && yarn package --linux",
     "package-32win": "cross-env PKLIB=32win yarn install-libxulsword && yarn package --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
     "package-64win": "cross-env PKLIB=64win yarn install-libxulsword && yarn package --win --x64 && cross-env PKLIB=linux yarn install-libxulsword",
+    "package-mac": "cross-env PKLIB=darwin yarn install-libxulsword && yarn package --mac zip --x64 --arm64 && cross-env PKLIB=linux yarn install-libxulsword",
     "release": "node ./scripts/clean.mjs release && yarn release-linux && yarn release-32win",
     "release-linux": "yarn && cross-env PKLIB=linux yarn install-libxulsword && yarn package-publish --linux",
     "release-32win": "yarn && cross-env PKLIB=32win yarn install-libxulsword && yarn package-publish --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
-    "release-64win": "yarn && cross-env PKLIB=64win yarn install-libxulsword && yarn package-publish --win --x64 && cross-env PKLIB=linux yarn install-libxulsword"
+    "release-64win": "yarn && cross-env PKLIB=64win yarn install-libxulsword && yarn package-publish --win --x64 && cross-env PKLIB=linux yarn install-libxulsword",
+    "release-mac": "yarn && cross-env PKLIB=darwin yarn install-libxulsword && yarn package-publish --mac zip --x64 --arm64 && cross-env PKLIB=linux yarn install-libxulsword"
   },
   "build": {
     "npmRebuild": false,
@@ -71,16 +73,12 @@
     },
     "mac": {
       "type": "distribution",
+      "category": "public.app-category.education",
       "hardenedRuntime": true,
       "entitlements": "assets/entitlements.mac.plist",
       "entitlementsInherit": "assets/entitlements.mac.plist",
       "gatekeeperAssess": false,
-      "extraFiles": [
-        {
-          "from": "./Cpp/build/libxulsword-static.dylib",
-          "to": "libxulsword-static.dylib"
-        }
-      ]
+      "x64ArchFiles": "**/libxulsword/build/Release/*"
     },
     "dmg": {
       "contents": [

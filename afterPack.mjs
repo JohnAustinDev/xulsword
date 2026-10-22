@@ -1,5 +1,7 @@
+/*global process */
 import fs from 'fs';
 import path from 'path';
+import macSign from './scripts/macSign.mjs';
 
 const keepLocales = ['en', 'ru', 'fa', 'ko'];
 const localeDirName = 'locales';
@@ -22,5 +24,14 @@ export default async function (context) {
       `Deleted ${Math.round(deleted / 1000000)} MB of unnecessary Chrome locales from ${dir}.`,
     );
   }
+
+  // electron-builder only signs MacOS apps when running on MacOS.
+  if (
+    context.electronPlatformName === 'darwin' &&
+    process.platform !== 'darwin'
+  ) {
+    await macSign(context);
+  }
+
   return true;
 }

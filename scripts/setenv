@@ -90,3 +90,22 @@ export XCWD="${ADDRESS_MODEL}win"
 
 # The ming-gcc cross-compiler standard must be 'posix' to work with NodeAPI:
 export GCCSTD=posix
+
+# Set MACMACHINE to 'universal' to cross-compile libxulsword for MacOS
+# (arm64 + x86_64). Or set to 'no' to skip compile for MacOS.
+export MACMACHINE=no
+export MACOS_ARCHS="arm64 x86_64"
+# The MacOS SDK must be supplied as xulsword/archive/$MACOS_SDK.tar.xz
+export MACOS_SDK=MacOSX14.5.sdk
+# Electron 37 requires MacOS 11 or later.
+export MACOS_DEPLOYMENT_TARGET=11.0
+# To sign the MacOS app with a Developer ID certificate and notarize it from
+# Linux, set these. Otherwise the app is only ad-hoc signed.
+# export MAC_SIGN_P12=/path/to/DeveloperID_Application.p12
+# export MAC_SIGN_P12_PASSWORD_FILE=/path/to/p12-password.txt
+# export MAC_NOTARY_API_KEY=/path/to/app-store-connect-api-key.json
+if [[ "$MACMACHINE" != "no" ]]; then
+  if [ -n "$(command -v llvm-config)" ]; then export LLVM_BIN="$(llvm-config --bindir)"; fi
+  # rcodesign, used to sign the MacOS app.
+  export PATH="$XULSWORD/Cpp/darwin-bin:$PATH"
+fi
