@@ -445,8 +445,12 @@ export default class Xulsword
             onChange={xulswordHandler}
             onKeyUp={(e: React.KeyboardEvent) => {
               if (e.key === 'Enter') {
+                // The button acts on pointerdown, which click() doesn't fire.
                 const b = getRootNode().getElementById('xsSearchButton');
-                if (b) b.click();
+                if (b)
+                  b.dispatchEvent(
+                    new PointerEvent('pointerdown', { bubbles: true }),
+                  );
               }
             }}
             title={GI.i18n.t('', renderPromise, 'searchbox.tooltip')}

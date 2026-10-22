@@ -1,4 +1,4 @@
-import { app, Menu, shell, MenuItem } from 'electron';
+import { app, BrowserWindow, Menu, MenuItem } from 'electron';
 import log from 'electron-log';
 import path from 'path';
 import i18n from 'i18next';
@@ -20,7 +20,7 @@ import Window, { getBrowserWindows } from './components/window.ts';
 import Commands from './components/commands.ts';
 
 import type S from '../../defaultPrefs.ts';
-import type { BrowserWindow, MenuItemConstructorOptions } from 'electron';
+import type { MenuItemConstructorOptions } from 'electron';
 import type { BookmarkFolderType, SearchType, TabTypes } from '../../type.ts';
 import type { PrefCallbackType } from '../../prefs.ts';
 
@@ -32,11 +32,6 @@ type Modifiers =
   | 'Shift'
   | 'Super'
   | 'Meta';
-
-type DarwinMenuItemConstructorOptions = {
-  selector?: string;
-  submenu?: DarwinMenuItemConstructorOptions[] | Menu;
-} & MenuItemConstructorOptions;
 
 // Debug mode menu clicks allow menu to close, avoiding debugger lockup.
 function d(func: () => void): any {
@@ -403,7 +398,9 @@ export default class MainMenuBuilder {
     const menu = Menu.buildFromTemplate(template);
     updateModuleMenus(menu);
     updateCheckboxAndRadiosFromPref(menu);
-    if (update) {
+    // On Windows and Linux, setApplicationMenu() would also give every other
+    // window a menu, but the macOS menu bar only changes through it.
+    if (update && process.platform !== 'darwin') {
       const appMenu = Menu.getApplicationMenu();
       if (appMenu) {
         while (appMenu.items.length) appMenu.items.shift();
@@ -541,22 +538,41 @@ export default class MainMenuBuilder {
       ],
     };
 
+    // On macOS, editing shortcuts only work through the menu, so they get the
+    // standard macOS keys whatever the locale gives (some locales give none).
+    const darwinEditKeys = {
+      undo: 'Command+Z',
+      redo: 'Shift+Command+Z',
+      cut: 'Command+X',
+      copy: 'Command+C',
+      paste: 'Command+V',
+      selectAll: 'Command+A',
+    };
     const edits = ['undo', 'redo', 'cut', 'copy', 'paste'];
+    if (process.platform === 'darwin') edits.push('selectAll');
     const subMenuEdit: MenuItemConstructorOptions = {
       role: 'editMenu',
       label: ts('menu.edit'),
       submenu: edits
         .map((edx) => {
-          const ed = edx as 'undo' | 'redo' | 'cut' | 'copy' | 'paste';
+          const ed = edx as keyof typeof darwinEditKeys;
           const item: MenuItemConstructorOptions = {
             label: ts(`menu.edit.${ed}`),
-            accelerator: tx(`menu.edit.${ed}.ac`, ['CommandOrControl']),
-            enabled: !(
-              (ed === 'undo' && !G.canUndo()) ||
-              (ed === 'redo' && !G.canRedo())
-            ),
+            accelerator:
+              process.platform === 'darwin'
+                ? darwinEditKeys[ed]
+                : tx(`menu.edit.${ed}.ac`, ['CommandOrControl']),
+            // On macOS, text fields can only undo through these items.
+            enabled:
+              process.platform === 'darwin' ||
+              !(
+                (ed === 'undo' && !G.canUndo()) ||
+                (ed === 'redo' && !G.canRedo())
+              ),
             click: d(() => {
-              if (!Commands.edit(ed)) this.window.webContents[ed]();
+              // The macOS menu is shared by all windows, so use the focused one.
+              const win = BrowserWindow.getFocusedWindow() || this.window;
+              if (!Commands.edit(ed)) win.webContents[ed]();
             }),
           };
           return item;
@@ -1023,7 +1039,9 @@ export default class MainMenuBuilder {
               return x > i ? null : panel || '';
             });
             G.Prefs.setComplexValue('xulsword.panels', newpans);
-            updateModuleMenus();
+            // macOS never updates a shown submenu's enabled state.
+            if (process.platform === 'darwin') this.buildMenu(true);
+            else updateModuleMenus();
           }),
         };
       }),
@@ -1085,154 +1103,42 @@ export default class MainMenuBuilder {
     return applicationMenuTemplate;
   }
 
-  buildDarwinTemplate(): DarwinMenuItemConstructorOptions[] {
-    const subMenuAbout: DarwinMenuItemConstructorOptions = {
-      label: 'Electron',
+  // The default menus, arranged for macOS: About and Quit go to the
+  // application menu, and File closes windows instead of quitting.
+  buildDarwinTemplate(): MenuItemConstructorOptions[] {
+    const template = this.buildDefaultTemplate();
+
+    const fileItems = template[0].submenu as MenuItemConstructorOptions[];
+    const quit = fileItems.findIndex((item) => item.role === 'quit');
+    fileItems.splice(quit, 1, { role: 'close', label: ts('close.label') });
+
+    // The Windows menu sets the number of text panels, so stop macOS from
+    // treating it as its Window menu and adding window management items.
+    template.forEach((menu) => {
+      if (menu.role === 'windowMenu') delete menu.role;
+    });
+
+    const subMenuApp: MenuItemConstructorOptions = {
+      label: app.name,
       submenu: [
         {
-          label: 'About ElectronReact',
-          selector: 'orderFrontStandardAboutPanel:',
+          label: ts('menu.help.about'),
+          click: d(() => {
+            Commands.openAbout();
+          }),
         },
         { type: 'separator' },
-        { label: 'Services', submenu: [] },
+        { role: 'services' },
         { type: 'separator' },
-        {
-          label: 'Hide ElectronReact',
-          accelerator: 'Command+H',
-          selector: 'hide:',
-        },
-        {
-          label: 'Hide Others',
-          accelerator: 'Command+Shift+H',
-          selector: 'hideOtherApplications:',
-        },
-        { label: 'Show All', selector: 'unhideAllApplications:' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
         { type: 'separator' },
-        {
-          label: 'Quit',
-          accelerator: 'Command+Q',
-          click: () => {
-            app.quit();
-          },
-        },
-      ],
-    };
-    const subMenuEdit: DarwinMenuItemConstructorOptions = {
-      label: 'Edit',
-      submenu: [
-        { label: 'Undo', accelerator: 'Command+Z', selector: 'undo:' },
-        { label: 'Redo', accelerator: 'Shift+Command+Z', selector: 'redo:' },
-        { type: 'separator' },
-        { label: 'Cut', accelerator: 'Command+X', selector: 'cut:' },
-        { label: 'Copy', accelerator: 'Command+C', selector: 'copy:' },
-        { label: 'Paste', accelerator: 'Command+V', selector: 'paste:' },
-        {
-          label: 'Select All',
-          accelerator: 'Command+A',
-          selector: 'selectAll:',
-        },
-      ],
-    };
-    const subMenuViewDev: MenuItemConstructorOptions = {
-      label: 'View',
-      submenu: [
-        {
-          label: 'Reload',
-          accelerator: 'Command+R',
-          click: () => {
-            this.window.webContents.reload();
-          },
-        },
-        {
-          label: 'Toggle Full Screen',
-          accelerator: 'Ctrl+Command+F',
-          click: () => {
-            this.window.setFullScreen(!this.window.isFullScreen());
-          },
-        },
-        {
-          label: 'Toggle Developer Tools',
-          accelerator: 'Alt+Command+I',
-          click: () => {
-            const { webContents: contents } = this.window;
-            contents.toggleDevTools();
-          },
-        },
-      ],
-    };
-    const subMenuViewProd: DarwinMenuItemConstructorOptions = {
-      label: 'View',
-      submenu: [
-        {
-          label: 'Toggle Full Screen',
-          accelerator: 'Ctrl+Command+F',
-          click: () => {
-            this.window.setFullScreen(!this.window.isFullScreen());
-          },
-        },
-      ],
-    };
-    const subMenuWindow: DarwinMenuItemConstructorOptions = {
-      label: 'Window',
-      submenu: [
-        {
-          label: 'Minimize',
-          accelerator: 'Command+M',
-          selector: 'performMiniaturize:',
-        },
-        { label: 'Close', accelerator: 'Command+W', selector: 'performClose:' },
-        { type: 'separator' },
-        { label: 'Bring All to Front', selector: 'arrangeInFront:' },
-      ],
-    };
-    const subMenuHelp: DarwinMenuItemConstructorOptions = {
-      label: 'Help',
-      submenu: [
-        {
-          label: 'Learn More',
-          click() {
-            shell.openExternal('https://electronjs.org').catch((er) => {
-              log.error(er);
-            });
-          },
-        },
-        {
-          label: 'Documentation',
-          click() {
-            shell
-              .openExternal(
-                'https://github.com/electron/electron/tree/servers/app/docs#readme',
-              )
-              .catch((er) => {
-                log.error(er);
-              });
-          },
-        },
-        {
-          label: 'Community Discussions',
-          click() {
-            shell
-              .openExternal('https://www.electronjs.org/community')
-              .catch((er) => {
-                log.error(er);
-              });
-          },
-        },
-        {
-          label: 'Search Issues',
-          click() {
-            shell
-              .openExternal('https://github.com/electron/electron/issues')
-              .catch((er) => {
-                log.error(er);
-              });
-          },
-        },
+        { role: 'quit', label: ts('menu.quit') },
       ],
     };
 
-    const subMenuView = Build.isDevelopment ? subMenuViewDev : subMenuViewProd;
-
-    return [subMenuAbout, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
+    // Help only holds About, which is now in the application menu.
+    return [subMenuApp, ...template.filter((menu) => menu.role !== 'about')];
   }
 }
