@@ -3,7 +3,7 @@
 export XULSWORD
 export CPP
 export NVM_DIR
-export VAGRANT
+export RUNCONTEXT
 export BOOSTDIR
 
 # CMake 4 refuses projects which require a CMake version below 3.5, which
@@ -13,8 +13,11 @@ export CMAKE_POLICY_VERSION_MINIMUM=3.5
 # This script installs dependencies and builds the libxulsword
 # dynamic library and libxulsword native node-module.
 
-# When run in Vagrant this script should run in Ubuntu 22 because snap
-# core22 is currently the latest working snap core (June 2025) .
+# It is normally run as a 'guest' in a Docker container by docker-build.sh,
+# with the host's xulsword directory mounted at /host. The guest builds the
+# libxulsword binaries for Linux, plus those for Windows and MacOS if they
+# are enabled in the host's setenv file. The binaries are then copied to the
+# host's xulsword directory.
 
 if [[ $EUID -eq 0 ]]; then
    echo "This script should not be run as root. Exiting..."
@@ -23,12 +26,41 @@ fi
 
 cd "$( dirname "${BASH_SOURCE[0]}" )" || exit 5
 
-if [[ -e "/vagrant" ]]; then VAGRANT="guest"; else VAGRANT="host"; fi
+HOSTDIR=/host
+if [[ -d "$HOSTDIR" && ( -e "/.dockerenv" || -e "/run/.containerenv" ) ]]; then
+  RUNCONTEXT="guest"
+else
+  RUNCONTEXT="host"
+fi
 
 DEBVERS="$(lsb_release -cs 2>/dev/null)"
 
 DBG=
 # DBG='-D CMAKE_BUILD_TYPE=Debug'
+
+# Make sure Debian packages are installed. A guest installs them itself,
+# otherwise the user is told how to install them.
+# Usage: requireDeps <description> <package>...
+function requireDeps() {
+  local desc="$1"
+  shift
+  if [ "$(dpkg -l "$@" 2>&1 | grep "no packages" | wc -m)" -eq 0 ]; then return; fi
+  if [[ "$RUNCONTEXT" == "guest" ]]; then
+    echo "INSTALLING $desc BUILD DEPENDENCIES"
+    sudo apt-get update
+    if ! sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "$@"; then
+      echo "ERROR: Failed to install $desc build dependencies."
+      exit 1
+    fi
+  else
+    echo "You need to install missing $desc packages with:"
+    echo .
+    echo "sudo apt-get install $*"
+    echo .
+    echo "Then run this script again."
+    exit 1
+  fi
+}
 
 # BUILD DEPENDENCIES
 PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip curl"
@@ -38,52 +70,32 @@ PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev debhelper libboost-
 PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev"
 # for Clucene build
 PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
-# for VM build
-if [[ "$VAGRANT" == "guest" ]]; then
-  # Ubuntu 24 (noble) renamed libasound2 to libasound2t64.
-  case "$DEBVERS" in
-    focal|jammy|bullseye|bookworm) ASOUND=libasound2 ;;
-    *) ASOUND=libasound2t64 ;;
-  esac
-  PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1-mesa libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev $ASOUND"
-fi
+# shellcheck disable=SC2086
+requireDeps "LINUX" $PKG_DEPS
 
-if [ "$(dpkg -l $PKG_DEPS 2>&1 | grep "no packages" | wc -m)" -ne 0 ]; then
-  echo "INSTALLING LINUX BUILD DEPENDENCIES"
-  if [[ "$VAGRANT" == "guest" ]]; then
-    sudo apt-get update
-    if ! sudo apt-get install -y $PKG_DEPS; then
-      echo "ERROR: Failed to install build dependencies."
-      exit 1
-    fi
-  else
-    echo "You need to install missing linux packages with:"
-    echo .
-    echo "sudo apt-get install ${PKG_DEPS}"
-    echo .
-    echo "Then run this script again."
-    exit;
-  fi
-fi
-
-# If running in Vagrant, then clone the host code to VM and build
-# everything within the VM so as not to contaminate the host's own build
-# files. Then copy only the finished output libraries to the host.
-# Also git must be used (vs. copied from host) so that line endings will
-# be correct on both the host and the guest.
+# If running as a guest, then copy the host's code into the guest and build
+# everything there, so as not to contaminate the host's own build files.
+# Then copy only the finished output libraries to the host.
 COPY_TO_HOST=
-if [[ "$VAGRANT" == "guest" ]]; then
+if [[ "$RUNCONTEXT" == "guest" ]]; then
   XULSWORD="$HOME/src/xulsword"
   COPY_TO_HOST=1
-  if [ ! -e "$HOME/src" ]; then
-    mkdir "$HOME/src";
-    cd "$HOME/src" || exit 5
-    git clone https://github.com/JohnAustinDev/xulsword
-  else
-    cd "$XULSWORD" ||exit 5
-    git pull
+  mkdir -p "$XULSWORD"
+  # Copy the files that git tracks, as they are now (including uncommitted
+  # changes), plus new files that git does not ignore. Tracked files that
+  # were deleted on the host are deleted here too. Ignored build files from
+  # earlier runs are kept, so that only what has changed is rebuilt.
+  FILELIST="$(mktemp)"
+  if ! git -C "$HOSTDIR" ls-files -z --cached --others --exclude-standard > "$FILELIST"; then
+    echo "ERROR: Could not list the source files in $HOSTDIR (it must be a git checkout)."
+    exit 1
   fi
-  if [[ -e "/vagrant/setenv" ]]; then cp "/vagrant/setenv" "$XULSWORD"; fi
+  if ! rsync -a --from0 --files-from="$FILELIST" --delete-missing-args "$HOSTDIR/" "$XULSWORD/"; then
+    echo "ERROR: Could not copy the source files from $HOSTDIR."
+    exit 1
+  fi
+  rm -f "$FILELIST"
+  if [[ -e "$HOSTDIR/setenv" ]]; then cp "$HOSTDIR/setenv" "$XULSWORD"; fi
 else
   XULSWORD=$( pwd )
 fi
@@ -93,48 +105,37 @@ echo "XULSWORD IS $XULSWORD"
 cd "$XULSWORD" || exit 5
 source "./setenv"
 
-# Vagrant is only used to create the Ubuntu 22 libxulsword.so file
-if [[ "$VAGRANT" == "guest" ]]; then
-  WINMACHINE=no
-  MACMACHINE=no
+# A guest only builds the libxulsword binaries. Which ones is set by
+# WINMACHINE and MACMACHINE in setenv.
+if [[ "$RUNCONTEXT" == "guest" ]]; then
   LIBXULSWORD_ONLY=yes
 fi
+echo "Building libxulsword for: Linux, Windows ($WINMACHINE), MacOS ($MACMACHINE)"
 
+# BUILD DEPENDENCIES (for cross compiling libxulsword to Windows)
 if [[ "$WINMACHINE" != "no" ]]; then
-  if [[ -z "$(which wine)" ]]; then
-    echo "INSTALLING WINE AND WINDOWS X-COMPILE BUILD DEPENDENCIES"
-    if [[ "$VAGRANT" == "guest" ]]; then
-      sudo dpkg --add-architecture i386
-      sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
-      sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources
-      sudo apt-get update
-      sudo apt install -y --install-recommends winehq-stable gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix
-    else
-      echo "You need to install missing windows32 packages with:"
-      echo .
-      echo "sudo dpkg --add-architecture i386"
-      echo "sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key"
-      echo "sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/$DEBVERS/winehq-$DEBVERS.sources"
-      echo "sudo apt-get update"
-      echo "sudo apt install --install-recommends winehq-stable gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix"
-      echo .
-      echo "Then run this script again."
-      exit;
-    fi
+  if [[ "$RUNCONTEXT" == "guest" ]]; then
+    # A guest only builds, so it needs the MinGW cross-compiler but not wine.
+    MINGWARCH="${TOOLCHAIN_PREFIX%%-*}"
+    MINGWARCH="${MINGWARCH//_/-}"
+    requireDeps "WINDOWS X-COMPILE" "gcc-mingw-w64-$MINGWARCH-posix" "g++-mingw-w64-$MINGWARCH-posix" mingw-w64-tools
+  elif [[ -z "$(which wine)" ]]; then
+    echo "You need to install missing windows32 packages with:"
+    echo .
+    echo "sudo dpkg --add-architecture i386"
+    echo "sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key"
+    echo "sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/$DEBVERS/winehq-$DEBVERS.sources"
+    echo "sudo apt-get update"
+    echo "sudo apt install --install-recommends winehq-stable gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix mingw-w64-tools"
+    echo .
+    echo "Then run this script again."
+    exit;
   fi
 fi
 
 # BUILD DEPENDENCIES (for cross compiling libxulsword to MacOS)
 if [[ "$MACMACHINE" != "no" ]]; then
-  MAC_DEPS="clang lld llvm xz-utils"
-  if [ "$(dpkg -l $MAC_DEPS 2>&1 | grep "no packages" | wc -m)" -ne 0 ]; then
-    echo "You need to install missing MacOS x-compile packages with:"
-    echo .
-    echo "sudo apt-get install ${MAC_DEPS}"
-    echo .
-    echo "Then run this script again."
-    exit;
-  fi
+  requireDeps "MACOS X-COMPILE" clang lld llvm xz-utils
   LLVM_BIN="$(llvm-config --bindir)"
   export LLVM_BIN
 fi
@@ -166,14 +167,16 @@ if [ ! -e "$XULSWORD/Cpp/lib" ]; then mkdir "$XULSWORD/Cpp/lib"; fi
 if [[ "$WINMACHINE" != "no" ]]; then
   if [[ ! -e "$XULSWORD/Cpp/lib.$XCWD" ]]; then mkdir "$XULSWORD/Cpp/lib.$XCWD"; fi
 fi
-if [[ "$VAGRANT" == "guest" ]]; then
-  if [[ ! -e "$XULSWORD/Cpp/lib-core22" ]]; then mkdir "$XULSWORD/Cpp/lib-core22"; fi
-fi
 
-# Create an archive directory to cache source code
+# Create an archive directory to cache source code. A guest also uses the
+# host's archive directory, so downloads are kept between --clean builds.
 ARCHIVEDIR="$XULSWORD/archive"
 if [[ ! -e "$ARCHIVEDIR" ]]; then mkdir "$ARCHIVEDIR"; fi
-if [[ -e "/vagrant/archive" ]]; then ARCHHOST="/vagrant/archive"; else ARCHHOST=$ARCHIVEDIR; fi
+ARCHHOST="$ARCHIVEDIR"
+if [[ "$RUNCONTEXT" == "guest" ]]; then
+  mkdir -p "$HOSTDIR/archive"
+  ARCHHOST="$HOSTDIR/archive"
+fi
 
 function getSource() {
   echo "Getting source code:"
@@ -212,8 +215,8 @@ function getSource() {
     else
       cd "$ARCHIVEDIR" || exit 5
       curl -o "$gzfile" "$url"
-      if [ -e "/vagrant/archive" ]; then
-        cp "$gzfile" "/vagrant/archive"
+      if [[ "$ARCHHOST" != "$ARCHIVEDIR" ]]; then
+        cp "$gzfile" "$ARCHHOST"
       fi
     fi
   fi
@@ -226,9 +229,9 @@ function getSource() {
     cd "./$dirout/build" || exit 5
   else
     echo "Archive does not exist: $ARCHIVEDIR/$gzfile"
-    exit;
+    exit 1;
   fi
-  # Sleep is required for files to be immediately modifiable in vagrant bookworm.
+  # Sleep was required for files to be immediately modifiable in a Debian bookworm VM.
   sleep 1
   echo "Finished getSource $dirin"
 }
@@ -239,6 +242,9 @@ if [[ "$MACMACHINE" != "no" ]]; then
   # The MacOS SDK cannot be downloaded automatically.
   MACSDK="$CPP/$MACOS_SDK"
   if [ ! -e "$MACSDK" ]; then
+    if [ ! -e "$ARCHIVEDIR/$MACOS_SDK.tar.xz" ] && [ -e "$ARCHHOST/$MACOS_SDK.tar.xz" ]; then
+      cp "$ARCHHOST/$MACOS_SDK.tar.xz" "$ARCHIVEDIR"
+    fi
     if [ ! -e "$ARCHIVEDIR/$MACOS_SDK.tar.xz" ]; then
       echo "The MacOS SDK is needed to cross-compile for MacOS, but this file is missing:"
       echo "$ARCHIVEDIR/$MACOS_SDK.tar.xz"
@@ -450,39 +456,40 @@ fi
 
 ########################################################################
 # COMPILE AND INSTALL LIBXULSWORD
-if [ ! -e "$CPP/build" ]; then
-  mkdir "$CPP/build"
-  cd "$CPP/build" || exit 5
+# Unlike the libraries above, libxulsword is rebuilt (incrementally) each
+# time this script runs, so that changes to its source are always built.
+mkdir -p "$CPP/build"
+cd "$CPP/build" || exit 5
+if [ ! -e Makefile ]; then
   cmake "$DBG" -D SWORD_NO_ICU="Yes" -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install/usr/local/lib" ..
-  make install
 fi
+make install || exit 1
 # CROSS COMPILE LIBXULSWORD TO WINDOWS
 if [[ "$WINMACHINE" != "no" ]]; then
-  if [ ! -e "$CPP/build.$XCWD" ]; then
-    mkdir "$CPP/build.$XCWD"
-    cd "$CPP/build.$XCWD" || exit 5
+  mkdir -p "$CPP/build.$XCWD"
+  cd "$CPP/build.$XCWD" || exit 5
+  if [ ! -e Makefile ]; then
     cmake "$DBG" -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="Yes" -D CMAKE_INCLUDE_PATH="$CPP/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install.$XCWD/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install.$XCWD/usr/local/lib" ..
-    make install
   fi
+  make install || exit 1
 fi
 # CROSS COMPILE LIBXULSWORD TO MACOS
 if [[ "$MACMACHINE" != "no" ]]; then
   for MACARCH in $MACOS_ARCHS; do
     export MACARCH
-    if [ ! -e "$CPP/build.darwin-$MACARCH" ]; then
-      mkdir "$CPP/build.darwin-$MACARCH"
-      cd "$CPP/build.darwin-$MACARCH" || exit 5
-      MACINST="$CPP/install.darwin-$MACARCH/usr/local"
+    mkdir -p "$CPP/build.darwin-$MACARCH"
+    cd "$CPP/build.darwin-$MACARCH" || exit 5
+    MACINST="$CPP/install.darwin-$MACARCH/usr/local"
+    if [ ! -e Makefile ]; then
       cmake "$DBG" -D CMAKE_TOOLCHAIN_FILE="$CPP/darwin/toolchain.cmake" -D SWORD_NO_ICU="Yes" -D CMAKE_INCLUDE_PATH="$MACINST/include" -D CMAKE_LIBRARY_PATH="$MACINST/lib" -D LIB_INSTALL_DIR="$MACINST/lib" ..
-      make install
     fi
+    make install || exit 1
   done
 fi
 ########################################################################
 
 # Install the lib and all dependencies and strip them
 LIBDIRNAME=lib
-if [[ "$(lsb_release -cs)" == "jammy" ]]; then LIBDIRNAME=lib-core22; fi
 LIBDIR="$CPP/$LIBDIRNAME"
 # Stop here if the build failed, so an existing library (including the
 # host's copy) is not replaced by an empty directory.
@@ -500,7 +507,7 @@ chmod ugo+x "$LIBDIR/"*
 
 # If COPY_TO_HOST then copy the finished library to the host machine
 if [ -n "$COPY_TO_HOST" ]; then
-  HLIBDIR="/vagrant/Cpp/$LIBDIRNAME"
+  HLIBDIR="$HOSTDIR/Cpp/$LIBDIRNAME"
   if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
   cp -r "$LIBDIR" "$HLIBDIR"
 fi
@@ -518,7 +525,8 @@ if [[ "$WINMACHINE" != "no" ]]; then
   cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/13-${GCCSTD}/$GCCDLL" "$LIBDIR"
   cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/13-${GCCSTD}/libstdc++-6.dll" "$LIBDIR"
   cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$LIBDIR"
-  gendef - "$CPP/install.$XCWD/usr/local/lib/libxulsword-static.dll" > "$LIBXULSWORD/lib/libxulsword.def"
+  DEFFILE="$XULSWORD/libxulsword/lib/libxulsword.def"
+  gendef - "$CPP/install.$XCWD/usr/local/lib/libxulsword-static.dll" > "$DEFFILE" || exit 1
   if [ -z "$DBG" ]; then
     strip "$LIBDIR/"*
   fi
@@ -526,9 +534,10 @@ if [[ "$WINMACHINE" != "no" ]]; then
 
   # If COPY_TO_HOST then copy the finished library to the host machine
   if [ -n "$COPY_TO_HOST" ]; then
-    HLIBDIR="/vagrant/Cpp/lib.$XCWD"
+    HLIBDIR="$HOSTDIR/Cpp/lib.$XCWD"
     if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
     cp -r "$LIBDIR" "$HLIBDIR"
+    cp "$DEFFILE" "$HOSTDIR/libxulsword/lib/"
   fi
 fi
 
@@ -545,7 +554,15 @@ if [[ "$MACMACHINE" != "no" ]]; then
   ADDONDIR="$XULSWORD/libxulsword/bin/darwin-universal-89"
   if [ ! -e "$ADDONDIR" ]; then mkdir -p "$ADDONDIR"; fi
   NODE_INC="$(node -p "require('path').join(process.execPath, '../../include/node')")"
-  NAPI_INC="$(cd "$XULSWORD/libxulsword" && node -p "require('path').resolve(require('node-addon-api').include_dir)")"
+  NAPI_INC="$(cd "$XULSWORD/libxulsword" && node -p "require('path').resolve(require('node-addon-api').include_dir)" 2>/dev/null)"
+  if [ -z "$NAPI_INC" ]; then
+    # Without node_modules (as in a guest) install just node-addon-api.
+    NAPIDIR="$CPP/node-addon-api"
+    if [ ! -e "$NAPIDIR/node_modules/node-addon-api" ]; then
+      npm install --prefix "$NAPIDIR" --no-save --no-package-lock node-addon-api@7.1.1 || exit 1
+    fi
+    NAPI_INC="$(cd "$NAPIDIR" && node -p "require('path').resolve(require('node-addon-api').include_dir)")"
+  fi
   DYLIBS=()
   ADDONS=()
   for MACARCH in $MACOS_ARCHS; do
@@ -566,6 +583,20 @@ if [[ "$MACMACHINE" != "no" ]]; then
     "$LLVM_BIN/llvm-lipo" -info "$f"
     "$LLVM_BIN/llvm-otool" -L "$f"
   done
+
+  # If COPY_TO_HOST then copy the finished libraries to the host machine,
+  # along with rcodesign, which the host uses to sign the MacOS app.
+  if [ -n "$COPY_TO_HOST" ]; then
+    HLIBDIR="$HOSTDIR/Cpp/lib.darwin"
+    if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
+    cp -r "$LIBDIR" "$HLIBDIR"
+    mkdir -p "$HOSTDIR/libxulsword/bin/darwin-universal-89"
+    cp "$ADDONDIR/libxulsword.node" "$HOSTDIR/libxulsword/bin/darwin-universal-89/"
+    if [ ! -e "$HOSTDIR/Cpp/darwin-bin/rcodesign" ]; then
+      mkdir -p "$HOSTDIR/Cpp/darwin-bin"
+      cp "$DARWINBIN/rcodesign" "$HOSTDIR/Cpp/darwin-bin/"
+    fi
+  fi
 fi
 
 if [[ "$LIBXULSWORD_ONLY" == "yes" ]]; then exit 0; fi
@@ -577,15 +608,8 @@ echo "Initializing node.js"
 cd "$XULSWORD" || exit 5
 yarn
 
-echo "Copying node_modules to host"
-if [ -n "$COPY_TO_HOST" ]; then
-  if [ ! -e "/vagrant/node_modules" ]; then
-    cp -r "$XULSWORD/node_modules" "/vagrant"
-  fi
-fi
-
 if [[ "$WINMACHINE" != "no" ]]; then
-  if [[ "$VAGRANT" != "guest" ]]; then
+  if [[ "$RUNCONTEXT" != "guest" ]]; then
     winecfg
   fi
 fi

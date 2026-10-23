@@ -56,7 +56,8 @@ Each time you open a shell to build xulsword, environment variables must be set 
 4. Build the native libxulsword C++ dynamic library for your system (this step only needs to be done once and won't be needed again until the rare occasion that xulsword/Cpp C++ source changes):
 
 - Download the [boost_1_80_0.tar.gz](https://www.boost.org/users/download/) source code package (check for the right version number; you may need to go to the history section to find previous releases). Create an `archive` sub-directory under `xulsword` and place the source package there (boost doesn't support scripted downloads).
-- Install [VirtualBox](https://www.virtualbox.org/wiki/Downloads) and [Vagrant](https://www.vagrantup.com/), and run `vagrant up`. Native libraries for each system will eventually appear in the Cpp/lib directories.
+- To also build the Windows and MacOS libraries, set `WINMACHINE` and `MACMACHINE` in `setenv`. The MacOS build also needs a MacOS SDK in the `archive` directory (see [libxulsword ReadMe](libxulsword/Readme.md)).
+- Install [Docker](https://docs.docker.com/engine/install/) and run `./docker-build.sh`. Native libraries for each system will appear in the Cpp/lib directories. Your local code is built as it is, including uncommitted changes. Later runs only rebuild what has changed; run `./docker-build.sh --clean` to rebuild everything.
 - Install the shared library for your particular operating system by running `yarn install-libxulsword`. The apporpriate binaries will be installed to the libxulsword nodejs module.
 
 5. Run `yarn` to install Node.js dependencies.

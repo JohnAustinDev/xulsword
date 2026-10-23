@@ -72,7 +72,7 @@ if [[ -z "$LIBXULSWORD_ONLY" ]]; then
   export LIBXULSWORD_ONLY=no
 fi
 
-if [ -e /vagrant ]; then export CONTEXT="guest"; else export CONTEXT="host"; fi
+if [ -d /host ] && { [ -e /.dockerenv ] || [ -e /run/.containerenv ]; }; then export CONTEXT="guest"; else export CONTEXT="host"; fi
 export CPP="$XULSWORD/Cpp"
 export LIBXULSWORD="$XULSWORD/build/app/node_modules/libxulsword"
 
