@@ -78,7 +78,7 @@ export LIBXULSWORD="$XULSWORD/build/app/node_modules/libxulsword"
 
 # Set WINMACHINE to x86 or x64 to compile Windows 32 bit or 64 bit, respectively.
 # Or set to 'no' to skip compile for windows.
-export WINMACHINE=no
+export WINMACHINE=x86
 export TOOLCHAIN_PREFIX=i686-w64-mingw32
 export ADDRESS_MODEL=32
 if [ "$WINMACHINE" = "x64" ]; then
@@ -93,7 +93,7 @@ export GCCSTD=posix
 
 # Set MACMACHINE to 'universal' to cross-compile libxulsword for MacOS
 # (arm64 + x86_64). Or set to 'no' to skip compile for MacOS.
-export MACMACHINE=no
+export MACMACHINE=universal
 export MACOS_ARCHS="arm64 x86_64"
 # The MacOS SDK must be supplied as xulsword/archive/$MACOS_SDK.tar.xz
 export MACOS_SDK=MacOSX14.5.sdk

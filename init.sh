@@ -6,6 +6,10 @@ export NVM_DIR
 export VAGRANT
 export BOOSTDIR
 
+# CMake 4 refuses projects which require a CMake version below 3.5, which
+# includes zlib, clucene, sword and libxulsword. Older CMake ignores this.
+export CMAKE_POLICY_VERSION_MINIMUM=3.5
+
 # This script installs dependencies and builds the libxulsword
 # dynamic library and libxulsword native node-module.
 
@@ -35,13 +39,23 @@ PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev"
 # for Clucene build
 PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
 # for VM build
-if [[ "$VAGRANT" == "guest" ]]; then PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1 libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev libasound2"; fi
+if [[ "$VAGRANT" == "guest" ]]; then
+  # Ubuntu 24 (noble) renamed libasound2 to libasound2t64.
+  case "$DEBVERS" in
+    focal|jammy|bullseye|bookworm) ASOUND=libasound2 ;;
+    *) ASOUND=libasound2t64 ;;
+  esac
+  PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1-mesa libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev $ASOUND"
+fi
 
 if [ "$(dpkg -l $PKG_DEPS 2>&1 | grep "no packages" | wc -m)" -ne 0 ]; then
   echo "INSTALLING LINUX BUILD DEPENDENCIES"
   if [[ "$VAGRANT" == "guest" ]]; then
     sudo apt-get update
-    sudo apt-get install -y $PKG_DEPS
+    if ! sudo apt-get install -y $PKG_DEPS; then
+      echo "ERROR: Failed to install build dependencies."
+      exit 1
+    fi
   else
     echo "You need to install missing linux packages with:"
     echo .
@@ -470,6 +484,12 @@ fi
 LIBDIRNAME=lib
 if [[ "$(lsb_release -cs)" == "jammy" ]]; then LIBDIRNAME=lib-core22; fi
 LIBDIR="$CPP/$LIBDIRNAME"
+# Stop here if the build failed, so an existing library (including the
+# host's copy) is not replaced by an empty directory.
+if [ ! -e "$CPP/install/usr/local/lib/libxulsword-static.so" ]; then
+  echo "ERROR: libxulsword build failed: $CPP/install/usr/local/lib/libxulsword-static.so was not created."
+  exit 1
+fi
 if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
 mkdir "$LIBDIR"
 cp "$CPP/install/usr/local/lib/libxulsword-static.so" "$LIBDIR"
