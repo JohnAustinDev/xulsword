@@ -1120,8 +1120,15 @@ export function parseTimingFile(timing: string): {
       C.DefaultAudioTimingSeparators,
   };
   // If all timing id's are only verse numbers or verse ranges (or titles),
-  // then level must be 'verse'.
-  if (lines.every((l) => /\s+([-\d]+|(s|mt|d|sp|is)\d+)$/.test(l)))
+  // then level must be 'verse'. Only timing entries are checked; blank lines
+  // and config lines are ignored.
+  const entries = lines
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith('\\'));
+  if (
+    entries.length &&
+    entries.every((l) => /\s+([-\d]+|(s|mt|d|sp|is)\d+)$/.test(l))
+  )
     settings.level = 'verse';
   const { level } = settings;
 
