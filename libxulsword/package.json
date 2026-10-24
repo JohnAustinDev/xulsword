@@ -7,8 +7,5 @@
     "node-addon-api": "^4.2.0"
   },
   "main": "libxulsword.mjs",
-  "scripts": {
-    "postinstall": "./install.mjs"
-  },
   "license": "MIT"
 }

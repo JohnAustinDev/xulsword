@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Build the libxulsword binaries in a Docker container by running
-# libxulsword-build.sh, and copy them into the xulsword directory:
+# libxulsword-build.sh, and copy them into the xulsword directory. Each
+# system's dynamic library and libxulsword.node addon go to:
 #   Linux:   Cpp/lib
-#   Windows: Cpp/lib.32win or Cpp/lib.64win, and libxulsword/bin/win32-ia32
-#            or libxulsword/bin/win32-x64
-#   MacOS:   Cpp/lib.darwin and libxulsword/bin/darwin-universal
+#   Windows: Cpp/lib.32win or Cpp/lib.64win
+#   MacOS:   Cpp/lib.darwin
 #
 # The Windows and MacOS binaries are only built if they are enabled by
 # WINMACHINE and MACMACHINE in setenv. The MacOS build also needs the MacOS

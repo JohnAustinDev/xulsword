@@ -1,12 +1,11 @@
 #!/bin/bash
 
-# This script builds the libxulsword binaries, and nothing else:
-#   Linux:   the libxulsword dynamic library in Cpp/lib, and the
-#            libxulsword.node addon in libxulsword/bin/linux-x64
-#   Windows: the libxulsword DLL in Cpp/lib.32win or Cpp/lib.64win, and the
-#            addon in libxulsword/bin/win32-ia32 or win32-x64
-#   MacOS:   the libxulsword dylib in Cpp/lib.darwin, and the addon in
-#            libxulsword/bin/darwin-universal
+# This script builds the libxulsword binaries, and nothing else. The
+# libxulsword dynamic library and the libxulsword.node addon for each system
+# go to the same directory:
+#   Linux:   Cpp/lib
+#   Windows: Cpp/lib.32win or Cpp/lib.64win (with the MinGW runtime DLLs)
+#   MacOS:   Cpp/lib.darwin
 # The Windows and MacOS binaries are only built if they are enabled by
 # WINMACHINE and MACMACHINE in setenv.
 #
@@ -464,13 +463,6 @@ if [ -z "$DBG" ]; then
 fi
 chmod ugo+x "$LIBDIR/"*
 
-# If COPY_TO_HOST then copy the finished library to the host machine
-if [ -n "$COPY_TO_HOST" ]; then
-  HLIBDIR="$HOSTDIR/Cpp/$LIBDIRNAME"
-  if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
-  cp -r "$LIBDIR" "$HLIBDIR"
-fi
-
 # NODE-API HEADERS
 # The libxulsword.node addons are compiled here rather than by node-gyp,
 # since node-gyp cannot cross-compile, and needs the SWORD headers, which
@@ -492,21 +484,22 @@ fi
 # Build the Linux libxulsword.node addon. Like the node-gyp build it
 # replaces, it finds libxulsword-static.so through the library search path
 # (the Linux package installs it alongside the main executable).
-ADDONDIR="$XULSWORD/libxulsword/bin/linux-x64"
-mkdir -p "$ADDONDIR"
 g++ -std=gnu++17 -O2 -fPIC -fvisibility=hidden -shared \
   -DNODE_GYP_MODULE_NAME=libxulsword -DBUILDING_NODE_EXTENSION \
   -I"$NODE_INC" -I"$NAPI_INC" -I"$CPP/src/include" -I"$CPP/sword/include" \
   "$XULSWORD/libxulsword/src/libxulsword.cpp" \
   -L"$CPP/install/usr/local/lib" -lxulsword-static \
-  -o "$ADDONDIR/libxulsword.node" || exit 1
+  -o "$LIBDIR/libxulsword.node" || exit 1
 if [ -z "$DBG" ]; then
-  strip "$ADDONDIR/libxulsword.node"
+  strip "$LIBDIR/libxulsword.node"
 fi
-readelf -d "$ADDONDIR/libxulsword.node" | grep NEEDED
+readelf -d "$LIBDIR/libxulsword.node" | grep NEEDED
+
+# If COPY_TO_HOST then copy the finished library and addon to the host machine
 if [ -n "$COPY_TO_HOST" ]; then
-  mkdir -p "$HOSTDIR/libxulsword/bin/linux-x64"
-  cp "$ADDONDIR/libxulsword.node" "$HOSTDIR/libxulsword/bin/linux-x64/"
+  HLIBDIR="$HOSTDIR/Cpp/$LIBDIRNAME"
+  if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
+  cp -r "$LIBDIR" "$HLIBDIR"
 fi
 
 if [[ "$WINMACHINE" != "no" ]]; then
@@ -536,7 +529,8 @@ if [[ "$WINMACHINE" != "no" ]]; then
   chmod ugo+x "$LIBDIR/"*
 
   # Build the libxulsword.node addon. It uses the same MinGW runtime DLLs
-  # as the libxulsword DLL, and install.mjs puts them all side by side.
+  # as the libxulsword DLL, and scripts/install-libxulsword.mjs puts them all
+  # side by side.
   # The addon delay-loads the Node-API functions from node.exe, and
   # win_delay_load_hook.c redirects them to the running program (see
   # libxulsword/Readme.md). It is linked with lld, because GNU ld makes
@@ -545,19 +539,15 @@ if [[ "$WINMACHINE" != "no" ]]; then
   ADDONBUILD="$CPP/build.$XCWD/addon"
   mkdir -p "$ADDONBUILD"
   if [[ "$XCWD" == "32win" ]]; then
-    WINADDONBIN=win32-ia32
     DLLTOOLARCH=i386
     # GCC 13's <iostream> refers to std::ios_base_library_init() without the
     # leading underscore that 32 bit Windows adds to C++ names. GNU ld
     # ignores this, but lld needs to be told the right name.
     ADDONLDFLAGS=(-Wl,--Xlink=-alternatename:_ZSt21ios_base_library_initv=__ZSt21ios_base_library_initv)
   else
-    WINADDONBIN=win32-x64
     DLLTOOLARCH=i386:x86-64
     ADDONLDFLAGS=()
   fi
-  ADDONDIR="$XULSWORD/libxulsword/bin/$WINADDONBIN"
-  mkdir -p "$ADDONDIR"
   "$LLVM_BIN/llvm-dlltool" -m "$DLLTOOLARCH" -d "$NAPI_DEF" -D node.exe -l "$ADDONBUILD/libnode.a" || exit 1
   "$TOOLCHAIN_PREFIX-gcc-$GCCSTD" -O2 -c "$XULSWORD/libxulsword/src/win_delay_load_hook.c" \
     -o "$ADDONBUILD/win_delay_load_hook.o" || exit 1
@@ -569,16 +559,14 @@ if [[ "$WINMACHINE" != "no" ]]; then
   "$LLVM_BIN/clang++" --target="$TOOLCHAIN_PREFIX" -fuse-ld=lld -shared -s -Wl,--no-insert-timestamp \
     "$ADDONBUILD/libxulsword.o" "$ADDONBUILD/win_delay_load_hook.o" \
     "$CPP/install.$XCWD/usr/local/lib/libxulsword-static.dll.a" "$ADDONBUILD/libnode.a" \
-    -Wl,--delayload=node.exe "${ADDONLDFLAGS[@]}" -o "$ADDONDIR/libxulsword.node" || exit 1
-  "$LLVM_BIN/llvm-readobj" --coff-imports "$ADDONDIR/libxulsword.node" | grep -E "^ *Name:"
+    -Wl,--delayload=node.exe "${ADDONLDFLAGS[@]}" -o "$LIBDIR/libxulsword.node" || exit 1
+  "$LLVM_BIN/llvm-readobj" --coff-imports "$LIBDIR/libxulsword.node" | grep -E "^ *Name:"
 
-  # If COPY_TO_HOST then copy the finished library to the host machine
+  # If COPY_TO_HOST then copy the finished libraries and addon to the host machine
   if [ -n "$COPY_TO_HOST" ]; then
     HLIBDIR="$HOSTDIR/Cpp/lib.$XCWD"
     if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
     cp -r "$LIBDIR" "$HLIBDIR"
-    mkdir -p "$HOSTDIR/libxulsword/bin/$WINADDONBIN"
-    cp "$ADDONDIR/libxulsword.node" "$HOSTDIR/libxulsword/bin/$WINADDONBIN/"
   fi
 fi
 
@@ -586,14 +574,13 @@ if [[ "$MACMACHINE" != "no" ]]; then
   # Merge the MacOS architectures into a universal dylib. Also build the
   # libxulsword.node addon here, since node-gyp cannot cross-compile, and
   # merge it into a universal binary. The addon finds the dylib through
-  # @loader_path, so the two must be installed side by side (install.mjs).
-  # Nothing is stripped afterwards, since that would break the arm64 ad-hoc
-  # code signature which the linker adds (local symbols are stripped by -x).
+  # @loader_path, so the two must be installed side by side
+  # (scripts/install-libxulsword.mjs). Nothing is stripped afterwards, since
+  # that would break the arm64 ad-hoc code signature which the linker adds
+  # (local symbols are stripped by -x).
   LIBDIR="$CPP/lib.darwin"
   if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
   mkdir "$LIBDIR"
-  ADDONDIR="$XULSWORD/libxulsword/bin/darwin-universal"
-  if [ ! -e "$ADDONDIR" ]; then mkdir -p "$ADDONDIR"; fi
   DYLIBS=()
   ADDONS=()
   for MACARCH in $MACOS_ARCHS; do
@@ -609,19 +596,17 @@ if [[ "$MACMACHINE" != "no" ]]; then
     ADDONS+=("$ADDON")
   done
   "$LLVM_BIN/llvm-lipo" -create "${DYLIBS[@]}" -output "$LIBDIR/libxulsword-static.dylib" || exit 1
-  "$LLVM_BIN/llvm-lipo" -create "${ADDONS[@]}" -output "$ADDONDIR/libxulsword.node" || exit 1
-  for f in "$LIBDIR/libxulsword-static.dylib" "$ADDONDIR/libxulsword.node"; do
+  "$LLVM_BIN/llvm-lipo" -create "${ADDONS[@]}" -output "$LIBDIR/libxulsword.node" || exit 1
+  for f in "$LIBDIR/libxulsword-static.dylib" "$LIBDIR/libxulsword.node"; do
     "$LLVM_BIN/llvm-lipo" -info "$f"
     "$LLVM_BIN/llvm-otool" -L "$f"
   done
 
-  # If COPY_TO_HOST then copy the finished libraries to the host machine
+  # If COPY_TO_HOST then copy the finished library and addon to the host machine
   if [ -n "$COPY_TO_HOST" ]; then
     HLIBDIR="$HOSTDIR/Cpp/lib.darwin"
     if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
     cp -r "$LIBDIR" "$HLIBDIR"
-    mkdir -p "$HOSTDIR/libxulsword/bin/darwin-universal"
-    cp "$ADDONDIR/libxulsword.node" "$HOSTDIR/libxulsword/bin/darwin-universal/"
   fi
 fi
 

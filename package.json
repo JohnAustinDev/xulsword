@@ -19,7 +19,7 @@
     "typescript": "yarn tsc --noEmit",
     "lint": "eslint . --cache",
     "lint:css": "stylelint \"src/**/*.{css,scss}\"",
-    "install-libxulsword": "node ./build/app/node_modules/libxulsword/install.mjs",
+    "install-libxulsword": "node ./scripts/install-libxulsword.mjs",
     "postinstall": "electron-builder install-app-deps && yarn ./build/app && yarn ./build/webapp",
     "package": "yarn build:clean && yarn build:app && electron-builder build --publish never",
     "package-publish": "yarn build:clean && yarn build:app && electron-builder build --publish always",
@@ -62,7 +62,10 @@
       "category": "Education",
       "extraFiles": [
         {
-          "from": "./Cpp/lib"
+          "from": "./Cpp/lib",
+          "filter": [
+            "!libxulsword.node"
+          ]
         }
       ]
     },
