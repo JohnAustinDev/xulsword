@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # This script builds the libxulsword binaries, and nothing else:
-#   Linux:   the libxulsword dynamic library, in Cpp/lib (the Linux
-#            libxulsword.node addon is built by node-gyp instead)
+#   Linux:   the libxulsword dynamic library in Cpp/lib, and the
+#            libxulsword.node addon in libxulsword/bin/linux-x64
 #   Windows: the libxulsword DLL in Cpp/lib.32win or Cpp/lib.64win, and the
-#            addon in libxulsword/bin/win32-ia32-89 or win32-x64-89
+#            addon in libxulsword/bin/win32-ia32 or win32-x64
 #   MacOS:   the libxulsword dylib in Cpp/lib.darwin, and the addon in
-#            libxulsword/bin/darwin-universal-89
+#            libxulsword/bin/darwin-universal
 # The Windows and MacOS binaries are only built if they are enabled by
 # WINMACHINE and MACMACHINE in setenv.
 #
@@ -126,14 +126,15 @@ if [[ "$WINMACHINE" != "no" || "$MACMACHINE" != "no" ]]; then
   requireDeps "NODE ADDON X-COMPILE" clang lld llvm
   LLVM_BIN="$(llvm-config --bindir)"
   export LLVM_BIN
-  # The addons are compiled against the Node.js headers, which setenv
-  # provides by installing Node.js with nvm.
-  if [[ -z "$(command -v node)" || -z "$(command -v npm)" ]]; then
-    echo "ERROR: Node.js is needed to build the Windows and MacOS libxulsword.node addons."
-    echo "Install nvm (https://github.com/nvm-sh/nvm), which setenv uses to install"
-    echo "Node.js. Then run this script again."
-    exit 1
-  fi
+fi
+
+# The libxulsword.node addons are compiled against the Node.js headers,
+# which setenv provides by installing Node.js with nvm.
+if [[ -z "$(command -v node)" || -z "$(command -v npm)" ]]; then
+  echo "ERROR: Node.js is needed to build the libxulsword.node addons."
+  echo "Install nvm (https://github.com/nvm-sh/nvm), which setenv uses to install"
+  echo "Node.js. Then run this script again."
+  exit 1
 fi
 
 CPP="$XULSWORD/Cpp"
@@ -471,21 +472,43 @@ if [ -n "$COPY_TO_HOST" ]; then
 fi
 
 # NODE-API HEADERS
-# node-gyp cannot cross-compile, so the Windows and MacOS libxulsword.node
-# addons are compiled here. Windows also needs the list of Node-API
-# functions from node-api-headers, to make an import library for them.
-if [[ "$WINMACHINE" != "no" || "$MACMACHINE" != "no" ]]; then
-  NODE_INC="$(node -p "require('path').join(process.execPath, '../../include/node')")"
-  NAPI_INC="$(cd "$XULSWORD/libxulsword" && node -p "require('path').resolve(require('node-addon-api').include_dir)" 2>/dev/null)"
-  if [ -z "$NAPI_INC" ]; then
-    # Without node_modules (as in a guest) install just node-addon-api.
-    NAPIDIR="$CPP/node-addon-api"
-    if [ ! -e "$NAPIDIR/node_modules/node-addon-api" ]; then
-      npm install --prefix "$NAPIDIR" --no-save --no-package-lock node-addon-api@7.1.1 || exit 1
-    fi
-    NAPI_INC="$(cd "$NAPIDIR" && node -p "require('path').resolve(require('node-addon-api').include_dir)")"
+# The libxulsword.node addons are compiled here rather than by node-gyp,
+# since node-gyp cannot cross-compile, and needs the SWORD headers, which
+# only exist where this script builds SWORD. The addons only use Node-API,
+# so they work with any version of Node.js or Electron. Windows also needs
+# the list of Node-API functions from node-api-headers, to make an import
+# library for them.
+NODE_INC="$(node -p "require('path').join(process.execPath, '../../include/node')")"
+NAPI_INC="$(cd "$XULSWORD/libxulsword" && node -p "require('path').resolve(require('node-addon-api').include_dir)" 2>/dev/null)"
+if [ -z "$NAPI_INC" ]; then
+  # Without node_modules (as in a guest) install just node-addon-api.
+  NAPIDIR="$CPP/node-addon-api"
+  if [ ! -e "$NAPIDIR/node_modules/node-addon-api" ]; then
+    npm install --prefix "$NAPIDIR" --no-save --no-package-lock node-addon-api@7.1.1 || exit 1
   fi
+  NAPI_INC="$(cd "$NAPIDIR" && node -p "require('path').resolve(require('node-addon-api').include_dir)")"
 fi
+
+# Build the Linux libxulsword.node addon. Like the node-gyp build it
+# replaces, it finds libxulsword-static.so through the library search path
+# (the Linux package installs it alongside the main executable).
+ADDONDIR="$XULSWORD/libxulsword/bin/linux-x64"
+mkdir -p "$ADDONDIR"
+g++ -std=gnu++17 -O2 -fPIC -fvisibility=hidden -shared \
+  -DNODE_GYP_MODULE_NAME=libxulsword -DBUILDING_NODE_EXTENSION \
+  -I"$NODE_INC" -I"$NAPI_INC" -I"$CPP/src/include" -I"$CPP/sword/include" \
+  "$XULSWORD/libxulsword/src/libxulsword.cpp" \
+  -L"$CPP/install/usr/local/lib" -lxulsword-static \
+  -o "$ADDONDIR/libxulsword.node" || exit 1
+if [ -z "$DBG" ]; then
+  strip "$ADDONDIR/libxulsword.node"
+fi
+readelf -d "$ADDONDIR/libxulsword.node" | grep NEEDED
+if [ -n "$COPY_TO_HOST" ]; then
+  mkdir -p "$HOSTDIR/libxulsword/bin/linux-x64"
+  cp "$ADDONDIR/libxulsword.node" "$HOSTDIR/libxulsword/bin/linux-x64/"
+fi
+
 if [[ "$WINMACHINE" != "no" ]]; then
   NAPIHDIR="$CPP/node-api-headers"
   if [ ! -e "$NAPIHDIR/node_modules/node-api-headers" ]; then
@@ -522,14 +545,14 @@ if [[ "$WINMACHINE" != "no" ]]; then
   ADDONBUILD="$CPP/build.$XCWD/addon"
   mkdir -p "$ADDONBUILD"
   if [[ "$XCWD" == "32win" ]]; then
-    WINADDONBIN=win32-ia32-89
+    WINADDONBIN=win32-ia32
     DLLTOOLARCH=i386
     # GCC 13's <iostream> refers to std::ios_base_library_init() without the
     # leading underscore that 32 bit Windows adds to C++ names. GNU ld
     # ignores this, but lld needs to be told the right name.
     ADDONLDFLAGS=(-Wl,--Xlink=-alternatename:_ZSt21ios_base_library_initv=__ZSt21ios_base_library_initv)
   else
-    WINADDONBIN=win32-x64-89
+    WINADDONBIN=win32-x64
     DLLTOOLARCH=i386:x86-64
     ADDONLDFLAGS=()
   fi
@@ -569,7 +592,7 @@ if [[ "$MACMACHINE" != "no" ]]; then
   LIBDIR="$CPP/lib.darwin"
   if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
   mkdir "$LIBDIR"
-  ADDONDIR="$XULSWORD/libxulsword/bin/darwin-universal-89"
+  ADDONDIR="$XULSWORD/libxulsword/bin/darwin-universal"
   if [ ! -e "$ADDONDIR" ]; then mkdir -p "$ADDONDIR"; fi
   DYLIBS=()
   ADDONS=()
@@ -597,8 +620,8 @@ if [[ "$MACMACHINE" != "no" ]]; then
     HLIBDIR="$HOSTDIR/Cpp/lib.darwin"
     if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
     cp -r "$LIBDIR" "$HLIBDIR"
-    mkdir -p "$HOSTDIR/libxulsword/bin/darwin-universal-89"
-    cp "$ADDONDIR/libxulsword.node" "$HOSTDIR/libxulsword/bin/darwin-universal-89/"
+    mkdir -p "$HOSTDIR/libxulsword/bin/darwin-universal"
+    cp "$ADDONDIR/libxulsword.node" "$HOSTDIR/libxulsword/bin/darwin-universal/"
   fi
 fi
 

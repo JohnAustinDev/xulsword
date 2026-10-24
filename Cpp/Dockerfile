@@ -38,7 +38,7 @@ RUN userdel -r ubuntu 2>/dev/null; \
 USER builder
 WORKDIR /home/builder
 
-# Node.js is needed to build the Windows and MacOS libxulsword.node addons.
+# Node.js is needed to build the libxulsword.node addons.
 # setenv loads nvm from ~/.nvm and selects NODE_VERSION. nvm requires bash.
 SHELL ["/bin/bash", "-c"]
 RUN export NVM_DIR="$HOME/.nvm" \

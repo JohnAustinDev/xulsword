@@ -27,10 +27,10 @@ const release = path.join(dirname, 'build', 'Release');
 fs.mkdirSync(release, { recursive: true });
 console.log(`Installing ${machine} xulsword.node binary.`);
 
-let bindir = 'linux-x64-89';
-if (machine === '32win') bindir = 'win32-ia32-89';
-else if (machine === '64win') bindir = 'win32-x64-89';
-else if (machine === 'darwin') bindir = 'darwin-universal-89';
+let bindir = 'linux-x64';
+if (machine === '32win') bindir = 'win32-ia32';
+else if (machine === '64win') bindir = 'win32-x64';
+else if (machine === 'darwin') bindir = 'darwin-universal';
 const binfile = path.join(dirname, 'bin', bindir, 'libxulsword.node');
 console.log(`Copying Node-API binary xulsword.node to ${release}`);
 if (!fs.existsSync(binfile))
