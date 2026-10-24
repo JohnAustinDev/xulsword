@@ -55,11 +55,11 @@ if (isWindows || isMac) {
   } else if (isMac)
     throw new Error(
       `MacOS libxulsword dylib has not been built:
-    Run xulsword init.sh after setting MACMACHINE=universal in xulsword/setenv`,
+    Run xulsword/Cpp/docker-build.sh after setting MACMACHINE=universal in xulsword/setenv`,
     );
   else
     throw new Error(
       `Windows ${machine} libxulsword DLL has not been built:
-    Run xulsword init.sh after setting WINMACHINE=${machine === '64win' ? 'x64' : 'x86'} in xulsword/setenv`,
+    Run xulsword/Cpp/docker-build.sh after setting WINMACHINE=${machine === '64win' ? 'x64' : 'x86'} in xulsword/setenv`,
     );
 }

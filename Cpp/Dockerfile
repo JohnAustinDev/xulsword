@@ -1,6 +1,7 @@
 # An Ubuntu 24.04 image with everything needed to build the libxulsword
 # binaries for Linux, Windows and MacOS. Use docker-build.sh to build the
-# image and run init.sh in it, rather than using this file directly.
+# image and run libxulsword-build.sh in it, rather than using this file
+# directly.
 
 FROM ubuntu:24.04
 
@@ -13,20 +14,20 @@ ARG NVM_VERSION=0.40.1
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Packages for the Linux build (PKG_DEPS in init.sh), then the Windows
-# cross-compile, then the MacOS cross-compile (clang and lld also link the
-# Windows addon), then those used by init.sh and setenv.
+# Packages for the Linux build (as checked by requireDeps in
+# libxulsword-build.sh), then the Windows cross-compile, then the MacOS
+# cross-compile (clang and lld also link the Windows addon), then those used
+# by libxulsword-build.sh itself.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      build-essential git subversion libtool-bin cmake autoconf make pkg-config zip curl \
-      debhelper binutils gcc-multilib dpkg-dev libboost-dev \
+      build-essential cmake pkg-config curl git subversion libboost-dev \
       gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix \
       gcc-mingw-w64-x86-64-posix g++-mingw-w64-x86-64-posix \
       clang lld llvm xz-utils \
-      ca-certificates lsb-release rsync sudo \
+      ca-certificates rsync sudo \
     && rm -rf /var/lib/apt/lists/*
 
-# init.sh will not run as root. The build user may use sudo, so that init.sh
-# can install any dependencies which are missing from this image.
+# libxulsword-build.sh will not run as root. The build user may use sudo, so
+# that it can install any dependencies which are missing from this image.
 RUN userdel -r ubuntu 2>/dev/null; \
     groupadd -o -g "$USER_GID" builder \
     && useradd -o -m -u "$USER_UID" -g "$USER_GID" -s /bin/bash builder \
@@ -47,4 +48,4 @@ RUN export NVM_DIR="$HOME/.nvm" \
     && git config --global --add safe.directory /host
 
 # docker-build.sh mounts the host's xulsword directory at /host.
-CMD ["/host/init.sh"]
+CMD ["/host/Cpp/libxulsword-build.sh"]

@@ -1,7 +1,8 @@
 # CMake toolchain for cross-compiling to MacOS from Linux using clang, lld
-# and the LLVM tools, plus a MacOS SDK (see init.sh). One architecture is
-# built per CMake run, selected by the MACARCH environment variable (arm64 or
-# x86_64). init.sh merges the architectures into universal binaries later.
+# and the LLVM tools, plus a MacOS SDK (see Cpp/libxulsword-build.sh). One
+# architecture is built per CMake run, selected by the MACARCH environment
+# variable (arm64 or x86_64). libxulsword-build.sh merges the architectures
+# into universal binaries later.
 
 set(CMAKE_SYSTEM_NAME Darwin)
 # Darwin 20 is MacOS 11

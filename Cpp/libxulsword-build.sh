@@ -1,30 +1,37 @@
 #!/bin/bash
 
+# This script builds the libxulsword binaries, and nothing else:
+#   Linux:   the libxulsword dynamic library, in Cpp/lib (the Linux
+#            libxulsword.node addon is built by node-gyp instead)
+#   Windows: the libxulsword DLL in Cpp/lib.32win or Cpp/lib.64win, and the
+#            addon in libxulsword/bin/win32-ia32-89 or win32-x64-89
+#   MacOS:   the libxulsword dylib in Cpp/lib.darwin, and the addon in
+#            libxulsword/bin/darwin-universal-89
+# The Windows and MacOS binaries are only built if they are enabled by
+# WINMACHINE and MACMACHINE in setenv.
+#
+# It is normally run as a 'guest' in a Docker container by docker-build.sh,
+# with the host's xulsword directory mounted at /host. The guest installs any
+# missing build dependencies, builds a copy of the host's code, and copies
+# the finished binaries to the host's xulsword directory.
+#
+# It can also be run directly on Ubuntu 24.04. It then builds in this
+# xulsword directory, and lists any missing packages for you to install.
+
 export XULSWORD
 export CPP
-export NVM_DIR
-export RUNCONTEXT
-export BOOSTDIR
 
 # CMake 4 refuses projects which require a CMake version below 3.5, which
 # includes zlib, clucene, sword and libxulsword. Older CMake ignores this.
 export CMAKE_POLICY_VERSION_MINIMUM=3.5
-
-# This script installs dependencies and builds the libxulsword
-# dynamic library and libxulsword native node-module.
-
-# It is normally run as a 'guest' in a Docker container by docker-build.sh,
-# with the host's xulsword directory mounted at /host. The guest builds the
-# libxulsword binaries for Linux, plus those for Windows and MacOS if they
-# are enabled in the host's setenv file. The binaries are then copied to the
-# host's xulsword directory.
 
 if [[ $EUID -eq 0 ]]; then
    echo "This script should not be run as root. Exiting..."
    exit 1
 fi
 
-cd "$( dirname "${BASH_SOURCE[0]}" )" || exit 5
+# This script is in xulsword/Cpp, so start in the xulsword directory.
+cd "$( dirname "${BASH_SOURCE[0]}" )/.." || exit 5
 
 HOSTDIR=/host
 if [[ -d "$HOSTDIR" && ( -e "/.dockerenv" || -e "/run/.containerenv" ) ]]; then
@@ -32,8 +39,6 @@ if [[ -d "$HOSTDIR" && ( -e "/.dockerenv" || -e "/run/.containerenv" ) ]]; then
 else
   RUNCONTEXT="host"
 fi
-
-DEBVERS="$(lsb_release -cs 2>/dev/null)"
 
 DBG=
 # DBG='-D CMAKE_BUILD_TYPE=Debug'
@@ -62,16 +67,9 @@ function requireDeps() {
   fi
 }
 
-# BUILD DEPENDENCIES
-PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip curl"
-# for xulsword
-PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev debhelper libboost-dev"
-# for ZLib build
-PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev"
-# for Clucene build
-PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
-# shellcheck disable=SC2086
-requireDeps "LINUX" $PKG_DEPS
+# BUILD DEPENDENCIES (git lists the files a guest copies, subversion gets
+# the SWORD source, and Clucene needs the boost headers)
+requireDeps "LINUX" build-essential cmake pkg-config curl git subversion libboost-dev
 
 # If running as a guest, then copy the host's code into the guest and build
 # everything there, so as not to contaminate the host's own build files.
@@ -109,32 +107,13 @@ echo "XULSWORD IS $XULSWORD"
 cd "$XULSWORD" || exit 5
 source "./setenv"
 
-# A guest only builds the libxulsword binaries. Which ones is set by
-# WINMACHINE and MACMACHINE in setenv.
-if [[ "$RUNCONTEXT" == "guest" ]]; then
-  LIBXULSWORD_ONLY=yes
-fi
 echo "Building libxulsword for: Linux, Windows ($WINMACHINE), MacOS ($MACMACHINE)"
 
 # BUILD DEPENDENCIES (for cross compiling libxulsword to Windows)
 if [[ "$WINMACHINE" != "no" ]]; then
-  if [[ "$RUNCONTEXT" == "guest" ]]; then
-    # A guest only builds, so it needs the MinGW cross-compiler but not wine.
-    MINGWARCH="${TOOLCHAIN_PREFIX%%-*}"
-    MINGWARCH="${MINGWARCH//_/-}"
-    requireDeps "WINDOWS X-COMPILE" "gcc-mingw-w64-$MINGWARCH-posix" "g++-mingw-w64-$MINGWARCH-posix"
-  elif [[ -z "$(which wine)" ]]; then
-    echo "You need to install missing windows32 packages with:"
-    echo .
-    echo "sudo dpkg --add-architecture i386"
-    echo "sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key"
-    echo "sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/$DEBVERS/winehq-$DEBVERS.sources"
-    echo "sudo apt-get update"
-    echo "sudo apt install --install-recommends winehq-stable gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix"
-    echo .
-    echo "Then run this script again."
-    exit;
-  fi
+  MINGWARCH="${TOOLCHAIN_PREFIX%%-*}"
+  MINGWARCH="${MINGWARCH//_/-}"
+  requireDeps "WINDOWS X-COMPILE" "gcc-mingw-w64-$MINGWARCH-posix" "g++-mingw-w64-$MINGWARCH-posix"
 fi
 
 # BUILD DEPENDENCIES (for cross compiling libxulsword to MacOS)
@@ -147,22 +126,17 @@ if [[ "$WINMACHINE" != "no" || "$MACMACHINE" != "no" ]]; then
   requireDeps "NODE ADDON X-COMPILE" clang lld llvm
   LLVM_BIN="$(llvm-config --bindir)"
   export LLVM_BIN
+  # The addons are compiled against the Node.js headers, which setenv
+  # provides by installing Node.js with nvm.
+  if [[ -z "$(command -v node)" || -z "$(command -v npm)" ]]; then
+    echo "ERROR: Node.js is needed to build the Windows and MacOS libxulsword.node addons."
+    echo "Install nvm (https://github.com/nvm-sh/nvm), which setenv uses to install"
+    echo "Node.js. Then run this script again."
+    exit 1
+  fi
 fi
 
 CPP="$XULSWORD/Cpp"
-
-if [[ "$LIBXULSWORD_ONLY" == "no" ]]; then
-  # Install node.js using nvm so our dev environment can use the latest
-  # LTS version of node.js. Then install yarn and dependant node modules.
-  NVM_DIR="$HOME/.nvm"
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-  corepack enable
-  yarn set version stable
-  yarn install
-fi
 
 # Create a local Cpp installation directory where compiled libraries will
 # be installed for libxulsword linking.
@@ -272,31 +246,6 @@ if [[ "$MACMACHINE" != "no" ]]; then
       echo "ERROR: $ARCHIVEDIR/$MACOS_SDK.tar.xz did not contain $MACOS_SDK"
       exit 1
     fi
-  fi
-
-  # rcodesign signs (and notarizes) the MacOS app from Linux.
-  DARWINBIN="$CPP/darwin-bin"
-  if [ ! -e "$DARWINBIN" ]; then mkdir "$DARWINBIN"; fi
-  if [ ! -e "$DARWINBIN/rcodesign" ]; then
-    RCODESIGN_VERSION=0.29.0
-    RCODESIGN_ARCH="$(uname -m)"
-    if [[ "$RCODESIGN_ARCH" == "x86_64" ]]; then
-      RCODESIGN_SHA256=dbe85cedd8ee4217b64e9a0e4c2aef92ab8bcaaa41f20bde99781ff02e600002
-    elif [[ "$RCODESIGN_ARCH" == "aarch64" ]]; then
-      RCODESIGN_SHA256=4af92c87ddf52f5f2d1258a3b4e56c7dcb8f1b2468df744976c5f139e031961f
-    else
-      echo "ERROR: rcodesign is not available for $RCODESIGN_ARCH"
-      exit 1
-    fi
-    RCODESIGN="apple-codesign-${RCODESIGN_VERSION}-${RCODESIGN_ARCH}-unknown-linux-musl"
-    if [ ! -e "$ARCHIVEDIR/$RCODESIGN.tar.gz" ]; then
-      curl -L -o "$ARCHIVEDIR/$RCODESIGN.tar.gz" "https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign/${RCODESIGN_VERSION}/$RCODESIGN.tar.gz"
-    fi
-    if ! echo "$RCODESIGN_SHA256  $ARCHIVEDIR/$RCODESIGN.tar.gz" | sha256sum -c -; then
-      echo "ERROR: $ARCHIVEDIR/$RCODESIGN.tar.gz has the wrong checksum"
-      exit 1
-    fi
-    tar -xzf "$ARCHIVEDIR/$RCODESIGN.tar.gz" -C "$DARWINBIN" --strip-components=1 "$RCODESIGN/rcodesign"
   fi
 fi
 ########################################################################
@@ -643,38 +592,13 @@ if [[ "$MACMACHINE" != "no" ]]; then
     "$LLVM_BIN/llvm-otool" -L "$f"
   done
 
-  # If COPY_TO_HOST then copy the finished libraries to the host machine,
-  # along with rcodesign, which the host uses to sign the MacOS app.
+  # If COPY_TO_HOST then copy the finished libraries to the host machine
   if [ -n "$COPY_TO_HOST" ]; then
     HLIBDIR="$HOSTDIR/Cpp/lib.darwin"
     if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
     cp -r "$LIBDIR" "$HLIBDIR"
     mkdir -p "$HOSTDIR/libxulsword/bin/darwin-universal-89"
     cp "$ADDONDIR/libxulsword.node" "$HOSTDIR/libxulsword/bin/darwin-universal-89/"
-    if [ ! -e "$HOSTDIR/Cpp/darwin-bin/rcodesign" ]; then
-      mkdir -p "$HOSTDIR/Cpp/darwin-bin"
-      cp "$DARWINBIN/rcodesign" "$HOSTDIR/Cpp/darwin-bin/"
-    fi
   fi
 fi
-
-if [[ "$LIBXULSWORD_ONLY" == "yes" ]]; then exit 0; fi
-
-########################################################################
-# WRAP UP
-
-echo "Initializing node.js"
-cd "$XULSWORD" || exit 5
-yarn
-
-if [[ "$WINMACHINE" != "no" ]]; then
-  if [[ "$RUNCONTEXT" != "guest" ]]; then
-    winecfg
-  fi
-fi
-########################################################################
-
-#sudo snap install snapcraft --classic
-##sudo snap install lxd
-##lxd init
 

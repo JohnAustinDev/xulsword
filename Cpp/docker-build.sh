@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Build the libxulsword binaries in a Docker container, and copy them into
-# this xulsword directory:
+# Build the libxulsword binaries in a Docker container by running
+# libxulsword-build.sh, and copy them into the xulsword directory:
 #   Linux:   Cpp/lib
 #   Windows: Cpp/lib.32win or Cpp/lib.64win, and libxulsword/bin/win32-ia32-89
 #            or libxulsword/bin/win32-x64-89
@@ -11,17 +11,17 @@
 # WINMACHINE and MACMACHINE in setenv. The MacOS build also needs the MacOS
 # SDK in the archive directory (see libxulsword/Readme.md).
 #
-# The code in this directory is built as it is now, including uncommitted
+# The xulsword code is built as it is now, including uncommitted
 # changes. Build files are kept in a Docker volume, so later runs only
 # rebuild what has changed.
 #
-# Usage: ./docker-build.sh [--clean]
+# Usage: Cpp/docker-build.sh [--clean]
 #   --clean  Delete the cached build files first, and build everything.
 
 IMAGE=xulsword-build
 VOLUME=xulsword-build
 
-cd "$( dirname "${BASH_SOURCE[0]}" )" || exit 5
+cd "$( dirname "${BASH_SOURCE[0]}" )/.." || exit 5
 XULSWORD="$(pwd)"
 
 CLEAN=
@@ -41,7 +41,7 @@ docker build -t "$IMAGE" \
   --build-arg USER_UID="$(id -u)" \
   --build-arg USER_GID="$(id -g)" \
   ${NODE_VERSION:+--build-arg NODE_VERSION="$NODE_VERSION"} \
-  - < "$XULSWORD/Dockerfile" || exit 1
+  - < "$XULSWORD/Cpp/Dockerfile" || exit 1
 
 if [ -n "$CLEAN" ]; then docker volume rm -f "$VOLUME" > /dev/null || exit 1; fi
 
@@ -52,4 +52,4 @@ if [ -t 0 ] && [ -t 1 ]; then TTY=-it; fi
 docker run --rm --init $TTY \
   -v "$XULSWORD:/host" \
   -v "$VOLUME:/home/builder/src" \
-  "$IMAGE" /host/init.sh
+  "$IMAGE" /host/Cpp/libxulsword-build.sh

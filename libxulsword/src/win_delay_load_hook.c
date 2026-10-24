@@ -8,12 +8,12 @@
  *
  * A Windows DLL must name the file that each of its imported functions comes
  * from. (Linux and MacOS can leave such functions to be found in the running
- * program instead.) So init.sh links the addon with an import library that
- * says the napi_* functions come from node.exe. If these were normal imports,
+ * program instead.) So Cpp/libxulsword-build.sh links the addon with an
+ * import library that says the napi_* functions come from node.exe. If these were normal imports,
  * Windows would look for a file called node.exe as soon as the addon was
  * loaded, which fails in Electron.
  *
- * Instead, init.sh links with --delayload=node.exe. Then nothing is looked
+ * Instead, libxulsword-build.sh links with --delayload=node.exe. Then nothing is looked
  * up when the addon is loaded. The first call to a napi_* function goes to
  * __delayLoadHelper2 (from the MinGW-w64 runtime, linked into the addon),
  * which loads the DLL, finds the function, and saves its address so later

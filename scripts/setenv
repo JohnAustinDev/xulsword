@@ -68,10 +68,6 @@ export LIBXULSWORD_MAJOR=1
 export LIBXULSWORD_MINOR=5
 export LIBXULSWORD_REVIS=6
 
-if [[ -z "$LIBXULSWORD_ONLY" ]]; then
-  export LIBXULSWORD_ONLY=no
-fi
-
 if [ -d /host ] && { [ -e /.dockerenv ] || [ -e /run/.containerenv ]; }; then export CONTEXT="guest"; else export CONTEXT="host"; fi
 export CPP="$XULSWORD/Cpp"
 export LIBXULSWORD="$XULSWORD/build/app/node_modules/libxulsword"
@@ -106,6 +102,6 @@ export MACOS_DEPLOYMENT_TARGET=11.0
 # export MAC_NOTARY_API_KEY=/path/to/app-store-connect-api-key.json
 if [[ "$MACMACHINE" != "no" ]]; then
   if [ -n "$(command -v llvm-config)" ]; then export LLVM_BIN="$(llvm-config --bindir)"; fi
-  # rcodesign, used to sign the MacOS app.
+  # rcodesign, used to sign the MacOS app (scripts/macSign.mjs installs it).
   export PATH="$XULSWORD/Cpp/darwin-bin:$PATH"
 fi
