@@ -8,7 +8,7 @@ The dynamic library and this addon are both built by `Cpp/docker-build.sh`, or `
 - Windows: `Cpp/lib.32win` or `Cpp/lib.64win` (including the MinGW runtime DLLs)
 - MacOS: `Cpp/lib.darwin`
 
-`yarn install-libxulsword` copies the binaries for a system into `libxulsword/build/Release`.
+`yarn install-libxulsword` copies the binaries for a system into `libxulsword/build/Release`, where the addon is `libxulsword.node`.
 
 The addon is built by libxulsword-build.sh rather than node-gyp, because node-gyp cannot cross-compile. The addon only uses Node-API, so it works with any version of Node.js or Electron, and does not need to be rebuilt when Electron is updated.
 

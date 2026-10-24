@@ -46,14 +46,14 @@ const build = path.join(paths.rootPath, 'libxulsword', 'build');
 if (fs.existsSync(build)) fs.rmSync(build, { recursive: true });
 const release = path.join(build, 'Release');
 fs.mkdirSync(release, { recursive: true });
-console.log(`Installing ${machine} xulsword.node binary.`);
+console.log(`Installing ${machine} ${addon} binary.`);
 
-console.log(`Copying Node-API binary ${binfile} to ${release}/xulsword.node`);
-fs.copyFileSync(binfile, path.join(release, 'xulsword.node'));
+console.log(`Copying Node-API binary ${binfile} to ${release}/${addon}`);
+fs.copyFileSync(binfile, path.join(release, addon));
 
 // Although Linux dynamic libraries need to be installed alongside the main electron executable
 // and so need to be installed by electron-builder according to the package.json build section,
-// Windows and MacOS dynamic libraries are installed to the libxulsword addon alongside xulsword.node.
+// Windows and MacOS dynamic libraries are installed to the libxulsword addon alongside libxulsword.node.
 if (isWindows || isMac) {
   fs.readdirSync(libdir)
     .filter((name) => name !== addon)

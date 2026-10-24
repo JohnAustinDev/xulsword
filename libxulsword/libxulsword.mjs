@@ -1,3 +1,3 @@
-import libxulsword from './build/Release/xulsword.node';
+import libxulsword from './build/Release/libxulsword.node';
 
 export default libxulsword;

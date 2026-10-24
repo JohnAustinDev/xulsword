@@ -148,7 +148,7 @@ export default async function macSign(context) {
   );
   const machos = [
     path.join(appPath, 'Contents', 'MacOS', productFilename),
-    path.join(release, 'xulsword.node'),
+    path.join(release, 'libxulsword.node'),
     path.join(release, 'libxulsword-static.dylib'),
   ];
   if (MAC_SIGN_P12) machos.forEach((macho) => run(['verify', macho]));

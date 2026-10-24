@@ -28,7 +28,7 @@ link_directories(${CMAKE_LIBRARY_PATH})
 add_library(xulsword-static SHARED ./src/xulsword.cpp ./src/libxulsword.cpp)
 
 IF(APPLE)
-  # The xulsword.node addon finds the dylib next to itself through
+  # The libxulsword.node addon finds the dylib next to itself through
   # @rpath (@loader_path). Building with the final install name means the
   # install step never has to modify, and so un-sign, the binary.
   set_target_properties(xulsword-static PROPERTIES

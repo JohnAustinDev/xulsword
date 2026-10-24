@@ -302,7 +302,7 @@ export default function (opts) {
 
       // libxulsword is packaged by electron-builder not Webpack.
       externals: {
-        './build/Release/xulsword.node': `node-commonjs ../../node_modules/libxulsword/build/Release/xulsword.node`,
+        './build/Release/libxulsword.node': `node-commonjs ../../node_modules/libxulsword/build/Release/libxulsword.node`,
         ...(!builds[build][0].startsWith('electron')
           ? { electron: 'return {};' }
           : {}),
