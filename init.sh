@@ -90,7 +90,11 @@ if [[ "$RUNCONTEXT" == "guest" ]]; then
     echo "ERROR: Could not list the source files in $HOSTDIR (it must be a git checkout)."
     exit 1
   fi
-  if ! rsync -a --from0 --files-from="$FILELIST" --delete-missing-args "$HOSTDIR/" "$XULSWORD/"; then
+  # rsync exits with 24 (files vanished) when a deleted file's directory was
+  # deleted too. Such files are still deleted here, so this is not an error.
+  rsync -a --from0 --files-from="$FILELIST" --delete-missing-args "$HOSTDIR/" "$XULSWORD/"
+  RSYNC_EXIT=$?
+  if [[ $RSYNC_EXIT -ne 0 && $RSYNC_EXIT -ne 24 ]]; then
     echo "ERROR: Could not copy the source files from $HOSTDIR."
     exit 1
   fi
@@ -118,7 +122,7 @@ if [[ "$WINMACHINE" != "no" ]]; then
     # A guest only builds, so it needs the MinGW cross-compiler but not wine.
     MINGWARCH="${TOOLCHAIN_PREFIX%%-*}"
     MINGWARCH="${MINGWARCH//_/-}"
-    requireDeps "WINDOWS X-COMPILE" "gcc-mingw-w64-$MINGWARCH-posix" "g++-mingw-w64-$MINGWARCH-posix" mingw-w64-tools
+    requireDeps "WINDOWS X-COMPILE" "gcc-mingw-w64-$MINGWARCH-posix" "g++-mingw-w64-$MINGWARCH-posix"
   elif [[ -z "$(which wine)" ]]; then
     echo "You need to install missing windows32 packages with:"
     echo .
@@ -126,7 +130,7 @@ if [[ "$WINMACHINE" != "no" ]]; then
     echo "sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key"
     echo "sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/$DEBVERS/winehq-$DEBVERS.sources"
     echo "sudo apt-get update"
-    echo "sudo apt install --install-recommends winehq-stable gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix mingw-w64-tools"
+    echo "sudo apt install --install-recommends winehq-stable gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix"
     echo .
     echo "Then run this script again."
     exit;
@@ -136,6 +140,11 @@ fi
 # BUILD DEPENDENCIES (for cross compiling libxulsword to MacOS)
 if [[ "$MACMACHINE" != "no" ]]; then
   requireDeps "MACOS X-COMPILE" clang lld llvm xz-utils
+fi
+
+# The Windows and MacOS libxulsword.node addons are linked with LLVM's lld.
+if [[ "$WINMACHINE" != "no" || "$MACMACHINE" != "no" ]]; then
+  requireDeps "NODE ADDON X-COMPILE" clang lld llvm
   LLVM_BIN="$(llvm-config --bindir)"
   export LLVM_BIN
 fi
@@ -512,6 +521,30 @@ if [ -n "$COPY_TO_HOST" ]; then
   cp -r "$LIBDIR" "$HLIBDIR"
 fi
 
+# NODE-API HEADERS
+# node-gyp cannot cross-compile, so the Windows and MacOS libxulsword.node
+# addons are compiled here. Windows also needs the list of Node-API
+# functions from node-api-headers, to make an import library for them.
+if [[ "$WINMACHINE" != "no" || "$MACMACHINE" != "no" ]]; then
+  NODE_INC="$(node -p "require('path').join(process.execPath, '../../include/node')")"
+  NAPI_INC="$(cd "$XULSWORD/libxulsword" && node -p "require('path').resolve(require('node-addon-api').include_dir)" 2>/dev/null)"
+  if [ -z "$NAPI_INC" ]; then
+    # Without node_modules (as in a guest) install just node-addon-api.
+    NAPIDIR="$CPP/node-addon-api"
+    if [ ! -e "$NAPIDIR/node_modules/node-addon-api" ]; then
+      npm install --prefix "$NAPIDIR" --no-save --no-package-lock node-addon-api@7.1.1 || exit 1
+    fi
+    NAPI_INC="$(cd "$NAPIDIR" && node -p "require('path').resolve(require('node-addon-api').include_dir)")"
+  fi
+fi
+if [[ "$WINMACHINE" != "no" ]]; then
+  NAPIHDIR="$CPP/node-api-headers"
+  if [ ! -e "$NAPIHDIR/node_modules/node-api-headers" ]; then
+    npm install --prefix "$NAPIHDIR" --no-save --no-package-lock node-api-headers@1.9.0 || exit 1
+  fi
+  NAPI_DEF="$NAPIHDIR/node_modules/node-api-headers/def/node_api.def"
+fi
+
 if [[ "$WINMACHINE" != "no" ]]; then
   # Install the DLL and all ming dependencies beyond the node executable and strip them
   LIBDIR="$CPP/lib.$XCWD"
@@ -525,19 +558,55 @@ if [[ "$WINMACHINE" != "no" ]]; then
   cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/13-${GCCSTD}/$GCCDLL" "$LIBDIR"
   cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/13-${GCCSTD}/libstdc++-6.dll" "$LIBDIR"
   cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$LIBDIR"
-  DEFFILE="$XULSWORD/libxulsword/lib/libxulsword.def"
-  gendef - "$CPP/install.$XCWD/usr/local/lib/libxulsword-static.dll" > "$DEFFILE" || exit 1
   if [ -z "$DBG" ]; then
     strip "$LIBDIR/"*
   fi
   chmod ugo+x "$LIBDIR/"*
+
+  # Build the libxulsword.node addon. It uses the same MinGW runtime DLLs
+  # as the libxulsword DLL, and install.mjs puts them all side by side.
+  # The addon delay-loads the Node-API functions from node.exe, and
+  # win_delay_load_hook.c redirects them to the running program (see
+  # libxulsword/Readme.md). It is linked with lld, because GNU ld makes
+  # broken delay-load imports, and lld can only delay-load from an import
+  # library made by llvm-dlltool.
+  ADDONBUILD="$CPP/build.$XCWD/addon"
+  mkdir -p "$ADDONBUILD"
+  if [[ "$XCWD" == "32win" ]]; then
+    WINADDONBIN=win32-ia32-89
+    DLLTOOLARCH=i386
+    # GCC 13's <iostream> refers to std::ios_base_library_init() without the
+    # leading underscore that 32 bit Windows adds to C++ names. GNU ld
+    # ignores this, but lld needs to be told the right name.
+    ADDONLDFLAGS=(-Wl,--Xlink=-alternatename:_ZSt21ios_base_library_initv=__ZSt21ios_base_library_initv)
+  else
+    WINADDONBIN=win32-x64-89
+    DLLTOOLARCH=i386:x86-64
+    ADDONLDFLAGS=()
+  fi
+  ADDONDIR="$XULSWORD/libxulsword/bin/$WINADDONBIN"
+  mkdir -p "$ADDONDIR"
+  "$LLVM_BIN/llvm-dlltool" -m "$DLLTOOLARCH" -d "$NAPI_DEF" -D node.exe -l "$ADDONBUILD/libnode.a" || exit 1
+  "$TOOLCHAIN_PREFIX-gcc-$GCCSTD" -O2 -c "$XULSWORD/libxulsword/src/win_delay_load_hook.c" \
+    -o "$ADDONBUILD/win_delay_load_hook.o" || exit 1
+  "$TOOLCHAIN_PREFIX-g++-$GCCSTD" -std=gnu++17 -O2 \
+    -DNODE_GYP_MODULE_NAME=libxulsword -DBUILDING_NODE_EXTENSION -DNAPI_DISABLE_CPP_EXCEPTIONS \
+    -I"$NODE_INC" -I"$NAPI_INC" -I"$CPP/src/include" -I"$CPP/sword.$XCWD/include" \
+    -c "$XULSWORD/libxulsword/src/libxulsword.cpp" -o "$ADDONBUILD/libxulsword.o" || exit 1
+  # Without a timestamp, rebuilding unchanged code gives an identical binary.
+  "$LLVM_BIN/clang++" --target="$TOOLCHAIN_PREFIX" -fuse-ld=lld -shared -s -Wl,--no-insert-timestamp \
+    "$ADDONBUILD/libxulsword.o" "$ADDONBUILD/win_delay_load_hook.o" \
+    "$CPP/install.$XCWD/usr/local/lib/libxulsword-static.dll.a" "$ADDONBUILD/libnode.a" \
+    -Wl,--delayload=node.exe "${ADDONLDFLAGS[@]}" -o "$ADDONDIR/libxulsword.node" || exit 1
+  "$LLVM_BIN/llvm-readobj" --coff-imports "$ADDONDIR/libxulsword.node" | grep -E "^ *Name:"
 
   # If COPY_TO_HOST then copy the finished library to the host machine
   if [ -n "$COPY_TO_HOST" ]; then
     HLIBDIR="$HOSTDIR/Cpp/lib.$XCWD"
     if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
     cp -r "$LIBDIR" "$HLIBDIR"
-    cp "$DEFFILE" "$HOSTDIR/libxulsword/lib/"
+    mkdir -p "$HOSTDIR/libxulsword/bin/$WINADDONBIN"
+    cp "$ADDONDIR/libxulsword.node" "$HOSTDIR/libxulsword/bin/$WINADDONBIN/"
   fi
 fi
 
@@ -553,16 +622,6 @@ if [[ "$MACMACHINE" != "no" ]]; then
   mkdir "$LIBDIR"
   ADDONDIR="$XULSWORD/libxulsword/bin/darwin-universal-89"
   if [ ! -e "$ADDONDIR" ]; then mkdir -p "$ADDONDIR"; fi
-  NODE_INC="$(node -p "require('path').join(process.execPath, '../../include/node')")"
-  NAPI_INC="$(cd "$XULSWORD/libxulsword" && node -p "require('path').resolve(require('node-addon-api').include_dir)" 2>/dev/null)"
-  if [ -z "$NAPI_INC" ]; then
-    # Without node_modules (as in a guest) install just node-addon-api.
-    NAPIDIR="$CPP/node-addon-api"
-    if [ ! -e "$NAPIDIR/node_modules/node-addon-api" ]; then
-      npm install --prefix "$NAPIDIR" --no-save --no-package-lock node-addon-api@7.1.1 || exit 1
-    fi
-    NAPI_INC="$(cd "$NAPIDIR" && node -p "require('path').resolve(require('node-addon-api').include_dir)")"
-  fi
   DYLIBS=()
   ADDONS=()
   for MACARCH in $MACOS_ARCHS; do

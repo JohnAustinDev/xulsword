@@ -8,15 +8,9 @@ In Linux, the build depends on libxulsword.so as well as shell tools and environ
 
 # Windows Build
 
-Although the libxulsword.dll shared library is cross-compiled with MinGW, this node addon cannot be cross-compiled because node-gyp is not compatible with MinGW. This addon must be compiled with MSVC for Windows. However, since it uses node-addon-api, it does not need to be recompiled unless the libxulsword.dll interface changes. For this reason, the MS-Windows libxulsword.node compiled binary is kept under version control. Compilation of this binary does not require the libxulsword.dll, but just a libxulsword.def file. This def file is created by init.sh, and it only changes when libxulsword.dll exported symbols change. When I compiled this addon in MS-Windows, I used nvm from https://github.com/coreybutler/nvm-windows.
+Both the libxulsword-static.dll shared library and this addon are cross-compiled on Linux by init.sh, using MinGW-w64. Set `WINMACHINE` in `xulsword/setenv` to `x86` (32 bit) or `x64` (64 bit), then run `./docker-build.sh` or `./init.sh`. The DLL and the MinGW runtime DLLs go to `Cpp/lib.32win` or `Cpp/lib.64win`, and `install.mjs` copies them next to `xulsword.node`. The addon goes to `bin/win32-ia32-89` or `bin/win32-x64-89`, which is kept under version control like the other binaries. To run init.sh without Docker, install the cross-compilers with `sudo apt-get install gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix clang lld llvm` (for 64 bit, use the `x86-64` packages instead of the `i686` ones).
 
-1. From an admistrator priviledged cmd.exe, the node version and arch to link against must first be selected (ie. `nvm use 18.12.1 32`).
-2. From a non-priviledged cmd.exe shell, run either MSVC's `vcvars32.bat` or `vcvars64.bat` (the one corresponding to the selected node arch).
-3. Run Git/bin/bash.exe from the cmd shell to start a git-bash shell in the new environment.
-4. cd into xulsword and update the setenv file so that WINMACHINE=x64 or x86 (whichever corresponds to your chosen node arch).
-5. Run `source ./setenv` to complete the environment settings.
-6. Build libxulsword by changing to the libxulsword directory and running `yarn` then `yarn rebuild`.
-7. Commit the resulting lib/$(XCWD)/libxulsword.node binary to version control.
+Because node-gyp cannot cross-compile, init.sh compiles `src/libxulsword.cpp` itself. The addon calls Node-API functions that are exported by the program that loads it: node.exe, electron.exe or the packaged app's executable. Windows must know which program at link time, so, as node-gyp does, the addon delay-loads the functions from `node.exe`, and `src/win_delay_load_hook.c` makes Windows take them from the running program instead. The import library for `node.exe` is made from the `.def` file in the [node-api-headers](https://github.com/nodejs/node-api-headers) package. The addon is linked with LLVM's lld, because GNU ld does not make working delay-load imports.
 
 # MacOS Build
 

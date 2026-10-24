@@ -14,13 +14,13 @@ ARG NVM_VERSION=0.40.1
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Packages for the Linux build (PKG_DEPS in init.sh), then the Windows
-# cross-compile, then the MacOS cross-compile, then those used by init.sh
-# and setenv.
+# cross-compile, then the MacOS cross-compile (clang and lld also link the
+# Windows addon), then those used by init.sh and setenv.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential git subversion libtool-bin cmake autoconf make pkg-config zip curl \
       debhelper binutils gcc-multilib dpkg-dev libboost-dev \
       gcc-mingw-w64-i686-posix g++-mingw-w64-i686-posix \
-      gcc-mingw-w64-x86-64-posix g++-mingw-w64-x86-64-posix mingw-w64-tools \
+      gcc-mingw-w64-x86-64-posix g++-mingw-w64-x86-64-posix \
       clang lld llvm xz-utils \
       ca-certificates lsb-release rsync sudo \
     && rm -rf /var/lib/apt/lists/*
@@ -37,8 +37,8 @@ RUN userdel -r ubuntu 2>/dev/null; \
 USER builder
 WORKDIR /home/builder
 
-# Node.js is needed to build the MacOS libxulsword.node addon. setenv loads
-# nvm from ~/.nvm and selects NODE_VERSION. nvm requires bash.
+# Node.js is needed to build the Windows and MacOS libxulsword.node addons.
+# setenv loads nvm from ~/.nvm and selects NODE_VERSION. nvm requires bash.
 SHELL ["/bin/bash", "-c"]
 RUN export NVM_DIR="$HOME/.nvm" \
     && curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh" | PROFILE=/dev/null bash \
