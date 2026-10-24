@@ -50,21 +50,17 @@ The build has two parts: a Node.js project and a native libxulsword C++ library.
 **Important**: First copy the environment script `cp ./scripts/setenv .`. This script can then be updated with any custom settings.
 Each time you open a shell to build xulsword, environment variables must be set by running `source ./setenv`.
 
-1. Install nvm on Linux, Windows or Mac. On Windows [nvm for Windows](https://github.com/coreybutler/nvm-windows) is recommended.
-2. Use nvm to select Node version 24. On Windows, select the x86 architecture with: `nvm install 24` followed by `nvm use 24` to select it. On Windows, administrator priviledge is required for these steps (subsequent steps do not require admin priviledge).
-3. Run `source ./setenv` to set environment variables. On Windows, the Git Bash shell that comes with [Git for Windows](https://gitforwindows.org/) can be used for this and subsequent command line steps.
-4. Build the native libxulsword C++ dynamic library for your system (this step only needs to be done once and won't be needed again until the rare occasion that xulsword/Cpp C++ source changes):
+1. Install [nvm](https://github.com/nvm-sh/nvm).
+2. Run `source ./setenv` to set environment variables and node version.
+3. Build the native libxulsword C++ dynamic libraries (this step only needs to be done once and won't be needed again unless xulsword/Cpp sources change):
 
 - Download the [boost_1_80_0.tar.gz](https://www.boost.org/users/download/) source code package (check for the right version number; you may need to go to the history section to find previous releases). Create an `archive` sub-directory under `xulsword` and place the source package there (boost doesn't support scripted downloads).
 - To also build the Windows and MacOS libraries, set `WINMACHINE` and `MACMACHINE` in `setenv`. The MacOS build also needs a MacOS SDK in the `archive` directory (see [libxulsword ReadMe](libxulsword/Readme.md)).
 - Install [Docker](https://docs.docker.com/engine/install/) and run `./docker-build.sh`. Native libraries for each system will appear in the Cpp/lib directories. Your local code is built as it is, including uncommitted changes. Later runs only rebuild what has changed; run `./docker-build.sh --clean` to rebuild everything.
 - Install the shared library for your particular operating system by running `yarn install-libxulsword`. The apporpriate binaries will be installed to the libxulsword nodejs module.
 
-5. Run `yarn` to install Node.js dependencies.
-6. Start xulsword with `yarn start:app`.
-
-**NOTE:** In the very rare occasion that the libxulsword interface changes, the Node.js libxulsword.node addon will need to be
-recompiled on each operating system, and the addon committed to git. See [libxulsword ReadMe](libxulsword/Readme.md).
+4. Run `yarn` to install Node.js dependencies.
+5. Start xulsword with `yarn start:app` or start the web app with `yarn start:webapp`.
 
 ---
 
@@ -75,6 +71,7 @@ Packaged applications for each operating system are created with:
     yarn package-linux
     yarn package-32win
     yarn package-64win
+    yarn package-mac
 
 ---
 
