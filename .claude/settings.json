@@ -1,7 +1,6 @@
 {
   "permissions": {
     "defaultMode": "default",
-    "disableAutoMode": "disable",
     "allow": [
       "Bash(command -v npx)"
     ]
