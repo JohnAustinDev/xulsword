@@ -26,8 +26,6 @@ The MacOS binaries are cross-compiled on Linux using clang, lld and a MacOS SDK.
    - On Linux: download an Xcode .xip from https://developer.apple.com/download/all/ (Xcode 15.4 contains MacOSX14.5.sdk) and run `tools/gen_sdk_package_pbzx.sh <xcode>.xip`.
    - On a Mac with Xcode or its Command Line Tools: run `tools/gen_sdk_package.sh`.
 2. In `xulsword/setenv`, set `MACMACHINE=universal`. If your SDK is not MacOSX14.5.sdk, also set `MACOS_SDK` to match.
-3. Run `Cpp/docker-build.sh`, or `Cpp/libxulsword-build.sh` if you're on Ubuntu 24.
-4. Run `yarn package-mac` to make two MacOS app zips in `build/release`: one for Intel Macs (`-mac.zip`) and one for Apple Silicon Macs (`-arm64-mac.zip`). A single universal app, or a DMG, can only be made on a Mac. The apps are signed with [rcodesign](https://github.com/indygreg/apple-platform-rs), which `scripts/macSign.mjs` downloads to `Cpp/darwin-bin` the first time.
 
 # TODOs
 
