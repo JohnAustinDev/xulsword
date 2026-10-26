@@ -27,6 +27,8 @@
     "package-32win": "cross-env PKLIB=32win yarn install-libxulsword && yarn package --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
     "package-64win": "cross-env PKLIB=64win yarn install-libxulsword && yarn package --win --x64 '-c.nsis.artifactName=${productName} Setup 64.${version}.${ext}' -c.publish.provider=github -c.publish.channel=latest-x64 && cross-env PKLIB=linux yarn install-libxulsword",
     "package-mac": "cross-env PKLIB=darwin yarn install-libxulsword && yarn package --mac zip --x64 --arm64 && cross-env PKLIB=linux yarn install-libxulsword",
+    "package-mac-dmg": "cross-env PKLIB=darwin yarn install-libxulsword && yarn package --mac dmg --universal && node ./scripts/dmgCompress.mjs",
+    "package-macvm-dmg": "node ./scripts/package-macvm-dmg.mjs",
     "release": "node ./scripts/clean.mjs release && yarn release-linux && yarn release-32win && yarn release-mac",
     "release-linux": "yarn && cross-env PKLIB=linux yarn install-libxulsword && yarn package-publish --linux",
     "release-32win": "yarn && cross-env PKLIB=32win yarn install-libxulsword && yarn package-publish --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
@@ -46,14 +48,14 @@
       "!dist/widgets*"
     ],
     "afterPack": "./afterPack.mjs",
-    "afterSign": "scripts/notarize.mjs",
     "directories": {
       "app": "build/app",
       "buildResources": "assets",
       "output": "build/release"
     },
     "extraResources": [
-      "./assets/**"
+      "./assets/**",
+      "!assets/dmg/**"
     ],
     "linux": {
       "target": [
@@ -84,6 +86,7 @@
       "x64ArchFiles": "**/libxulsword/build/Release/*"
     },
     "dmg": {
+      "background": "assets/dmg/background.png",
       "contents": [
         {
           "x": 130,
@@ -206,7 +209,6 @@
     "electron-context-menu": "^4.1.0",
     "electron-devtools-installer": "^4.0.0",
     "electron-log": "^5.4.2",
-    "electron-notarize": "^1.2.2",
     "electron-updater": "6.6.2",
     "enzyme": "^3.11.0",
     "enzyme-to-json": "^3.6.2",

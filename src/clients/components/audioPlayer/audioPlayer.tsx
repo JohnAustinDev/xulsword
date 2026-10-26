@@ -68,6 +68,7 @@ export default function AudioPlayer(
             .then((rawTiming) => {
               if (rawTiming) {
                 const t = parseTimingFile(rawTiming);
+                logTimingFile(iafTiming, rawTiming, t);
                 TimingFetched[iafTiming] = t;
                 xulswordState(checkTimesState(t));
               }
@@ -76,10 +77,12 @@ export default function AudioPlayer(
         } else times = TimingFetched[iafTiming];
       } else if (iafTiming) {
         // Otherwise iafTiming is the raw timing.
-        times =
-          iafTiming in TimingFetched && TimingFetched[iafTiming]
-            ? TimingFetched[iafTiming]
-            : parseTimingFile(iafTiming);
+        if (iafTiming in TimingFetched && TimingFetched[iafTiming]) {
+          times = TimingFetched[iafTiming];
+        } else {
+          times = parseTimingFile(iafTiming);
+          logTimingFile('inline', iafTiming, times);
+        }
         TimingFetched[iafTiming] = times;
       }
       if (times) {
@@ -144,6 +147,17 @@ export default function AudioPlayer(
       )}
     </div>
   );
+}
+
+// Logs a timing file when it is first loaded: its raw text (including any
+// config from the HTTP header) and the object parsed from it.
+function logTimingFile(
+  source: string,
+  rawTiming: string,
+  parsed: ReturnType<typeof parseTimingFile>,
+) {
+  log.debug(`Timing file raw (${source}):\n${rawTiming}`);
+  log.debug(`Timing file parsed (${source}):`, parsed);
 }
 
 // Take a times object and update the state with it only if possible and

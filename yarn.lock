@@ -6911,16 +6911,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-notarize@npm:^1.2.2":
-  version: 1.2.2
-  resolution: "electron-notarize@npm:1.2.2"
-  dependencies:
-    debug: "npm:^4.1.1"
-    fs-extra: "npm:^9.0.1"
-  checksum: 10c0/62b9ef82488d9c366d909198e58c1c810042f5067e6a0d74e3c7d9f7a48f8a9bb7f4dbc1cdd8e39835dce473321338517ba16db9aa65a7073621ef0147ba7c0c
-  languageName: node
-  linkType: hard
-
 "electron-publish@npm:26.0.11":
   version: 26.0.11
   resolution: "electron-publish@npm:26.0.11"
@@ -16766,7 +16756,6 @@ __metadata:
     electron-context-menu: "npm:^4.1.0"
     electron-devtools-installer: "npm:^4.0.0"
     electron-log: "npm:^5.4.2"
-    electron-notarize: "npm:^1.2.2"
     electron-updater: "npm:6.6.2"
     enzyme: "npm:^3.11.0"
     enzyme-to-json: "npm:^3.6.2"
