@@ -205,7 +205,14 @@ socket.on('connect', () => {
       locale = langcode && isWebappLocale(langcode) ? langcode : 'en';
       Prefs.setCharPref('global.locale', locale);
     }
-    Prefs.setCharPref('global.fallbackLocale', langcode);
+    // global.fallbackLocale must be 'en' or 'ru' (see C.LocalePreferredFeature).
+    let fallbackLocale: 'en' | 'ru' = 'en';
+    if (langcode === 'en' || langcode === 'ru') fallbackLocale = langcode;
+    else if (langcode && langcode in C.FallbackLanguage)
+      fallbackLocale = C.FallbackLanguage[langcode];
+    else if (locale in C.FallbackLanguage)
+      fallbackLocale = C.FallbackLanguage[locale];
+    Prefs.setCharPref('global.fallbackLocale', fallbackLocale);
 
     // Determine the number of panels to show initially. If runtime is narrow
     // screen and server settings show a single text, reduce the initial

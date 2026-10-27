@@ -979,7 +979,7 @@ export function validateGlobalModulePrefs(
       const fbloc: 'en' | 'ru' = Build.isWebApp
         ? (G().Prefs.getCharPref('global.fallbackLocale') as any)
         : (C.FallbackLanguage[G().Prefs.getCharPref('global.locale')] as any);
-      const pref = C.LocalePreferredFeature[fbloc][f];
+      const pref = C.LocalePreferredFeature[fbloc]?.[f];
       feature[f] = pref?.find((m) => fmods.includes(m)) || fmods[0];
     }
   });
