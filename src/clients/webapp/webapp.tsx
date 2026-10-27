@@ -197,10 +197,12 @@ socket.on('connect', () => {
     writeSettingsToPrefsStores(settings, applyUserPrefs);
 
     // Must check and set final global.locale before callBatchThenCache.
+    // Only locales marked as webapp locales in C.Locales may be used.
+    const isWebappLocale = (l: string) =>
+      C.Locales.some((x) => x[0] === l && x[3]);
     let locale = Prefs.getCharPref('global.locale');
-    if (!locale || !C.Locales.some((x) => x[0] === locale)) {
-      locale =
-        langcode && C.Locales.some((x) => x[0] === langcode) ? langcode : 'en';
+    if (!locale || !isWebappLocale(locale)) {
+      locale = langcode && isWebappLocale(langcode) ? langcode : 'en';
       Prefs.setCharPref('global.locale', locale);
     }
     Prefs.setCharPref('global.fallbackLocale', langcode);
