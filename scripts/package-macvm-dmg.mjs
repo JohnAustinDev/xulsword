@@ -18,9 +18,8 @@ import paths from './projectPaths.mjs';
 //   MACVM_SSH  SSH host of the VM (default: macvm)
 //   MACVM_DIR  xulsword directory on the VM, relative to its home directory
 //              (default: src/xulsword)
-// On the VM, ~/xulsword-dmg.env is sourced after setenv if it exists. Use it
-// for VM-only settings, such as the APPLE_API_KEY, APPLE_API_KEY_ID and
-// APPLE_API_ISSUER notarization variables.
+// The local setenv is synced to the VM and sourced there, so it also holds
+// the MacOS signing and notarization settings for the DMG (see setenv).
 
 const host = process.env.MACVM_SSH || 'macvm';
 const remoteDir = process.env.MACVM_DIR || 'src/xulsword';
@@ -91,7 +90,6 @@ remote(
     `cd ${quote(remoteDir)}`,
     'rm -rf build/release',
     'source ./setenv > /dev/null',
-    'if [ -f ~/xulsword-dmg.env ]; then source ~/xulsword-dmg.env; fi',
     'yarn install --immutable',
     'yarn package-mac-dmg',
   ].join(' && '),

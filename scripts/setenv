@@ -95,11 +95,20 @@ export MACOS_ARCHS="arm64 x86_64"
 export MACOS_SDK=MacOSX14.5.sdk
 # Electron 37 requires MacOS 11 or later.
 export MACOS_DEPLOYMENT_TARGET=11.0
-# To sign the MacOS app with a Developer ID certificate and notarize it from
-# Linux, set these. Otherwise the app is only ad-hoc signed.
+# To sign the MacOS app with a Developer ID certificate and notarize it, set
+# all these. Otherwise the app is only ad-hoc signed.
 # export MAC_SIGN_P12=/path/to/DeveloperID_Application.p12
 # export MAC_SIGN_P12_PASSWORD_FILE=/path/to/p12-password.txt
 # export MAC_NOTARY_API_KEY=/path/to/app-store-connect-api-key.json
+# export APPLE_API_KEY=/path/to/AuthKey_XXXXXXXXXX.p8
+# export APPLE_API_KEY_ID=XXXXXXXXXX
+# export APPLE_API_ISSUER=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+# electron-builder also uses CSC_LINK to sign Windows apps, so set it only on
+# MacOS.
+if [[ "$(uname)" == "Darwin" && -n "$MAC_SIGN_P12" ]]; then
+  export CSC_LINK="$MAC_SIGN_P12"
+  export CSC_KEY_PASSWORD="$(cat "$MAC_SIGN_P12_PASSWORD_FILE")"
+fi
 if [[ "$MACMACHINE" != "no" ]]; then
   if [ -n "$(command -v llvm-config)" ]; then export LLVM_BIN="$(llvm-config --bindir)"; fi
   # rcodesign, used to sign the MacOS app (scripts/macSign.mjs installs it).
