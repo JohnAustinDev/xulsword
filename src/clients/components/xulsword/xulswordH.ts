@@ -418,6 +418,16 @@ export default function xulswordHandler(
     }
 
     case 'ended': {
+      // Go on to the next chapter only if this one really played. A browser
+      // that cannot play the audio may fire 'ended' at once, which would race
+      // through every chapter.
+      const player = currentTarget as HTMLAudioElement | null;
+      if (player && !(player.currentTime >= 0.5)) {
+        log.warn(
+          `Audio ended at ${player.currentTime}s of ${player.duration}s: not going on to the next chapter.`,
+        );
+        break;
+      }
       const { audio } = state;
       const { file, defaults } = clone(audio);
       doUntilDone((rp) => {
