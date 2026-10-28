@@ -5,7 +5,7 @@ This Node.js addon provides a JavaScript interface to the libxulsword dynamic li
 The dynamic library and this addon are both built by `Cpp/docker-build.sh`, or `Cpp/libxulsword-build.sh` if you're on Ubuntu 24. All the binaries for each system go to one directory:
 
 - Linux: `Cpp/lib`
-- Windows: `Cpp/lib.32win` or `Cpp/lib.64win` (including the MinGW runtime DLLs)
+- Windows: `Cpp/lib.32win` or `Cpp/lib.64win` (including `libwinpthread-1.dll`)
 - MacOS: `Cpp/lib.darwin`
 
 `yarn install-libxulsword` copies the binaries for a system into `libxulsword/build/Release`, where the addon is `libxulsword.node`.
@@ -17,6 +17,8 @@ The addon is built by libxulsword-build.sh rather than node-gyp, because node-gy
 The Windows binaries are cross-compiled on Linux using MinGW-w64. Set `WINMACHINE` in `setenv` to `x86` (32 bit) or `x64` (64 bit) before building.
 
 The addon calls Node-API functions that are exported by the program that loads it: node.exe, electron.exe or the packaged app's executable. Windows must know which program at link time, so, as node-gyp does, the addon delay-loads the functions from `node.exe`, and `src/win_delay_load_hook.c` makes Windows take them from the running program instead. The import library for `node.exe` is made from the `.def` file in the [node-api-headers](https://github.com/nodejs/node-api-headers) package. The addon is linked with LLVM's lld, because GNU ld does not make working delay-load imports.
+
+The DLL and the addon each have the C++ runtime (libstdc++ and libgcc) linked in, so the only MinGW DLL they need is `libwinpthread-1.dll`. The addon must not use `libgcc_s_dw2-1.dll`: if that DLL is loaded, 32 bit C++ exceptions thrown in the libxulsword DLL abort the process, which makes search indexing fail (see `Cpp/libxulsword-build.sh`).
 
 # MacOS Build
 

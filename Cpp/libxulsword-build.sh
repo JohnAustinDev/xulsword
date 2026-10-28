@@ -4,7 +4,7 @@
 # libxulsword dynamic library and the libxulsword.node addon for each system
 # go to the same directory:
 #   Linux:   Cpp/lib
-#   Windows: Cpp/lib.32win or Cpp/lib.64win (with the MinGW runtime DLLs)
+#   Windows: Cpp/lib.32win or Cpp/lib.64win (with libwinpthread-1.dll)
 #   MacOS:   Cpp/lib.darwin
 # The Windows and MacOS binaries are only built if they are enabled by
 # WINMACHINE and MACMACHINE in setenv.
@@ -511,26 +511,28 @@ if [[ "$WINMACHINE" != "no" ]]; then
 fi
 
 if [[ "$WINMACHINE" != "no" ]]; then
-  # Install the DLL and all ming dependencies beyond the node executable and strip them
+  # Install the DLL and the one MinGW DLL it needs, and strip them. The C++
+  # runtime (libstdc++ and libgcc) is linked into both the DLL and the addon,
+  # so libstdc++-6.dll and libgcc_s_*.dll are not needed.
   LIBDIR="$CPP/lib.$XCWD"
   if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
-  GCCDLL=libgcc_s_seh-1.dll
-  if [[ "$XCWD" == "32win" ]]; then
-    GCCDLL=libgcc_s_dw2-1.dll
-  fi
   mkdir "$LIBDIR"
   cp "$CPP/install.$XCWD/usr/local/lib/libxulsword-static.dll" "$LIBDIR"
-  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/13-${GCCSTD}/$GCCDLL" "$LIBDIR"
-  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/13-${GCCSTD}/libstdc++-6.dll" "$LIBDIR"
   cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$LIBDIR"
   if [ -z "$DBG" ]; then
     strip "$LIBDIR/"*
   fi
   chmod ugo+x "$LIBDIR/"*
 
-  # Build the libxulsword.node addon. It uses the same MinGW runtime DLLs
-  # as the libxulsword DLL, and scripts/install-libxulsword.mjs puts them all
-  # side by side.
+  # Build the libxulsword.node addon. scripts/install-libxulsword.mjs puts it
+  # beside the DLLs above.
+  # The addon must not use libgcc_s_dw2-1.dll (32 bit). If that DLL is loaded,
+  # the libxulsword DLL's startup code registers the DLL's exception tables
+  # with it, instead of with the DLL's own built-in copy of libgcc. Then the
+  # first C++ exception thrown in the DLL (CLucene throws and catches some
+  # while building a search index) cannot be unwound, and the process
+  # aborts. So the addon is linked with -static-libgcc and -static-libstdc++,
+  # like the DLL, and -lpthread for the libwinpthread-1.dll they both use.
   # The addon delay-loads the Node-API functions from node.exe, and
   # win_delay_load_hook.c redirects them to the running program (see
   # libxulsword/Readme.md). It is linked with lld, because GNU ld makes
@@ -557,10 +559,17 @@ if [[ "$WINMACHINE" != "no" ]]; then
     -c "$XULSWORD/libxulsword/src/libxulsword.cpp" -o "$ADDONBUILD/libxulsword.o" || exit 1
   # Without a timestamp, rebuilding unchanged code gives an identical binary.
   "$LLVM_BIN/clang++" --target="$TOOLCHAIN_PREFIX" -fuse-ld=lld -shared -s -Wl,--no-insert-timestamp \
+    -static-libgcc -static-libstdc++ \
     "$ADDONBUILD/libxulsword.o" "$ADDONBUILD/win_delay_load_hook.o" \
-    "$CPP/install.$XCWD/usr/local/lib/libxulsword-static.dll.a" "$ADDONBUILD/libnode.a" \
+    "$CPP/install.$XCWD/usr/local/lib/libxulsword-static.dll.a" "$ADDONBUILD/libnode.a" -lpthread \
     -Wl,--delayload=node.exe "${ADDONLDFLAGS[@]}" -o "$LIBDIR/libxulsword.node" || exit 1
   "$LLVM_BIN/llvm-readobj" --coff-imports "$LIBDIR/libxulsword.node" | grep -E "^ *Name:"
+  for f in "$LIBDIR/libxulsword-static.dll" "$LIBDIR/libxulsword.node"; do
+    if "$LLVM_BIN/llvm-readobj" --coff-imports "$f" | grep -qiE "Name: *(libgcc_s|libstdc\+\+)"; then
+      echo "ERROR: $f uses a MinGW C++ runtime DLL (see the note above)."
+      exit 1
+    fi
+  done
 
   # If COPY_TO_HOST then copy the finished libraries and addon to the host machine
   if [ -n "$COPY_TO_HOST" ]; then

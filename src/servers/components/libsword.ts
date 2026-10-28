@@ -889,7 +889,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
           indexer.send(msg);
         };
 
+        let isDone = false;
         const done = () => {
+          isDone = true;
           sendProgress(0);
           clearInterval(watchForKill);
           delete this.indexingID[modcode];
@@ -915,6 +917,18 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         indexer.on('error', (er: Error) => {
           doneError();
           reject(er);
+        });
+
+        // If the worker exits before reporting that it finished or failed, it
+        // crashed (or was killed), and will never respond.
+        indexer.on('exit', (code, signal) => {
+          if (!isDone) {
+            log.error(
+              `Index worker exited unexpectedly (code=${code}, signal=${signal}): ${modcode}`,
+            );
+            doneError();
+            resolve(false);
+          }
         });
 
         indexer.on('message', (indexerMsg: MessagesFromIndexWorker) => {
