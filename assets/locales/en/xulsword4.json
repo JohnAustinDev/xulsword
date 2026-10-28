@@ -12,5 +12,15 @@
   "Textual variants": "Textual variants",
   "normal": "normal",
   "variant": "variant",
-  "both": "both"
+  "both": "both",
+  "Play": "Play",
+  "Pause": "Pause",
+  "Mute": "Mute",
+  "Unmute": "Unmute",
+  "Seek": "Seek",
+  "Volume": "Volume",
+  "More options": "More options",
+  "Download": "Download",
+  "Playback speed": "Playback speed",
+  "Normal": "Normal"
 }

@@ -68,6 +68,7 @@ export type AnalyticsInfo = {
 } & (
   | DownloadLinkInfo
   | DownloadMediaInfo
+  | DownloadAudioInfo
   | BibleBrowserEventInfo
   | PlayAudioInfo
   | {
@@ -81,17 +82,21 @@ export type AnalyticsInfo = {
     }
 );
 
+// An audio player's src may be given (when it is an /audio API URL) so that
+// the server can find the file's media id. It is not itself recorded.
 export type PlayAudioInfo =
   | {
       event: keyof Pick<typeof analyticsEventActionMap, 'playAudio'>;
       AudioCode: string;
       book: string;
       chapter: number | string;
+      src?: string;
     }
   | {
       event: keyof Pick<typeof analyticsEventActionMap, 'playAudio'>;
       AudioCode: string;
       locationky: string;
+      src?: string;
     }
   | {
       event: keyof Pick<typeof analyticsEventActionMap, 'playAudio'>;
@@ -108,6 +113,17 @@ export type DownloadMediaInfo = {
   format: 'mp3';
   package: 'zip' | 'none';
 };
+
+// A download from the audio player. Its url is the /audio API URL of the audio
+// file, from which the server finds the file's media id (which the player does
+// not know), so the event is recorded like DownloadMediaInfo downloads.
+export type DownloadAudioInfo = {
+  event: keyof Pick<typeof analyticsEventActionMap, 'download'>;
+  url: string;
+  format: 'mp3';
+  package: 'none';
+  AudioCode: string;
+} & ({ book: string; chapter: number | string } | { locationky: string });
 
 export type DownloadLinkInfo = {
   event: keyof Pick<typeof analyticsEventActionMap, 'download'>;

@@ -7,17 +7,14 @@
 .xulswordWin .bp6-button {
   min-height: unset;
 }
-.xulswordWin #closeplayer {
-  margin-inline-start: 10px !important;
-}
 .xulswordWin #search-tool .vbox > div,
-.xulswordWin .controlbar .button,
-.xulswordWin .controlbar .button > div,
-.xulswordWin .controlbar button {
+.xulswordWin #historyButtons .button,
+.xulswordWin #historyButtons .button > div,
+.xulswordWin #historyButtons button,
+.xulswordWin #xsSearchButton,
+.xulswordWin #xsSearchButton > div,
+.xulswordWin #xsSearchButton button {
   width: 100%;
-}
-.xulswordWin .controlbar #closeplayer {
-  width: unset;
 }
 .xulswordWin .controlbar .textbox {
   font-size: 15px;

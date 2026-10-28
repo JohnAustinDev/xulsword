@@ -52,15 +52,6 @@ export default function xulswordHandler(
   switch (e.type) {
     case 'pointerdown': {
       switch (currentId) {
-        case 'closeplayer': {
-          const audio: XulswordState['audio'] = {
-            open: false,
-            file: null,
-            defaults: state.audio.defaults,
-          };
-          this.setState({ audio });
-          break;
-        }
         case 'back': {
           this.setHistory(state.historyIndex + 1);
           break;
@@ -392,6 +383,8 @@ export default function xulswordHandler(
       if (file) {
         const { audioModule } = file;
         const AudioCode = audioModule ?? 'unknown';
+        const { src: s } = target as HTMLAudioElement;
+        const src = s && /^https?:/.test(s) ? s : undefined;
         let info: AnalyticsInfo;
         if ('key' in file) {
           const { key } = file;
@@ -399,6 +392,7 @@ export default function xulswordHandler(
             event: 'playAudio',
             AudioCode,
             locationky: key ?? 'unknown',
+            src,
           };
         } else {
           const { book, chapter } = 'book' in file ? file : {};
@@ -407,6 +401,7 @@ export default function xulswordHandler(
             AudioCode,
             book: book ?? 'unkown',
             chapter: chapter ?? -1,
+            src,
           };
         }
         analytics.recordElementEvent(info, target as HTMLElement);

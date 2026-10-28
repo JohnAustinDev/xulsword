@@ -18,16 +18,324 @@
   z-index: 1;
 }
 
-.audioplayer audio {
+.audioplayer .tracking.button {
+  margin: 0 0 0 2px;
+}
+
+/* Audio controls (see audioControls.tsx). They are drawn by xulsword rather
+than the browser, so that they look the same everywhere. Their look follows
+Chrome's native audio controls. The dark skin sets its own colors. */
+.audio-controls {
+  --ac-fg: #000;
+  --ac-panel-bg: #f1f3f4;
+  --ac-volume-bg: rgba(0, 0, 0, 0.055);
+  --ac-focus: rgba(45, 114, 210, 0.75);
+  --ac-menu-fg: #202124;
+  --ac-menu-bg: #fff;
+  --ac-menu-hover: #e0e0e0;
+  --ac-menu-shadow: 0 1px 9px rgba(0, 0, 0, 0.3);
+  --ac-check: #1a73e8;
+
+  position: relative;
+  box-sizing: border-box;
+  /* 300px wide (a native audio element's default) as given by .ac-sizer, but
+  able to shrink down to the play and more buttons (see .hide-timeline). */
+  min-width: 86px;
+  flex-shrink: 1;
   height: var(--input-height);
   vertical-align: middle;
-  border: 1px solid rgb(197 197 197);
+  border: 1px solid rgb(197, 197, 197);
   background-color: var(--bg-bp6-light);
+  color: var(--ac-fg);
+  /* The platform's UI font. Not system-ui, which browsers map to different
+  fonts on Linux. */
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans',
+    'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: normal;
+  direction: ltr;
+  text-align: left;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
-.audioplayer audio:focus {
+
+/* The panel is positioned absolutely, so that, as with a native audio
+element, the controls' contents add nothing to the natural width of a parent
+sized by its contents (as in the web app). Otherwise opening the volume slider
+could widen such a parent. */
+/* Gives the controls their 300px width (with borders), like a native audio
+element. A width property would also set the smallest width their parents can
+shrink to, so they could not narrow with the window. But an SVG with a
+percentage max-width, like a native audio element, does not add to that. */
+.audio-controls .ac-sizer {
+  display: block;
+  width: 298px;
+  max-width: 100%;
+  height: 0;
+}
+
+.audio-controls .ac-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 10px;
+  background-color: var(--ac-panel-bg);
+  overflow: hidden;
+}
+
+.audio-controls .ac-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+/* Buttons: reset the browser's and xulsword's own button styles. */
+.audio-controls button.ac-button,
+.audio-controls button.ac-menuitem {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.audio-controls button.ac-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border-radius: 9999px;
+}
+.audio-controls button.ac-button:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+.audio-controls.menu-open button.ac-more {
+  background-color: var(--ac-volume-bg);
+}
+
+/* Show a focus ring for keyboard focus only. Browsers without :focus-visible
+drop the second rule, and so show it for all focus. */
+.audio-controls button:focus,
+.audio-controls .ac-slider:focus {
+  outline: 2px solid var(--ac-focus);
+  outline-offset: -2px;
+}
+.audio-controls button:focus:not(:focus-visible),
+.audio-controls .ac-slider:focus:not(:focus-visible) {
   outline: none;
 }
 
-.audioplayer .tracking.button {
-  margin: 0 0 0 2px;
+.audio-controls .ac-time {
+  flex-shrink: 0;
+  margin-left: 5px;
+  white-space: nowrap;
+}
+
+/* When the controls are too narrow for all their parts, Chrome leaves some
+out: first the time, then the volume slider, then the mute button, then the
+timeline (see audioControls.tsx). The time stays measurable while hidden. */
+.audio-controls.hide-time .ac-time {
+  position: absolute;
+  visibility: hidden;
+}
+.audio-controls.hide-volume-slider .ac-volume-slider-box {
+  display: none;
+}
+.audio-controls.hide-mute .ac-volume {
+  display: none;
+}
+.audio-controls.hide-timeline .ac-timeline {
+  display: none;
+}
+.audio-controls.hide-timeline .ac-more {
+  margin-left: auto;
+}
+
+/* Sliders: a 4px track with the played (or volume) part filled, and a thumb
+that shows while the pointer is over the slider. */
+.audio-controls .ac-slider {
+  position: relative;
+  align-self: stretch;
+  min-width: 0;
+  cursor: pointer;
+  touch-action: none;
+}
+/* The timeline may shrink to nothing while the volume slider is open.
+audioControls.tsx keeps it at least 12px wide otherwise. */
+.audio-controls .ac-timeline {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0 16px;
+}
+.audio-controls.disabled .ac-slider {
+  cursor: default;
+}
+.audio-controls .ac-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.audio-controls .ac-track::before,
+.audio-controls .ac-buffered,
+.audio-controls .ac-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background-color: currentColor;
+}
+.audio-controls .ac-track::before {
+  content: '';
+  right: 0;
+  opacity: 0.2;
+}
+.audio-controls .ac-buffered {
+  opacity: 0.6;
+}
+.audio-controls .ac-timeline .ac-fill {
+  opacity: 0.96;
+}
+.audio-controls .ac-volume-slider .ac-fill {
+  opacity: 0.62;
+}
+.audio-controls .ac-thumb {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  visibility: hidden;
+}
+.audio-controls:not(.disabled) .ac-slider:focus .ac-thumb,
+.audio-controls.dragging-timeline .ac-timeline .ac-thumb,
+.audio-controls.dragging-volume .ac-volume-slider .ac-thumb {
+  visibility: visible;
+}
+@media (hover: hover) {
+  .audio-controls:not(.disabled) .ac-slider:hover .ac-thumb {
+    visibility: visible;
+  }
+}
+
+/* Volume: the slider opens to the left of the mute button while the pointer
+is over either of them, or one of them has focus. Devices that cannot hover
+(touch screens) show only the mute button, as Chrome does. Like Chrome, the
+open slider leaves only a short stub of the timeline, and a narrower gap. */
+.audio-controls .ac-volume {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 100%;
+  border-radius: 9999px;
+  transition:
+    background-color 0.2s,
+    margin-left 0.2s ease-out;
+}
+.audio-controls .ac-volume-slider-box {
+  display: flex;
+  align-self: stretch;
+  width: 0;
+  overflow: hidden;
+  transition: width 0.2s ease-out;
+}
+.audio-controls .ac-volume-slider {
+  flex-shrink: 0;
+  width: 52px;
+  margin-left: 16px;
+}
+.audio-controls:not(.disabled):not(.hide-volume-slider) .ac-volume:focus-within,
+.audio-controls.dragging-volume .ac-volume {
+  margin-left: -10px;
+  background-color: var(--ac-volume-bg);
+}
+.audio-controls:not(.disabled):not(.hide-volume-slider)
+  .ac-volume:focus-within
+  .ac-volume-slider-box,
+.audio-controls.dragging-volume .ac-volume-slider-box {
+  width: 68px;
+}
+@media (hover: hover) {
+  .audio-controls:not(.disabled):not(.hide-volume-slider) .ac-volume:hover {
+    margin-left: -10px;
+    background-color: var(--ac-volume-bg);
+  }
+  .audio-controls:not(.disabled):not(.hide-volume-slider)
+    .ac-volume:hover
+    .ac-volume-slider-box {
+    width: 68px;
+  }
+}
+
+/* The menu of the more button. It is position:fixed so that no ancestor
+with overflow:hidden (such as the web app's player animation) clips it. */
+.audio-controls .ac-menu {
+  position: fixed;
+  z-index: 100;
+  box-sizing: border-box;
+  width: 200px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: 2px;
+  background-color: var(--ac-menu-bg);
+  box-shadow: var(--ac-menu-shadow);
+  color: var(--ac-menu-fg);
+  font-size: 14px;
+}
+.audio-controls button.ac-menuitem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 46px;
+  min-height: 0;
+  padding: 0 16px 0 13px;
+  white-space: nowrap;
+}
+.audio-controls button.ac-menuitem .ac-icon {
+  margin-right: 12px;
+}
+.audio-controls button.ac-menuitem span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.audio-controls button.ac-menuitem:hover,
+.audio-controls button.ac-menuitem:focus {
+  background-color: var(--ac-menu-hover);
+  outline: none;
+}
+.audio-controls button.ac-speed {
+  justify-content: space-between;
+  height: 40px;
+  padding-left: 45px;
+}
+.audio-controls button.ac-speed .ac-icon {
+  margin-right: 0;
+  fill: var(--ac-check);
 }

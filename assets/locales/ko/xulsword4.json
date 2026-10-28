@@ -12,5 +12,15 @@
   "Textual variants": "이문",
   "normal": "기본",
   "variant": "이문",
-  "both": "둘 다"
+  "both": "둘 다",
+  "Play": "재생",
+  "Pause": "일시정지",
+  "Mute": "음소거",
+  "Unmute": "음소거 해제",
+  "Seek": "탐색",
+  "Volume": "볼륨",
+  "More options": "옵션 더보기",
+  "Download": "다운로드",
+  "Playback speed": "재생 속도",
+  "Normal": "보통"
 }

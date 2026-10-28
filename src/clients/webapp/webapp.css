@@ -162,8 +162,12 @@ Hosted viewport height */
 #textnav .vk-book select,
 #genbknav .menulist,
 #genbknav .menulist select,
-audio {
+audio,
+#player .audio-controls {
   width: 100%;
+}
+#player .audio-controls .ac-sizer {
+  display: none;
 }
 #back,
 #textnav .selectvk,

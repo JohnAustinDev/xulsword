@@ -397,7 +397,17 @@ rather than BluePrintJS's lighter dark grays. */
   color: var(--dk-text-faint);
 }
 
-/* Audio player */
-.audioplayer audio {
+/* Audio player controls (see audioPlayer.css) */
+#root .audio-controls {
+  --ac-fg: var(--dk-text);
+  --ac-panel-bg: rgba(255, 255, 255, 0.06);
+  --ac-volume-bg: rgba(255, 255, 255, 0.08);
+  --ac-focus: var(--color-primary);
+  --ac-menu-fg: var(--dk-text);
+  --ac-menu-bg: var(--bg-text-dark);
+  --ac-menu-hover: var(--bg-interface-selection);
+  --ac-menu-shadow: var(--shadow);
+  --ac-check: var(--color-primary);
+
   border-color: var(--border-dark);
 }

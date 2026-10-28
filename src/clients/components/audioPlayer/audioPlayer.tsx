@@ -7,12 +7,14 @@ import {
   onTimeUpdate,
   parseTimingFile,
 } from '../../audioTiming.ts';
+import analytics from '../../analytics.ts';
 import { GI } from '../../G.ts';
 import log from '../../log.ts';
 import Menulist from '../libxul/menulist.tsx';
 import Button from '../libxul/button.tsx';
 import { Hbox } from '../libxul/boxes.tsx';
 import { htmlAttribs, XulProps } from '../libxul/xul.tsx';
+import AudioControls from './audioControls.tsx';
 import './audioPlayer.css';
 
 import type {
@@ -20,6 +22,7 @@ import type {
   AudioPlayerFileVK,
   AudioPlayerType,
 } from '../../../type.ts';
+import type { DownloadAudioInfo } from '../../analytics.ts';
 import type RenderPromise from '../../renderPromise.ts';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
 
@@ -125,15 +128,17 @@ export default function AudioPlayer(
       )}
       {audio.open && (
         <Hbox>
-          <audio
-            controls
+          <AudioControls
+            audioRef={audioDOM}
             onEnded={audioHandler}
             onCanPlay={audioHandler}
             onPlay={audioHandler}
             onTimeUpdate={() => onTimeUpdate(audio, audioDOM, xulswordState)}
             autoPlay={!!Build.isWebApp}
             src={src}
-            ref={audioDOM}
+            downloadName={downloadName(file)}
+            onDownload={() => recordDownload(file, src)}
+            renderPromise={renderPromise}
           />
           {audio.file?.timing && (
             <Button
@@ -147,6 +152,52 @@ export default function AudioPlayer(
       )}
     </div>
   );
+}
+
+// Record a download of the audio file for analytics. The player does not know
+// the file's media id, so the event gives the file's /audio API URL (its src).
+// Only an http(s) src can be such a URL (Electron's local audio files are 
+// data: URLs, and Electron sends no analytics anyway).
+function recordDownload(
+  file: AudioPlayerFileVK | AudioPlayerFileGB | null,
+  src: string | undefined,
+) {
+  if (!file || !src || !/^https?:/.test(src)) return;
+  const AudioCode = file.audioModule ?? 'unknown';
+  const common = {
+    event: 'download',
+    url: src,
+    format: 'mp3',
+    package: 'none',
+    AudioCode,
+  } as const;
+  let info: DownloadAudioInfo;
+  if ('key' in file) {
+    info = { ...common, locationky: file.key ?? 'unknown' };
+  } else {
+    const { book, chapter } = 'book' in file ? file : {};
+    info = { ...common, book: book ?? 'unknown', chapter: chapter ?? -1 };
+  }
+  analytics.record(info);
+}
+
+// A file name (without extension) for a downloaded audio file, such as
+// UZV_Gen_1 for a Bible chapter or UZV_Introduction for a general book key.
+function downloadName(
+  file: AudioPlayerFileVK | AudioPlayerFileGB | null,
+): string {
+  const parts: string[] = [];
+  if (file) {
+    parts.push(file.audioModule || file.swordModule);
+    if ('book' in file && file.book) {
+      parts.push(file.book);
+      if (file.chapter !== undefined) parts.push(String(file.chapter));
+    } else if ('key' in file && file.key) {
+      const leaf = file.key.split(/[/\\]/).filter(Boolean).pop();
+      if (leaf) parts.push(leaf);
+    }
+  }
+  return parts.join('_').replace(/[\\/:*?"<>|\s]+/g, '_') || 'audio';
 }
 
 // Logs a timing file when it is first loaded: its raw text (including any

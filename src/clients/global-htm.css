@@ -216,6 +216,7 @@ host's html element onto the shadow #root element. */
 .textbox,
 select,
 audio,
+.audio-controls,
 button,
 .bookselect,
 .selectvk,

@@ -427,11 +427,6 @@ export default class Xulsword
           renderPromise={renderPromise}
           xulswordState={xulswordState}
         />
-        {Build.isElectronApp && (
-          <Button id="closeplayer" onPointerDown={xulswordHandler}>
-            {GI.i18n.t('', renderPromise, 'close.label')}
-          </Button>
-        )}
       </Hbox>
     );
 
