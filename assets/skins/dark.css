@@ -8,7 +8,7 @@ window, then panels and popups), and text is a soft off-white rather than pure
 white, which is easier on the eyes over long reading. */
 #root {
   /* Skin-only tokens */
-  --dk-text: #d9dde3; /* body text, ~12:1 on the reading surface */
+  --dk-text: #d9dde3; /* body text, ~13:1 on the reading surface */
   --dk-text-muted: #9aa3b0; /* secondary labels, inactive tabs */
   --dk-text-faint: #5f6875; /* disabled */
   --dk-underline: rgba(217, 221, 227, 0.28); /* quiet underlines in text */
@@ -26,13 +26,16 @@ white, which is easier on the eyes over long reading. */
   --color-secondary2: #bb9cf2; /* commentaries */
   --color-secondary3: #6fd0a8; /* general books */
 
-  --bg-interface-dark: #15181d; /* wells: book lists, sizer bars */
-  --bg-interface-light: #1d2127; /* window, notebox, list items */
-  --bg-bp6-light: #262b32; /* containers, inputs, tabs */
-  --bg-interface-selection: #313945; /* hover and selected rows */
-  --bg-disabled: #22262c;
-  --bg-text-light: #181b20; /* reading surface */
-  --bg-text-dark: #23272e; /* popups, raised above the text */
+  /* Each layer is a clear step from its neighbors, so the window does not
+  look flat: the reading surface sits well below the window, and the window
+  and containers match BluePrintJS's dark-gray2 and dark-gray3. */
+  --bg-interface-dark: #121418; /* wells: book lists, sizer bars */
+  --bg-interface-light: #252a31; /* window, notebox, list items */
+  --bg-bp6-light: #2f343c; /* containers, inputs, tabs */
+  --bg-interface-selection: #3d4552; /* hover and selected rows */
+  --bg-disabled: #2a2e35;
+  --bg-text-light: #16191d; /* reading surface */
+  --bg-text-dark: #2a2f37; /* popups, raised above the text */
   /* Lightens rather than darkens: a dark tint would not show on surfaces
   that are already this dark. */
   --overlay-text-pinned: rgba(255, 255, 255, 0.035);
@@ -43,8 +46,8 @@ white, which is easier on the eyes over long reading. */
   --bg-strongs-p: hsla(298, 55%, 62%, 0.26);
   --bg-strongs-l: hsla(200, 75%, 55%, 0.26);
 
-  --border-light: #2c323a;
-  --border-dark: #3b424d;
+  --border-light: #363c46;
+  --border-dark: #48505c;
 
   --font-heading-color: var(--dk-text);
 
@@ -153,7 +156,7 @@ hover and while dragging. */
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 #root:not(.printing) .dragsizer:hover > div {
-  background-color: #59626f;
+  background-color: #646e7c;
 }
 #root:not(.printing) .dragsizer > .dragging,
 #root:not(.printing) .dragsizer:hover > .dragging {
