@@ -1125,9 +1125,10 @@ const Module = {
           if (!tmpdir.exists()) {
             result = `Could not create tmp directory '${tmpdir.path}'.`;
           }
+          // Audio files and timing files are separate downloads.
           const dlfile = await getFileHTTP(
-            resolveTemplateURL(http, data, 'zip', '1', true),
-            tmpdir.append(randomID()),
+            resolveTemplateURL(http, data, 'zip', '1'),
+            tmpdir.clone().append(randomID()),
             downloadkey,
             (p: number) => {
               if (p && p !== -1) progress(p);
@@ -1136,6 +1137,42 @@ const Module = {
           httpThrowIfCanceled(downloadkey);
 
           result = new ZIP(dlfile.path);
+
+          // Many publications have no timing files, in which case the server
+          // returns 'no-timing-file' and nothing is added. A failed timing
+          // download is logged but does not fail the audio download.
+          const tmfile = await getFileHTTP(
+            resolveTemplateURL(http, data, 'zip', '1', true),
+            tmpdir.clone().append(randomID()),
+            downloadkey,
+          ).catch((er) => {
+            if (er?.message === C.UI.Manager.cancelMsg) throw er;
+            log.warn(`Timing file download failed: ${er}`);
+            return null;
+          });
+          httpThrowIfCanceled(downloadkey);
+          if (tmfile) {
+            const buf = tmfile.readBuf();
+            if (buf.toString('utf8').trim() !== 'no-timing-file') {
+              try {
+                const tmzip = new ZIP(buf);
+                const audioZip = result;
+                const existing = new Set(
+                  audioZip
+                    .getEntries()
+                    .map((ze) => normalizeZipEntry(ze).entryName),
+                );
+                tmzip.getEntries().forEach((ze) => {
+                  const { entryName } = normalizeZipEntry(ze);
+                  if (!ze.isDirectory && !existing.has(entryName)) {
+                    audioZip.addFile(entryName, ze.getData());
+                  }
+                });
+              } catch (er) {
+                log.warn(`Timing file download was not a zip: ${er}`);
+              }
+            }
+          }
 
           // If a conf file is requested, add it to the zip if not already there.
           if (confname) {
