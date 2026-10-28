@@ -118,13 +118,23 @@
   margin-inline-start: 10px;
   margin-inline-end: 0px;
 }
-.snbut:after {
-  display: inline-block;
-  content: url(../../images/search.png);
-  width: 30px;
-  height: 18px;
-  overflow: clip;
-  margin-inline-start: 16px;
+/* The search icon is BluePrint's 20px 'search' icon path, as a CSS mask
+filled with the icon color. Popup HTML is sanitized to HTML only, so it cannot
+be an inline SVG as BluePrint icons usually are. The mask uses longhands,
+because Chrome before 120 and Safari before 15.4 only support the -webkit-
+prefixed mask properties, whose shorthand syntax differs. */
+.snbut .snbut-icon {
+  width: 20px;
+  height: 20px;
+  background-color: currentcolor;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill-rule='evenodd' d='M19.56 17.44l-4.94-4.94A8.004 8.004 0 0016 8c0-4.42-3.58-8-8-8S0 3.58 0 8s3.58 8 8 8c1.67 0 3.21-.51 4.5-1.38l4.94 4.94a1.498 1.498 0 102.12-2.12zM8 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z'/%3E%3C/svg%3E");
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill-rule='evenodd' d='M19.56 17.44l-4.94-4.94A8.004 8.004 0 0016 8c0-4.42-3.58-8-8-8S0 3.58 0 8s3.58 8 8 8c1.67 0 3.21-.51 4.5-1.38l4.94 4.94a1.498 1.498 0 102.12-2.12zM8 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z'/%3E%3C/svg%3E");
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
 }
 .lemma-header {
   font-weight: bold;

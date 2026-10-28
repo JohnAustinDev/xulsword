@@ -30,17 +30,22 @@
 }
 
 /* header-icon types don't have headings, so remove the extra space */
-.bp6-table-column-headers .header-icon .bp6-popover-target {
-  position: relative;
-  top: 5px;
-  left: -10px;
-}
 .bp6-table-column-headers .header-icon .bp6-table-header-content .bp6-icon {
   display: block;
   position: absolute;
   top: -24px;
   left: calc(50% - 10px);
 }
-.bp6-table-last-in-row .bp6-table-th-menu-container .bp6-icon {
-  margin-right: 14px;
+
+/* The last column's header extends under the table's vertical scrollbar, so
+its menu button is moved out from under it, and its header icon is centered
+on the part that shows. */
+.bp6-table-last-in-row .bp6-table-th-menu-container {
+  right: 16px;
+}
+.bp6-table-column-headers
+  .header-icon.bp6-table-last-in-row
+  .bp6-table-header-content
+  .bp6-icon {
+  left: calc(50% - 18px);
 }

@@ -39,25 +39,28 @@
 #textnav > span {
   padding-inline-start: 4px;
 }
-#textnav #nextchap,
-#textnav #nextverse {
-  display: block;
-  background: url(../../images/smallButtonIncrement.png);
-  margin-bottom: 1px;
-}
-#textnav #prevchap,
-#textnav #prevverse {
-  display: block;
-  background: url(../../images/smallButtonDecrement.png);
-  margin-top: 1px;
-}
+/* Chapter and verse up/down buttons: BluePrint chevron icons, cropped to the
+glyph so that each pair is the height of the textbox beside it. */
 #textnav .anchorbutton {
-  width: 15px;
-  height: 8px;
-  background-position: 0px 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 13px;
+  overflow: hidden;
+  border-radius: 3px;
+  color: var(--color-primary);
+  cursor: pointer;
 }
 #textnav .anchorbutton:hover {
-  background-position: -15px 0px;
+  background-color: var(--bg-interface-selection);
+}
+#textnav .anchorbutton.disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+#textnav .anchorbutton.disabled:hover {
+  background-color: transparent;
 }
 #textnav .textbox input {
   text-align: center;

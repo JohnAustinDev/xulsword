@@ -18,6 +18,7 @@ import {
 import { getRootElement, getRootNode } from '../../rootNode.ts';
 import { addClass, delayHandler, topHandle } from '../libxul/xul.tsx';
 import Button, { AnchorButton } from '../libxul/button.tsx';
+import Icon from '../libxul/icon.tsx';
 import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
 import Bookselect from '../libxul/bookselect.tsx';
 import Spacer from '../libxul/spacer.tsx';
@@ -670,12 +671,16 @@ export default class Xulsword
               id="nextchap"
               disabled={navdisabled}
               onPointerDown={xulswordHandler}
-            />
+            >
+              <Icon icon="chevron-up" size={16} />
+            </AnchorButton>
             <AnchorButton
               id="prevchap"
               disabled={navdisabled}
               onPointerDown={xulswordHandler}
-            />
+            >
+              <Icon icon="chevron-down" size={16} />
+            </AnchorButton>
           </Vbox>
           <span>:</span>
           <Textbox
@@ -695,12 +700,16 @@ export default class Xulsword
               id="nextverse"
               disabled={navdisabled}
               onPointerDown={xulswordHandler}
-            />
+            >
+              <Icon icon="chevron-up" size={16} />
+            </AnchorButton>
             <AnchorButton
               id="prevverse"
               disabled={navdisabled}
               onPointerDown={xulswordHandler}
-            />
+            >
+              <Icon icon="chevron-down" size={16} />
+            </AnchorButton>
           </Vbox>
         </Hbox>
       </Vbox>

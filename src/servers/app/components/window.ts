@@ -17,6 +17,7 @@ import Subscription from '../../../subscription.ts';
 import Dirs from '../../components/dirs.ts';
 import Data from '../../components/data.ts';
 import Prefs from '../prefs.ts';
+import { setNativeChrome } from '../nativeChrome.ts';
 import LocalFile from '../../components/localFile.ts';
 
 import type {
@@ -313,6 +314,9 @@ export const pushPrefsToWindows: PrefCallbackType = (
     } else if (store === 'prefs' && idOrKey === 'global.fontSize') {
       Window.reset('dynamic-stylesheet-reset', 'all');
     } else if (store === 'prefs' && idOrKey === 'global.skin') {
+      setNativeChrome(
+        Prefs.getCharPref('global.skin') as typeof S.prefs.global.skin,
+      );
       Window.reset('component-reset', 'all');
     } else {
       // Get a (key.property)[] of changed keyprops requesting to be pushed.

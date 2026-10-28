@@ -214,15 +214,22 @@ export function windowArguments(
   return prop ? undefined : defval;
 }
 
-// Add <style id="skin"> and write any user pref skin CSS to it.
-export function setGlobalSkin(skin: typeof S.prefs.global.skin) {
+// Add <style id="skin"> and write any user pref skin CSS to it. When isPrint
+// is set, the page being printed is a descendant of #root, but it must keep
+// BluePrint's light style. So then the BluePrint dark class is not set on
+// #root or body, but on the print controls instead (see printSkinClass).
+export function setGlobalSkin(
+  skin: typeof S.prefs.global.skin,
+  isPrint = false,
+) {
   if (Build.isElectronApp) {
-    // Set BluePrint Dark theme class (on #root, see renderToRoot).
+    // Set BluePrint Dark theme class (on #root, see renderToRoot). It goes on
+    // body as well, because BluePrint dialogs, popovers and toasts portal into
+    // document.body, outside #root.
     const rootElement = getRootElement();
-    if (rootElement) {
-      if (skin === 'dark') rootElement.classList.add('bp6-dark');
-      else rootElement.classList.remove('bp6-dark');
-    }
+    [rootElement, document.body].forEach((elem) => {
+      if (elem) elem.classList.toggle('bp6-dark', skin === 'dark' && !isPrint);
+    });
     // Update skin CSS
     let css = '';
     if (skin) {
@@ -240,6 +247,16 @@ export function setGlobalSkin(skin: typeof S.prefs.global.skin) {
     }
     style.textContent = css;
   }
+}
+
+// The BluePrint dark class for print controls (the elements around the page
+// being printed), when the dark skin is in use. See setGlobalSkin.
+export function printSkinClass(): string {
+  return Build.isElectronApp &&
+    (G.Prefs.getCharPref('global.skin') as typeof S.prefs.global.skin) ===
+      'dark'
+    ? 'bp6-dark'
+    : '';
 }
 
 export const printRefs: {

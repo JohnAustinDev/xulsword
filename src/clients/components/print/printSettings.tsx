@@ -9,6 +9,7 @@ import { G, GI } from '../../G.ts';
 import {
   getStatePref,
   printRefs,
+  printSkinClass,
   rootRenderPromise,
   setStatePref,
   windowArguments,
@@ -633,6 +634,7 @@ export default class PrintSettings extends React.Component<
   async addToast(message: ToastProps) {
     (
       await OverlayToaster.create({
+        className: printSkinClass(),
         canEscapeKeyClear: true,
         position: Position.TOP,
       })

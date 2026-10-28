@@ -418,7 +418,8 @@ export function getLemmaHTML(
         context: sourcemod,
       };
       const d = JSON_attrib_stringify(data);
-      buttonHTML += `<button type="button" class="snbut" data-data="${d}">${code}</button>`;
+      // A BluePrint button with the search icon (see .snbut in popup.css).
+      buttonHTML += `<button type="button" class="bp6-button snbut" data-data="${d}"><span class="bp6-icon snbut-icon" aria-hidden="true"></span><span class="bp6-button-text">${code}</span></button>`;
     }
 
     const options = getSwordOptions(G, C.DICTIONARY);

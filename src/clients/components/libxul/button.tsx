@@ -79,7 +79,10 @@ export function AnchorButton({
   return (
     <a
       type="button"
-      {...htmlAttribs('anchorbutton', props)}
+      {...htmlAttribs(
+        ['anchorbutton', ...(disabled ? ['disabled'] : [])],
+        props,
+      )}
       {...(disabled
         ? { onPointerDown: undefined, onPointerDownCapture: undefined }
         : {})}

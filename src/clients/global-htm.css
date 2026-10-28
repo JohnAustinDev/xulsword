@@ -1,4 +1,7 @@
-#root {
+/* The light palette is also given to the page being printed (.print .content),
+so that it keeps the light look of paper whatever the skin of #root. */
+#root,
+#root .print .content {
   --color-primary: #2d72d2;
   --color-secondary: #f0b12e;
   --color-secondary2: #462476;
@@ -19,6 +22,12 @@
   in tabs.css and .atext.pinned .npopupTX in popup.css. */
   --overlay-text-pinned: rgba(0, 0, 0, 0.04);
 
+  /* Strong's hilight colors, by type (see .matchingStrongs* in atext.css) */
+  --bg-strongs-gh: hsla(60, 100%, 50%, 0.5); /* Strong's numbers */
+  --bg-strongs-m: hsla(123, 100%, 50%, 0.5); /* numbered morphology */
+  --bg-strongs-p: hsla(298, 100%, 50%, 0.5); /* parse codes */
+  --bg-strongs-l: hsla(200, 100%, 50%, 0.5); /* other lemmas */
+
   --border-light: #dbdbd3;
   --border-dark: #bbbbbb;
 
@@ -37,7 +46,8 @@
 /* Host Styles: Variables must be set on #root for the xulsword app, and so
 cannot be overwritten by host CSS, so the ownsDocument class is copied from
 host's html element onto the shadow #root element. */
-#root:not(.ownsDocument) {
+#root:not(.ownsDocument),
+#root:not(.ownsDocument) .print .content {
   --color-primary: #8d3524;
   --color-secondary: #a7bd43;
   --color-secondary2: #813c34;

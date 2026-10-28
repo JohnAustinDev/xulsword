@@ -3,7 +3,11 @@ import Subscription from '../../../subscription.ts';
 import { b64toBlob } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { functionalComponentRenderPromise, printRefs } from '../../common.ts';
+import {
+  functionalComponentRenderPromise,
+  printRefs,
+  printSkinClass,
+} from '../../common.ts';
 import { getRootElement, getShadowHost } from '../../rootNode.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button.tsx';
@@ -126,7 +130,11 @@ export default function Print(props: PrintProps) {
   return (
     <>
       {iframeFilePath && (
-        <Vbox className="pdf-preview" pack="start" align="stretch">
+        <Vbox
+          className={['pdf-preview', printSkinClass()].join(' ')}
+          pack="start"
+          align="stretch"
+        >
           <Hbox flex="1">
             <iframe
               key={iframeFilePath}
@@ -178,7 +186,10 @@ export default function Print(props: PrintProps) {
 
           <Spacer width={C.UI.Print.viewMargin} />
 
-          <Vbox className="printsettings-container" pack="center">
+          <Vbox
+            className={['printsettings-container', printSkinClass()].join(' ')}
+            pack="center"
+          >
             <PrintSettings print={print} />
           </Vbox>
         </Hbox>

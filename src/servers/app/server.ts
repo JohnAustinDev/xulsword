@@ -18,6 +18,7 @@ import devToolsInstaller, {
 } from 'electron-devtools-installer';
 import { install as SourceMapInstall } from 'source-map-support';
 import { G } from './G.ts';
+import { releaseGtkTheme, setNativeChrome } from './nativeChrome.ts';
 import Subscription from '../../subscription.ts';
 import Cache from '../../cache.ts';
 import {
@@ -169,10 +170,10 @@ function showApp() {
   }
 }
 
-const skin = G.Prefs.getCharPref('global.skin') as typeof S.prefs.global.skin;
-const { shouldUseDarkColors } = nativeTheme;
-nativeTheme.themeSource =
-  skin === 'dark' || shouldUseDarkColors ? 'dark' : 'light';
+setNativeChrome(
+  G.Prefs.getCharPref('global.skin') as typeof S.prefs.global.skin,
+  true,
+);
 
 ipcMain.on('global', (event: IpcMainEvent, acall: GCallType) => {
   const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1;
@@ -273,16 +274,14 @@ const openXulswordWindow = () => {
   log.info(BuildInfo);
   Data.write(BuildInfo, 'buildInfo');
 
-  const xswinSubscriptions: Array<() => void> = [];
+  const xswinDoOnClose: Array<() => void> = [];
   // addBookmarkTransaction must be before pushPrefsToMenu for undo/redo enable to work.
-  xswinSubscriptions.push(
+  xswinDoOnClose.push(
     Subscription.subscribe.prefsChanged(addBookmarkTransaction),
   );
-  xswinSubscriptions.push(
-    Subscription.subscribe.prefsChanged(pushPrefsToWindows),
-  );
-  xswinSubscriptions.push(Subscription.subscribe.prefsChanged(pushPrefsToMenu));
-  xswinSubscriptions.push(
+  xswinDoOnClose.push(Subscription.subscribe.prefsChanged(pushPrefsToWindows));
+  xswinDoOnClose.push(Subscription.subscribe.prefsChanged(pushPrefsToMenu));
+  xswinDoOnClose.push(
     Subscription.subscribe.resetMain(() => {
       LibSword.quit();
       Cache.clear();
@@ -295,7 +294,7 @@ const openXulswordWindow = () => {
       menuBuilder.buildMenu(true);
     }),
   );
-  xswinSubscriptions.push(
+  xswinDoOnClose.push(
     Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType, callingWinID?: number) => {
         if (callingWinID) {
@@ -392,6 +391,16 @@ const openXulswordWindow = () => {
     ),
   );
 
+  // Windows menus follow nativeTheme, whose dark state changes with the skin
+  // or the system theme, so rebuild the menu for its menuIcon()s to match.
+  if (process.platform === 'win32') {
+    const rebuildMenu = () => menuBuilder.buildMenu(true);
+    nativeTheme.on('updated', rebuildMenu);
+    xswinDoOnClose.push(() => nativeTheme.off('updated', rebuildMenu));
+  }
+
+  xulswordWindow.once('ready-to-show', releaseGtkTheme);
+
   xulswordWindow.on(
     'ready-to-show',
     () =>
@@ -418,7 +427,7 @@ const openXulswordWindow = () => {
     BrowserWindow.getAllWindows().forEach((w) => {
       if (w !== xulswordWindow) w.close();
     });
-    xswinSubscriptions.forEach((dispose) => {
+    xswinDoOnClose.forEach((dispose) => {
       dispose();
     });
 

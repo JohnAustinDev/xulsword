@@ -1,53 +1,400 @@
+/* Dark skin, applied by setGlobalSkin('dark'), which also adds the BluePrintJS
+class 'bp6-dark' to #root and body.
 
-/* This custom skin is used by calling setGlobalSkin('dark'). NOTE: this skin
-expects the BluePrintJS class 'bp6-dark' to be added to top container.*/
+The palette is a cool graphite gray scale that matches BluePrintJS's own dark
+grays, so its buttons, inputs and menus sit naturally beside xulsword's
+surfaces. Surfaces get lighter as they rise toward the reader (wells, then
+window, then panels and popups), and text is a soft off-white rather than pure
+white, which is easier on the eyes over long reading. */
 #root {
-  --color-primary: #8abbff; /* mimics BluePrintJS dark theme primary color */
-  --color-secondary: rgba(204, 204, 0, 0.8);
-  --color-secondary2: rgba(100, 100, 255, 0.8);
-  --color-secondary3: rgba(100, 245, 245, 0.8);
+  /* Skin-only tokens */
+  --dk-text: #d9dde3; /* body text, ~12:1 on the reading surface */
+  --dk-text-muted: #9aa3b0; /* secondary labels, inactive tabs */
+  --dk-text-faint: #5f6875; /* disabled */
+  --dk-underline: rgba(217, 221, 227, 0.28); /* quiet underlines in text */
+  --dk-highlight: hsla(43, 85%, 55%, 0.22); /* bookmarks, matches */
+  --dk-accent: #2d72d2; /* selected fills, white text on top */
+  --dk-words-of-jesus: #f08c84;
+  --dk-search-term: #f2bd5a;
+  --dk-border-style: solid; /* chooser items, flat rather than outset */
+  --dk-icon-filter: invert(0.88) hue-rotate(180deg);
+  --dk-gray-icon-filter: invert(0.85);
 
-  --bg-interface-dark: #0d0d0d;
-  --bg-interface-light: #646464;
-  --bg-bp6-light: #2f343c;
-  --bg-disabled: #7d7d7d;
-  --bg-text-light: black;
-  --bg-text-dark: #363636;
-  /* Lightens rather than darkens: the pinned tint is composited over
-  surfaces that are already black or near-black here, so a dark tint
-  would be invisible. Raise or lower the alpha to taste. */
-  --overlay-text-pinned: rgba(255, 255, 255, 0.15);
+  /* The tab of each module type has its own color (see Tabs below). */
+  --color-primary: #8abbff; /* BluePrintJS dark theme primary; Bibles */
+  --color-secondary: #e8b84f; /* dictionaries */
+  --color-secondary2: #bb9cf2; /* commentaries */
+  --color-secondary3: #6fd0a8; /* general books */
 
-  --font-heading-color: white;
+  --bg-interface-dark: #15181d; /* wells: book lists, sizer bars */
+  --bg-interface-light: #1d2127; /* window, notebox, list items */
+  --bg-bp6-light: #262b32; /* containers, inputs, tabs */
+  --bg-interface-selection: #313945; /* hover and selected rows */
+  --bg-disabled: #22262c;
+  --bg-text-light: #181b20; /* reading surface */
+  --bg-text-dark: #23272e; /* popups, raised above the text */
+  /* Lightens rather than darkens: a dark tint would not show on surfaces
+  that are already this dark. */
+  --overlay-text-pinned: rgba(255, 255, 255, 0.035);
 
-  --shadow: 8px 8px 2px 1px rgba(8, 8, 8, 0.219);
+  /* Strong's hilights: low alpha, so light text stays readable over them. */
+  --bg-strongs-gh: var(--dk-highlight);
+  --bg-strongs-m: hsla(135, 55%, 50%, 0.24);
+  --bg-strongs-p: hsla(298, 55%, 62%, 0.26);
+  --bg-strongs-l: hsla(200, 75%, 55%, 0.26);
+
+  --border-light: #2c323a;
+  --border-dark: #3b424d;
+
+  --font-heading-color: var(--dk-text);
+
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
   --bp6-box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(255, 255, 255, 0.1);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  /* Dark native scrollbars, select popups and form controls. */
+  color-scheme: dark;
 }
 
+/* The page being printed (or previewed) keeps the light look of paper, as do
+the page buttons drawn on it. (Effects below that use fixed colors, such as
+the tab glow and toggle button tint, are also limited to #root:not(.printing),
+because the page of a main window printout shows its tabs and buttons.) global-htm.css gives the page the light palette,
+and this gives it light values for this skin's own tokens. BluePrintJS
+controls keep their light style there too, because in print mode
+setGlobalSkin() puts 'bp6-dark' on the print controls rather than on #root. */
+#root .print .content,
+#root .print .page-buttons {
+  --dk-text: rgb(40, 40, 40);
+  --dk-text-muted: grey;
+  --dk-text-faint: rgb(160, 160, 160);
+  --dk-underline: currentcolor;
+  --dk-highlight: hsla(60, 100%, 50%, 0.5);
+  --dk-words-of-jesus: red;
+  --dk-search-term: red;
+  --dk-border-style: outset;
+  --dk-icon-filter: none;
+  --dk-gray-icon-filter: none;
+
+  color: var(--dk-text);
+  color-scheme: light;
+}
+@media print {
+  #root {
+    background-color: white;
+  }
+}
+
+/* The dynamic locale style sheet gives .cs-locale a dark text color. This
+skin's style sheet comes after it, so equal specificity is enough to override
+it, while more specific component rules (links etc.) still win as they do in
+the light skin. */
 #root,
 .cs-locale,
-.npopup,
-select,
-optgroup,
-option {
-  color: white !important;
+.npopup {
+  color: var(--dk-text);
 }
-select,
-optgroup,
-option {
-  background-color:var(--bg-bp6-light) !important;
+
+/* Native selects and their option lists */
+#root select,
+#root optgroup,
+#root option {
+  color: var(--dk-text);
+  background-color: var(--bg-bp6-light);
 }
-.tabPlus select {
-  background-color: white !important;
+#root .tabs .tabPlus select {
+  color: transparent;
+  background-color: transparent;
+}
+.tabs .tabPlus select * {
+  color: var(--dk-text);
+}
+
+/* Dark icons drawn for the light skin: invert lightness but keep hue. A gray
+button image gets plain inversion, which gives a cool gray. */
+.tabs .tabPlus select,
+.versePerLineButton > div,
+.crtwisty,
+.bookgroupitem .hasAudo,
+.chaptermenu .chaptermenucell.hasAudio:after {
+  filter: var(--dk-icon-filter);
+}
+.atext .notebox-maximizer {
+  filter: var(--dk-gray-icon-filter);
+}
+
+/* Buttons: as in the light skin, the icon of a checked (on) button is in the
+primary color, which BluePrintJS's dark button style would otherwise override.
+An unchecked (off) button's icon is dimmed, and the checked toggles of the
+main window's option buttons also get a tinted fill. */
+#root .button.on:not(.disabled):not(.bp6-fill) .bp6-icon {
+  color: var(--color-primary);
+}
+#root:not(.printing) .button.off:not(.disabled) .bp6-icon {
+  color: var(--dk-text-faint);
+}
+#root:not(.printing) #optionButtons .button.on:not(.disabled) .bp6-button,
+#root:not(.printing) .chooserButton.on:not(.disabled) .bp6-button {
+  background-color: rgba(45, 114, 210, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(138, 187, 255, 0.45);
+}
+#root:not(.printing) #optionButtons .button.on:not(.disabled) .bp6-button:hover,
+#root:not(.printing) .chooserButton.on:not(.disabled) .bp6-button:hover {
+  background-color: rgba(45, 114, 210, 0.34);
+}
+#root:not(.printing) .button.off:not(.disabled) .bp6-button:hover .bp6-icon {
+  color: var(--dk-text-muted);
+}
+
+/* Drag sizer bars: lighter than the surfaces around them, and brighter on
+hover and while dragging. */
+#root:not(.printing) .dragsizer > div {
+  background-color: var(--border-dark);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+#root:not(.printing) .dragsizer:hover > div {
+  background-color: #59626f;
+}
+#root:not(.printing) .dragsizer > .dragging,
+#root:not(.printing) .dragsizer:hover > .dragging {
+  border-color: var(--color-primary);
+  background-color: rgba(138, 187, 255, 0.45);
+}
+
+/* Window overlays */
+#overlay .progress-container {
+  background-color: var(--bg-text-dark);
+  box-shadow: var(--shadow);
+}
+#overlay.darkened {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Menus and popups */
+.menupopup {
+  border-color: var(--border-dark);
+  box-shadow: var(--shadow);
+}
+.npopupTX {
+  border-color: var(--border-dark);
+}
+#root .popup-mod-select {
+  border: 1px solid var(--border-dark);
+  border-radius: 4px;
+  background-color: var(--bg-bp6-light);
+  color: var(--dk-text);
+}
+.popup-fail {
+  border-color: rgba(255, 120, 110, 0.5);
+}
+.lemma-sep,
+.dict-sep,
+.nlist,
+.cropened .cr-sep,
+.sense,
+.atext:not(.Texts) .sb table td:not(.label) {
+  border-color: var(--border-dark);
+}
+
+/* Tabs: each module type has its color as a top bar, which glows down into
+the tab, more so on the active tab. */
+.tabs .tabTexts {
+  --dk-tab-color: var(--color-primary);
+  --dk-tab-glow: rgba(138, 187, 255, 0.55);
+  --dk-tab-glow-soft: rgba(138, 187, 255, 0.3);
+}
+.tabs .tabComms {
+  --dk-tab-color: var(--color-secondary2);
+  --dk-tab-glow: rgba(187, 156, 242, 0.55);
+  --dk-tab-glow-soft: rgba(187, 156, 242, 0.3);
+}
+.tabs .tabDicts {
+  --dk-tab-color: var(--color-secondary);
+  --dk-tab-glow: rgba(232, 184, 79, 0.55);
+  --dk-tab-glow-soft: rgba(232, 184, 79, 0.3);
+}
+.tabs .tabGenbks {
+  --dk-tab-color: var(--color-secondary3);
+  --dk-tab-glow: rgba(111, 208, 168, 0.55);
+  --dk-tab-glow-soft: rgba(111, 208, 168, 0.3);
+}
+#root:not(.printing) .tabs > .tab:not(.tabPlus) > .border {
+  background-image: linear-gradient(var(--dk-tab-glow-soft), transparent 80%);
+  box-shadow: inset 0 4px 4px -3px var(--dk-tab-glow-soft);
+}
+#root:not(.printing) .tabs > .tab.active:not(.tabPlus) > .border {
+  background-image: linear-gradient(var(--dk-tab-glow), transparent 95%);
+  box-shadow: inset 0 4px 4px -3px var(--dk-tab-glow);
+}
+.tabs .tab {
+  color: var(--dk-text-muted);
+}
+#root:not(.printing) .tabs .tab.active:not(.tabPlus) {
+  text-shadow: 0 0 6px rgba(138, 187, 255, 0.5);
+}
+.tabs .tab:not(.active):hover {
+  color: var(--dk-text);
+}
+/* The multi-tab's dropdown arrow, drawn light. (Its menu is inside it, so a
+filter cannot be used to lighten the light skin's arrow image.) */
+#root:not(.printing) .tabs .mts-tab .anchorbutton {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23d9dde3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+/* Its menu lists the tabs, each with its type color as a left bar. */
+#root:not(.printing) .tabs .mts-tab .menupopup {
+  padding: 4px 0;
+}
+#root:not(.printing) .tabs .mts-tab .menupopup .mto-tab {
+  margin: 0;
+  padding: 0;
+  border-inline-start: 3px solid var(--dk-tab-color);
+}
+#root:not(.printing) .tabs .mts-tab .menupopup .mto-tab > .border {
+  border-top: none;
+  padding: 4px 10px;
+}
+#root:not(.printing) .tabs .mts-tab .menupopup .mto-tab:hover {
+  color: var(--dk-text);
+}
+.tabs .ilt-tab.disabled {
+  color: var(--dk-text-faint);
+}
+
+/* Text panels */
+.atext.prev-disabled .prevchaplink,
+.atext.next-disabled .nextchaplink {
+  color: var(--dk-text-faint);
+}
+.selectvk span.description {
+  color: var(--dk-text-muted);
+}
+#root:not(.printing) .fnselected .fncol5 {
+  border: 1px solid rgba(226, 179, 80, 0.45);
+}
+.nowreading {
+  background-color: var(--dk-highlight);
+}
+.nowreading-sweep {
+  background-image: linear-gradient(
+    rgba(226, 179, 80, 0.45),
+    rgba(226, 179, 80, 0.45)
+  );
+}
+.wordsOfJesus {
+  color: var(--dk-words-of-jesus);
+}
+.sn,
+.dt,
+.dtl,
+.resultBox a.sn span {
+  text-decoration-color: var(--dk-underline);
+}
+.x-text-image img {
+  border-color: var(--border-dark);
+}
+
+/* Bookmarked text */
+.atext.Texts .bmnote {
+  background-color: var(--dk-highlight);
+}
+
+/* Chooser: flat bordered items, rather than the light skin's outset ones */
+.chooser .bookgroup,
+.bookgrouplist,
+.bookgroupitem,
+.chaptermenu .chaptermenucell,
+.chaptermenu .headingmenu {
+  border-style: var(--dk-border-style);
+  border-color: var(--border-light);
+}
+.bookgroupitem {
+  border-color: var(--border-dark);
+}
+.chooser .bookgroup.selected,
+.bookgroupitem.selected {
+  background-color: var(--dk-accent);
+  border-color: var(--dk-accent);
+  color: #ffffff;
+}
+.bookgroupitem.selected > .audio-icon .bp6-icon {
+  color: #ffffff;
+}
+.chaptermenu {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55));
+}
+.chaptermenu .chaptermenucell {
+  background-color: var(--bg-text-dark);
+  border-color: var(--border-dark);
+}
+.chaptermenu .chaptermenucell:hover {
+  background-color: var(--dk-accent);
+  color: #ffffff;
+}
+.chaptermenu .headingmenu {
+  background-color: var(--bg-text-dark);
+  border-color: var(--border-dark);
+}
+.bookgroupitem.disabled {
+  border-style: var(--dk-border-style);
+  border-color: var(--border-light);
+  color: var(--dk-text-faint);
+}
+#root:not(.printing) .bookgroupitem.selected.disabled {
+  background-color: rgba(45, 114, 210, 0.3);
+  border-color: transparent;
+  color: var(--dk-text-muted);
+}
+#root:not(.printing) .chooser .bookgroup.other,
+#root:not(.printing) .other .bookgroupitem.selected {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.06) 0 2px,
+    transparent 1px 4px
+  );
+}
+.genbook-chooser .scroll-parent:hover {
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
+}
+
+/* Search */
+#searchResults .searchterm {
+  color: var(--dk-search-term);
 }
 .resultBox {
   background-color: var(--bg-text-light);
 }
 .odd-row {
-  background-color: var(--bg-interface-dark);
-}
-.even-row {
   background-color: var(--bg-interface-light);
 }
+.even-row {
+  background-color: var(--bg-bp6-light);
+}
 
+/* BluePrintJS tables (bookmark and module managers): match the text panels
+rather than BluePrintJS's lighter dark grays. */
+#root .bp6-table-container,
+#root .bp6-table-quadrant,
+#root .bp6-table-cell-client {
+  background-color: var(--bg-text-light);
+}
+#root .bp6-table-column-headers,
+#root .bp6-table-row-headers,
+#root .bp6-table-menu {
+  background-color: var(--bg-bp6-light);
+}
+
+/* The About window keeps its light artwork, so its link there stays dark. */
+#root.aboutWin .splash-text a,
+#root.aboutWin .splash-text a:hover {
+  color: #215db0;
+}
+
+/* Module manager */
+.checkbox-column.disabled {
+  color: var(--dk-text-faint);
+}
+
+/* Audio player */
+.audioplayer audio {
+  border-color: var(--border-dark);
+}

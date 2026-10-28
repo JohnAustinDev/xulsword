@@ -11,8 +11,27 @@
 // warns "export 'X' was not found in '@blueprintjs/icons'" and it needs to be
 // added below.
 
+import React from 'react';
+import { SVGIconContainer as BPSVGIconContainer } from '@blueprintjs/icons/lib/esm/svgIconContainer.js';
+
 export { IconSize } from '@blueprintjs/icons/lib/esm/iconTypes.js';
-export { SVGIconContainer } from '@blueprintjs/icons/lib/esm/svgIconContainer.js';
+
+// Only 20px icon paths are bundled, and blueprintIconPathsShim.ts serves them
+// for 16px icon requests too. But BluePrint's SVGIconContainer gives an icon
+// smaller than 20px a 16px viewBox, which would crop a 20px path (such as the
+// chevron of a table column header menu). So it is always given a 20px
+// viewBox, which scales the 20px path to the icon's size.
+export const SVGIconContainer = React.forwardRef(function SVGIconContainer20(
+  props: any,
+  ref,
+) {
+  return React.createElement(BPSVGIconContainer, {
+    ...props,
+    ref,
+    svgProps: { viewBox: '0 0 20 20', ...props.svgProps },
+  });
+}) as unknown as typeof BPSVGIconContainer;
+
 export { Icons } from '@blueprintjs/icons/lib/esm/iconLoader.js';
 export { IconNames } from '@blueprintjs/icons/lib/esm/iconNames.js';
 export { BlueprintIcons_20 } from '@blueprintjs/icons/lib/esm/generated/20px/blueprint-icons-20.js';

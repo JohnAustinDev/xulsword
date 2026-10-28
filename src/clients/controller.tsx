@@ -166,10 +166,10 @@ function Controller(props: ControllerProps) {
   // IPC component-reset setup:
   useEffect(() => {
     return window.IPC.on('component-reset', () => {
-      if (!s.print[0])
-        setGlobalSkin(
-          G.Prefs.getCharPref('global.skin') as typeof S.prefs.global.skin,
-        );
+      setGlobalSkin(
+        G.Prefs.getCharPref('global.skin') as typeof S.prefs.global.skin,
+        !!s.print[0],
+      );
       if (dynamicStyleSheet) {
         log.verbose(
           `Renderer reset (stylesheet, cache, component): ${descriptor?.id || 'unknown'}`,
@@ -206,17 +206,18 @@ function Controller(props: ControllerProps) {
   useEffect(() => {
     return Subscription.subscribe.setControllerState(
       (partialState, addToHistory) => {
-        // Print windows/cards must use skin '', and theme must be restored
-        // when print ends.
+        // The page being printed must keep BluePrint's light style, so the
+        // skin is set up for print mode when print begins, and set back when
+        // print ends (see setGlobalSkin).
         const wasPrint = !!s.print[0];
         const isPrint =
           typeof partialState.print === 'undefined'
             ? wasPrint
             : partialState.print !== null;
-        if (!wasPrint && isPrint) setGlobalSkin('');
-        else if (wasPrint && !isPrint) {
+        if (wasPrint !== isPrint) {
           setGlobalSkin(
             G.Prefs.getCharPref('global.skin') as typeof S.prefs.global.skin,
+            isPrint,
           );
         }
         const fullState = {} as ControllerState;
@@ -623,10 +624,8 @@ export default async function renderToRoot(
     : undefined;
   dynamicStyleSheet.update(st);
 
-  const skin = print
-    ? ''
-    : (G.Prefs.getCharPref('global.skin') as typeof S.prefs.global.skin);
-  setGlobalSkin(skin);
+  const skin = G.Prefs.getCharPref('global.skin') as typeof S.prefs.global.skin;
+  setGlobalSkin(skin, !!print);
 
   // Set window type and language classes on the root html element.
   const classes: string[] = rootCssClass ? [rootCssClass] : [];
@@ -645,7 +644,7 @@ export default async function renderToRoot(
   });
   classes.push('cs-locale');
   classes.push(G.i18n.language);
-  if (skin === 'dark') classes.push('bp6-dark');
+  if (skin === 'dark' && !print) classes.push('bp6-dark');
   // Adding is-vagrant class only works for same origin iframe.
   if (frameElement) {
     const parentHTML =

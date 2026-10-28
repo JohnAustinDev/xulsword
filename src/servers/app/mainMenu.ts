@@ -16,6 +16,7 @@ import {
 } from '../../commands.ts';
 import { resolveXulswordPath } from '../common.ts';
 import { G } from './G.ts';
+import { menuIcon } from './nativeChrome.ts';
 import Window, { getBrowserWindows } from './components/window.ts';
 import Commands from './components/commands.ts';
 
@@ -625,7 +626,7 @@ export default class MainMenuBuilder {
           label: ts(`menu.view.${key}`),
           id: `xulsword.show.${key}`,
           type: 'checkbox',
-          icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${key}.png`),
+          icon: menuIcon(G.Dirs.path.xsAsset, 'icons', '16x16', `${key}.png`),
           click: d(() => {
             const keys = [`xulsword.show.${key}`];
             if (key === 'strongs') {
