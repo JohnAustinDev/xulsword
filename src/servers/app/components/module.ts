@@ -1133,13 +1133,15 @@ const Module = {
           if (!tmpdir.exists()) {
             result = `Could not create tmp directory '${tmpdir.path}'.`;
           }
-          // Audio files and timing files are separate downloads.
+          // Audio files and timing files are separate downloads. The renderer
+          // treats a progress of 1 as finished, so each step is scaled to stay
+          // below 1 until progress(-1) is sent after all steps are done.
           const dlfile = await getFileHTTP(
             resolveTemplateURL(http, data, 'zip', '1'),
             tmpdir.clone().append(randomID()),
             downloadkey,
             (p: number) => {
-              if (p && p !== -1) progress(p);
+              if (p && p !== -1) progress(0.9 * Math.min(p, 1));
             },
           );
           httpThrowIfCanceled(downloadkey);
@@ -1150,7 +1152,8 @@ const Module = {
           // returns 'no-timing-file' and nothing is added. A failed timing
           // download is logged but does not fail the audio download. Any
           // config in the X-Timing-Config header must be added to every
-          // timing file (as getTimingFile() does).
+          // timing file (as getTimingFile() does) and only fetchHTTP can
+          // read the header.
           const tm = await fetchHTTP(
             resolveTemplateURL(http, data, 'zip', '1', true),
             downloadkey,
@@ -1195,6 +1198,7 @@ const Module = {
               log.warn(`Timing file download was not a zip: ${er}`);
             }
           }
+          progress(0.95);
 
           // If a conf file is requested, add it to the zip if not already there.
           if (confname) {
@@ -1208,7 +1212,7 @@ const Module = {
                 { ...download, file: C.SwordRepoManifest, type: 'ftp' },
                 downloadkey,
                 (p: number) => {
-                  if (p && p !== -1) progress(3 / 4 + p / 4);
+                  if (p && p !== -1) progress(0.95 + 0.04 * Math.min(p, 1));
                 },
               );
               ftpThrowIfCanceled(downloadkey);
