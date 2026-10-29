@@ -247,7 +247,6 @@ export function tooltip(atooltip: string, skipColumnIndexArray: number[]) {
 export function modclasses() {
   return (dri: number, dci: number, datax: TData) => {
     const data = datax as TModuleTableRow[];
-    const drow = data[dri];
     const classes: string[] = [];
     if (
       (
@@ -256,17 +255,73 @@ export function modclasses() {
     ) {
       classes.push('checkbox-column');
     }
-    const iInstalled = readModCheckbox(dri, ModCol.iInstalled, data);
-    if (dci === ModCol.iInstalled && iInstalled === ON) {
-      classes.push('disabled');
-    } else if (
-      dci === ModCol.iShared &&
-      (drow[ModCol.iInfo].conf.xsmType === 'XSM_audio' || iInstalled === OFF)
-    ) {
-      classes.push('disabled');
-    }
+    if (modCheckboxDisabled(dri, dci, data)) classes.push('disabled');
     return classes;
   };
+}
+
+// Return true if a modtable checkbox cell cannot be clicked.
+export function modCheckboxDisabled(
+  dri: number,
+  dci: number,
+  data: TModuleTableRow[],
+): boolean {
+  const drow = data[dri];
+  const iInstalled = readModCheckbox(dri, ModCol.iInstalled, data);
+  return (
+    (dci === ModCol.iInstalled && iInstalled === ON) ||
+    (dci === ModCol.iShared &&
+      (drow[ModCol.iInfo].conf.xsmType === 'XSM_audio' || iInstalled === OFF))
+  );
+}
+
+// The last checkbox clicked in each table. It is the start of the range of
+// checkboxes changed by a shift-click.
+const CheckboxAnchor: Partial<
+  Record<(typeof Tables)[number], { dataColIndex: number; rowKey: string }>
+> = {};
+
+// Return the data rows whose checkboxes should change when the checkbox at
+// dataRowIndex/dataColIndex is clicked. Normally this is just the clicked
+// row, or all selected rows if the clicked row is selected. But on a
+// shift-click, after a checkbox in the same column was clicked, it is every
+// row from that checkbox to this one, in table order. The clicked checkbox
+// then becomes the start of the next shift-click range.
+function checkboxClickRows(
+  state: ManagerState,
+  tableName: (typeof Tables)[number],
+  dataRowIndex: number,
+  dataColIndex: number,
+  e: React.PointerEvent,
+): number[] {
+  const { data, tableToDataRowMap } = state.tables[tableName];
+  const toTableRow = (dri: number) => {
+    const tri = tableToDataRowMap.indexOf(dri);
+    return tri === -1 ? dri : tri;
+  };
+  let rows: number[] = [];
+  const anchor = CheckboxAnchor[tableName];
+  if (e.shiftKey && anchor && anchor.dataColIndex === dataColIndex) {
+    const anchorRow = data.findIndex(
+      (r) => getDataRowSelectKey(r) === anchor.rowKey,
+    );
+    if (anchorRow !== -1) {
+      const a = toTableRow(anchorRow);
+      const b = toTableRow(dataRowIndex);
+      for (let tri = Math.min(a, b); tri <= Math.max(a, b); tri += 1) {
+        rows.push(tableToDataRowMap[tri] ?? tri);
+      }
+    }
+  }
+  if (!rows.length) {
+    rows = selectionToDataRowIndexes(state, tableName);
+    if (!rows.includes(dataRowIndex)) rows = [dataRowIndex];
+  }
+  CheckboxAnchor[tableName] = {
+    dataColIndex,
+    rowKey: getDataRowSelectKey(data[dataRowIndex]),
+  };
+  return rows;
 }
 
 // This modtable cell function that should be used as the initial checkbox value
@@ -368,13 +423,17 @@ export function onModCellClick(
     const { tables } = newstate;
     const { module: modtable } = tables;
     const { data } = modtable;
-    let dataRowIndexes = selectionToDataRowIndexes(newstate, 'module');
-    if (dataRowIndexes.indexOf(dataRowIndex) === -1)
-      dataRowIndexes = [dataRowIndex];
     const drow = modtable.data[dataRowIndex];
     if (drow) {
       const checkbox = readModCheckbox(dataRowIndex, dataColIndex, data);
       if (checkbox !== null && !drow[ModCol.iInfo].loading) {
+        const dataRowIndexes = checkboxClickRows(
+          newstate,
+          'module',
+          dataRowIndex,
+          dataColIndex,
+          e,
+        ).filter((dri) => !modCheckboxDisabled(dri, dataColIndex, data));
         if (dataColIndex === ModCol.iShared) {
           let updated = false;
           dataRowIndexes.forEach((dri) => {
@@ -421,13 +480,17 @@ export function onRepoCellClick(
   const { repository: repotable } = newstate.tables;
   if (repository) {
     const checkbox = repotable.data[dataRowIndex][RepCol.iState] === ON;
-    let dataRowIndexes = selectionToDataRowIndexes(newstate, 'repository');
-    if (dataRowIndexes.indexOf(dataRowIndex) === -1)
-      dataRowIndexes = [dataRowIndex];
     if (
       dataColIndex === RepCol.iState &&
       !isRepoBuiltIn(repotable.data[dataRowIndex][RepCol.iInfo].repo)
     ) {
+      const dataRowIndexes = checkboxClickRows(
+        newstate,
+        'repository',
+        dataRowIndex,
+        dataColIndex,
+        e,
+      );
       switchRepo(this, newstate, dataRowIndexes, !checkbox);
     } else {
       rowSelect(newstate, e, 'repository', dataRowIndex);
