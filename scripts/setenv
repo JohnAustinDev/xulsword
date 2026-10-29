@@ -52,7 +52,7 @@
 
 # export LOGLEVEL='error'
 
-export XULSWORD=$(dirname $(realpath -s "${BASH_SOURCE[0]}"))
+export XULSWORD="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 export NODE_VERSION=24.18.0
 export NVM_DIR="$HOME/.nvm"
