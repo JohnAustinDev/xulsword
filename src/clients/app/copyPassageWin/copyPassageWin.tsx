@@ -3,6 +3,7 @@ import { Intent, OverlayToaster, Position } from '@blueprintjs/core';
 import VerseKey from '../../../verseKey.ts';
 import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import { GE as G, GI } from '../../G.ts';
+import { getPortalContainer } from '../../rootNode.ts';
 import renderToRoot from '../../controller.tsx';
 import {
   windowArguments,
@@ -114,10 +115,13 @@ export default class CopyPassageWin
 
   async addToast(message: ToastProps) {
     (
-      await OverlayToaster.create({
-        canEscapeKeyClear: true,
-        position: Position.TOP,
-      })
+      await OverlayToaster.create(
+        {
+          canEscapeKeyClear: true,
+          position: Position.TOP,
+        },
+        { container: getPortalContainer() },
+      )
     ).show(message);
   }
 

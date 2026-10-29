@@ -1,6 +1,12 @@
 import React, { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Intent, ProgressBar, Spinner, Tag } from '@blueprintjs/core';
+import {
+  Intent,
+  PortalProvider,
+  ProgressBar,
+  Spinner,
+  Tag,
+} from '@blueprintjs/core';
 import { G } from './G.ts';
 import Subscription from '../subscription.ts';
 import { JSON_stringify, randomID, stringHash } from '../common.ts';
@@ -9,8 +15,13 @@ import Cache from '../cache.ts';
 import C from '../constant.ts';
 import DynamicStyleSheet from './style.ts';
 import ContextData from './contextData.ts';
-import { setGlobalSkin, windowArguments } from './common.ts';
-import { getRootElement, getRootNode, setRootNode } from './rootNode.ts';
+import { printSkinClass, setGlobalSkin, windowArguments } from './common.ts';
+import {
+  getPortalContainer,
+  getRootElement,
+  getRootNode,
+  setRootNode,
+} from './rootNode.ts';
 import log from './log.ts';
 import {
   delayHandler,
@@ -544,10 +555,13 @@ function Controller(props: ControllerProps) {
   );
 
   return (
-    <>
+    <PortalProvider
+      portalContainer={getPortalContainer()}
+      portalClassName={(s.print[0] && printSkinClass()) || undefined}
+    >
       {closeButton}
       {s.print[0] ? <Print print={s.print[0]}>{root}</Print> : root}
-    </>
+    </PortalProvider>
   );
 }
 
@@ -607,8 +621,9 @@ export default async function renderToRoot(
   // web-app's CSS cannot restyle the host page. The shadow root gets its own
   // #root, which carries the window's classes. Electron windows own their
   // document, so they render directly into #root.
-  // NOTE: BlueprintJS components that portal into document.body (Popover,
-  // Overlay, Toaster etc.) render outside the shadow root, and so unstyled.
+  // NOTE: BlueprintJS portals (Popover, Overlay, Toaster etc.) are given #root
+  // as their container (see getPortalContainer), since document.body is
+  // outside the shadow root, where they would be unstyled.
   let rootElement = document.getElementById('root');
   if (Build.isWebApp && rootElement) {
     const shadowRoot = rootElement.attachShadow({ mode: 'open' });

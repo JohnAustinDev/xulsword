@@ -201,7 +201,11 @@ const Commands = {
     };
 
     const modulesDir = Dirs.xsAudio.append('modules');
-    const audioFiles = getFiles(modulesDir);
+    // Export audio only, not timing files.
+    const audioExtRE = new RegExp(`^\\.(${C.SupportedAudio.join('|')})$`);
+    const audioFiles = getFiles(modulesDir).filter((f) =>
+      audioExtRE.test(fpath.extname(f.path).toLowerCase()),
+    );
     if (audioFiles.length) {
       const obj = await dialog.showOpenDialog(xswindow, {
         title: i18n.t('to.label'),

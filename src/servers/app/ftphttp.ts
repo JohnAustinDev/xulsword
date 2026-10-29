@@ -1,4 +1,4 @@
-import { session } from 'electron';
+import { net, session } from 'electron';
 import fpath from 'path';
 import log from 'electron-log';
 import FTP from 'ftp';
@@ -1060,6 +1060,42 @@ export async function untargz(
     });
   }
   return result;
+}
+
+// Fetch a small file into memory, returning its contents and response headers
+// (which getFileHTTP cannot provide). It is canceled like getFileHTTP.
+export async function fetchHTTP(
+  url: string,
+  cancelkey?: string,
+): Promise<{ buffer: Buffer; headers: Headers }> {
+  const controller = new AbortController();
+  if (cancelkey) {
+    HttpCancelable[cancelkey] = {
+      canceled: false,
+      callback: () => controller.abort(),
+    };
+  }
+  const canceled = () =>
+    cancelkey &&
+    cancelkey in HttpCancelable &&
+    HttpCancelable[cancelkey].canceled;
+  try {
+    const response = await net.fetch(url, {
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} for ${url}`);
+    }
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (canceled()) throw { message: C.UI.Manager.cancelMsg };
+    return { buffer, headers: response.headers };
+  } catch (er) {
+    if (canceled()) throw { message: C.UI.Manager.cancelMsg };
+    throw er;
+  } finally {
+    if (cancelkey) delete HttpCancelable[cancelkey];
+  }
 }
 
 export async function getFileHTTP(

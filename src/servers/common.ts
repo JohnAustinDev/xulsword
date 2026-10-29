@@ -1285,7 +1285,9 @@ export function scanAudio(
           if (scan2.isDirectory()) {
             scan2.directoryEntries.forEach((chapter) => {
               const audioFile = scan2.clone().append(chapter);
-              if (!audioFile.isDirectory()) {
+              if (isTimingFile(chapter)) {
+                // Timing files are ignored.
+              } else if (!audioFile.isDirectory()) {
                 const chn = Number(
                   audioFile.leafName.replace(/^(\d+).*?$/, '$1'),
                 );
@@ -1302,13 +1304,18 @@ export function scanAudio(
           for (let i = 0; i < boolArray.length; i += 1) {
             boolArray[i] = !!boolArray[i];
           }
-          r[book] = audioConfStrings(boolArray);
+          // A book may have only timing files and no audio.
+          if (boolArray.some(Boolean)) r[book] = audioConfStrings(boolArray);
         } else log.warn(`Skipping unrecognized audio subdirectory: ${bk}`);
       });
       return r;
     }
   }
   return {};
+}
+
+function isTimingFile(name: string): boolean {
+  return name.toLowerCase().endsWith('.txt');
 }
 
 function recurseAudioDirectory(
@@ -1322,7 +1329,9 @@ function recurseAudioDirectory(
   const chs: number[] = [];
   dir.directoryEntries.forEach((sub) => {
     const subfile = dir.clone().append(sub);
-    if (/^(\d+)/.test(sub)) {
+    if (isTimingFile(sub)) {
+      // Timing files are ignored.
+    } else if (/^(\d+)/.test(sub)) {
       const m2 = subfile.leafName.match(/^(\d+)/);
       if (subfile.isDirectory()) {
         recurseAudioDirectory(subfile, ancOrSelf, audio);

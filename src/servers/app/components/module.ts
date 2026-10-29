@@ -30,6 +30,7 @@ import LibSword, { moduleUnsupported } from '../../components/libsword.ts';
 import {
   getFile,
   getDir,
+  fetchHTTP,
   getFileHTTP,
   getFiles,
   getListing,
@@ -617,7 +618,14 @@ export async function installZIPs(
                     audio.writeFile(entry.getData());
                   }
                   // Modify the config file to show currently installed audio.
-                  if (audioCode && conf) {
+                  // Timing files (.txt) do not change the installed audio.
+                  if (
+                    audioCode &&
+                    conf &&
+                    C.SupportedAudio.includes(
+                      pobj.ext.substring(1).toLowerCase(),
+                    )
+                  ) {
                     const confFile = Dirs.xsAudio;
                     confFile.append('mods.d');
                     confFile.append(conf.filename);
@@ -1140,10 +1148,11 @@ const Module = {
 
           // Many publications have no timing files, in which case the server
           // returns 'no-timing-file' and nothing is added. A failed timing
-          // download is logged but does not fail the audio download.
-          const tmfile = await getFileHTTP(
+          // download is logged but does not fail the audio download. Any
+          // config in the X-Timing-Config header must be added to every
+          // timing file (as getTimingFile() does).
+          const tm = await fetchHTTP(
             resolveTemplateURL(http, data, 'zip', '1', true),
-            tmpdir.clone().append(randomID()),
             downloadkey,
           ).catch((er) => {
             if (er?.message === C.UI.Manager.cancelMsg) throw er;
@@ -1151,26 +1160,39 @@ const Module = {
             return null;
           });
           httpThrowIfCanceled(downloadkey);
-          if (tmfile) {
-            const buf = tmfile.readBuf();
-            if (buf.toString('utf8').trim() !== 'no-timing-file') {
+          if (tm && tm.buffer.toString('utf8').trim() !== 'no-timing-file') {
+            let timingConfig = '';
+            const tch = tm.headers.get('X-Timing-Config');
+            if (tch) {
               try {
-                const tmzip = new ZIP(buf);
-                const audioZip = result;
-                const existing = new Set(
-                  audioZip
-                    .getEntries()
-                    .map((ze) => normalizeZipEntry(ze).entryName),
-                );
-                tmzip.getEntries().forEach((ze) => {
-                  const { entryName } = normalizeZipEntry(ze);
-                  if (!ze.isDirectory && !existing.has(entryName)) {
-                    audioZip.addFile(entryName, ze.getData());
-                  }
-                });
+                timingConfig = decodeURIComponent(tch).trim();
               } catch (er) {
-                log.warn(`Timing file download was not a zip: ${er}`);
+                log.warn(`Bad X-Timing-Config header: ${tch}`);
               }
+            }
+            try {
+              const tmzip = new ZIP(tm.buffer);
+              const audioZip = result;
+              // All the publication's timing files are installed, even for
+              // chapters not being downloaded, so that timing updates apply
+              // to audio that is already installed.
+              tmzip.getEntries().forEach((ze) => {
+                const { entryName } = normalizeZipEntry(ze);
+                if (!ze.isDirectory && !audioZip.getEntry(entryName)) {
+                  let tmdata = ze.getData();
+                  if (timingConfig) {
+                    tmdata = Buffer.from(
+                      [timingConfig, tmdata.toString('utf8').trim()]
+                        .filter(Boolean)
+                        .join('\n'),
+                      'utf8',
+                    );
+                  }
+                  audioZip.addFile(entryName, tmdata);
+                }
+              });
+            } catch (er) {
+              log.warn(`Timing file download was not a zip: ${er}`);
             }
           }
 

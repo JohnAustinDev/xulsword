@@ -16,6 +16,7 @@ import {
 import S from '../../../../defaultPrefs.ts';
 import C from '../../../../constant.ts';
 import { GE as G } from '../../../G.ts';
+import { getPortalContainer } from '../../../rootNode.ts';
 import log from '../../../log.ts';
 import {
   getStatePref,
@@ -722,10 +723,13 @@ export default class ModuleManager
 
   async addToast(message: ToastProps) {
     (
-      await OverlayToaster.create({
-        canEscapeKeyClear: true,
-        position: Position.TOP,
-      })
+      await OverlayToaster.create(
+        {
+          canEscapeKeyClear: true,
+          position: Position.TOP,
+        },
+        { container: getPortalContainer() },
+      )
     ).show(message);
   }
 

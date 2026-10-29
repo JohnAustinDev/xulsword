@@ -224,8 +224,7 @@ export function setGlobalSkin(
 ) {
   if (Build.isElectronApp) {
     // Set BluePrint Dark theme class (on #root, see renderToRoot). It goes on
-    // body as well, because BluePrint dialogs, popovers and toasts portal into
-    // document.body, outside #root.
+    // body as well, for any BluePrint portal not given #root as its container.
     const rootElement = getRootElement();
     [rootElement, document.body].forEach((elem) => {
       if (elem) elem.classList.toggle('bp6-dark', skin === 'dark' && !isPrint);

@@ -26,6 +26,14 @@ export function getRootElement(): HTMLElement | null {
   return getRootNode().getElementById('root');
 }
 
+// Where BlueprintJS portals (dialogs, popovers, toasts) are put: #root, so
+// that they get the CSS variables, skin rules and window classes that are all
+// set on #root. BlueprintJS's default, document.body, is outside the
+// web-app's shadow root, where none of xulsword's CSS applies.
+export function getPortalContainer(): HTMLElement | undefined {
+  return getRootElement() ?? undefined;
+}
+
 // The host page element the web-app's shadow root is attached to, or null for
 // Electron windows, which own their document and so have no host page.
 export function getShadowHost(): Element | null {

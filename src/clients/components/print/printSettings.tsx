@@ -16,7 +16,11 @@ import {
   iframeAutoHeightObserver,
   doUntilDone,
 } from '../../common.ts';
-import { getRootElement, getRootNode } from '../../rootNode.ts';
+import {
+  getPortalContainer,
+  getRootElement,
+  getRootNode,
+} from '../../rootNode.ts';
 import log from '../../log.ts';
 import Icon from '../libxul/icon.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
@@ -633,11 +637,14 @@ export default class PrintSettings extends React.Component<
 
   async addToast(message: ToastProps) {
     (
-      await OverlayToaster.create({
-        className: printSkinClass(),
-        canEscapeKeyClear: true,
-        position: Position.TOP,
-      })
+      await OverlayToaster.create(
+        {
+          className: printSkinClass(),
+          canEscapeKeyClear: true,
+          position: Position.TOP,
+        },
+        { container: getPortalContainer() },
+      )
     ).show(message);
   }
 
