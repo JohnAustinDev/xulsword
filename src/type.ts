@@ -86,6 +86,7 @@ declare global {
     isWebApp: boolean;
     isClient: boolean;
     isServer: boolean;
+    xulswordVersion: string;
   };
 }
 

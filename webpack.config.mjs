@@ -1,4 +1,5 @@
 /*global process */
+import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
 import webpack from 'webpack';
@@ -460,6 +461,9 @@ export default function (opts) {
             ),
             'Build.isServer': ['appSrv', 'webappSrv'].includes(build),
             'Build.isPackaged': !!packaged,
+            'Build.xulswordVersion': JSON.parse(
+              fs.readFileSync(projectPaths.appPackagePath, 'utf8'),
+            ).version,
             ...Object.entries(defaultEnvironment).reduce((entries, entry) => {
               const [name, value] = entry;
               entries[`process.env.${name}`] = process.env[name] ?? value;

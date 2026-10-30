@@ -50,7 +50,7 @@ const C = {
   FTPMaxConnections: 48,
   FTPConnectTimeout: 20000, // ms for an ftp server to respond
   FTPPassword: 'xulsword4@xulsword.org',
-  HTTPUserAgent: 'xulsword4@xulsword.org',
+  HTTPUserAgent: `xulsword/${Build.xulswordVersion} (xulsword4@xulsword.org)`,
 
   SYSTEMNEWLINE:
     platform() === 'win32' ? '\r\n' : platform() === 'darwin' ? '\r' : '\n',
