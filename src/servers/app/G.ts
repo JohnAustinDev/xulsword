@@ -19,6 +19,7 @@ import {
   getBooksInVKModules,
   inlineAudioFile,
   inlineFile,
+  readLogFile,
   getAllDictionaryKeyList,
   genBookTreeNodes,
   getLanguageName,
@@ -159,6 +160,12 @@ export const G: GTypeMain = {
     ...args: Parameters<GType['inlineAudioFile']>
   ): ReturnType<GType['inlineAudioFile']> {
     return inlineAudioFile(...args);
+  },
+
+  readLogFile(
+    ...args: Parameters<GType['readLogFile']>
+  ): ReturnType<GType['readLogFile']> {
+    return readLogFile(...args);
   },
 
   getModuleConf(

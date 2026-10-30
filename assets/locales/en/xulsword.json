@@ -256,6 +256,7 @@
    "searchbox.tooltip" : "Match any word ending with ' * '. Match any single character with ' ? '.",
    "searchtext.label" : "Search word or phrase",
    "shared.label" : "Shared",
+   "showLog.label" : "Show log",
    "stop.label" : "Stop",
    "textColor.label" : "Color",
    "textSize.label" : "Size",

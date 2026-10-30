@@ -1001,6 +1001,16 @@ export function inlineFile(
     : `data:${contentType};${encoding},${rawbuf.toString(encoding)}`;
 }
 
+// Return the path and current contents of this session's log file.
+export function readLogFile(): { path: string; contents: string } {
+  const logpath = (Data.read('logfile') as string | null) || '';
+  const file = logpath ? new LocalFile(logpath) : null;
+  return {
+    path: logpath,
+    contents: file?.exists() ? file.readFile() : '',
+  };
+}
+
 // Return the audio src attribute value for an audio file. The audio file will
 // be retreived from the audioModule conf DataPath, which may be http(s) or
 // a local file.

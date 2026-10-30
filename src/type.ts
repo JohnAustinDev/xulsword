@@ -32,6 +32,7 @@ import type {
   getLocaleDigits,
   inlineFile,
   inlineAudioFile,
+  readLogFile,
   getAllDictionaryKeyList,
   genBookTreeNodes,
   getLanguageName,
@@ -808,6 +809,7 @@ export type GType = {
   getBooksLocalized: typeof getBooksLocalized;
   inlineFile: typeof inlineFile;
   inlineAudioFile: typeof inlineAudioFile;
+  readLogFile: typeof readLogFile;
   getModuleConf: typeof getModuleConf;
   getAudioConf: typeof getAudioConf;
   resetMain: typeof resetMain;
@@ -1111,6 +1113,7 @@ export const GBuilder: GType & {
   getBooksLocalized: CACHEfunc as any,
   inlineFile: CACHEfunc as any,
   inlineAudioFile: CACHEfunc as any,
+  readLogFile: func as any,
   getModuleConf: CACHEfunc as any,
   getAudioConf: CACHEfunc as any,
   getSystemFonts: CACHEfunc as any,
