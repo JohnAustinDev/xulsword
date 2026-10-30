@@ -111,6 +111,7 @@ const defaultEnvironment = {
   WEBAPP_SEARCH_BAN: 2000,
   LOGLEVEL: 'info',
   NODE_VERSION: '24.18.0',
+  CrashReporterURL: '',
 };
 const env = (k) =>
   (k in process.env && process.env[k]) || defaultEnvironment[k];

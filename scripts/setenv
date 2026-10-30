@@ -52,6 +52,10 @@
 
 # export LOGLEVEL='error'
 
+# The xulsword app sends crash reports to this URL (only if the user has given
+# permission to use the Internet). Leave unset to disable crash reporting.
+# export CrashReporterURL='https://example.com/crashreport'
+
 export XULSWORD="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 export NODE_VERSION=24.18.0

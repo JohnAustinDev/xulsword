@@ -103,11 +103,37 @@ addBookmarkTransaction(
   ) as typeof S.bookmarks.rootfolder,
 );
 
-if (Prefs.getBoolPref('global.InternetPermission')) {
-  const url = Prefs.getCharPref('global.crashReporterURL');
-  if (url) {
-    crashReporter.start({ submitURL: url });
-  }
+// Crash reports of the main and renderer processes are sent to the
+// CrashReporterURL build environment variable, but only when the user has
+// given permission to use the Internet. Crash reports are always saved
+// locally, in app.getPath('crashDumps').
+if (process.env.CrashReporterURL) {
+  const permission = () => Prefs.getBoolPref('global.InternetPermission');
+  crashReporter.start({
+    submitURL: process.env.CrashReporterURL,
+    uploadToServer: permission(),
+    // Upload at most one report per hour (so a crash loop can't flood the
+    // server).
+    rateLimit: true,
+    globalExtra: {
+      xulswordVersion: Build.xulswordVersion,
+      isPackaged: String(Build.isPackaged),
+      isDevelopment: String(Build.isDevelopment),
+      locale: Prefs.getCharPref('global.locale'),
+    },
+  });
+  // On Linux, setUploadToServer() has no effect until the app restarts. So
+  // main process reports are also marked with the current permission, which
+  // is read when the crash happens, and the server discards any marked false.
+  // This must not be a globalExtra key, which can't be changed.
+  crashReporter.addExtraParameter('InternetPermission', String(permission()));
+  Subscription.subscribe.prefsChanged(() => {
+    const p = permission();
+    if (p !== crashReporter.getUploadToServer()) {
+      crashReporter.setUploadToServer(p);
+      crashReporter.addExtraParameter('InternetPermission', String(p));
+    }
+  });
 }
 
 LibSword.init(

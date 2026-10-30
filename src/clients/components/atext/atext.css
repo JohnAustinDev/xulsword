@@ -435,12 +435,12 @@ copies these declarations to the Strong's classes being hilighted. */
   padding-inline-end: 16px;
 }
 .fnrow > div {
-  padding: 2px 0;
+  padding-top: 2px;
+  padding-bottom: 2px;
 }
 .fncol1 {
   display: table-cell;
   width: 6px;
-  padding-top: 8px;
 }
 .crtwisty {
   width: 9px;
@@ -453,7 +453,6 @@ copies these declarations to the Strong's classes being hilighted. */
 .fncol2 {
   display: table-cell;
   visibility: hidden;
-  padding-top: 12px;
 }
 .fndash {
   width: 6px;
@@ -480,7 +479,6 @@ copies these declarations to the Strong's classes being hilighted. */
   display: table-cell;
   text-align: end;
   white-space: nowrap;
-  padding-top: 2px;
 }
 .fnlink {
   text-decoration: underline;
@@ -489,7 +487,8 @@ copies these declarations to the Strong's classes being hilighted. */
 }
 .fncol5 {
   display: table-cell;
-  padding: 0px 4px 0px 4px;
+  padding-left: 4px;
+  padding-right: 4px;
   border: 1px solid transparent;
   border-radius: 6px;
 }

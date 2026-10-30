@@ -94,7 +94,6 @@ const S = {
         'Wolfgang Stradner',
         'Tom Roth',
       ],
-      crashReporterURL: '' as string,
       InternetPermission: false as boolean,
       fontSize: 2 as 0 | 1 | 2 | 3 | 4,
       locale: '' as (typeof C.Locales)[number][0],
