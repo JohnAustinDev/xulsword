@@ -399,7 +399,7 @@ export default function xulswordHandler(
           info = {
             event: 'playAudio',
             AudioCode,
-            book: book ?? 'unkown',
+            book: book ?? 'unknown',
             chapter: chapter ?? -1,
             src,
           };

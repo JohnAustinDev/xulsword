@@ -256,6 +256,7 @@ export function getStrongsModAndKey(
   snclass: string,
   renderPromise: RenderPromise,
   reason?: FailReason,
+  noAnalytics = false, // true when only testing whether a popup would render
 ): {
   mod: string | null;
   key: string | null;
@@ -338,11 +339,13 @@ export function getStrongsModAndKey(
         );
         if (r.text === C.NOTFOUND) mod = null;
         if (mod && r.key) {
-          analytics.record({
-            event: 'glossary',
-            module: mod,
-            locationky: keys[0],
-          });
+          if (!noAnalytics) {
+            analytics.record({
+              event: 'glossary',
+              module: mod,
+              locationky: r.key,
+            });
+          }
           ({ key } = r);
         }
         if ((!mod || !key) && reason) {
@@ -373,7 +376,7 @@ export function getStrongsModAndKey(
     default: {
       // meaning of tag is unknown
       if (reason) reason.reason = `${snclass}? (${type})`;
-      log.warn(`Unknown Strongs type: '${type}'`);
+      if (Build.isDevelopment) log.warn(`Unknown Strongs type: '${type}'`);
       key = null;
     }
   }
@@ -395,13 +398,19 @@ export function getLemmaHTML(
   sourcemod: string,
   renderPromise: RenderPromise,
   reason?: FailReason,
+  noAnalytics = false,
 ) {
   // Start building html
   let html = '';
   let sep = '';
   let info;
   for (let i = 0; i < strongsClassArray.length; i += 1) {
-    info = getStrongsModAndKey(strongsClassArray[i], renderPromise, reason);
+    info = getStrongsModAndKey(
+      strongsClassArray[i],
+      renderPromise,
+      reason,
+      noAnalytics,
+    );
     if (!info.mod) continue;
 
     // add a button to search for this Strong's number

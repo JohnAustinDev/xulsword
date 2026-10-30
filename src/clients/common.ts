@@ -1534,7 +1534,7 @@ export function getExtRefHTML(
         }`,
     )
     .join('; ');
-  if (parsedExtref.length)
+  if (showText && parsedExtref.length)
     analytics.record({
       event: 'verse',
       module: mod,

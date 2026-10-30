@@ -174,11 +174,13 @@ export function getPopupHTML(
               renderPromise,
               failReason,
             );
-            analytics.record({
-              event: 'glossary',
-              module: context,
-              locationky: reflist[0].replace(/^.*?:/, ''),
-            });
+            if (!testonly) {
+              analytics.record({
+                event: 'glossary',
+                module: context,
+                locationky: reflist[0].replace(/^.*?:/, ''),
+              });
+            }
           }
         } else failReason.requires.push(context);
       }
@@ -197,6 +199,7 @@ export function getPopupHTML(
               context,
               renderPromise,
               failReason,
+              testonly,
             );
           }
         } else failReason.requires.push(context);
@@ -222,11 +225,13 @@ export function getPopupHTML(
           renderPromise,
           failReason,
         );
-        analytics.record({
-          event: 'glossary',
-          module: dnames.join(';'),
-          locationky: dword,
-        });
+        if (!testonly) {
+          analytics.record({
+            event: 'glossary',
+            module: dnames.join(';'),
+            locationky: dword,
+          });
+        }
       }
       break;
     }
@@ -269,11 +274,13 @@ export function getPopupHTML(
           );
           if (intro?.textHTML) {
             html = intro.textHTML;
-            analytics.record({
-              event: 'glossary',
-              module: context,
-              locationky: 'introlink',
-            });
+            if (!testonly) {
+              analytics.record({
+                event: 'glossary',
+                module: context,
+                locationky: 'introlink',
+              });
+            }
           }
         } else failReason.requires.push(context);
       }
