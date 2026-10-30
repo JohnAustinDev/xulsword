@@ -114,7 +114,7 @@ if (process.env.CrashReporterURL) {
     uploadToServer: permission(),
     // Upload at most one report per hour (so a crash loop can't flood the
     // server).
-    rateLimit: true,
+    rateLimit: !Build.isDevelopment,
     globalExtra: {
       xulswordVersion: Build.xulswordVersion,
       isPackaged: String(Build.isPackaged),

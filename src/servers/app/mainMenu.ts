@@ -1084,6 +1084,15 @@ export default class MainMenuBuilder {
             contents.toggleDevTools();
           }),
         },
+        { type: 'separator' },
+        // This tests the crash reporter. Each window's context menu also has
+        // 'Crash this window' in development.
+        {
+          label: 'Crash main process',
+          click: d(() => {
+            process.crash();
+          }),
+        },
       ],
     };
 

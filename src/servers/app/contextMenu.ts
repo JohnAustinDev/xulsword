@@ -432,8 +432,24 @@ export default function contextMenu(
           },
         ];
 
-        if (d.type === 'bookmarkManager') return bookmarkManagerMenu;
-        return generalMenu;
+        // This tests the crash reporter in any window.
+        const developmentMenu: Electron.MenuItemConstructorOptions[] =
+          Build.isDevelopment
+            ? [
+                actions.separator(),
+                {
+                  label: 'Crash this window',
+                  click: () => {
+                    window.webContents.forcefullyCrashRenderer();
+                  },
+                },
+              ]
+            : [];
+
+        if (d.type === 'bookmarkManager') {
+          return [...bookmarkManagerMenu, ...developmentMenu];
+        }
+        return [...generalMenu, ...developmentMenu];
       },
     }),
   );

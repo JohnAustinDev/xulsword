@@ -736,7 +736,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       this.backgroundIndexerTO = null;
     }
 
-    log.verbose(
+    log.info(
       `Finished background index, success=${success}: ${module} (${Math.ceil((new Date().valueOf() - start) / 1000)}s)`,
     );
     return success;
