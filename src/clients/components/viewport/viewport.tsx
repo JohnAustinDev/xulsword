@@ -1,5 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { Intent, Tag } from '@blueprintjs/core';
+import Subscription from '../../../subscription.ts';
 import VerseKey from '../../../verseKey.ts';
 import { playAudio } from '../../../commands.ts';
 import C from '../../../constant.ts';
@@ -10,9 +12,16 @@ import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { getRootElement, getRootNode, getShadowHost } from '../../rootNode.ts';
 import log from '../../log.ts';
-import { clearPending } from '../../common.ts';
+import {
+  audioSelections,
+  clearPending,
+  remoteAudioSelections,
+} from '../../common.ts';
 import { addClass, topHandle } from '../libxul/xul.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
+import Dialog from '../libxul/dialog.tsx';
+import Spacer from '../libxul/spacer.tsx';
+import Button from '../libxul/button.tsx';
 import Chooser from '../chooser/chooser.tsx';
 import GenbookChooser from '../genbookChooser/genbookChooser.tsx';
 import Tabs from '../tabs/tabs.tsx';
@@ -24,6 +33,7 @@ import type {
   AudioPlayerFileGB,
   LocationVKType,
   AudioPlayerFileVK,
+  GType,
   V11nType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
@@ -64,6 +74,45 @@ type ViewportState = PopupParentState &
   RenderPromiseState & {
     reset: number;
   };
+
+// Download and install an audio file that is not installed but is offered by
+// a remote repository, then play it (Electron app only).
+async function installAndPlayAudio(
+  file: AudioPlayerFileVK | AudioPlayerFileGB,
+) {
+  const result = await (G as GType).Module.installRemoteAudio(file);
+  if (result === true) await playAudio(file);
+  else {
+    // Don't use Shell.beep(): it crashes Electron on Linux.
+    log.error(`Could not install audio: ${result}`);
+    const close = () =>
+      Subscription.publish.setControllerState({ dialogs: [] }, false);
+    Subscription.publish.setControllerState(
+      {
+        dialogs: [
+          <Dialog
+            key="installAudioError"
+            className="modulesInstalled"
+            body={
+              <Tag icon="error" intent={Intent.DANGER} multiline>
+                {result}
+              </Tag>
+            }
+            buttons={
+              <>
+                <Spacer flex="10" />
+                <Button flex="1" fill="x" onPointerDown={close}>
+                  {(G as GType).i18n.t('ok.label')}
+                </Button>
+              </>
+            }
+          />,
+        ],
+      },
+      false,
+    );
+  }
+}
 
 export default class Viewport
   extends React.Component<ViewportProps, ViewportState>
@@ -286,7 +335,14 @@ export default class Viewport
       // because at that time all available audio file options are again
       // collected and a single option will be selected according to current
       // defaults.
-      void playAudio(file);
+      if (
+        file &&
+        Build.isElectronApp &&
+        !audioSelections(file).length &&
+        remoteAudioSelections(file).length
+      ) {
+        void installAndPlayAudio(file);
+      } else void playAudio(file);
     }
   }
 

@@ -446,6 +446,9 @@ const C = {
 
   SwordRepoManifest: 'mods.d.tar.gz',
 
+  // DiskCache store of audio that remote repositories offer (Electron app).
+  RemoteAudioStore: 'RemoteAudio',
+
   SwordModuleStartRE: /^\[([A-Za-z0-9_-]+)\]\s*$/,
   SwordModuleCharsRE: /^[A-Za-z0-9_-]+$/,
 

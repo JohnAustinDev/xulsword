@@ -7,3 +7,8 @@
 .audio-icon span {
   cursor: pointer;
 }
+.audio-icon.not-installed:not(.bp6-tree-node) .bp6-icon,
+.bp6-tree-node.audio-icon.not-installed > .bp6-tree-node-content .bp6-icon {
+  color: inherit;
+  opacity: 0.4;
+}

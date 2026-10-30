@@ -43,6 +43,7 @@ import type {
   PrefObject,
   PrefStoreType,
   PrefValue,
+  RemoteAudioType,
   Repository,
   SwordConfLocalized,
   SwordConfType,
@@ -888,6 +889,79 @@ export function audioConfigs(
   return audioConfs;
 }
 
+// The parts of an audio config needed to find audio selections.
+type AudioSelectionConf = Pick<
+  SwordConfType,
+  'module' | 'AudioChapters' | 'ChapterZeroIsIntro'
+>;
+
+// Return an audio player selection for one audio config, or null if the
+// config has no audio for the selection.
+function audioConfSelection(
+  selection: AudioPlayerFileVK | AudioPlayerFileGB,
+  conf: AudioSelectionConf,
+  remote: boolean,
+  renderPromise?: RenderPromise,
+): AudioPlayerFileVK | AudioPlayerFileGB | null {
+  const { swordModule } = selection;
+  const { module: audioModule, AudioChapters } = conf;
+  if (
+    swordModule in G.Tab &&
+    G.Tab[swordModule].isVerseKey &&
+    'book' in selection &&
+    AudioChapters &&
+    isAudioVerseKey(AudioChapters)
+  ) {
+    const { book: bk, chapter: ch } = selection;
+    let boolarray: boolean[] = [];
+    const ac = AudioChapters as VerseKeyAudio;
+    let book = bk;
+    let chapter = ch === undefined ? -1 : ch;
+    if (!book) {
+      const [entry] = Object.entries(ac);
+      if (entry) {
+        [, boolarray] = entry;
+        const [b] = entry;
+        book = b as OSISBookType;
+        chapter = -1;
+      }
+    } else if (book in ac) {
+      const acbk = ac[book];
+      if (acbk) boolarray = acbk;
+    }
+    if (book && boolarray.length) {
+      if (chapter === -1) chapter = boolarray.indexOf(true);
+      if (chapter !== -1 && boolarray[chapter])
+        return {
+          swordModule,
+          book,
+          chapter,
+          audioModule,
+          path: [book, chapter],
+        };
+    }
+  } else if (
+    swordModule in G.Tab &&
+    G.Tab[swordModule].tabType === 'Genbks' &&
+    'key' in selection &&
+    AudioChapters &&
+    !isAudioVerseKey(AudioChapters)
+  ) {
+    let { key } = selection;
+    const gbaudio = getGenBookAudio(conf, swordModule, renderPromise, remote);
+    if (typeof key === 'undefined') [key] = Object.keys(gbaudio);
+    if (key in gbaudio) {
+      return {
+        swordModule,
+        key,
+        audioModule,
+        path: gbaudio[key],
+      };
+    }
+  }
+  return null;
+}
+
 // Return possible audio player selections by updating the selection's Audio-
 // Code, path and possibly book, chapter or key. This is done by checking each
 // of the selection's swordModule AudioCodes for audio. If book, chapter or key
@@ -904,74 +978,77 @@ export function audioSelections(
     const { swordModule } = selection;
     if (swordModule) {
       const results = audioConfigs(swordModule, renderPromise).map((conf) => {
-        const { module: audioModule, AudioChapters } = conf;
-        if (
-          swordModule in G.Tab &&
-          G.Tab[swordModule].isVerseKey &&
-          'book' in selection &&
-          AudioChapters &&
-          isAudioVerseKey(AudioChapters)
-        ) {
-          const { book: bk, chapter: ch } = selection;
-          let boolarray: boolean[] = [];
-          const ac = AudioChapters as VerseKeyAudio;
-          let book = bk;
-          let chapter = ch === undefined ? -1 : ch;
-          if (!book) {
-            const [entry] = Object.entries(ac);
-            if (entry) {
-              [, boolarray] = entry;
-              const [b] = entry;
-              book = b as OSISBookType;
-              chapter = -1;
-            }
-          } else if (book in ac) {
-            const acbk = ac[book];
-            if (acbk) boolarray = acbk;
-          }
-          if (book && boolarray.length) {
-            if (chapter === -1) chapter = boolarray.indexOf(true);
-            if (chapter !== -1 && boolarray[chapter])
-              return {
-                selection: {
-                  swordModule,
-                  book,
-                  chapter,
-                  audioModule,
-                  path: [book, chapter],
-                },
-                conf,
-              };
-          }
-        } else if (
-          swordModule in G.Tab &&
-          G.Tab[swordModule].tabType === 'Genbks' &&
-          'key' in selection &&
-          AudioChapters &&
-          !isAudioVerseKey(AudioChapters)
-        ) {
-          let { key } = selection;
-          const gbaudio = getGenBookAudio(conf, swordModule, renderPromise);
-          if (typeof key === 'undefined') [key] = Object.keys(gbaudio);
-          if (key in gbaudio) {
-            return {
-              selection: {
-                swordModule,
-                key,
-                audioModule,
-                path: gbaudio[key],
-              },
-              conf,
-            };
-          }
-        }
-        return null;
+        const sel = audioConfSelection(selection, conf, false, renderPromise);
+        return sel ? { selection: sel, conf } : null;
       });
 
       return results.filter((r) => r !== null);
     }
   }
 
+  return [];
+}
+
+// Has the user given permission to use the Internet (Electron app)? This is
+// cached because it is checked for every audio icon.
+function internetPermission(): boolean {
+  if (!Cache.has('internetPermission')) {
+    Cache.write(
+      (G as GType).Prefs.getBoolPref('global.InternetPermission'),
+      'internetPermission',
+    );
+  }
+  return Cache.read('internetPermission') as boolean;
+}
+
+// Return the remote audio (known from repository listings saved in the
+// RemoteAudio DiskCache) offered for a SWORD module's AudioCodes. Only the
+// Electron app downloads audio, and only with Internet permission; the web
+// app gets all audio by http.
+export function remoteAudioConfigs(module: string): RemoteAudioType[] {
+  const remote: RemoteAudioType[] = [];
+  if (
+    Build.isElectronApp &&
+    module &&
+    module in G.Tab &&
+    internetPermission()
+  ) {
+    const GT = G as GType;
+    const codes = [module, ...G.Tab[module].audioCodes];
+    codes.forEach((code) => {
+      if (!remote.some((r) => r.module === code)) {
+        const r = GT.DiskCache.read(code, C.RemoteAudioStore) as
+          | RemoteAudioType
+          | undefined;
+        if (r) remote.push(r);
+      }
+    });
+  }
+  return remote;
+}
+
+// Return audio player selections for audio that is not installed but which
+// can be downloaded (Electron app only). If any audio is installed for the
+// selection, an empty array is returned.
+export function remoteAudioSelections(
+  selection: AudioPlayerFileVK | AudioPlayerFileGB | null,
+  renderPromise?: RenderPromise,
+): Array<{
+  selection: AudioPlayerFileVK | AudioPlayerFileGB;
+  conf: RemoteAudioType;
+}> {
+  if (
+    Build.isElectronApp &&
+    selection?.swordModule &&
+    !audioSelections(selection, renderPromise).length
+  ) {
+    const { swordModule } = selection;
+    const results = remoteAudioConfigs(swordModule).map((conf) => {
+      const sel = audioConfSelection(selection, conf, true, renderPromise);
+      return sel ? { selection: sel, conf } : null;
+    });
+    return results.filter((r) => r !== null);
+  }
   return [];
 }
 
@@ -1013,6 +1090,14 @@ export function audioGenBookNode(
       node.icon = 'volume-up';
       return true;
     }
+    const remote = remoteAudioSelections({ swordModule, key }, renderPromise);
+    const rselection = remote[0]?.selection ?? null;
+    if (rselection) {
+      node.nodeData = rselection;
+      node.className = 'audio-icon not-installed';
+      node.icon = 'volume-up';
+      return true;
+    }
   }
   return false;
 }
@@ -1020,15 +1105,26 @@ export function audioGenBookNode(
 // Returns the GenBookAudio object for a genbk module. It resolves a gbmod
 // AudioChapters config value to a valid full genbk key and AudioPath.
 export function getGenBookAudio(
-  audioConfig: SwordConfType,
+  audioConfig: Pick<
+    SwordConfType,
+    'module' | 'AudioChapters' | 'ChapterZeroIsIntro'
+  >,
   gbmodule: string,
   renderPromise?: RenderPromise,
+  remote = false,
 ): GenBookAudio {
   if (gbmodule && gbmodule in G.Tab) {
     const treeNodes = GI.genBookTreeNodes([], renderPromise, gbmodule);
     if (treeNodes.length) {
-      const cid = 'getGenBookAudio';
-      if (!Cache.has(cid, gbmodule)) {
+      // Installed and remote audio, and each audio module, are cached
+      // separately.
+      const cid = [
+        'getGenBookAudio',
+        gbmodule,
+        audioConfig.module,
+        remote ? 'remote' : 'installed',
+      ];
+      if (!Cache.has(...cid)) {
         const r: GenBookAudio = {};
         const { AudioChapters, ChapterZeroIsIntro } = audioConfig;
         if (AudioChapters && !isAudioVerseKey(AudioChapters)) {
@@ -1056,10 +1152,10 @@ export function getGenBookAudio(
               if (kx) r[kx[0]] = pp;
             });
           });
-          Cache.write(r, cid, gbmodule);
+          Cache.write(r, ...cid);
         }
       }
-      return Cache.read(cid, gbmodule);
+      return Cache.read(...cid);
     }
   }
 

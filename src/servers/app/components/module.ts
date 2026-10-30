@@ -43,12 +43,18 @@ import {
   httpThrowIfCanceled,
   resetAll,
 } from '../ftphttp.ts';
-import Window, { getBrowserWindows } from './window.ts';
+import Window, { getBrowserWindows, publishSubscription } from './window.ts';
+import Prefs from '../prefs.ts';
 
 import type {
+  AudioPlayerFileGB,
+  AudioPlayerFileVK,
   CipherKey,
   Download,
+  DownloadKey,
   FTPDownload,
+  HTTPDownload,
+  RemoteAudioType,
   NewModulesType,
   Repository,
   RepositoryListing,
@@ -827,6 +833,132 @@ async function repoConfigs(
   return repositoryConfs;
 }
 
+// Save the audio offered by a remote repository to DiskCache, so the app
+// always knows which audio files can be downloaded.
+let RemoteAudioChanged = false;
+function cacheRemoteAudio(manifest: FTPDownload, confs: SwordConfType[]) {
+  const store = C.RemoteAudioStore;
+  const { name, domain, path } = manifest;
+  let changed = false;
+  confs.forEach((conf) => {
+    const { module, xsmType, AudioChapters, DataPath } = conf;
+    if (xsmType === 'XSM_audio' && AudioChapters && C.URLRE.test(DataPath)) {
+      const value: RemoteAudioType = {
+        module,
+        AudioChapters,
+        DataPath,
+        filename: conf.filename,
+        ChapterZeroIsIntro: conf.ChapterZeroIsIntro,
+        repository: { name, domain, path },
+      };
+      const has = DiskCache.has(module, store);
+      if (
+        !has ||
+        JSON_stringify(DiskCache.read(module, store)) !== JSON_stringify(value)
+      ) {
+        if (has) DiskCache.delete(module, store);
+        DiskCache.write(module, value, store);
+        changed = true;
+      }
+    }
+  });
+  if (changed) {
+    RemoteAudioChanged = true;
+    DiskCache.writeAllStores();
+  }
+}
+
+// Reset windows that show audio icons if remote audio has changed since the
+// last call, or if force is true.
+export function resetIfRemoteAudioChanged(force = false) {
+  if (RemoteAudioChanged || force) {
+    RemoteAudioChanged = false;
+    Window.reset('all', { type: 'xulswordWin' });
+    Window.reset('all', { type: 'viewportWin' });
+  }
+}
+
+// If an HTTP audio download is for a single audio file, return the zip entry
+// path (without extension) that file should have, as if the server had sent
+// it in a zip. Otherwise (or if the path cannot be known) return null.
+function singleAudioEntry(download: HTTPDownload): string | null {
+  const { data, confname } = download;
+  if (!data) return null;
+  const code =
+    ('audioModule' in data && data.audioModule) ||
+    (confname ?? '').replace(/\.conf$/i, '');
+  if (!code) return null;
+  // VerseKey: audio/<code>/<book>/001
+  if ('book' in data) {
+    const { book, chapter } = data;
+    const lastchapter = 'lastchapter' in data ? data.lastchapter : undefined;
+    if (!book || chapter === undefined) return null;
+    if (lastchapter && lastchapter !== chapter) return null;
+    return fpath.posix.join('audio', code, book, pad(chapter, 3, 0));
+  }
+  // GenBook: audio/<code>/000 Title/002 Title/005
+  if ('path' in data && data.path?.length) {
+    const nums = data.path.map(Number);
+    if (nums.some((n) => Number.isNaN(n))) return null;
+    const ch = nums.pop() as number;
+    // Use the fully qualified directory names of the remote AudioChapters,
+    // which are the names the server would use in a zip.
+    let dirs = nums.map((n) => pad(n, 3, 0));
+    const remote =
+      data.audioModule && DiskCache.has(data.audioModule, C.RemoteAudioStore)
+        ? (DiskCache.read(data.audioModule, C.RemoteAudioStore) as
+            | RemoteAudioType
+            | undefined)
+        : undefined;
+    const ac = remote?.AudioChapters;
+    if (ac) {
+      const parent = Object.keys(ac)
+        .map((k) => k.split(C.GBKSEP).filter(Boolean))
+        .find(
+          (segs) =>
+            segs.length === nums.length &&
+            segs.every(
+              (s, i) => Number(s.replace(/^(\d+).*?$/, '$1')) === nums[i],
+            ),
+        );
+      if (parent) dirs = parent;
+    }
+    return fpath.posix.join('audio', code, ...dirs, pad(ch, 3, 0));
+  }
+  return null;
+}
+
+// Return the audio file extension of a single audio file download.
+function audioFileExt(url: string, headers: Headers): string {
+  let ext = '';
+  try {
+    ext = fpath.posix.extname(new URL(url).pathname).substring(1);
+  } catch (er) {
+    ext = '';
+  }
+  ext = ext.toLowerCase();
+  if (C.SupportedAudio.includes(ext)) return ext;
+  const type = headers.get('Content-Type') ?? '';
+  if (/audio\/ogg/i.test(type)) return 'ogg';
+  return 'mp3';
+}
+
+// Put any X-Timing-Config header value at the start of a timing file, as
+// getTimingFile() does.
+function addTimingConfig(timingConfig: string, tmdata: Buffer): Buffer {
+  if (!timingConfig) return tmdata;
+  return Buffer.from(
+    [timingConfig, tmdata.toString('utf8').trim()].filter(Boolean).join('\n'),
+    'utf8',
+  );
+}
+
+// Functions that also receive a download's progress, by download key.
+const DownloadProgressListeners: Record<
+  DownloadKey,
+  ((prog: number) => void) | undefined
+> = {};
+
 const DownloadModuleZips = {
   ongoing: {} as Record<string, Promise<ZIP | string> | undefined>,
   finished: {} as Record<string, ZIP>,
@@ -965,9 +1097,15 @@ const Module = {
               failCause(manifest, C.UI.Manager.cancelMsg),
             );
           }
-          return await Promise.resolve(
-            repconfs.filter((rc) => rc).map((rc) => rc?.conf as SwordConfType),
-          );
+          const confs = repconfs
+            .filter((rc) => rc)
+            .map((rc) => rc?.conf as SwordConfType);
+          try {
+            cacheRemoteAudio(manifest, confs);
+          } catch (er) {
+            log.error(er);
+          }
+          return await Promise.resolve(confs);
         }
         return null;
       },
@@ -1106,6 +1244,7 @@ const Module = {
         const trace = 'trace' in erobj ? erobj.trace : '';
         w?.webContents.send('progress', prog, downloadkey, trace);
         w = null;
+        DownloadProgressListeners[downloadkey]?.(prog);
         threshProgress = prog + 0.02;
         done = prog === -1;
       }
@@ -1133,20 +1272,64 @@ const Module = {
           if (!tmpdir.exists()) {
             result = `Could not create tmp directory '${tmpdir.path}'.`;
           }
-          // Audio files and timing files are separate downloads. The renderer
-          // treats a progress of 1 as finished, so each step is scaled to stay
-          // below 1 until progress(-1) is sent after all steps are done.
-          const dlfile = await getFileHTTP(
-            resolveTemplateURL(http, data, 'zip', '1'),
-            tmpdir.clone().append(randomID()),
-            downloadkey,
-            (p: number) => {
-              if (p && p !== -1) progress(0.9 * Math.min(p, 1));
-            },
-          );
-          httpThrowIfCanceled(downloadkey);
-
-          result = new ZIP(dlfile.path);
+          // Audio files and timing files are separate downloads, and progress
+          // is the share of both files' bytes received. Sizes come from the
+          // Content-Length header, but until it is known (or if the server
+          // does not send it) sizes are estimated. The renderer treats a
+          // progress of 1 as finished, so the downloads only go to 0.95,
+          // until progress(-1) is sent after all steps are done.
+          // A single audio file (as when an audio icon is clicked) and its
+          // timing file are requested without a zip package, so the server
+          // does not need to create and cache many single file zips. The zip
+          // is then made here.
+          const single = singleAudioEntry(download);
+          const pkg = single ? 'none' : 'zip';
+          const audioURL = resolveTemplateURL(http, data, pkg, '1');
+          const timingURL = resolveTemplateURL(http, data, pkg, '1', true);
+          let files = 1;
+          if ('keys' in data) files = data.keys.length;
+          else if ('lastchapter' in data && data.lastchapter)
+            files = data.lastchapter - data.chapter + 1;
+          const size = {
+            audio: files > 1 ? 50000000 : 4000000,
+            timing: single ? 10000 : 1000000,
+          };
+          const received = { audio: 0, timing: 0 };
+          const reportBytes = () => {
+            const r = received.audio + received.timing;
+            progress(0.95 * Math.min(r / (size.audio + size.timing), 1));
+          };
+          const audioProgress = (r: number, t: number) => {
+            received.audio = r;
+            if (t) size.audio = t;
+            reportBytes();
+          };
+          let audioZip: ZIP;
+          if (single) {
+            // fetchHTTP gives the final URL and headers, which tell the
+            // audio file type.
+            const af = await fetchHTTP(audioURL, downloadkey, audioProgress);
+            httpThrowIfCanceled(downloadkey);
+            size.audio = af.buffer.length || size.audio;
+            audioZip = new ZIP();
+            audioZip.addFile(
+              `${single}.${audioFileExt(af.url, af.headers)}`,
+              af.buffer,
+            );
+          } else {
+            const dlfile = await getFileHTTP(
+              audioURL,
+              tmpdir.clone().append(randomID()),
+              downloadkey,
+              audioProgress,
+            );
+            httpThrowIfCanceled(downloadkey);
+            // The audio size is now known, even if it was estimated.
+            size.audio = Number(dlfile.stats()?.size) || size.audio;
+            audioZip = new ZIP(dlfile.path);
+          }
+          received.audio = size.audio;
+          result = audioZip;
 
           // Many publications have no timing files, in which case the server
           // returns 'no-timing-file' and nothing is added. A failed timing
@@ -1154,10 +1337,11 @@ const Module = {
           // config in the X-Timing-Config header must be added to every
           // timing file (as getTimingFile() does) and only fetchHTTP can
           // read the header.
-          const tm = await fetchHTTP(
-            resolveTemplateURL(http, data, 'zip', '1', true),
-            downloadkey,
-          ).catch((er) => {
+          const tm = await fetchHTTP(timingURL, downloadkey, (r, t) => {
+            received.timing = r;
+            if (t) size.timing = t;
+            reportBytes();
+          }).catch((er) => {
             if (er?.message === C.UI.Manager.cancelMsg) throw er;
             log.warn(`Timing file download failed: ${er}`);
             return null;
@@ -1173,29 +1357,30 @@ const Module = {
                 log.warn(`Bad X-Timing-Config header: ${tch}`);
               }
             }
-            try {
-              const tmzip = new ZIP(tm.buffer);
-              const audioZip = result;
-              // All the publication's timing files are installed, even for
-              // chapters not being downloaded, so that timing updates apply
-              // to audio that is already installed.
-              tmzip.getEntries().forEach((ze) => {
-                const { entryName } = normalizeZipEntry(ze);
-                if (!ze.isDirectory && !audioZip.getEntry(entryName)) {
-                  let tmdata = ze.getData();
-                  if (timingConfig) {
-                    tmdata = Buffer.from(
-                      [timingConfig, tmdata.toString('utf8').trim()]
-                        .filter(Boolean)
-                        .join('\n'),
-                      'utf8',
+            if (single) {
+              // Only the single audio file's timing file is received.
+              audioZip.addFile(
+                `${single}.txt`,
+                addTimingConfig(timingConfig, tm.buffer),
+              );
+            } else {
+              try {
+                const tmzip = new ZIP(tm.buffer);
+                // All the publication's timing files are installed, even for
+                // chapters not being downloaded, so that timing updates apply
+                // to audio that is already installed.
+                tmzip.getEntries().forEach((ze) => {
+                  const { entryName } = normalizeZipEntry(ze);
+                  if (!ze.isDirectory && !audioZip.getEntry(entryName)) {
+                    audioZip.addFile(
+                      entryName,
+                      addTimingConfig(timingConfig, ze.getData()),
                     );
                   }
-                  audioZip.addFile(entryName, tmdata);
-                }
-              });
-            } catch (er) {
-              log.warn(`Timing file download was not a zip: ${er}`);
+                });
+              } catch (er) {
+                log.warn(`Timing file download was not a zip: ${er}`);
+              }
             }
           }
           progress(0.95);
@@ -1280,15 +1465,20 @@ const Module = {
 
     DownloadModuleZips.ongoing[downloadkey] = zipPromise;
 
-    const result = await zipPromise;
-    progress(-1);
-    if (typeof result === 'string') {
-      log.verbose(`Failed download: ${logid(downloadkey)} ${logdls()}`);
-    } else {
-      log.verbose(`Successful download: ${logid(downloadkey)} ${logdls()}`);
-      DownloadModuleZips.finished[downloadkey] = result;
+    // A rejected download (such as with no Internet connection) must also be
+    // removed from ongoing, or later downloads of it would reuse the failure.
+    try {
+      const result = await zipPromise;
+      if (typeof result === 'string') {
+        log.verbose(`Failed download: ${logid(downloadkey)} ${logdls()}`);
+      } else {
+        log.verbose(`Successful download: ${logid(downloadkey)} ${logdls()}`);
+        DownloadModuleZips.finished[downloadkey] = result;
+      }
+    } finally {
+      progress(-1);
+      delete DownloadModuleZips.ongoing[downloadkey];
     }
-    delete DownloadModuleZips.ongoing[downloadkey];
 
     return zipPromise;
   },
@@ -1383,6 +1573,74 @@ const Module = {
       delete DownloadModuleZips.finished[key];
     });
     return await modalInstall(zipobj, destdir, callingWinID);
+  },
+
+  // Download and install a single remote audio file that is listed in the
+  // RemoteAudio DiskCache. Returns true on success or an error string.
+  async installRemoteAudio(
+    file: AudioPlayerFileVK | AudioPlayerFileGB,
+  ): Promise<true | string> {
+    const callingWinID = (arguments[1] ?? -1) as number;
+    if (!Prefs.getBoolPref('global.InternetPermission'))
+      return 'Internet permission has not been given.';
+    const { audioModule } = file;
+    const remote =
+      audioModule && DiskCache.has(audioModule, C.RemoteAudioStore)
+        ? (DiskCache.read(audioModule, C.RemoteAudioStore) as RemoteAudioType)
+        : null;
+    if (!remote) return `No remote audio is known for '${audioModule}'.`;
+    const { DataPath, filename, repository } = remote;
+    const dl: HTTPDownload = {
+      ...repository,
+      type: 'http',
+      http: DataPath,
+      confname: filename,
+      data: file,
+    };
+    const dlkey = downloadKey(dl);
+    if (
+      dlkey in DownloadModuleZips.ongoing ||
+      dlkey in DownloadModuleZips.finished
+    )
+      return `Audio '${audioModule}' is already being downloaded.`;
+    const setProgress = (progress: number) => {
+      if (callingWinID !== -1)
+        publishSubscription(
+          'setControllerState',
+          { renderers: { id: callingWinID } },
+          { progress },
+          false,
+        );
+    };
+    // Show the download's percent complete in the calling window.
+    DownloadProgressListeners[dlkey] = (p) => {
+      if (p !== -1) setProgress(p);
+    };
+    setProgress(0);
+    let result: number | string;
+    try {
+      result = await this.download(dl, callingWinID);
+    } catch (er) {
+      result = unknown2String(er, ['message']);
+    } finally {
+      delete DownloadProgressListeners[dlkey];
+    }
+    const zip = DownloadModuleZips.finished[dlkey];
+    delete DownloadModuleZips.finished[dlkey];
+    if (typeof result === 'string' || !zip) {
+      setProgress(-1);
+      // With no Internet connection the download ends as canceled, but
+      // nothing canceled it, so say what probably happened.
+      let msg = typeof result === 'string' ? result : '';
+      if (!msg || msg === C.UI.Manager.cancelMsg)
+        msg = 'The download did not finish. Check the Internet connection.';
+      log.error(`Remote audio download failed: ${audioModule}: ${msg}`);
+      return `Could not download ${audioModule} audio. ${msg}`;
+    }
+    // The bar stays full while installing, until modulesInstalled clears it.
+    setProgress(1);
+    await modalInstall([zip], Dirs.path.xsAudio, callingWinID);
+    return true;
   },
 
   // Set windows to modal before calling this function!

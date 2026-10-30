@@ -1062,12 +1062,15 @@ export async function untargz(
   return result;
 }
 
-// Fetch a small file into memory, returning its contents and response headers
-// (which getFileHTTP cannot provide). It is canceled like getFileHTTP.
+// Fetch a small file into memory, returning its contents AND RESPONSE HEADERS
+// and final URL after any redirects (which getFileHTTP cannot provide). It is
+// canceled like getFileHTTP. The progress callback gets the bytes received
+// and the total bytes (0 if the server did not send Content-Length).
 export async function fetchHTTP(
   url: string,
   cancelkey?: string,
-): Promise<{ buffer: Buffer; headers: Headers }> {
+  progress?: ((received: number, total: number) => void) | null,
+): Promise<{ buffer: Buffer; headers: Headers; url: string }> {
   const controller = new AbortController();
   if (cancelkey) {
     HttpCancelable[cancelkey] = {
@@ -1087,9 +1090,23 @@ export async function fetchHTTP(
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} for ${url}`);
     }
-    const buffer = Buffer.from(await response.arrayBuffer());
+    let buffer: Buffer;
+    if (progress && response.body) {
+      const total = Number(response.headers.get('Content-Length')) || 0;
+      const reader = response.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let received = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.length;
+        progress(received, total);
+      }
+      buffer = Buffer.concat(chunks);
+    } else buffer = Buffer.from(await response.arrayBuffer());
     if (canceled()) throw { message: C.UI.Manager.cancelMsg };
-    return { buffer, headers: response.headers };
+    return { buffer, headers: response.headers, url: response.url || url };
   } catch (er) {
     if (canceled()) throw { message: C.UI.Manager.cancelMsg };
     throw er;
@@ -1098,17 +1115,18 @@ export async function fetchHTTP(
   }
 }
 
+// Download a file to dest. The progress callback gets the bytes received and
+// the total bytes (0 if the server did not send Content-Length).
 export async function getFileHTTP(
   url: string,
   dest: LocalFile | string,
   cancelkey?: string,
-  progress?: ((p: number) => void) | null,
+  progress?: ((received: number, total: number) => void) | null,
 ): Promise<LocalFile> {
   return await new Promise((resolve, reject) => {
     let rejected = false;
     const rejectme = (er: unknown) => {
       if (!rejected) {
-        if (progress) progress(-1);
         reject(er);
       }
       rejected = true;
@@ -1129,7 +1147,6 @@ export async function getFileHTTP(
       const destpath = typeof dest === 'string' ? dest : dest.path;
       const destFile = new LocalFile(destpath);
       ses.on('will-download', (ev, item) => {
-        if (progress) progress(0);
         if (cancelkey) {
           HttpCancelable[cancelkey] = {
             canceled: false,
@@ -1151,15 +1168,11 @@ export async function getFileHTTP(
               ev2.preventDefault();
               rejectme(new Error('Download was paused'));
             } else if (progress) {
-              // TODO: getTotalBytes returns 0 (need response headers?)
-              // Assume the largest download is 50MB, and use that if 0.
-              const total = item.getTotalBytes() || 50000000;
-              progress(item.getReceivedBytes() / total);
+              progress(item.getReceivedBytes(), item.getTotalBytes());
             }
           }
         });
         item.once('done', (_e, state) => {
-          if (progress) progress(-1);
           if (cancelkey) delete HttpCancelable[cancelkey];
           if (state === 'completed') {
             if (!canceled()) {

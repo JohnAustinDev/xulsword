@@ -3,7 +3,12 @@ import { dString } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { audioConfigs, clearPending, getMaxChapter } from '../../common.ts';
+import {
+  audioConfigs,
+  clearPending,
+  getMaxChapter,
+  remoteAudioConfigs,
+} from '../../common.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import {
@@ -369,7 +374,8 @@ class Chooser
             }
             <BookGroupList
               className={`sizer${
-                (audioConfigs(headingsModule || '', renderPromise).length &&
+                ((audioConfigs(headingsModule || '', renderPromise).length ||
+                  remoteAudioConfigs(headingsModule || '').length) &&
                   ' audio') ||
                 ''
               }`}

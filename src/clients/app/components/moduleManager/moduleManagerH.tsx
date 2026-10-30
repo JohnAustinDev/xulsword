@@ -1875,10 +1875,15 @@ export function updateDownloadProgress(
     else ids[idi][1] = prog;
     if (ids.every((d) => d[1] === -1)) ids = [];
     Progressing.ids = ids;
-    const total = ids.reduce((p, c) => p + (c[1] === -1 ? 1 : c[1]), 0);
-    if (!ids.length || total === ids.length) state.progress = null;
-    else state.progress = [total, ids.length];
   }
+  // Always set state.progress from Progressing, even when this update is
+  // ignored. The state passed in may be a copy made before React applied an
+  // earlier progress update (such as the final -1), and saving that copy
+  // would otherwise leave the progress bar stuck.
+  const { ids } = Progressing;
+  const total = ids.reduce((p, c) => p + (c[1] === -1 ? 1 : c[1]), 0);
+  if (!ids.length || total === ids.length) state.progress = null;
+  else state.progress = [total, ids.length];
 }
 
 export function listDownload(repo: Repository): FTPDownload {

@@ -647,8 +647,15 @@ export type HTTPDownload = {
   type: 'http';
   http: string; // https?://...
   confname?: string;
-  data?: SelectVKType | SelectORMType;
+  data?: SelectVKType | SelectORMType | AudioPlayerFileVK | AudioPlayerFileGB;
 } & Repository;
+
+// What a remote audio repository offers for one audio module. Saved to
+// DiskCache when the Module Manager loads the repository listing.
+export type RemoteAudioType = Pick<
+  SwordConfType,
+  'module' | 'AudioChapters' | 'DataPath' | 'filename' | 'ChapterZeroIsIntro'
+> & { repository: Repository };
 export type Download = FTPDownload | ModFTPDownload | HTTPDownload;
 
 export type DownloadKey = string;
@@ -1019,6 +1026,7 @@ export const GBuilder: GType & {
         'cancelModuleDownloads',
         'cancel',
         'installDownloads',
+        'installRemoteAudio',
       ],
     ],
     [
@@ -1238,6 +1246,7 @@ export const GBuilder: GType & {
     cancelModuleDownloads: func as any,
     cancel: func as any,
     installDownloads: func as any,
+    installRemoteAudio: func as any,
     remove: func as any,
     move: func as any,
     copy: func as any,

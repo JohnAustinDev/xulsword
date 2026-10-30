@@ -5,6 +5,7 @@ import {
   audioSelections,
   blockTouchEvents,
   eventHandled,
+  remoteAudioSelections,
 } from '../../common.ts';
 import { G, GI } from '../../G.ts';
 import Button from '../libxul/button.tsx';
@@ -44,19 +45,27 @@ export default function audioIcon(props: AudioIconProps): JSX.Element | null {
     disableIfNoAudio,
   } = props;
   if (swordModule && swordModule in G.Tab) {
-    const selections = audioSelections(
-      G.Tab[swordModule].isVerseKey
-        ? {
-            swordModule,
-            book: bookOrKey as OSISBookType,
-            chapter: chapter as number,
-          }
-        : {
-            swordModule,
-            key: bookOrKey,
-          },
-      renderPromise,
-    );
+    const location = G.Tab[swordModule].isVerseKey
+      ? {
+          swordModule,
+          book: bookOrKey as OSISBookType,
+          chapter: chapter as number,
+        }
+      : {
+          swordModule,
+          key: bookOrKey,
+        };
+    let selections: Array<{
+      selection: AudioPlayerFileVK | AudioPlayerFileGB;
+    }> = audioSelections(location, renderPromise);
+    // Audio that is not installed but can be downloaded is shown with a
+    // disabled look. Clicking it downloads, installs and plays the audio.
+    let notInstalled = false;
+    if (!renderPromise.waiting() && !selections.length) {
+      selections = remoteAudioSelections(location, renderPromise);
+      notInstalled = selections.length > 0;
+    }
+    const cls = `audio-icon${notInstalled ? ' not-installed' : ''}`;
     if (
       disableIfNoAudio ||
       audio?.open ||
@@ -65,7 +74,7 @@ export default function audioIcon(props: AudioIconProps): JSX.Element | null {
       if (button) {
         return (
           <Button
-            className="audio-icon"
+            className={cls}
             checked={audio?.open ?? true}
             disabled={
               !audio?.open && !(!renderPromise.waiting() && selections.length)
@@ -82,7 +91,7 @@ export default function audioIcon(props: AudioIconProps): JSX.Element | null {
       }
       return (
         <div
-          className="audio-icon"
+          className={cls}
           onPointerDown={(e: React.SyntheticEvent) => {
             e.stopPropagation();
             audioHandler(selections[0]?.selection ?? null, e);

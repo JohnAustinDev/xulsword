@@ -40,7 +40,7 @@ import {
 } from '../../common.ts';
 import Prefs from '../prefs.ts';
 import LocalFile from '../../components/localFile.ts';
-import { modalInstall } from './module.ts';
+import { modalInstall, resetIfRemoteAudioChanged } from './module.ts';
 import Window, { getBrowserWindows, publishSubscription } from './window.ts';
 import Dirs from '../../components/dirs.ts';
 
@@ -70,9 +70,13 @@ import type { BMPropertiesStateWinArg } from '../../../clients/app/bmPropertiesW
 // windows and the main process.
 const Prefs2 = Prefs as GAddWindowId['Prefs'];
 
+// Module Manager windows that will reset audio icons when closed.
+const ModuleManagerCloseHooked = new Set<number>();
+
 const Commands = {
   openModuleManager(): void {
-    Window.open({
+    const permission = Prefs.getBoolPref('global.InternetPermission');
+    const id = Window.open({
       type: 'moduleManagerWin',
       typePersistBounds: true,
       saveIfAppClosed: true,
@@ -82,6 +86,21 @@ const Commands = {
         height: 800,
       },
     });
+    // Repository listings may have saved new remote audio, and Internet
+    // permission may have changed, so audio icons need updating when the
+    // Module Manager closes (even if canceled).
+    // An already open Module Manager is only brought to the front, and keeps
+    // its original listener.
+    const win = BrowserWindow.fromId(id);
+    if (win && !ModuleManagerCloseHooked.has(id)) {
+      ModuleManagerCloseHooked.add(id);
+      win.once('closed', () => {
+        ModuleManagerCloseHooked.delete(id);
+        resetIfRemoteAudioChanged(
+          permission !== Prefs.getBoolPref('global.InternetPermission'),
+        );
+      });
+    }
   },
 
   // Install one or more .zip, .xsm, .xsb, .txt or .json modules from the local
