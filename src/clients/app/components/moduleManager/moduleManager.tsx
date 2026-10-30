@@ -865,10 +865,7 @@ export default class ModuleManager
                     <>
                       <Label value={gbAudioDialog.conf.module} />
                       <SelectOR
-                        key={[
-                          gbAudioDialog.selection.otherMod,
-                          ...gbAudioDialog.selection.keys,
-                        ].join('.')}
+                        key={gbAudioDialog.conf.module}
                         initialORM={gbAudioDialog.selection}
                         otherMods={[]}
                         nodeLists={gbAudioDialog.options.nodeLists}

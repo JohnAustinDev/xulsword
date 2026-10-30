@@ -105,6 +105,12 @@ the light skin. */
   color: var(--dk-text);
   background-color: var(--bg-bp6-light);
 }
+/* The rule above hides the browser's highlight of selected options in an
+unfocused list box (focused ones keep theirs), so mark them here. */
+#root select[multiple] option:checked,
+#root select[size]:not([size='1']) option:checked {
+  background-color: var(--bg-interface-selection);
+}
 #root .tabs .tabPlus select {
   color: transparent;
   background-color: transparent;
