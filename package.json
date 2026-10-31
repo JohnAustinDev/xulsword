@@ -137,10 +137,7 @@
   "prettier": {
     "singleQuote": true
   },
-  "//": "Add eslint override because eslint-plugin-react is not 'officially' compatible with 9.0.6, but is used via @eslint/compat",
-  "overrides": {
-    "eslint": "^9.39.5"
-  },
+  "//": "@blueprintjs/core is pinned to 6.8.1, with select and table pinned to the versions built for it, because from 6.9.0 Blueprint's component CSS uses color-mix() with no fallback, which breaks button colors and borders in browsers older than Chrome 111, Safari 16.2 and Firefox 113 (see CSS browser support in CLAUDE.md). Check a newer version's lib/css/blueprint.css before upgrading. These versions declare React 18 only (React 19 from 6.16.0), so yarn warns about peers, but they use no API that React 19 removed.",
   "dependencies": {
     "@babel/core": "^8.0.10",
     "@babel/plugin-transform-react-constant-elements": "^8.0.5",
@@ -149,9 +146,9 @@
     "@babel/preset-react": "^8.0.1",
     "@babel/preset-typescript": "^8.0.7",
     "@babel/runtime": "^8.0.10",
-    "@blueprintjs/core": "^6.21.0",
-    "@blueprintjs/select": "^6.4.0",
-    "@blueprintjs/table": "^6.3.0",
+    "@blueprintjs/core": "6.8.1",
+    "@blueprintjs/select": "6.1.1",
+    "@blueprintjs/table": "6.0.16",
     "@eslint/compat": "^2.1.1",
     "@eslint/js": "^9.39.5",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.6.3",

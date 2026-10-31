@@ -11,6 +11,21 @@
 // webpack-bundle-analyzer's report.html for that build). If bibleBrowser or
 // widgets start using another Blueprint component, its partial needs to be
 // added below or that component's styling will silently be missing.
+
+// Blueprint's design tokens: the --bp-* CSS variables. From Blueprint 6.9 the
+// component styles are built on them, and without them buttons lose their
+// borders, background colors and padding. Blueprint is pinned to 6.8.1 (see
+// the "//" note in package.json), which doesn't use them, so they are left
+// out to save ~10KB. Uncomment them when upgrading to 6.9 or later, and also
+// move Blueprint's :root rules to :host. The outer page having the shadowRoot
+// doesn't use Blueprint, so they aren't needed on :root. From 6.9, the button
+// styles also have :root rules (for --bp6-button-warning-rest). Sass @extend
+// can add :host to them but can't remove :root, so it takes something like a
+// small webpack loader, run on this file after sass-loader, that replaces
+// ':root' with ':host'.
+// @import '@blueprintjs/core/src/design-tokens/build/tokens';
+// @import '@blueprintjs/core/src/design-tokens/build/tokens-dark';
+
 @import '@blueprintjs/colors/lib/scss/colors';
 @import '@blueprintjs/core/src/common/variables';
 @import '@blueprintjs/core/src/common/variables-extended';
