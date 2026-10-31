@@ -18,6 +18,7 @@ import devToolsInstaller, {
 } from 'electron-devtools-installer';
 import { install as SourceMapInstall } from 'source-map-support';
 import { G } from './G.ts';
+import forceX11 from './forceX11.ts';
 import { releaseGtkTheme, setNativeChrome } from './nativeChrome.ts';
 import Subscription from '../../subscription.ts';
 import Cache from '../../cache.ts';
@@ -75,6 +76,12 @@ import type {
   WindowDescriptorType,
 } from '../../type.ts';
 import type { ManagerStatePref } from '../../clients/app/components/moduleManager/moduleManager.tsx';
+
+// xulsword's window placement system requires older X11, however newer Wayland
+// (the default) is more readable on large screens and zoomed-in views. New
+// linux op-sys window management features are currently (2026) being developed
+// to replace the X11 window placement system and then Wayland can be used.
+if (process.platform === 'linux') forceX11();
 
 app.userAgentFallback = C.HTTPUserAgent;
 

@@ -6,7 +6,7 @@
   "scripts": {
     "dist": "electron-builder --linux snap",
     "start:app": "webpack serve --env development --env appClients",
-    "start:appSrv": "webpack --env development --env appSrv --env preload && cross-env LD_LIBRARY_PATH='./Cpp/lib' electron ./build/app/dist/appSrv/server.cjs",
+    "start:appSrv": "webpack --env development --env appSrv --env preload && cross-env LD_LIBRARY_PATH='./Cpp/lib' electron ./build/app/dist/appSrv/server.cjs --ozone-platform=x11",
     "start:webapp": "webpack serve --env development --env webapp",
     "start:widgets": "webpack serve --env development --env widgets",
     "start:webappSrv": "webpack --env development --env webappSrv && cross-env LD_LIBRARY_PATH='./Cpp/lib' node ./build/webapp",
