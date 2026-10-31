@@ -4235,7 +4235,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"classnames@npm:^2.3.1":
+"classnames@npm:^2.3.1, classnames@npm:^2.5.1":
   version: 2.5.1
   resolution: "classnames@npm:2.5.1"
   checksum: 10c0/afff4f77e62cea2d79c39962980bf316bacb0d7c49e13a21adaadb9221e1c6b9d3cdb829d8bb1b23c406f4e740507f37e1dcf506f7e3b7113d17c5bab787aa69
@@ -8795,7 +8795,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.4.32, postcss@npm:^8.4.40, postcss@npm:^8.5.26, postcss@npm:^8.5.6":
+"postcss@npm:^8.4.32, postcss@npm:^8.4.40, postcss@npm:^8.5.26, postcss@npm:^8.5.32, postcss@npm:^8.5.6":
   version: 8.5.32
   resolution: "postcss@npm:8.5.32"
   dependencies:
@@ -11497,6 +11497,7 @@ __metadata:
     "@babel/preset-typescript": "npm:^8.0.7"
     "@babel/runtime": "npm:^8.0.10"
     "@blueprintjs/core": "npm:6.8.1"
+    "@blueprintjs/icons": "npm:^6.14.1"
     "@blueprintjs/select": "npm:6.1.1"
     "@blueprintjs/table": "npm:6.0.16"
     "@eslint/compat": "npm:^2.1.1"
@@ -11515,6 +11516,7 @@ __metadata:
     babel-loader: "npm:^10.1.1"
     bufferutil: "npm:^4.1.0"
     chalk: "npm:^6.0.1"
+    classnames: "npm:^2.5.1"
     compression-webpack-plugin: "npm:^12.0.0"
     core-js: "npm:^3.51.0"
     cross-env: "npm:^10.1.0"
@@ -11542,6 +11544,7 @@ __metadata:
     libxulsword: "portal:./libxulsword"
     memorystore: "npm:^1.6.8"
     mini-css-extract-plugin: "npm:^2.10.2"
+    postcss: "npm:^8.5.32"
     postcss-scss: "npm:^4.0.9"
     prettier: "npm:^3.9.10"
     rate-limiter-flexible: "npm:^11.2.3"
