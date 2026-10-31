@@ -1,4 +1,4 @@
-import React, { useLayoutEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { dString } from '../../../common.ts';
 import { sanitizeHTML } from '../../../sanitizeHTML.ts';
 import C from '../../../constant.ts';

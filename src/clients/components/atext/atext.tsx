@@ -212,13 +212,13 @@ class Atext
 
   wheelScrollTO: NodeJS.Timeout | undefined;
 
-  sbref: React.RefObject<HTMLDivElement>;
+  sbref: React.RefObject<HTMLDivElement | null>;
 
-  nbref: React.RefObject<HTMLDivElement>;
+  nbref: React.RefObject<HTMLDivElement | null>;
 
   renderPromise: RenderPromiseComponent['renderPromise'];
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
   resizeObserver: ResizeObserver;
 

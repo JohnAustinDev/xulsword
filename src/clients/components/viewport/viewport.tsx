@@ -130,9 +130,9 @@ export default class Viewport
 
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
-  popupRef: React.RefObject<Popup>;
+  popupRef: React.RefObject<Popup | null>;
 
   tabrowObserver: MutationObserver;
 

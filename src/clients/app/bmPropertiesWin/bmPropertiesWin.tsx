@@ -128,7 +128,7 @@ export default class BMPropertiesWin
 {
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLElement>;
+  loadingRef: React.RefObject<HTMLElement | null>;
 
   constructor(props: BMPropertiesProps) {
     super(props);

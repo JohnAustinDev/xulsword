@@ -18,7 +18,7 @@ type TextboxProps = {
   multiline?: boolean;
   pattern?: RegExp;
   readonly?: boolean;
-  inputRef?: React.RefObject<HTMLInputElement>;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
   disabled?: boolean;
   timeout?: string | number;
   type?: string;

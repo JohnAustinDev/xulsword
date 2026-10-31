@@ -78,9 +78,9 @@ class Chooser
 
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
-  listRef: React.RefObject<HTMLDivElement>;
+  listRef: React.RefObject<HTMLDivElement | null>;
 
   constructor(props: ChooserProps) {
     super(props);

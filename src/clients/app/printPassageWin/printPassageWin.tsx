@@ -1,4 +1,3 @@
-import React from 'react';
 import renderToRoot, { PrintOptionsType } from '../../controller.tsx';
 import log from '../../log.ts';
 import { setStatePref, windowArguments } from '../../common.ts';

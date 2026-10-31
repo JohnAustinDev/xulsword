@@ -165,7 +165,7 @@ function Controller(props: ControllerProps) {
     return null;
   }
 
-  const textbox: React.RefObject<HTMLInputElement> = React.createRef();
+  const textbox: React.RefObject<HTMLInputElement | null> = React.createRef();
 
   // Run didFinishRender() one time.
   useEffect(() => {

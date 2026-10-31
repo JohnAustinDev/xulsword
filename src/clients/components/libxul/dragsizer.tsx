@@ -30,7 +30,7 @@ export default class DragSizer extends React.Component<
   DragSizerProps,
   DragSizerState
 > {
-  sizerRef: React.RefObject<HTMLDivElement>;
+  sizerRef: React.RefObject<HTMLDivElement | null>;
 
   listeners: Array<[string, (e: any) => void]>;
 

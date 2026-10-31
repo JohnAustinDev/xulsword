@@ -81,11 +81,11 @@ export default class ViewportWin
 
   destroy: Array<() => void>;
 
-  atextRefs: Array<React.RefObject<Atext>>;
+  atextRefs: Array<React.RefObject<Atext | null>>;
 
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
   constructor(props: ViewportWinProps) {
     super(props);

@@ -76,7 +76,7 @@ class Popup
 
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
   constructor(props: PopupProps) {
     super(props);

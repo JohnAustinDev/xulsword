@@ -42,9 +42,9 @@ type CellInfo = TCellInfo & {
 };
 
 export type TableRow = [
-  JSX.Element,
-  JSX.Element,
-  JSX.Element,
+  React.JSX.Element,
+  React.JSX.Element,
+  React.JSX.Element,
   string,
   CellInfo,
 ];
@@ -340,7 +340,7 @@ export function itemRenderer(
   this: BMManagerWin,
   item: BookmarkItemType,
   itemProps: ItemRendererProps,
-): JSX.Element | null {
+): React.JSX.Element | null {
   const { handleClick, ref } = itemProps;
   const { label, labelLocale, note, noteLocale } = item;
   let sampleText = '';
@@ -517,7 +517,7 @@ export function printableItem(
   itemOrID: string | BookmarkItemType,
   renderPromise: RenderPromise,
   level = 1,
-): JSX.Element | null {
+): React.JSX.Element | null {
   const { localizedRootFolderClone } = this;
   if (localizedRootFolderClone) {
     const item =
@@ -526,7 +526,7 @@ export function printableItem(
         : itemOrID;
     if (item) {
       let module: string = '';
-      let ref: JSX.Element | null = null;
+      let ref: React.JSX.Element | null = null;
       if (item.type === 'bookmark') {
         const { location } = item;
         if (location && 'v11n' in location) {

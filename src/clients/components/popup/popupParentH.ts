@@ -36,7 +36,7 @@ export type PopupParent = RenderPromiseComponent & {
   popupHandler: typeof popupHandler;
   popupParentHandler?: typeof popupParentHandler;
   popupClickClose?: typeof popupClickClose; // For WebApp only
-  popupRef?: React.RefObject<Popup>;
+  popupRef?: React.RefObject<Popup | null>;
 };
 
 export const PopupParentInitState = {
@@ -53,7 +53,7 @@ export type ViewportPopupProps = {
   place: PlaceType;
   show: ShowType;
   isPinned: boolean[];
-  atextRefs: Array<React.RefObject<Atext>>;
+  atextRefs: Array<React.RefObject<Atext | null>>;
 };
 
 // Event handler for a container containing links to popups.

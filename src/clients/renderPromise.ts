@@ -23,7 +23,7 @@ import type { getBooksInVKModules } from '../servers/common.ts';
 
 export type RenderPromiseComponent = {
   renderPromise: RenderPromise;
-  loadingRef: React.RefObject<HTMLElement>;
+  loadingRef: React.RefObject<HTMLElement | null>;
 };
 
 export type RenderPromiseState = {
@@ -84,7 +84,7 @@ export default class RenderPromise {
 
   callback: (() => void) | null;
 
-  loadingRef: React.RefObject<HTMLElement>;
+  loadingRef: React.RefObject<HTMLElement | null>;
 
   pendingCalls: GCallType[];
 
@@ -190,7 +190,7 @@ export default class RenderPromise {
   constructor(
     componentOrCallback:
       (React.Component & RenderPromiseComponent) | (() => void) | null,
-    loadingRef?: React.RefObject<HTMLElement> | null,
+    loadingRef?: React.RefObject<HTMLElement | null> | null,
     loadingSelector?: string,
   ) {
     this.loadingRef = loadingRef || { current: null };

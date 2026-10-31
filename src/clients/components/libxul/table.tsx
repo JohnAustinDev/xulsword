@@ -59,7 +59,7 @@ export type TableProps = XulProps & {
   onColumnWidthChanged?: (tableColumns: TableColumnInfo[]) => void;
   onColumnHide?: (tableColumns: TableColumnInfo[]) => void;
 
-  tableCompRef?: React.RefObject<Table2>;
+  tableCompRef?: React.RefObject<Table2 | null>;
 };
 
 export type TableColumnInfo = {
@@ -153,11 +153,11 @@ export default class Table
 {
   static scrollTop: Record<string, number>;
 
-  tableDomRef: React.RefObject<HTMLDivElement>;
+  tableDomRef: React.RefObject<HTMLDivElement | null>;
 
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLElement>;
+  loadingRef: React.RefObject<HTMLElement | null>;
 
   constructor(props: TableProps) {
     super(props);
@@ -233,7 +233,7 @@ export default class Table
   }
 
   menuRenderer(internalColIndex?: number) {
-    const items: JSX.Element[][] = [];
+    const items: React.JSX.Element[][] = [];
     if (typeof internalColIndex !== 'undefined') {
       const { props } = this;
       const { tableColumns, onRowsReordered, onColumnHide } = props;
@@ -286,7 +286,7 @@ export default class Table
             />,
           ]);
         }
-        const hideableItems: JSX.Element[] = [];
+        const hideableItems: React.JSX.Element[] = [];
         tableColumns.forEach((c) => {
           const { datacolumn, hideable, visible, heading } = c;
           if (hideable && !visible) {

@@ -2,6 +2,7 @@ import globals from 'globals';
 import js from '@eslint/js';
 import ts from 'typescript-eslint';
 import react from 'eslint-plugin-react/configs/recommended.js';
+import reactJsxRuntime from 'eslint-plugin-react/configs/jsx-runtime.js';
 import { fixupConfigRules } from '@eslint/compat';
 import prettier from 'eslint-config-prettier';
 import compat from 'eslint-plugin-compat';
@@ -35,6 +36,8 @@ const config = [
   js.configs.recommended,
   ...ts.configs.recommended,
   ...fixupConfigRules(react),
+  // JSX uses the automatic runtime, so React needn't be in scope.
+  ...fixupConfigRules(reactJsxRuntime),
   prettier,
 
   // Rules to be applied only to src:

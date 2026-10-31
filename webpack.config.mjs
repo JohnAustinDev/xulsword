@@ -384,13 +384,14 @@ export default function (opts) {
                   ['appClients', 'webapp', 'widgets'].includes(build)
                     ? [
                         '@babel/preset-react',
-                        // Babel 8 defaults to the automatic runtime and drops
-                        // __self/__source, so keep Babel 7's behavior: the
-                        // classic runtime matches tsconfig's "jsx": "react".
+                        // The automatic runtime (react/jsx-runtime) matches
+                        // tsconfig's "jsx": "react-jsx", so JSX files don't
+                        // need to import React. Don't add __self/__source:
+                        // React 19 no longer uses them and warns of an
+                        // outdated JSX transform if seen.
                         {
                           development,
-                          runtime: 'classic',
-                          developmentSourceSelf: development,
+                          runtime: 'automatic',
                         },
                       ]
                     : null,

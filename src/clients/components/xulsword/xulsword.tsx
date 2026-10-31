@@ -93,11 +93,11 @@ export default class Xulsword
 
   destroy: Array<() => void>;
 
-  atextRefs: Array<React.RefObject<Atext>>;
+  atextRefs: Array<React.RefObject<Atext | null>>;
 
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLElement>;
+  loadingRef: React.RefObject<HTMLElement | null>;
 
   // Web-app parent iframe height must follow the xulsword div height, which
   // changes both on re-render and afterward (LibSword text written directly

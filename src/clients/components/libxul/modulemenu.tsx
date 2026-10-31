@@ -1,4 +1,3 @@
-import React from 'react';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import {

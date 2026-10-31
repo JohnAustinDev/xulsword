@@ -1,4 +1,4 @@
-import React, { type ReactElement } from 'react';
+import { type ReactElement } from 'react';
 import { Classes, Dialog as BPDialog } from '@blueprintjs/core';
 import { drop } from '../../../common.ts';
 import { Hbox } from './boxes.tsx';

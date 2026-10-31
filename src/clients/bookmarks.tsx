@@ -1,4 +1,3 @@
-import React from 'react';
 import Cache from '../cache.ts';
 import {
   bookmarkItemIconPath,

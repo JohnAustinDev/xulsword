@@ -1,4 +1,3 @@
-import React from 'react';
 import { Vbox } from './boxes.tsx';
 import { addClass } from './xul.tsx';
 import './menupopup.css';

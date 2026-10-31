@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button as BPButton } from '@blueprintjs/core';
 import { keep } from '../../../common.ts';
 import C from '../../../constant.ts';

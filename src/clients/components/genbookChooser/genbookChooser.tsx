@@ -60,11 +60,11 @@ export default class GenbookChooser
 
   finishedScrolling: boolean;
 
-  treeRef: Record<string, React.RefObject<Tree>>;
+  treeRef: Record<string, React.RefObject<Tree | null>>;
 
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
   constructor(props: GenbookChooserProps) {
     super(props);

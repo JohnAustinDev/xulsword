@@ -142,17 +142,17 @@ export default class Search
 
   popupUnblockTO: PopupParent['popupUnblockTO'];
 
-  resref: React.RefObject<HTMLDivElement>;
+  resref: React.RefObject<HTMLDivElement | null>;
 
-  lexref: React.RefObject<HTMLDivElement>;
+  lexref: React.RefObject<HTMLDivElement | null>;
 
   destroy: Array<() => void>;
 
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
-  popupRef: React.RefObject<Popup>;
+  popupRef: React.RefObject<Popup | null>;
 
   // Card height is not constrained, and changes over time (the more/less
   // transition), so the iframe parent must follow every height change.

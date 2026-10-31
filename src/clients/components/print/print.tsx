@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import Subscription from '../../../subscription.ts';
 import { b64toBlob } from '../../../common.ts';
 import C from '../../../constant.ts';

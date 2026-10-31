@@ -107,7 +107,9 @@ export async function cachePreload(
 export function functionalComponentRenderPromise(loadingSelector?: string) {
   const [, setState] = useState(0);
   const callback = () => setState((prevState) => prevState + 1);
-  const [loadingRef] = useState(createRef() as React.RefObject<HTMLElement>);
+  const [loadingRef] = useState(
+    createRef() as React.RefObject<HTMLElement | null>,
+  );
   const [renderPromise] = useState(
     () => new RenderPromise(callback, loadingRef, loadingSelector),
   );
@@ -123,7 +125,7 @@ export function functionalComponentRenderPromise(loadingSelector?: string) {
 // functions are synchronous, the passed renderPromise will be null.
 export function doUntilDone(
   func: (renderPromise: RenderPromise) => void,
-  loadingRef?: React.RefObject<HTMLElement>,
+  loadingRef?: React.RefObject<HTMLElement | null>,
 ): void {
   const doFunc = () => {
     func(renderPromise);
@@ -140,7 +142,7 @@ Cache.write(doUntilDone, 'doUntilDone');
 // will be resolved.
 export async function doUntilDoneAsync<R>(
   func: (renderPromise: RenderPromise) => Promise<R>,
-  loadingRef?: React.RefObject<HTMLElement>,
+  loadingRef?: React.RefObject<HTMLElement | null>,
 ): Promise<R> {
   return new Promise((resolve, reject) => {
     const doFunc = async () => {
@@ -260,10 +262,10 @@ export function printSkinClass(): string {
 }
 
 export const printRefs: {
-  pageViewRef: React.RefObject<HTMLDivElement>;
-  printContainerRef: React.RefObject<HTMLDivElement>;
-  customSettingsRef: React.RefObject<HTMLDivElement>;
-  settingsRef: React.RefObject<HTMLDivElement>;
+  pageViewRef: React.RefObject<HTMLDivElement | null>;
+  printContainerRef: React.RefObject<HTMLDivElement | null>;
+  customSettingsRef: React.RefObject<HTMLDivElement | null>;
+  settingsRef: React.RefObject<HTMLDivElement | null>;
   setPages: () => void;
 } = {
   pageViewRef: React.createRef(),

@@ -39,13 +39,13 @@ export default class AboutWin
   implements ModinfoParent
 {
   modinfoRefs: {
-    textarea: React.RefObject<HTMLTextAreaElement>;
-    container: React.RefObject<HTMLDivElement>;
+    textarea: React.RefObject<HTMLTextAreaElement | null>;
+    container: React.RefObject<HTMLDivElement | null>;
   };
 
   modinfoParentHandler: typeof modinfoParentHandlerH;
 
-  logTextarea: React.RefObject<HTMLTextAreaElement>;
+  logTextarea: React.RefObject<HTMLTextAreaElement | null>;
 
   constructor(props: AboutWinProps) {
     super(props);

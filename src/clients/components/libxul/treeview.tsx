@@ -25,7 +25,7 @@ export type TreeViewProps = XulProps & {
   onSelection?: (ids: Array<string | number>) => void;
   onExpansion?: (ids: Array<string | number>) => void;
   onNodeClick?: TreeEventHandler;
-  treeRef?: React.RefObject<Tree>;
+  treeRef?: React.RefObject<Tree | null>;
 };
 
 type NodePath = number[];
@@ -142,7 +142,7 @@ function updatedExpansion(
 }
 
 function usePreviousSelection<V>(value: V) {
-  const ref: React.MutableRefObject<V | undefined> = React.useRef();
+  const ref = React.useRef<V | undefined>(undefined);
   React.useEffect(() => {
     ref.current = value;
   }, [value]);
@@ -150,7 +150,7 @@ function usePreviousSelection<V>(value: V) {
 }
 
 function usePreviousExpansion<V>(value: V) {
-  const ref: React.MutableRefObject<V | undefined> = React.useRef();
+  const ref = React.useRef<V | undefined>(undefined);
   React.useEffect(() => {
     ref.current = value;
   }, [value]);
@@ -177,7 +177,7 @@ export default function TreeView({
   // React useRef() is required here, not createRef(), because createRef
   // returns an immutable object whose current value will always be null
   // during the mount useEffect setTimeout.
-  const treeRef1: React.MutableRefObject<Tree | null> = React.useRef(null);
+  const treeRef1 = React.useRef<Tree | null>(null);
   const treeRef = treeRef0 || treeRef1;
 
   const [nodes, dispatch] = React.useReducer(treeReducer, initialState);

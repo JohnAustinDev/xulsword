@@ -13,7 +13,7 @@ import type RenderPromise from '../../renderPromise.ts';
 // displayed, but it stays in the DOM where other code finds it by tag name.
 
 type AudioControlsProps = {
-  audioRef: React.RefObject<HTMLAudioElement>;
+  audioRef: React.RefObject<HTMLAudioElement | null>;
   src?: string;
   autoPlay?: boolean;
   // File name (without extension) to give a downloaded audio file, when its
@@ -189,8 +189,7 @@ export default function AudioControls(props: AudioControlsProps) {
   const elRef = useRef<HTMLAudioElement | null>(null);
   const setAudioRef = (elem: HTMLAudioElement | null) => {
     elRef.current = elem;
-    (audioRef as React.MutableRefObject<HTMLAudioElement | null>).current =
-      elem;
+    audioRef.current = elem;
   };
   const [menu, setMenu] = React.useState<MenuState | null>(null);
   const [drag, setDrag] = React.useState<DragState | null>(null);

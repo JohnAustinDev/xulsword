@@ -36,7 +36,7 @@ export default class PopupWin
 
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
   constructor(props: PopupWinProps) {
     super(props);

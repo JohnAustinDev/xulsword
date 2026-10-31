@@ -82,7 +82,7 @@ export default class SelectVK
 
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
   constructor(props: SelectVKProps) {
     super(props);

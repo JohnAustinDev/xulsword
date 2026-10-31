@@ -21,7 +21,7 @@ import type { XulProps } from './xul.tsx';
 export type MenulistProps = {
   disabled?: boolean;
   multiple?: boolean;
-  options?: Array<React.ReactElement<HTMLOptionElement>>;
+  options?: React.ReactElement[];
   size?: number | undefined;
   value: string | string[] | number | number[];
   onChange: (e: any) => void | Promise<void>;

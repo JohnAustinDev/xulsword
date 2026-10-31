@@ -155,16 +155,18 @@ export default class ModuleManager
   modinfoParentHandler: typeof modinfoParentHandlerH;
 
   tableDomRefs: {
-    [table in (typeof H.Tables)[number]]: React.RefObject<HTMLDivElement>;
+    [
+      table in (typeof H.Tables)[number]
+    ]: React.RefObject<HTMLDivElement | null>;
   };
 
   tableComponentRefs: {
-    [table in (typeof H.Tables)[number]]: React.RefObject<Table2>;
+    [table in (typeof H.Tables)[number]]: React.RefObject<Table2 | null>;
   };
 
   modinfoRefs: {
-    textarea: React.RefObject<HTMLTextAreaElement>;
-    container: React.RefObject<HTMLDivElement>;
+    textarea: React.RefObject<HTMLTextAreaElement | null>;
+    container: React.RefObject<HTMLDivElement | null>;
   };
 
   constructor(props: ManagerProps) {

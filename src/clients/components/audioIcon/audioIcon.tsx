@@ -33,7 +33,9 @@ export type AudioIconProps = {
   disableIfNoAudio?: boolean; // default is hide if no audio
 };
 
-export default function audioIcon(props: AudioIconProps): JSX.Element | null {
+export default function audioIcon(
+  props: AudioIconProps,
+): React.JSX.Element | null {
   const {
     swordModule,
     bookOrKey,

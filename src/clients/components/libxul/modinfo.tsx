@@ -34,8 +34,8 @@ export const modinfoParentInitialState = {
 // Parent component should implement this interface.
 export type ModinfoParent = {
   modinfoRefs: {
-    textarea: React.RefObject<HTMLTextAreaElement>;
-    container: React.RefObject<HTMLDivElement>;
+    textarea: React.RefObject<HTMLTextAreaElement | null>;
+    container: React.RefObject<HTMLDivElement | null>;
   };
   setState: React.Component['setState'];
 };
@@ -118,8 +118,8 @@ type ModinfoProps = {
   showConf: string; // unique id of conf to show
   editConf: boolean | undefined; // is showConf editable?
   refs: {
-    container: React.RefObject<HTMLDivElement>; // ref to control scrolling
-    textarea: React.RefObject<HTMLTextAreaElement>; // ref to retreive conf edits
+    container: React.RefObject<HTMLDivElement | null>; // ref to control scrolling
+    textarea: React.RefObject<HTMLTextAreaElement | null>; // ref to retreive conf edits
   };
   buttonHandler: (e: React.SyntheticEvent) => void;
 } & XulProps;
@@ -173,7 +173,7 @@ export default function Modinfo({ showConf = '', ...props }: ModinfoProps) {
 
   return (
     <div {...htmlAttribs('modinfo', props)} ref={container}>
-      <div ref={loadingRef as React.RefObject<HTMLDivElement>}>
+      <div ref={loadingRef as React.RefObject<HTMLDivElement | null>}>
         {showLinkList &&
           [
             'Biblical Texts',

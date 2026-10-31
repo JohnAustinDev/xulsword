@@ -93,11 +93,11 @@ export default class BMManagerWin
 
   printableItem: typeof H.printableItem;
 
-  tableCompRef: React.RefObject<BPTable>;
+  tableCompRef: React.RefObject<BPTable | null>;
 
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLElement>;
+  loadingRef: React.RefObject<HTMLElement | null>;
 
   destroy: (() => void)[];
 

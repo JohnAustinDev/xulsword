@@ -55,7 +55,7 @@ export default class CopyPassageWin
 {
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
   constructor(props: CopyPassageProps) {
     super(props);

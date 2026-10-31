@@ -1,4 +1,3 @@
-import React from 'react';
 import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import log from '../../log.ts';

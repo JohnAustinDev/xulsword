@@ -1,4 +1,3 @@
-import React from 'react';
 import { noAutoSearchIndex } from '../../../common.ts';
 import { GE as G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';

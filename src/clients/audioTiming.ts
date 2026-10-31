@@ -169,7 +169,7 @@ function doHighlight(
 
 export function onTimeUpdate(
   audio: AudioPlayerType,
-  audioDOM: React.RefObject<HTMLAudioElement>,
+  audioDOM: React.RefObject<HTMLAudioElement | null>,
   xulswordState: React.Component<any, XulswordState>['setState'],
 ) {
   const { file, tracking } = audio;

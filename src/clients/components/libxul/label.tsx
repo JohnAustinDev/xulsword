@@ -1,4 +1,3 @@
-import React from 'react';
 import { htmlAttribs } from './xul.tsx';
 import './label.css';
 

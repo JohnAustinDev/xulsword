@@ -46,7 +46,7 @@ class Tabs
 {
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
   resizeObserver: ResizeObserver;
 

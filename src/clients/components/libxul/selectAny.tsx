@@ -57,7 +57,7 @@ export default class SelectAny
 {
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
   constructor(props: SelectAnyProps) {
     super(props);
@@ -164,7 +164,7 @@ export default class SelectAny
     if (!location) return null;
     const module = getModuleOfObject(location) || '';
 
-    let select: JSX.Element;
+    let select: React.JSX.Element;
     if ('v11n' in location) {
       select = (
         <SelectVK

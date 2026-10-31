@@ -15,8 +15,6 @@ export default (api) => {
         : [
             // production
             '@babel/plugin-transform-react-constant-elements',
-            '@babel/plugin-transform-react-inline-elements',
-            'babel-plugin-transform-react-remove-prop-types',
           ]),
     ],
   };

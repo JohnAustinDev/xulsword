@@ -88,7 +88,7 @@ export default class PrintPassage
   extends React.Component<PrintPassageProps, PrintPassageState>
   implements RenderPromiseComponent
 {
-  pagebuttons: React.RefObject<HTMLDivElement>;
+  pagebuttons: React.RefObject<HTMLDivElement | null>;
 
   handler: typeof handlerH;
 
@@ -96,7 +96,7 @@ export default class PrintPassage
 
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
   componentInstanceID: string;
 

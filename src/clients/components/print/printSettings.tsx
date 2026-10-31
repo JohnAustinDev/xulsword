@@ -155,19 +155,19 @@ export default class PrintSettings extends React.Component<
   PrintSettingsProps,
   PrintSettingsState
 > {
-  iframe: React.RefObject<HTMLIFrameElement>;
+  iframe: React.RefObject<HTMLIFrameElement | null>;
 
   selectRefs: {
     margins: {
-      top: React.RefObject<HTMLInputElement>;
-      right: React.RefObject<HTMLInputElement>;
-      bottom: React.RefObject<HTMLInputElement>;
-      left: React.RefObject<HTMLInputElement>;
+      top: React.RefObject<HTMLInputElement | null>;
+      right: React.RefObject<HTMLInputElement | null>;
+      bottom: React.RefObject<HTMLInputElement | null>;
+      left: React.RefObject<HTMLInputElement | null>;
     };
-    scale: React.RefObject<HTMLInputElement>;
+    scale: React.RefObject<HTMLInputElement | null>;
   };
 
-  pagebuttons: React.RefObject<HTMLDivElement>;
+  pagebuttons: React.RefObject<HTMLDivElement | null>;
 
   pageScrollW: number;
 

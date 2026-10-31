@@ -37,7 +37,7 @@ export default function AudioPlayer(
     audioHandler: (e: React.SyntheticEvent<any>) => void;
     xulswordState: React.Component<any, XulswordState>['setState'];
   } & XulProps,
-): JSX.Element {
+): React.JSX.Element {
   const { audio, renderPromise, audioHandler, xulswordState } = props;
   const { file, defaults, tracking } = audio;
   const { swordModule } = file ?? {};
@@ -103,7 +103,7 @@ export default function AudioPlayer(
     } as AudioPlayerFileVK | AudioPlayerFileGB,
     renderPromise,
   );
-  const audioDOM = createRef() as React.RefObject<HTMLAudioElement>;
+  const audioDOM = createRef() as React.RefObject<HTMLAudioElement | null>;
 
   const trackingIsOn =
     typeof tracking === 'undefined'

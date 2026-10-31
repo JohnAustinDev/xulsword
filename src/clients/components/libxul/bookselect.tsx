@@ -48,7 +48,7 @@ export default class Bookselect extends React.Component<
   BookselectProps,
   BookselectState
 > {
-  textInput: React.RefObject<HTMLInputElement>;
+  textInput: React.RefObject<HTMLInputElement | null>;
 
   parser: RefParser;
 

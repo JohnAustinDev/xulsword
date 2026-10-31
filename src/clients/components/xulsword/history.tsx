@@ -4,7 +4,6 @@
 // current v11n or nothing will be recorded. The history entry
 // will be recorded at the current historyIndex, and the history
 
-import React from 'react';
 import VerseKey from '../../../verseKey.ts';
 import { clone } from '../../../common.ts';
 import C from '../../../constant.ts';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { stringHash } from '../../../common.ts';
 import { Hbox } from './boxes.tsx';
 import Label from './label.tsx';

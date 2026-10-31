@@ -90,7 +90,7 @@ export default class SelectOR
 {
   renderPromise: RenderPromise;
 
-  loadingRef: React.RefObject<HTMLDivElement>;
+  loadingRef: React.RefObject<HTMLDivElement | null>;
 
   selectorValue: string[];
 
@@ -306,7 +306,7 @@ export default class SelectOR
     );
 
     // Generate all HTML select elements
-    const selects: JSX.Element[] = [];
+    const selects: React.JSX.Element[] = [];
 
     // Module selector
     selects.push(

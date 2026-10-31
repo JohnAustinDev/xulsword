@@ -1,4 +1,3 @@
-import React from 'react';
 import { keep, drop } from '../../../common.ts';
 import { addClass } from './xul.tsx';
 import Label from './label.tsx';

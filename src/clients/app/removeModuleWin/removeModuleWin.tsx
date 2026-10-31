@@ -1,4 +1,3 @@
-import React from 'react';
 import renderToRoot from '../../controller.tsx';
 import log from '../../log.ts';
 import ModuleManager, {
