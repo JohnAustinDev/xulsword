@@ -398,8 +398,8 @@ rather than BluePrintJS's lighter dark grays. */
   color: #215db0;
 }
 
-/* Module manager */
-.checkbox-column.disabled {
+/* Module manager: must outrank BluePrintJS's dark table cell text color. */
+#root .bp6-table-cell.checkbox-column.disabled {
   color: var(--dk-text-faint);
 }
 

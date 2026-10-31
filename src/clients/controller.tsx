@@ -20,6 +20,7 @@ import {
   getPortalContainer,
   getRootElement,
   getRootNode,
+  ignoreMouseRightClick,
   setRootNode,
 } from './rootNode.ts';
 import log from './log.ts';
@@ -682,6 +683,7 @@ export default async function renderToRoot(
       rootElement.classList.add('ownsDocument');
   }
 
+  ignoreMouseRightClick(rootElement as HTMLElement);
   const root = createRoot(rootElement as HTMLElement);
 
   root.render(

@@ -9,7 +9,7 @@ import {
 import C from '../../constant.ts';
 import { cachePreload } from '../common.ts';
 import log from '../log.ts';
-import { setRootNode } from '../rootNode.ts';
+import { ignoreMouseRightClick, setRootNode } from '../rootNode.ts';
 import Prefs from '../web-prefs.ts';
 import WidgetVK from './widgetVK.tsx';
 import WidgetOR from './widgetOR.tsx';
@@ -62,6 +62,7 @@ if (widgets.length) {
               defaultSettings,
             ) as ComponentData;
             const { component } = settings;
+            ignoreMouseRightClick(widget);
             switch (component) {
               case 'selectVK': {
                 createRoot(widget).render(

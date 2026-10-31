@@ -156,7 +156,7 @@ export default function AudioPlayer(
 
 // Record a download of the audio file for analytics. The player does not know
 // the file's media id, so the event gives the file's /audio API URL (its src).
-// Only an http(s) src can be such a URL (Electron's local audio files are 
+// Only an http(s) src can be such a URL (Electron's local audio files are
 // data: URLs, and Electron sends no analytics anyway).
 function recordDownload(
   file: AudioPlayerFileVK | AudioPlayerFileGB | null,

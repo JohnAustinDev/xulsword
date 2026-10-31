@@ -66,3 +66,22 @@ export default function insertStyle(style: HTMLElement) {
   if (styleParent) styleParent.appendChild(style);
   else pendingStyles.push(style);
 }
+
+// Stop pointerdown events that open the context menu from reaching any of
+// xulsword's handlers. Handlers act on pointerdown, but right-click (and
+// middle-click, and macOS ctrl+click) are not clicks. Call this on a React
+// root container before createRoot(), so this capture listener runs before
+// React's own listeners on the same element.
+export function ignoreMouseRightClick(container: HTMLElement) {
+  const isMac = /Mac/.test(navigator.platform);
+  container.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (e.pointerType !== 'mouse') return;
+      if (e.button !== 0 || (isMac && e.ctrlKey)) {
+        e.stopImmediatePropagation();
+      }
+    },
+    true,
+  );
+}
