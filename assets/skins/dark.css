@@ -154,6 +154,14 @@ main window's option buttons also get a tinted fill. */
 #root:not(.printing) .button.off:not(.disabled) .bp6-button:hover .bp6-icon {
   color: var(--dk-text-muted);
 }
+/* BluePrintJS 6.8.1 draws dark disabled buttons with 60% transparent text and
+no outline, so they almost vanish into the window. Give them the solid gray
+text of later BluePrintJS versions and a faint outline. */
+#root:not(.printing) .bp6-button:not([class*='bp6-intent-']):disabled,
+#root:not(.printing) .bp6-button:not([class*='bp6-intent-']).bp6-disabled {
+  color: #8f99a8;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
 
 /* Drag sizer bars: lighter than the surfaces around them, and brighter on
 hover and while dragging. */
