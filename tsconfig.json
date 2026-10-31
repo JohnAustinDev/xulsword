@@ -26,7 +26,10 @@
     "allowJs": true,
     "allowImportingTsExtensions": true,
     "emitDeclarationOnly": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    // TypeScript 6 checks side-effect imports by default, which fails for
+    // the CSS imports that webpack handles.
+    "noUncheckedSideEffectImports": false
   },
   "include": ["./src/**/*", "./scripts/**/*", "./libxulsword/**/*", "./*.mjs"]
 }

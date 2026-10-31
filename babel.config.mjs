@@ -4,7 +4,10 @@ export default (api) => {
   return {
     presets: [
       //'@babel/preset-env', --> this is set by webpack.config.mjs
-      '@babel/preset-typescript',
+      // Babel 8 defaults onlyRemoveTypeImports to true, which keeps imports
+      // of type-only names unless they use `import type`. This code base
+      // doesn't use verbatimModuleSyntax, so remove them as Babel 7 did.
+      ['@babel/preset-typescript', { onlyRemoveTypeImports: false }],
     ],
     plugins: [
       ...(development

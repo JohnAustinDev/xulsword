@@ -138,7 +138,7 @@ void TEIXHTMLXS::outHtmlTag(const char * t, SWBuf &o, MyUserDataXS *u) {
 
   if (keepTag) {o += t;}
 
-  delete(tcopy);
+  delete[] tcopy;
 }
 
 char TEIXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *module) {

@@ -141,7 +141,7 @@ void OSISXHTMLXS::outHtmlTag(const char * t, SWBuf &o, MyUserDataXS *u) {
 
   if (keepTag) {o += t;}
 
-  delete(tcopy);
+  delete[] tcopy;
 }
 
 char OSISXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *module) {

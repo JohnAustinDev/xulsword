@@ -71,45 +71,50 @@ function showBanner(msg) {
 }
 
 export default function drupalSettingsProxy(app) {
-  app.get('/drupalSettings/:target(api|ibt).js', async (req, res) => {
-    res.type('application/javascript');
-    res.set('Cache-Control', 'no-store');
-    const { search } = new URL(req.originalUrl, 'http://localhost');
-    const ibt = req.params.target === 'ibt' && WEBAPP_IBT_URL;
-    if (!search && !ibt) {
-      res.send('// No query parameters, so defaultSettings.ts will be used.\n');
-      return;
-    }
-    const url = `${ibt ? WEBAPP_IBT_URL : WEBAPP_API_URL}${search}`;
-    try {
-      const { statusCode, body } = await get(url);
-      const m = body.match(
-        /<script type="application\/json" data-drupal-selector="drupal-settings-json">([\s\S]*?)<\/script>/,
-      );
-      if (statusCode !== 200 || !m) {
-        throw new Error(
-          `HTTP ${statusCode}${m ? '' : ', no drupalSettings in response'}`,
+  app.get(
+    ['/drupalSettings/api.js', '/drupalSettings/ibt.js'],
+    async (req, res) => {
+      res.type('application/javascript');
+      res.set('Cache-Control', 'no-store');
+      const { search } = new URL(req.originalUrl, 'http://localhost');
+      const ibt = req.path === '/drupalSettings/ibt.js' && WEBAPP_IBT_URL;
+      if (!search && !ibt) {
+        res.send(
+          '// No query parameters, so defaultSettings.ts will be used.\n',
+        );
+        return;
+      }
+      const url = `${ibt ? WEBAPP_IBT_URL : WEBAPP_API_URL}${search}`;
+      try {
+        const { statusCode, body } = await get(url);
+        const m = body.match(
+          /<script type="application\/json" data-drupal-selector="drupal-settings-json">([\s\S]*?)<\/script>/,
+        );
+        if (statusCode !== 200 || !m) {
+          throw new Error(
+            `HTTP ${statusCode}${m ? '' : ', no drupalSettings in response'}`,
+          );
+        }
+        JSON.parse(m[1]);
+        res.send(
+          `window.drupalSettings = ${m[1]};\n` +
+            `console.log('drupalSettings from', ${JSON.stringify(url)}, window.drupalSettings);\n`,
+        );
+      } catch (er) {
+        // A refused connection to localhost is an AggregateError with an empty
+        // message, so fall back to its code.
+        const msg =
+          `drupalSettings request failed: ${url}: ` +
+          `${er.message || er.code || er}. The web-app will use ` +
+          'defaultSettings.ts, so query parameters such as storeid are ignored.';
+        console.error(msg);
+        // Also show the failure on the page, since the web-app still loads and
+        // the fallback is otherwise easy to miss.
+        res.send(
+          `console.error(${JSON.stringify(msg)});\n` +
+            `(${showBanner.toString()})(${JSON.stringify(msg)});\n`,
         );
       }
-      JSON.parse(m[1]);
-      res.send(
-        `window.drupalSettings = ${m[1]};\n` +
-          `console.log('drupalSettings from', ${JSON.stringify(url)}, window.drupalSettings);\n`,
-      );
-    } catch (er) {
-      // A refused connection to localhost is an AggregateError with an empty
-      // message, so fall back to its code.
-      const msg =
-        `drupalSettings request failed: ${url}: ` +
-        `${er.message || er.code || er}. The web-app will use ` +
-        'defaultSettings.ts, so query parameters such as storeid are ignored.';
-      console.error(msg);
-      // Also show the failure on the page, since the web-app still loads and
-      // the fallback is otherwise easy to miss.
-      res.send(
-        `console.error(${JSON.stringify(msg)});\n` +
-          `(${showBanner.toString()})(${JSON.stringify(msg)});\n`,
-      );
-    }
-  });
+    },
+  );
 }

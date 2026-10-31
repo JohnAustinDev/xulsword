@@ -110,7 +110,7 @@ const defaultEnvironment = {
   WEBAPP_MAX_CACHE_RAMMB: 250,
   WEBAPP_SEARCH_BAN: 2000,
   LOGLEVEL: 'info',
-  NODE_VERSION: '24.18.0',
+  NODE_VERSION: '24.22.2',
   CrashReporterURL: '',
 };
 const env = (k) =>
@@ -181,20 +181,12 @@ export default function (opts) {
   // Return a config object for a build. Each --env build in the command line
   // will use this function to generate a config object to pass to Webpack.
   function getConfig(build) {
-    const mimeTypes = {
-      eot: 'application/vnd.ms-fontobject',
-      gif: 'image/gif',
-      ico: 'image/vnd.microsoft.icon',
-      jpg: 'image/jpeg',
-      otf: 'font/otf',
-      png: 'image/png',
-      svg: 'image/svg+xml',
-      ttf: 'font/ttf',
-      woff: 'application/font-woff',
-      woff2: 'application/font-woff',
-    };
+    const publicPath = ['webapp', 'widgets', 'library'].includes(build)
+      ? path.join(env('WEBAPP_PUBLIC_DIST'), build, path.sep)
+      : './';
 
-    const useFileLoader = [
+    // Files of these types are output as separate files.
+    const assetFiles = [
       'eot',
       'gif',
       'ico',
@@ -206,7 +198,8 @@ export default function (opts) {
       'woff2',
     ];
 
-    const useUrlLoader = ['png'];
+    // Files of these types are inlined as data: URLs.
+    const assetInline = ['png'];
 
     // The web-app renders into a shadow root (see renderToRoot() in
     // controller.tsx), which stylesheets linked from the document <head> can't
@@ -230,6 +223,14 @@ export default function (opts) {
       ...(development ? { devtool: 'source-map' } : {}),
 
       mode: development ? 'development' : 'production',
+
+      // rate-limiter-flexible loads its database stores with import() of a
+      // variable, which webpack warns about. Only RateLimiterMemory is used.
+      ignoreWarnings: [
+        {
+          module: /rate-limiter-flexible[\\/]lib[\\/]RateLimiterDrizzle\.js$/,
+        },
+      ],
 
       target: builds[build][0],
 
@@ -339,9 +340,7 @@ export default function (opts) {
           widgets: path.join(webappDistPath, 'widgets'),
           library: path.join(webappDistPath, 'library'),
         }[build],
-        publicPath: ['webapp', 'widgets', 'library'].includes(build)
-          ? path.join(env('WEBAPP_PUBLIC_DIST'), build, path.sep)
-          : './',
+        publicPath,
         ...(build === 'library'
           ? { library: 'xulsword', globalObject: 'globalThis' }
           : {}),
@@ -383,7 +382,17 @@ export default function (opts) {
                         },
                   ],
                   ['appClients', 'webapp', 'widgets'].includes(build)
-                    ? ['@babel/preset-react', { development }]
+                    ? [
+                        '@babel/preset-react',
+                        // Babel 8 defaults to the automatic runtime and drops
+                        // __self/__source, so keep Babel 7's behavior: the
+                        // classic runtime matches tsconfig's "jsx": "react".
+                        {
+                          development,
+                          runtime: 'classic',
+                          developmentSourceSelf: development,
+                        },
+                      ]
                     : null,
                 ].filter(Boolean),
 
@@ -420,20 +429,16 @@ export default function (opts) {
               },
             ],
           },
-          ...useFileLoader.map((ext) => {
-            return { test: new RegExp(`\\.${ext}$`), use: 'file-loader' };
-          }),
-          ...useUrlLoader.map((ext) => {
-            return {
-              test: new RegExp(`\\.${ext}$`),
-              use: {
-                loader: 'url-loader',
-                options: {
-                  ...(ext in mimeTypes ? { mimetype: mimeTypes[ext] } : {}),
-                },
-              },
-            };
-          }),
+          // webpack's asset modules replace file-loader and url-loader, which
+          // don't work with css-loader 6+.
+          {
+            test: new RegExp(`\\.(${assetFiles.join('|')})$`),
+            type: 'asset/resource',
+          },
+          {
+            test: new RegExp(`\\.(${assetInline.join('|')})$`),
+            type: 'asset/inline',
+          },
         ],
       },
 
@@ -502,8 +507,11 @@ export default function (opts) {
           ),
         ),
 
-        // Note: you can't analyze a preload file.
-        build !== 'preload'
+        // Note: you can't analyze a preload file. Nor dev-server builds: their
+        // bundles are only in memory, which the analyzer only detects for
+        // dev-server v3's file system, so it warns it can't read them.
+        build !== 'preload' &&
+        !(development && ['appClients', 'webapp', 'widgets'].includes(build))
           ? new BundleAnalyzerPlugin({
               analyzerMode: 'static',
               openAnalyzer: false,
@@ -555,12 +563,36 @@ export default function (opts) {
         ? {
             devServer: {
               port: devServerPort,
-              serveIndex: true,
               hot: true,
-              publicPath: '/', // required for app development server
+              // Serve the project root, as dev-server v3 did, so that files
+              // like src/clients/webapp/test.html can be loaded. Don't watch
+              // it (v3 didn't), since that would include node_modules.
+              static: { directory: rootPath, serveIndex: true, watch: false },
+              devMiddleware: { publicPath: '/' }, // required for app development server
               headers: { 'Access-Control-Allow-Origin': '*' },
-              before(app) {
-                if (build === 'webapp') drupalSettingsProxy(app);
+              // The browser error overlay was off by default in dev-server v3.
+              client: { overlay: false },
+              setupMiddlewares(middlewares, devServer) {
+                // Dev-server v3 served the webapp and widgets bundles both at
+                // '/' and at their publicPath (like '/webapp/'), and their
+                // html refers to the latter. Dev-server 6 serves only '/',
+                // so strip the publicPath from requests.
+                if (publicPath.startsWith('/') && publicPath !== '/') {
+                  middlewares.unshift({
+                    name: 'strip-public-path',
+                    middleware: (req, _res, next) => {
+                      if (req.url.startsWith(publicPath))
+                        req.url = req.url.slice(publicPath.length - 1);
+                      next();
+                    },
+                  });
+                }
+                if (build === 'webapp') drupalSettingsProxy(devServer.app);
+                return middlewares;
+              },
+              // Start the server only once the dev-server is listening, or the
+              // Electron app's first windows fail to load.
+              onListening() {
                 const start =
                   build === 'appClients' ? 'start:appSrv' : 'start:webappSrv';
                 console.log(
@@ -604,7 +636,7 @@ export default function (opts) {
                       .join('\n'),
                   );
                 }
-                spawn('yarn', [start], {
+                spawn(`yarn ${start}`, {
                   shell: true,
                   env: process.env,
                   stdio: 'inherit',

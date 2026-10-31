@@ -7,7 +7,7 @@ import paths from './projectPaths.mjs';
 // Recompress the universal DMG with lzma (ULMO). That makes it about 20%
 // smaller than electron-builder's default (UDZO), and electron-builder 26
 // does not accept ULMO as its dmg.format. ULMO needs macOS 10.15 or later,
-// and Electron 37 already needs macOS 11. This only runs on macOS, since it
+// and Electron 43 already needs macOS 12. This only runs on macOS, since it
 // uses hdiutil.
 
 if (process.platform !== 'darwin')

@@ -1023,8 +1023,8 @@ export async function getDir(
 // { header, content } objects.
 export async function untargz(
   input: Buffer | string,
-): Promise<Array<{ header: TAR.Headers; content: Buffer }>> {
-  const result: Array<{ header: TAR.Headers; content: Buffer }> = [];
+): Promise<Array<{ header: TAR.Header; content: Buffer }>> {
+  const result: Array<{ header: TAR.Header; content: Buffer }> = [];
   let stream: Stream | null = null;
   if (typeof input === 'string') {
     const file = new LocalFile(input);
@@ -1038,22 +1038,21 @@ export async function untargz(
     const extract = TAR.extract();
     stream.pipe(GUNZIP()).pipe(extract);
     return await new Promise((resolve, reject) => {
-      extract.on(
-        'entry',
-        (header: TAR.Headers, stream2: Readable, next: () => void) => {
-          streamToBuffer(stream2)
-            .then((content) => {
-              return content && result.push({ header, content });
-            })
-            .catch((er) => {
-              reject(er);
-            });
-          stream2.on('end', () => {
-            next();
+      extract.on('entry', (header, stream2, next) => {
+        // tar-stream entries are streamx streams, which have the Node.js
+        // stream methods used here, but not Node's stream type.
+        streamToBuffer(stream2 as unknown as NodeJS.ReadableStream)
+          .then((content) => {
+            return content && result.push({ header, content });
+          })
+          .catch((er) => {
+            reject(er);
           });
-          stream2.resume(); // just auto drain the stream
-        },
-      );
+        stream2.on('end', () => {
+          next();
+        });
+        stream2.resume(); // just auto drain the stream
+      });
       extract.on('finish', () => {
         resolve(result);
       });

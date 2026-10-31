@@ -40,4 +40,4 @@ not dead
 # appClients (the Electron windows) only ever run in the bundled Chromium, so
 # they're free to use anything that ships with it.
 [electron]
-electron >= 37.0
+electron >= 43.0
