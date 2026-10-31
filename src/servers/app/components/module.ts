@@ -907,8 +907,7 @@ function singleAudioEntry(download: HTTPDownload): string | null {
     const remote =
       data.audioModule && DiskCache.has(data.audioModule, C.RemoteAudioStore)
         ? (DiskCache.read(data.audioModule, C.RemoteAudioStore) as
-            | RemoteAudioType
-            | undefined)
+            RemoteAudioType | undefined)
         : undefined;
     const ac = remote?.AudioChapters;
     if (ac) {

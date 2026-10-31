@@ -338,7 +338,7 @@ export default function contextMenu(
             label: i18n.t('menu.edit.paste'),
             enabled: Boolean(
               G.Prefs.getComplexValue('bookmarkManager.cut') ||
-                G.Prefs.getComplexValue('bookmarkManager.copy'),
+              G.Prefs.getComplexValue('bookmarkManager.copy'),
             ),
             click: () => {
               const cut = G.Prefs.getComplexValue(

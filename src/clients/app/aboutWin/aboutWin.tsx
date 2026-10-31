@@ -101,9 +101,7 @@ export default class AboutWin
           case 'showModules':
           case 'showLog': {
             const p = target.id as
-              | 'showModules'
-              | 'showContributors'
-              | 'showLog';
+              'showModules' | 'showContributors' | 'showLog';
             const logfile =
               p === 'showLog' && !this.state.showLog
                 ? G.readLogFile()

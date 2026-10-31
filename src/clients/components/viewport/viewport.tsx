@@ -448,8 +448,7 @@ export default class Viewport
     //   - the first (default) ilModuleOption.
     // It is visible but inactive otherwise.
     const interlinear = G.Prefs.getComplexValue('global.interlinear') as
-      | typeof S.prefs.global.interlinear
-      | undefined;
+      typeof S.prefs.global.interlinear | undefined;
     const bookGroup =
       location?.book && location.book in Book
         ? Book[location.book].bookGroup

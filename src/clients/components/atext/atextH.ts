@@ -326,8 +326,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           case 'image-viewport': {
             okay = true;
             const img = element.getElementsByTagName('img')[0] as
-              | HTMLImageElement
-              | undefined;
+              HTMLImageElement | undefined;
             if (
               img &&
               !img.style.cursor &&
@@ -466,8 +465,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
       const origselect = ofClass(['origselect'], e.target);
       if (origselect) {
         const s = origselect.element.firstChild as
-          | HTMLSelectElement
-          | undefined;
+          HTMLSelectElement | undefined;
         const module = s?.value;
         if (module) {
           // Remember the user's choice for the current testament. Choosing the
@@ -480,8 +478,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
           if (bookGroup === 'ot' || bookGroup === 'nt') {
             const interlinear = {
               ...(G.Prefs.getComplexValue('global.interlinear') as
-                | typeof S.prefs.global.interlinear
-                | undefined),
+                typeof S.prefs.global.interlinear | undefined),
             };
             if (module === ilModuleOption[0]) delete interlinear[bookGroup];
             else interlinear[bookGroup] = module;
@@ -498,8 +495,7 @@ export default function handler(this: Atext, e: React.SyntheticEvent | Event) {
       const variantselect = ofClass(['variantselect'], e.target);
       if (variantselect) {
         const s = variantselect.element.firstChild as
-          | HTMLSelectElement
-          | undefined;
+          HTMLSelectElement | undefined;
         const { module, ilModule } = this.props;
         const variantModule = ilModule || module;
         if (s && variantModule) {

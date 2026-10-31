@@ -171,7 +171,7 @@ export function getPanelChange<T extends PanelChangeState>(
   const modulesUpdated: string[] = [];
   let panelIndex = 0;
   let moduleIndex = 0;
-  for (; moduleIndex < modules.length && panelIndex < panels.length; ) {
+  for (; moduleIndex < modules.length && panelIndex < panels.length;) {
     if (!modules[moduleIndex]) {
       moduleIndex += 1;
       continue;

@@ -73,9 +73,7 @@ const notStatePref = {
   searchtype: 'SearchExactText' as SearchType['type'], // type of search to do
   scoperadio: 'all' as 'all' | 'book' | 'ot' | 'nt' | 'other', // scope radio value
   scopeselect: 'gospel' as
-    | BookGroupType
-    | (typeof ScopeSelectOptions)[number]
-    | string, // scope select value
+    BookGroupType | (typeof ScopeSelectOptions)[number] | string, // scope select value
   displayModule: '' as string, // current module for displaying search results
   results: null as SearchResult | null, // count and page-result are returned at different times
   pageindex: 0 as number, // first results index to show

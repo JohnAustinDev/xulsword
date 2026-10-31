@@ -612,8 +612,7 @@ const S = {
       // The web-app's empty default is replaced with a size chosen from the
       // browser's locale (see localePageSize() in printSettings.tsx).
       pageSize: (Build.isWebApp ? '' : 'A4') as
-        | (typeof paperSizes)[number]['type']
-        | '',
+        (typeof paperSizes)[number]['type'] | '',
       twoColumns: false as boolean,
       scale: 100 as number,
       margins: {

@@ -40,9 +40,7 @@ export type WidgetMenulistData = {
   data: {
     urlroot: string;
     items: (
-      | { option: FileItem | string }
-      | { optgroup: string }
-      | { hr: string }
+      { option: FileItem | string } | { optgroup: string } | { hr: string }
     )[];
   };
   onChange?: (...args: any[]) => void;

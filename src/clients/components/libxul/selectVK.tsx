@@ -71,8 +71,7 @@ type SelectVKState = RenderPromiseState & {
 };
 
 export type SelectVKChangeEvents =
-  | React.ChangeEvent<HTMLInputElement>
-  | React.ChangeEvent<HTMLSelectElement>;
+  React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLSelectElement>;
 
 // React VerseKey Select
 export default class SelectVK

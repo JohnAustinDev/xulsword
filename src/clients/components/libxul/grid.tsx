@@ -130,11 +130,7 @@ type RowColProps = {
 // XUL column
 type ColumnProps = RowColProps & {
   width?:
-    | string
-    | 'auto'
-    | 'max-content'
-    | 'min-content'
-    | 'minmax(<min>, <max>)';
+    string | 'auto' | 'max-content' | 'min-content' | 'minmax(<min>, <max>)';
 };
 function Column({ span = 1, width = 'auto', ...props }: ColumnProps) {
   return <>{props.children}</>;
@@ -144,11 +140,7 @@ Column.displayName = 'Column';
 // XUL row
 type RowProps = RowColProps & {
   height?:
-    | string
-    | 'auto'
-    | 'max-content'
-    | 'min-content'
-    | 'minmax(<min>, <max>)';
+    string | 'auto' | 'max-content' | 'min-content' | 'minmax(<min>, <max>)';
 };
 function Row({ span = 1, height = 'auto', ...props }: RowProps) {
   return <>{props.children}</>;

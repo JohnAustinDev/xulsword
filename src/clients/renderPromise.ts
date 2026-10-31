@@ -189,9 +189,7 @@ export default class RenderPromise {
   // runtime context requires a promise.
   constructor(
     componentOrCallback:
-      | (React.Component & RenderPromiseComponent)
-      | (() => void)
-      | null,
+      (React.Component & RenderPromiseComponent) | (() => void) | null,
     loadingRef?: React.RefObject<HTMLElement> | null,
     loadingSelector?: string,
   ) {

@@ -214,8 +214,7 @@ export const G: GTypeMain = {
     s: S,
     ops: {
       renderers?:
-        | Partial<WindowDescriptorType>
-        | Array<Partial<WindowDescriptorType>>;
+        Partial<WindowDescriptorType> | Array<Partial<WindowDescriptorType>>;
       main?: boolean;
     },
     ...args: Parameters<SubscriptionType['publish'][S]>

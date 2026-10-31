@@ -368,8 +368,7 @@ export function publishSubscription<
   subscription: S,
   options: {
     renderers?:
-      | Partial<WindowDescriptorType>
-      | Array<Partial<WindowDescriptorType>>;
+      Partial<WindowDescriptorType> | Array<Partial<WindowDescriptorType>>;
     main?: boolean;
   },
   ...args: Parameters<SubscriptionType['publish'][S]>

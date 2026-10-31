@@ -1018,8 +1018,7 @@ export function remoteAudioConfigs(module: string): RemoteAudioType[] {
     codes.forEach((code) => {
       if (!remote.some((r) => r.module === code)) {
         const r = GT.DiskCache.read(code, C.RemoteAudioStore) as
-          | RemoteAudioType
-          | undefined;
+          RemoteAudioType | undefined;
         if (r) remote.push(r);
       }
     });

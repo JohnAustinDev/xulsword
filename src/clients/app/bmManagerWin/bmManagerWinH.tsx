@@ -162,11 +162,9 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
   if (button) {
     let titleKey = 'menu.edit.properties';
     let bmPropertiesState:
-      | Parameters<GType['Commands']['openBookmarkProperties']>[1]
-      | undefined;
+      Parameters<GType['Commands']['openBookmarkProperties']>[1] | undefined;
     let newitem:
-      | Parameters<GType['Commands']['openBookmarkProperties']>[2]
-      | undefined;
+      Parameters<GType['Commands']['openBookmarkProperties']>[2] | undefined;
     switch (button.element.id.split('.').pop()) {
       case 'newFolder': {
         titleKey = 'menu.folder.add';

@@ -61,8 +61,7 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
             updateAnalyticsInfo(selection);
             const comParent = document.getElementById(compid)?.parentElement;
             const player = comParent?.querySelector('audio') as
-              | HTMLAudioElement
-              | undefined;
+              HTMLAudioElement | undefined;
             if (player && data) {
               const da = data[parent].find((x) => x[0] === chapter);
               if (da) {

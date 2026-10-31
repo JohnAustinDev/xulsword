@@ -40,11 +40,7 @@ export const xulCaptureEvents = [
 export type XulProps = {
   align?: 'start' | 'center' | 'end' | 'baseline' | 'stretch' | undefined;
   children?:
-    | React.ReactNode
-    | React.ReactNode[]
-    | React.ReactPortal
-    | undefined
-    | null;
+    React.ReactNode | React.ReactNode[] | React.ReactPortal | undefined | null;
   className?: string | undefined;
   dir?: 'ltr' | 'rtl' | 'auto' | undefined;
   xuldir?: 'reverse' | undefined;

@@ -1179,10 +1179,7 @@ export function xulswordLocation(
 // or return null if there is none.
 export function getModuleOfObject(
   bookmarkOrLocation:
-    | BookmarkItemType
-    | LocationTypes[TabTypes]
-    | SelectORMType
-    | SelectVKType,
+    BookmarkItemType | LocationTypes[TabTypes] | SelectORMType | SelectVKType,
 ): string | null {
   let location: LocationTypes[TabTypes] | SelectORMType | SelectVKType;
   if ('type' in bookmarkOrLocation) {
@@ -1933,10 +1930,7 @@ export function modulesOfAudioCode(
 // true if the selection could be converted, or false otherwise.
 function IBTtemplateURL(
   selection:
-    | SelectVKType
-    | SelectORMType
-    | AudioPlayerFileVK
-    | AudioPlayerFileGB,
+    SelectVKType | SelectORMType | AudioPlayerFileVK | AudioPlayerFileGB,
   phs: {
     XSKEY: string;
     XSPARENT: string;
@@ -2046,10 +2040,7 @@ function IBTtemplateURL(
 export function resolveTemplateURL(
   url: string,
   selection:
-    | SelectVKType
-    | SelectORMType
-    | AudioPlayerFileVK
-    | AudioPlayerFileGB,
+    SelectVKType | SelectORMType | AudioPlayerFileVK | AudioPlayerFileGB,
   // 'auto' becomes 'none' for one file, or 'zip' for multiple files.
   XSPACKAGE: 'none' | 'zip' | 'auto',
   XSREDIRECT: '0' | '1', // redirect to the file's absolute url?

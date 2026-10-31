@@ -20,9 +20,7 @@ import type { PrefCallbackType } from '../../prefs.ts';
 import VerseKey from '../../verseKey.ts';
 
 type BMkeys =
-  | keyof BookmarkItem
-  | keyof BookmarkType
-  | keyof BookmarkFolderType;
+  keyof BookmarkItem | keyof BookmarkType | keyof BookmarkFolderType;
 
 type StringRegex = [JSTypes, RegExp];
 

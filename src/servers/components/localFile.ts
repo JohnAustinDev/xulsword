@@ -188,7 +188,11 @@ export default class LocalFile {
     if (options && typeof options === 'object' && 'encoding' in options) {
       options.encoding = null;
     }
-    return fs.readFileSync(this.path, options) as Buffer;
+    // encoding was forced to null above, so a Buffer is returned.
+    return fs.readFileSync(
+      this.path,
+      options as fs.ReadFileSyncOptionsWithBufferEncoding | undefined,
+    );
   }
 
   rename(newName: string) {

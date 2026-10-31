@@ -233,7 +233,7 @@ export class Analytics {
     let info = {} as Partial<AnalyticsInfo>;
     let el: HTMLElement | null = element;
     findTypeBlock: {
-      for (; el; ) {
+      for (; el;) {
         switch (el.localName) {
           case 'a': {
             info = {

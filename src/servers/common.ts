@@ -1169,7 +1169,7 @@ export function getAllDictionaryKeyList(module: string): string[] {
             a = aa.replace(re, '');
             b = bb.replace(re, '');
           });
-          for (; a.length && b.length; ) {
+          for (; a.length && b.length;) {
             let x;
             let am;
             let bm;

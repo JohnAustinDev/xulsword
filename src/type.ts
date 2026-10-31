@@ -172,11 +172,7 @@ export type WindowArgType =
   | 'children';
 
 export type ModalType =
-  | 'off'
-  | 'darkened'
-  | 'dropshadow'
-  | 'outlined'
-  | 'transparent';
+  'off' | 'darkened' | 'dropshadow' | 'outlined' | 'transparent';
 
 // to other windows.
 export type ScrollType = {
@@ -213,9 +209,7 @@ export type SwordFilterType =
 
 // Values of the SWORD 'Textual Variants' filter.
 export type TextualVariantType =
-  | 'Primary Reading'
-  | 'Secondary Reading'
-  | 'All Readings';
+  'Primary Reading' | 'Secondary Reading' | 'All Readings';
 
 export type SwordFilterValueType = 'Off' | 'On' | TextualVariantType;
 
@@ -243,10 +237,7 @@ export type SearchType = {
   module: string;
   searchtext: string;
   type:
-    | 'SearchAnyWord'
-    | 'SearchSimilar'
-    | 'SearchExactText'
-    | 'SearchAdvanced';
+    'SearchAnyWord' | 'SearchSimilar' | 'SearchExactText' | 'SearchAdvanced';
   scope?: string;
 };
 
@@ -363,17 +354,19 @@ export type OSISBookType =
   (typeof C.SupportedBooks)[keyof typeof C.SupportedBooks][number];
 
 export type ConfigType = {
-  [key in
-    | 'direction'
-    | 'fontFamily'
-    | 'fontSizeAdjust'
-    | 'lineHeight'
-    | 'fontSize'
-    | 'color'
-    | 'background'
-    | 'AssociatedModules'
-    | 'AssociatedLocale'
-    | 'PreferredCSSXHTML']: string | null;
+  [
+    key in
+      | 'direction'
+      | 'fontFamily'
+      | 'fontSizeAdjust'
+      | 'lineHeight'
+      | 'fontSize'
+      | 'color'
+      | 'background'
+      | 'AssociatedModules'
+      | 'AssociatedLocale'
+      | 'PreferredCSSXHTML'
+  ]: string | null;
 };
 
 export type FontFaceType = {
@@ -671,19 +664,14 @@ export type ZipEntryType = {
 };
 
 export type ResetType =
-  | 'all'
-  | 'cache-reset'
-  | 'component-reset'
-  | 'dynamic-stylesheet-reset';
+  'all' | 'cache-reset' | 'component-reset' | 'dynamic-stylesheet-reset';
 
 export type PrefStoreType = 'prefs' | 'bookmarks' | 'style' | 'windows';
 
 export type PrefPrimative = number | string | boolean | null | undefined;
 export type PrefObject = Record<string, PrefValue>;
 export type PrefValue =
-  | PrefPrimative
-  | { [k: string]: PrefValue }
-  | PrefValue[];
+  PrefPrimative | { [k: string]: PrefValue } | PrefValue[];
 export type PrefRoot = {
   [rootkey in keyof typeof S]: PrefObject;
 };
@@ -851,42 +839,46 @@ export type GTypeMain = GType & { Dirs: DirsMainType; i18n: typeof i18next };
 
 // Internet safe GI on clients require render-promise arguments:
 export type GIType = {
-  [name in keyof Pick<
-    GType,
-    | 'Tabs'
-    | 'Tab'
-    | 'BooksLocalizedAll'
-    | 'Config'
-    | 'ModuleConfs'
-    | 'AudioConfs'
-    | 'ProgramConfig'
-    | 'LocaleConfigs'
-    | 'ModuleConfigDefault'
-    | 'ModuleFonts'
-    | 'FeatureModules'
-    | 'BooksInVKModules'
-  >]: (a: GType[name], b: RenderPromise | null) => GType[name];
+  [
+    name in keyof Pick<
+      GType,
+      | 'Tabs'
+      | 'Tab'
+      | 'BooksLocalizedAll'
+      | 'Config'
+      | 'ModuleConfs'
+      | 'AudioConfs'
+      | 'ProgramConfig'
+      | 'LocaleConfigs'
+      | 'ModuleConfigDefault'
+      | 'ModuleFonts'
+      | 'FeatureModules'
+      | 'BooksInVKModules'
+    >
+  ]: (a: GType[name], b: RenderPromise | null) => GType[name];
 } & {
-  [name in keyof Pick<
-    GType,
-    | 'getBooks'
-    | 'getBook'
-    | 'getBooksLocalized'
-    | 'inlineFile'
-    | 'inlineAudioFile'
-    | 'getModuleConf'
-    | 'getAudioConf'
-    | 'getSystemFonts'
-    | 'getBooksInVKModule'
-    | 'getBkChsInV11n'
-    | 'getLocaleDigits'
-    | 'callBatch'
-    | 'callBatchSync'
-    | 'getAllDictionaryKeyList'
-    | 'genBookTreeNodes'
-    | 'locationVKText'
-    | 'getLanguageName'
-  >]: (...args: RenderPromiseArgs<GType[name]>) => ReturnType<GType[name]>;
+  [
+    name in keyof Pick<
+      GType,
+      | 'getBooks'
+      | 'getBook'
+      | 'getBooksLocalized'
+      | 'inlineFile'
+      | 'inlineAudioFile'
+      | 'getModuleConf'
+      | 'getAudioConf'
+      | 'getSystemFonts'
+      | 'getBooksInVKModule'
+      | 'getBkChsInV11n'
+      | 'getLocaleDigits'
+      | 'callBatch'
+      | 'callBatchSync'
+      | 'getAllDictionaryKeyList'
+      | 'genBookTreeNodes'
+      | 'locationVKText'
+      | 'getLanguageName'
+    >
+  ]: (...args: RenderPromiseArgs<GType[name]>) => ReturnType<GType[name]>;
 } & {
   i18n: {
     [m in 'exists' | 't']: (

@@ -457,10 +457,7 @@ function initialBookmark(): BookmarkItemType | undefined {
   let bookmark: BookmarkItemType | undefined;
   if (newitem || !windowArgState?.bookmark) {
     let location:
-      | LocationVKType
-      | LocationVKCommType
-      | LocationORType
-      | undefined;
+      LocationVKType | LocationVKCommType | LocationORType | undefined;
     if (newitem && 'location' in newitem) ({ location } = newitem);
     const item: BookmarkItem = {
       id: randomID(),

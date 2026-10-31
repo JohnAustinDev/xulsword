@@ -57,8 +57,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
                 const comParent =
                   document.getElementById(compid)?.parentElement;
                 const player = comParent?.querySelector('audio') as
-                  | HTMLAudioElement
-                  | undefined;
+                  HTMLAudioElement | undefined;
                 if (player) {
                   const chaparray =
                     data && data[book]?.find((ca) => ca[0] === chapter);

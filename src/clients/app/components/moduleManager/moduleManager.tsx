@@ -121,8 +121,7 @@ const notStatePref = {
 };
 
 export type ManagerStatePref =
-  | typeof S.prefs.moduleManager
-  | typeof S.prefs.removeModule;
+  typeof S.prefs.moduleManager | typeof S.prefs.removeModule;
 
 export type ManagerState = ManagerStatePref &
   typeof notStatePref &

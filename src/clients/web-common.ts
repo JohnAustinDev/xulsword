@@ -30,10 +30,7 @@ export type AllComponentsData = {
 };
 
 export type ComponentData =
-  | BibleBrowserData
-  | WidgetVKData
-  | WidgetORData
-  | WidgetMenulistData;
+  BibleBrowserData | WidgetVKData | WidgetORData | WidgetMenulistData;
 
 // React components HTML elements have a data-react-component attribute
 // specifying the type.
