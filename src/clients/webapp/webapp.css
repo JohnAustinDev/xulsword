@@ -187,6 +187,14 @@ audio,
 #player {
   margin-right: 0;
 }
+/* Blueprint pulls the icon of an icon-only button 7px into each side's 8px
+padding. That suits default 20px icons in a 30px min-width button, as in the
+Electron app, but leaves the web-app's 28px icons touching the button sides.
+This restores 28px icons' 5px gap on each side. */
+.button .bp6-button > .bp6-icon:first-child:last-child {
+  margin: 0 -3px;
+}
+
 /* If only one genbk select is shown, then it shouldn't show disabled or single-option selects */
 #genbknav.single-level .menulist.disabled,
 #genbknav.single-level .menulist.single-option {
