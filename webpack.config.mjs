@@ -146,6 +146,11 @@ export default function (opts) {
     opts.production = process.env.NODE_ENV === 'production';
     ({ development, production } = opts);
   }
+  // An unset --env flag is undefined, not false. Make both real booleans,
+  // because some options treat undefined as "not given" and pick their own
+  // default (preset-react would then emit jsxDEV in production builds).
+  development = !!development;
+  production = !!production;
   if ((!development && !production) || development === production) {
     throw new Error(
       `Must run webpack with either '--env production' or '--env development'`,
@@ -355,6 +360,10 @@ export default function (opts) {
               loader: 'babel-loader',
               options: {
                 ...(development ? { cacheDirectory: true } : {}),
+
+                // Babel's env name defaults to 'development' when NODE_ENV and
+                // BABEL_ENV are unset, so set it for babel.config.mjs.
+                envName: development ? 'development' : 'production',
 
                 presets: [
                   [
