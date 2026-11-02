@@ -16,7 +16,7 @@ import {
 } from '../../commands.ts';
 import { resolveXulswordPath } from '../common.ts';
 import { G } from './G.ts';
-import { menuIcon } from './nativeChrome.ts';
+import { circleIcon, menuIcon, TabTypeColors } from './nativeChrome.ts';
 import Window, { getBrowserWindows } from './components/window.ts';
 import Commands from './components/commands.ts';
 
@@ -661,11 +661,17 @@ export default class MainMenuBuilder {
       }
     });
 
+    // Each module type's item has an icon in the color of its tabs.
+    const skin = G.Prefs.getCharPref(
+      'global.skin',
+    ) as typeof S.prefs.global.skin;
+    const typeColors = TabTypeColors[skin] ?? TabTypeColors[''];
     const textTabs: MenuItemConstructorOptions[] = showtabs.map((t) => {
       const [typekey, type] = t;
       return {
         id: `parent_${typekey}`,
         label: ts(`menu.view.${typekey}`),
+        icon: circleIcon(typeColors[type]),
         submenu: [
           ...panelLabels().map((pl: string) => {
             const panelIndex =

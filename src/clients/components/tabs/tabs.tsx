@@ -238,6 +238,15 @@ class Tabs
   multiTabButtonClick(e: React.SyntheticEvent) {
     const { renderPromise } = this;
     const { multiTabMenupopup } = this.state;
+    // The menu is inside this button, so a pointerdown on the menu itself
+    // (such as on its scrollbar, to drag it) must not close it.
+    if (
+      multiTabMenupopup &&
+      (e.target as HTMLElement).classList?.contains('menupopup')
+    ) {
+      e.stopPropagation();
+      return;
+    }
     if (
       !multiTabMenupopup ||
       (multiTabMenupopup && ofClass('button-box', e.target))

@@ -314,6 +314,13 @@ const openXulswordWindow = () => {
   );
   xswinDoOnClose.push(Subscription.subscribe.prefsChanged(pushPrefsToWindows));
   xswinDoOnClose.push(Subscription.subscribe.prefsChanged(pushPrefsToMenu));
+  // The View menu's module type icons are drawn in the skin's tab colors.
+  xswinDoOnClose.push(
+    Subscription.subscribe.prefsChanged((_winid, store, key) => {
+      if (store === 'prefs' && key === 'global.skin')
+        menuBuilder.buildMenu(true);
+    }),
+  );
   xswinDoOnClose.push(
     Subscription.subscribe.resetMain(() => {
       LibSword.quit();

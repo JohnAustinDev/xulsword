@@ -523,6 +523,24 @@ export default class Xulsword
           title={GI.i18n.t('', renderPromise, 'headingsButton.tooltip')}
           disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
         />
+        {Build.isElectronApp && (
+          <Button
+            id="strongs"
+            checked={show.strongs}
+            icon="translate"
+            iconSize={webAppIconSize}
+            onPointerDown={xulswordHandler}
+            title={GI.i18n.t('', renderPromise, 'menu.view.strongs')}
+            disabled={
+              !panels.find(
+                (m) =>
+                  m &&
+                  m in G.Tab &&
+                  G.Tab[m].features.includes('StrongsNumbers'),
+              )
+            }
+          />
+        )}
         <Button
           id="dictlinks"
           checked={show.dictlinks}

@@ -4,6 +4,7 @@ import { nativeImage, nativeTheme } from 'electron';
 
 import type { NativeImage } from 'electron';
 import type S from '../../defaultPrefs.ts';
+import type { TabTypes } from '../../type.ts';
 
 // The native window chrome follows the skin. nativeTheme.themeSource gives dark
 // menus and title bars on Windows (the macOS menu bar is separate from xulsword
@@ -93,4 +94,80 @@ export function menuIcon(...pathSegments: string[]): string | NativeImage {
     });
   }
   return invertedIcons[file];
+}
+
+// The tab color of each module type, by skin. These copy the --color-primary
+// and --color-secondary* variables of src/clients/global-htm.css (the light
+// skin '') and of assets/skins/*.css, so keep them the same. (Menus are built
+// in the main process, which cannot read CSS variables.)
+export const TabTypeColors: Record<
+  typeof S.prefs.global.skin,
+  Record<TabTypes, string>
+> = {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  '': {
+    Texts: '#2d72d2',
+    Comms: '#462476',
+    Dicts: '#f0b12e',
+    Genbks: '#a8a78f',
+  },
+  arabesque: {
+    Texts: '#2e5cd1',
+    Comms: '#b8327f',
+    Dicts: '#e59a12',
+    Genbks: '#13998a',
+  },
+  dark: {
+    Texts: '#8abbff',
+    Comms: '#bb9cf2',
+    Dicts: '#e8b84f',
+    Genbks: '#6fd0a8',
+  },
+};
+
+const circleIcons: Record<string, NativeImage> = {};
+
+// A menu item icon that is a filled circle of a color (#rrggbb), drawn at 1x
+// and 2x so that it stays sharp on high density screens.
+export function circleIcon(color: string): NativeImage {
+  if (!(color in circleIcons)) {
+    const [r, g, b] = [1, 3, 5].map((i) =>
+      parseInt(color.substring(i, i + 2), 16),
+    );
+    const image = nativeImage.createEmpty();
+    [1, 2].forEach((scaleFactor) => {
+      const size = 16 * scaleFactor;
+      const radius = 6.5 * scaleFactor;
+      const center = size / 2;
+      const sub = 4; // subsamples per pixel side, for smooth edges
+      // BGRA with premultiplied alpha
+      const buffer = Buffer.alloc(size * size * 4);
+      for (let y = 0; y < size; y += 1) {
+        for (let x = 0; x < size; x += 1) {
+          let inside = 0;
+          for (let sy = 0; sy < sub; sy += 1) {
+            for (let sx = 0; sx < sub; sx += 1) {
+              const dx = x + (sx + 0.5) / sub - center;
+              const dy = y + (sy + 0.5) / sub - center;
+              if (dx * dx + dy * dy <= radius * radius) inside += 1;
+            }
+          }
+          const alpha = inside / (sub * sub);
+          const i = (y * size + x) * 4;
+          buffer[i] = Math.round(b * alpha);
+          buffer[i + 1] = Math.round(g * alpha);
+          buffer[i + 2] = Math.round(r * alpha);
+          buffer[i + 3] = Math.round(255 * alpha);
+        }
+      }
+      image.addRepresentation({
+        scaleFactor,
+        width: size,
+        height: size,
+        buffer,
+      });
+    });
+    circleIcons[color] = image;
+  }
+  return circleIcons[color];
 }

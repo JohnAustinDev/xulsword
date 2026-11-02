@@ -20,7 +20,8 @@ white, which is easier on the eyes over long reading. */
   --dk-icon-filter: invert(0.88) hue-rotate(180deg);
   --dk-gray-icon-filter: invert(0.85);
 
-  /* The tab of each module type has its own color (see Tabs below). */
+  /* The tab of each module type has its own color (see Tabs below). The View
+  menu's icons copy them (see TabTypeColors in nativeChrome.ts). */
   --color-primary: #8abbff; /* BluePrintJS dark theme primary; Bibles */
   --color-secondary: #e8b84f; /* dictionaries */
   --color-secondary2: #bb9cf2; /* commentaries */
@@ -192,6 +193,12 @@ hover and while dragging. */
   border-color: var(--border-dark);
   box-shadow: var(--shadow);
 }
+/* The plus tab's menu (see tabs.css). A separate rule, since browsers that do
+not know ::picker() drop the whole rule. */
+.tabs .tabPlus select::picker(select) {
+  border-color: var(--border-dark);
+  box-shadow: var(--shadow);
+}
 .npopupTX {
   border-color: var(--border-dark);
 }
@@ -342,10 +349,6 @@ filter cannot be used to lighten the light skin's arrow image.) */
 .chaptermenu .chaptermenucell {
   background-color: var(--bg-text-dark);
   border-color: var(--border-dark);
-}
-.chaptermenu .chaptermenucell:hover {
-  background-color: var(--dk-accent);
-  color: #ffffff;
 }
 .chaptermenu .headingmenu {
   background-color: var(--bg-text-dark);

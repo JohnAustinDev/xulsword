@@ -709,7 +709,11 @@ export function doBlockEvents() {
   if (Build.isDevelopment)
     getRootNode()
       .querySelectorAll(`.atext`)
-      .forEach((el) => ((el as HTMLDivElement).style.border = `2px solid red`));
+      .forEach((el) => {
+        const { style } = el as HTMLDivElement;
+        style.outline = '2px solid red';
+        style.outlineOffset = '-2px';
+      });
 }
 
 export function isBlockedEvent(e: React.SyntheticEvent | Event): boolean {
@@ -727,7 +731,11 @@ export function unBlockEvents() {
   if (Build.isDevelopment)
     getRootNode()
       .querySelectorAll(`.atext`)
-      .forEach((el) => ((el as HTMLDivElement).style.border = ''));
+      .forEach((el) => {
+        const { style } = el as HTMLDivElement;
+        style.outline = '';
+        style.outlineOffset = '';
+      });
 }
 
 // Block handlers gated by isBlockedEvent() for a period of time. Typically

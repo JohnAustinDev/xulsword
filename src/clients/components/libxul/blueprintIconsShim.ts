@@ -317,6 +317,10 @@ export {
   TickIcon,
 } from '@blueprintjs/icons/lib/esm/generated/components/tick.js';
 export {
+  Translate,
+  TranslateIcon,
+} from '@blueprintjs/icons/lib/esm/generated/components/translate.js';
+export {
   TwoColumns,
   TwoColumnsIcon,
 } from '@blueprintjs/icons/lib/esm/generated/components/two-columns.js';

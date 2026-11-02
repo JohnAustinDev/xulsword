@@ -90,6 +90,7 @@ export { default as SortAsc } from '@blueprintjs/icons/lib/esm/generated/20px/pa
 export { default as SortDesc } from '@blueprintjs/icons/lib/esm/generated/20px/paths/sort-desc.js';
 export { default as SymbolCross } from '@blueprintjs/icons/lib/esm/generated/20px/paths/symbol-cross.js';
 export { default as Tick } from '@blueprintjs/icons/lib/esm/generated/20px/paths/tick.js';
+export { default as Translate } from '@blueprintjs/icons/lib/esm/generated/20px/paths/translate.js';
 export { default as TwoColumns } from '@blueprintjs/icons/lib/esm/generated/20px/paths/two-columns.js';
 export { default as Undo } from '@blueprintjs/icons/lib/esm/generated/20px/paths/undo.js';
 export { default as Unpin } from '@blueprintjs/icons/lib/esm/generated/20px/paths/unpin.js';

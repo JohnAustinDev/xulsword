@@ -39,6 +39,13 @@
 #root[dir='rtl'] .genbook-chooser .scroll-parent:hover {
   right: -5px;
 }
+/* Rows hover like every other menu, rather than in BluePrint's tree color.
+The selected row keeps its own color. */
+.genbook-chooser
+  .bp6-tree-node:not(.bp6-tree-node-selected)
+  > .bp6-tree-node-content:hover {
+  background-color: var(--bg-interface-selection);
+}
 #root[dir='rtl'] .bp6-tree-node-label {
   transform: scaleX(-1);
 }

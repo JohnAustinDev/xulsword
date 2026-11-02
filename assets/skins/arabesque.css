@@ -1,19 +1,39 @@
 
-/* This custom skin called may be added using setGlobalSkin('arabesque') */
+/* Classic skin, applied by setGlobalSkin('arabesque').
+
+Text panels and the book chooser are light "cards" floating over the arabesque
+background: thin borders, rounded corners and soft shadows, with flat controls
+rather than outset bevels. Effects that would look odd on paper (shadows) are
+limited to #root:not(.printing), because a main window printout shows its tabs
+and panels. */
 #root {
-  --color-primary: #2e5cd1e6;
-  --color-secondary: rgba(204, 204, 0, 0.8);
-  --color-secondary2: rgba(100, 100, 255, 0.8);
-  --color-secondary3: rgba(100, 245, 245, 0.8);
+  /* Skin-only tokens */
+  --ar-elev: 0 1px 2px rgba(70, 40, 90, 0.06), 0 4px 16px rgba(70, 40, 90, 0.08);
+  --ar-muted: #6e6178; /* inactive tab text */
+  --ar-tab: #ffffff; /* inactive tabs */
+  --ar-item: #f9f9f9; /* book list items and chapter cells */
+  --ar-card: #f7f5f8; /* chooser and notebox surfaces */
+  --ar-underline: rgba(110, 85, 110, 0.32); /* Strong's and dictionary links */
+  --ar-scrollbar: rgba(110, 85, 110, 0.5);
+
+  /* Module type colors, of tabs and of the View menu's icons (which copy
+  them, see TabTypeColors in nativeChrome.ts). */
+  --color-primary: #2e5cd1e6; /* Bibles */
+  --color-secondary: #e59a12; /* dictionaries: amber */
+  --color-secondary2: #b8327f; /* commentaries: berry */
+  --color-secondary3: #13998a; /* general books: teal */
 
   --bg-interface-light: rgb(242, 242, 242);
+  --bg-interface-selection: #ede7e3; /* menu hover, a little lighter than base */
 
-  --bg-text-light: rgb(255, 243, 255);
-  --bg-text-dark: rgb(245, 220, 255);
+  --bg-text-light: #fef5ff;
+  --bg-text-dark: #f5e4fd;
   /* No --overlay-text-pinned override: this skin's text surfaces are all
   near-white, so the default dark tint reads correctly on them. */
 
-  --border-light: rgb(200, 170, 205);
+  --border-light: #d3bfd7;
+
+  --shadow: 0 12px 32px rgba(70, 40, 90, 0.18), 0 2px 6px rgba(70, 40, 90, 0.1);
 
   /* This URL contains the arabesque.png file, which cannot be accessed
   directly by Electron */
@@ -39,10 +59,193 @@
   margin-bottom: -25px;
 }
 
-.chooser .chooser-container,
-.genbook-chooser .scroll-parent,
+/* Slim scrollbars. The standard properties are used where supported (they
+also make Chrome 121+ ignore the ::-webkit-scrollbar rules), and the
+::-webkit-scrollbar rules serve older Chrome and Safari. */
+#root,
+#root * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ar-scrollbar) transparent;
+}
+#root ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+#root ::-webkit-scrollbar-track,
+#root ::-webkit-scrollbar-corner {
+  background: transparent;
+}
+#root ::-webkit-scrollbar-thumb {
+  background-color: var(--ar-scrollbar);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 5px;
+}
+#root ::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Text panels */
 .atext {
-  border-radius: 8px;
+  border-width: 1px;
+  border-radius: 10px; /* no more: the tab row ends 10px from the corner */
+}
+#root:not(.printing) .atext {
+  box-shadow: var(--ar-elev);
+}
+.atext:not(.columns1) .sb {
+  column-rule: 2px solid var(--border-light);
+}
+.atext .nb {
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  background-color: var(--ar-card);
+}
+.fnselected .fncol5 {
+  border: 1px solid rgba(46, 92, 209, 0.5);
+  background-color: #ffffff;
+}
+
+/* Quieter underlines on Strong's and dictionary links, which mark nearly every
+word of some texts. They show in full on hover. (Older browsers ignore the
+offset and thickness, and keep the normal underline.) */
+.sn,
+.dt,
+.dtl {
+  text-decoration-color: var(--ar-underline);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+.sn:hover,
+.dt:hover,
+.dtl:hover {
+  text-decoration-color: currentcolor;
+}
+
+/* Tabs: rounded tops, and 1px borders to match the panel border. The tab row
+overlaps the panel by the panel's border width (2px in the base CSS).
+Selecting a tab must change only colors, never its text's weight, size or
+style. Any change of width can move tabs into or out of the multi-tab, so the
+tabs would rearrange as the selection changes. */
+.tabs {
+  top: 1px;
+}
+.tabs .tab {
+  font-size: 0.92em;
+  border-width: 1px;
+  color: var(--ar-muted);
+  transition:
+    background-color 0.12s,
+    color 0.12s;
+}
+.tabs > .tab:not(.active) {
+  height: 24px;
+  margin-bottom: 1px;
+  background-color: var(--ar-tab);
+}
+.tabs > .tab:not(.active):not(.tabPlus):hover {
+  background-color: #ffffff;
+  color: rgb(40, 40, 40);
+}
+.tabs > .tab,
+.tabs > .tab > .border {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+.tabs .tab.active {
+  color: var(--color-primary);
+}
+.menupopup {
+  border-color: var(--border-light);
+  box-shadow: var(--shadow);
+}
+/* The plus tab's menu (see tabs.css). A separate rule, since browsers that do
+not know ::picker() drop the whole rule. */
+.tabs .tabPlus select::picker(select) {
+  border-color: var(--border-light);
+  box-shadow: var(--shadow);
+}
+
+/* Main window option buttons: larger, to balance the two navigator rows
+beside them. */
+#optionButtons .button-box,
+#optionButtons button.bp6-button {
+  height: 38px;
+}
+#optionButtons button.bp6-button {
+  min-width: 42px;
+  border-radius: 6px;
+}
+#optionButtons .bp6-icon svg {
+  width: 23px;
+  height: 23px;
+}
+
+/* Book chooser: flat items rather than outset bevels */
+/* The general book chooser's card is its scrolling list (which widens over the
+text on hover), not its container, as in the other skins. */
+.chooser:not(.genbook-chooser) .chooser-container,
+.genbook-chooser .scroll-parent {
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  background-color: var(--ar-card);
+}
+#root:not(.printing) .chooser:not(.genbook-chooser) .chooser-container,
+#root:not(.printing) .genbook-chooser .scroll-parent {
+  box-shadow: var(--ar-elev);
+}
+.genbook-chooser .scroll-parent:hover {
+  filter: drop-shadow(0 6px 14px rgba(70, 40, 90, 0.18));
+}
+.chooser .bookgroup,
+.bookgrouplist,
+.chaptermenu .chaptermenucell,
+.chaptermenu .headingmenu {
+  border-style: solid;
+  border-color: var(--border-light);
+}
+.bookgroupitem {
+  background-color: var(--ar-item);
+  border: 1px solid var(--border-light);
+  transition: background-color 0.12s;
+}
+.chooser .bookgroup.selected,
+.bookgroupitem.selected {
+  border-color: var(--color-primary);
+}
+.bookgroupitem.disabled {
+  border-style: solid;
+}
+.chaptermenu {
+  filter: drop-shadow(0 6px 14px rgba(70, 40, 90, 0.18));
+}
+.chaptermenu .chaptermenucell {
+  background-color: var(--ar-item);
+}
+.chaptermenu .headingmenu {
+  border-radius: 10px;
+}
+
+/* Popups */
+.npopupTX {
+  border-color: var(--border-light);
+  border-radius: 10px;
+}
+
+/* Drag sizer bars */
+.dragsizer > div {
+  background-color: var(--border-light);
+  box-shadow: none;
+}
+.dragsizer:hover > div {
+  background-color: rgba(46, 92, 209, 0.45);
+}
+
+/* Window overlays */
+#overlay .progress-container {
+  border-radius: 12px;
+  filter: none;
+  box-shadow: var(--shadow);
 }
 
 @media print {
@@ -51,5 +254,11 @@
   .chooser .fadebot {
     background-image: unset;
     background-color: white;
+  }
+  .atext,
+  .chooser .chooser-container,
+  .genbook-chooser .scroll-parent,
+  .tabs .tab {
+    box-shadow: none;
   }
 }

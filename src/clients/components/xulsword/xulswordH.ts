@@ -168,6 +168,7 @@ export default function xulswordHandler(
           break;
         }
         case 'headings':
+        case 'strongs':
         case 'footnotes':
         case 'crossrefs':
         case 'dictlinks': {
@@ -176,6 +177,8 @@ export default function xulswordHandler(
             show = clone(show);
             const id = currentId as keyof ShowType;
             show[id] = !show[id];
+            // Strong's and morphology switch together, as in the View menu.
+            if (currentId === 'strongs') show['morph'] = show[id];
             // Web app uses fewer buttons but that control multiple options.
             if (Build.isWebApp) {
               if (currentId === 'footnotes') {
