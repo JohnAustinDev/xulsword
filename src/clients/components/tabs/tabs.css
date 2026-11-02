@@ -79,8 +79,15 @@ border ends up a device pixel lower than the panel's border. */
 .tabs .tabPlus select * {
   color: black;
 }
-/* NOTE: builtin select option:hover color and background-color cannot be
-changed */
+/* The plus tab's menu, where selects are customized (see global-htm.css): the
+select is only the plus icon, so it shows no arrow. */
+@media (hover: hover) and (pointer: fine) {
+  @supports (appearance: base-select) {
+    .tabs .tabPlus select::picker-icon {
+      display: none;
+    }
+  }
+}
 .tabs .mts-tab {
   position: relative;
   padding-inline-end: 0px;

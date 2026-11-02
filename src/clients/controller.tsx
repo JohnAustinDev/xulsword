@@ -14,6 +14,7 @@ import { sanitizeHTML } from '../sanitizeHTML.ts';
 import Cache from '../cache.ts';
 import C from '../constant.ts';
 import DynamicStyleSheet from './style.ts';
+import keepNativeSelectWidths from './selectWidths.ts';
 import ContextData from './contextData.ts';
 import { printSkinClass, setGlobalSkin, windowArguments } from './common.ts';
 import {
@@ -174,6 +175,9 @@ function Controller(props: ControllerProps) {
       didFinishRenderTO = setTimeout(didFinishRender, 100);
     }
   });
+
+  // Customized selects keep the widths of native selects.
+  useEffect(() => keepNativeSelectWidths(), []);
 
   // IPC component-reset setup:
   useEffect(() => {

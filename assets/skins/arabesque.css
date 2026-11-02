@@ -34,6 +34,8 @@ and panels. */
   --border-light: #d3bfd7;
 
   --shadow: 0 12px 32px rgba(70, 40, 90, 0.18), 0 2px 6px rgba(70, 40, 90, 0.1);
+  --menu-border: var(--border-light);
+  --menu-shadow: var(--shadow);
 
   /* This URL contains the arabesque.png file, which cannot be accessed
   directly by Electron */
@@ -154,31 +156,6 @@ tabs would rearrange as the selection changes. */
 }
 .tabs .tab.active {
   color: var(--color-primary);
-}
-.menupopup {
-  border-color: var(--border-light);
-  box-shadow: var(--shadow);
-}
-/* The plus tab's menu (see tabs.css). A separate rule, since browsers that do
-not know ::picker() drop the whole rule. */
-.tabs .tabPlus select::picker(select) {
-  border-color: var(--border-light);
-  box-shadow: var(--shadow);
-}
-
-/* Main window option buttons: larger, to balance the two navigator rows
-beside them. */
-#optionButtons .button-box,
-#optionButtons button.bp6-button {
-  height: 38px;
-}
-#optionButtons button.bp6-button {
-  min-width: 42px;
-  border-radius: 6px;
-}
-#optionButtons .bp6-icon svg {
-  width: 23px;
-  height: 23px;
 }
 
 /* Book chooser: flat items rather than outset bevels */

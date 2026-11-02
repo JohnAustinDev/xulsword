@@ -14,6 +14,20 @@
   font: inherit;
 }
 
+/* The focus ring is outside the field (the .xsinput box), like those of the
+book select and selects (see global-htm.css), rather than BluePrint's ring
+around the input inside it. */
+.textbox:focus-within {
+  outline: rgba(45, 114, 210, 0.6) auto 2px;
+  outline-offset: 2px;
+}
+.textbox input:focus,
+.textbox textarea:focus,
+.bookselect .textbox:focus-within,
+.bp6-focus-disabled .textbox:focus-within {
+  outline: none;
+}
+
 .textbox .contextmenu {
   cursor: default;
 }

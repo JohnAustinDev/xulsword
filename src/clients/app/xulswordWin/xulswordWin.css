@@ -28,3 +28,17 @@
   margin-top: 0;
   margin-bottom: 2px;
 }
+
+/* Option buttons: larger, to balance the two navigator rows beside them. */
+.xulswordWin #optionButtons .button-box,
+.xulswordWin #optionButtons button.bp6-button {
+  height: 38px;
+}
+.xulswordWin #optionButtons button.bp6-button {
+  min-width: 42px;
+  border-radius: 6px;
+}
+.xulswordWin #optionButtons .bp6-icon svg {
+  width: 23px;
+  height: 23px;
+}
