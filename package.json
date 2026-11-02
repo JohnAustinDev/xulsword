@@ -137,7 +137,11 @@
   "prettier": {
     "singleQuote": true
   },
-  "//": "@blueprintjs/core is pinned to 6.8.1, with select and table pinned to the versions built for it, because from 6.9.0 Blueprint's component CSS uses color-mix() with no fallback, which breaks button colors and borders in browsers older than Chrome 111, Safari 16.2 and Firefox 113 (see CSS browser support in CLAUDE.md). Check a newer version's lib/css/blueprint.css before upgrading. These versions declare React 18 only (React 19 from 6.16.0), so yarn warns about peers, but they use no API that React 19 removed.",
+  "//": "@blueprintjs/core is pinned to 6.8.1, with select and table pinned to the versions built for it, because from 6.9.0 Blueprint's component CSS uses color-mix() with no fallback, which breaks button colors and borders in browsers older than Chrome 111, Safari 16.2 and Firefox 113 (see CSS browser support in CLAUDE.md). Check a newer version's lib/css/blueprint.css before upgrading. The resolutions entry keeps select and table on this core too: their own ^6.8.1 range would otherwise install a second, newer core, whose components don't see xulsword's PortalProvider. react-popper is patched because its Manager drops the popover target under React 19 StrictMode, so popovers opened at the top-left corner in development builds. These versions declare React 18 only (React 19 from 6.16.0), so yarn warns about peers, but they use no API that React 19 removed.",
+  "resolutions": {
+    "@blueprintjs/core": "6.8.1",
+    "react-popper@npm:^2.3.0": "patch:react-popper@npm%3A2.3.0#~/.yarn/patches/react-popper-npm-2.3.0-1045578379.patch"
+  },
   "dependencies": {
     "@babel/runtime": "^8.0.10",
     "@blueprintjs/core": "6.8.1",

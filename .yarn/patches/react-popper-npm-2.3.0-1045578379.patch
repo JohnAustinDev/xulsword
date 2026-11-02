@@ -1,0 +1,48 @@
+diff --git a/lib/cjs/Manager.js b/lib/cjs/Manager.js
+index a8e5517f15b190f834f1ec18bdcc91ad45955b6c..94a57753437614e145c8fa14ceb876e738b1abe6 100644
+--- a/lib/cjs/Manager.js
++++ b/lib/cjs/Manager.js
+@@ -24,16 +24,10 @@ function Manager(_ref) {
+       referenceNode = _React$useState[0],
+       setReferenceNode = _React$useState[1];
+ 
+-  var hasUnmounted = React.useRef(false);
+-  React.useEffect(function () {
+-    return function () {
+-      hasUnmounted.current = true;
+-    };
+-  }, []);
+   var handleSetReferenceNode = React.useCallback(function (node) {
+-    if (!hasUnmounted.current) {
+-      setReferenceNode(node);
+-    }
++    // No unmounted check: React 19 StrictMode re-attaches refs after its
++    // simulated unmount, and that check then dropped the reference node.
++    setReferenceNode(node);
+   }, []);
+   return /*#__PURE__*/React.createElement(ManagerReferenceNodeContext.Provider, {
+     value: referenceNode
+diff --git a/lib/esm/Manager.js b/lib/esm/Manager.js
+index 5df2908ac232b22e1b250f6adbd40edabe98399e..a826a7cab2cce15a56379017a389d091b0fbb115 100644
+--- a/lib/esm/Manager.js
++++ b/lib/esm/Manager.js
+@@ -8,16 +8,10 @@ export function Manager(_ref) {
+       referenceNode = _React$useState[0],
+       setReferenceNode = _React$useState[1];
+ 
+-  var hasUnmounted = React.useRef(false);
+-  React.useEffect(function () {
+-    return function () {
+-      hasUnmounted.current = true;
+-    };
+-  }, []);
+   var handleSetReferenceNode = React.useCallback(function (node) {
+-    if (!hasUnmounted.current) {
+-      setReferenceNode(node);
+-    }
++    // No unmounted check: React 19 StrictMode re-attaches refs after its
++    // simulated unmount, and that check then dropped the reference node.
++    setReferenceNode(node);
+   }, []);
+   return /*#__PURE__*/React.createElement(ManagerReferenceNodeContext.Provider, {
+     value: referenceNode

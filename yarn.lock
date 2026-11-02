@@ -1234,7 +1234,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@blueprintjs/colors@npm:^5.1.14, @blueprintjs/colors@npm:^5.1.16":
+"@blueprintjs/colors@npm:^5.1.14":
   version: 5.1.16
   resolution: "@blueprintjs/colors@npm:5.1.16"
   dependencies:
@@ -1268,33 +1268,6 @@ __metadata:
     upgrade-blueprint-2.0.0-rename: scripts/upgrade-blueprint-2.0.0-rename.sh
     upgrade-blueprint-3.0.0-rename: scripts/upgrade-blueprint-3.0.0-rename.sh
   checksum: 10c0/2b7ae0f842fe70f407926b052d4862f097a5f25a991c5cce6102fee8f578f471e986893cf702661dc13e177623da2c194d75b08b551bb3bd7a34d497d2b45592
-  languageName: node
-  linkType: hard
-
-"@blueprintjs/core@npm:^6.8.1":
-  version: 6.21.0
-  resolution: "@blueprintjs/core@npm:6.21.0"
-  dependencies:
-    "@blueprintjs/colors": "npm:^5.1.16"
-    "@blueprintjs/icons": "npm:^6.14.1"
-    "@floating-ui/react": "npm:^0.27.13"
-    "@popperjs/core": "npm:^2.11.8"
-    classnames: "npm:^2.3.1"
-    normalize.css: "npm:^8.0.1"
-    react-popper: "npm:^2.3.0"
-    react-transition-group: "npm:^4.4.5"
-    tslib: "npm:~2.6.2"
-  peerDependencies:
-    "@types/react": 18 || 19
-    react: 18 || 19
-    react-dom: 18 || 19
-  peerDependenciesMeta:
-    "@types/react":
-      optional: true
-  bin:
-    upgrade-blueprint-2.0.0-rename: scripts/upgrade-blueprint-2.0.0-rename.sh
-    upgrade-blueprint-3.0.0-rename: scripts/upgrade-blueprint-3.0.0-rename.sh
-  checksum: 10c0/94c70b3a36c2af417f8fbb1c2692101a6b9bad7f8f3d20748aefb4c1d3695f140e0a6c53a0ab11c36409bec3832289a1868cf3b487dc9ebde58f759595d54e8c
   languageName: node
   linkType: hard
 
@@ -9097,7 +9070,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-popper@npm:^2.3.0":
+"react-popper@npm:2.3.0":
   version: 2.3.0
   resolution: "react-popper@npm:2.3.0"
   dependencies:
@@ -9108,6 +9081,20 @@ __metadata:
     react: ^16.8.0 || ^17 || ^18
     react-dom: ^16.8.0 || ^17 || ^18
   checksum: 10c0/23f93540537ca4c035425bb8d5e51b11131fbc921d7ac1d041d0ae557feac8c877f3a012d36b94df8787803f52ed81e6df9257ac9e58719875f7805518d6db3f
+  languageName: node
+  linkType: hard
+
+"react-popper@patch:react-popper@npm%3A2.3.0#~/.yarn/patches/react-popper-npm-2.3.0-1045578379.patch":
+  version: 2.3.0
+  resolution: "react-popper@patch:react-popper@npm%3A2.3.0#~/.yarn/patches/react-popper-npm-2.3.0-1045578379.patch::version=2.3.0&hash=b67b64"
+  dependencies:
+    react-fast-compare: "npm:^3.0.1"
+    warning: "npm:^4.0.2"
+  peerDependencies:
+    "@popperjs/core": ^2.0.0
+    react: ^16.8.0 || ^17 || ^18
+    react-dom: ^16.8.0 || ^17 || ^18
+  checksum: 10c0/d61b70a628c44012173a17dace9774b6f648809c1077aa8fce0549083bbc596fa59fba5f800fa87ac07d49bf2be41c8868f6c4db88edda19641b1fba761b2c64
   languageName: node
   linkType: hard
 
