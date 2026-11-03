@@ -151,8 +151,8 @@ tabs would rearrange as the selection changes. */
 }
 .tabs > .tab,
 .tabs > .tab > .border {
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
 }
 .tabs .tab.active {
   color: var(--color-primary);

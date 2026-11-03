@@ -180,10 +180,10 @@
 }
 .bookgroupitem .charrow {
   position: relative;
-  top: 2px;
-  margin-inline-end: 2px;
+  top: 4px;
+  margin-inline-end: 5px;
   background: url(../../images/arrow.png);
-  width: 18px;
+  width: 15px;
   height: 12px;
 }
 .bookgroupitem.disabled .charrow {

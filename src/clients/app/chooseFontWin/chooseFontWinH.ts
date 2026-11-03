@@ -23,12 +23,13 @@ export const startingState = {
 
   ruSureDialog: null as ((yes: boolean) => void) | null,
 
-  // These are initial (unset) user style setting values:
-  fontFamily: '' as string, // Shows text: 'Choose...'
-  color: null as RGBColor | null, // will be grey
-  background: null as RGBColor | null, // will be grey
-  fontSize: 50, // percent on slider
-  lineHeight: 50, // percent on slider
+  // These are initial (unset) user style setting values. Only values the user
+  // has actually set are saved as user styles.
+  fontFamily: '' as string, // displays the text's computed font
+  color: null as RGBColor | null, // displays the text's computed color
+  background: null as RGBColor | null, // displays the text's computed color
+  fontSize: null as number | null, // percent on slider, displayed at 50
+  lineHeight: null as number | null, // percent on slider, displayed at 50
 };
 
 const sliders = {
@@ -94,13 +95,15 @@ export function stateToStyle(state: ChooseFontWinState): StyleType {
     if (unset) {
       delete style.module[modname];
     } else {
-      const config = {} as ConfigType;
+      const config: Partial<ConfigType> = {};
       Object.entries(C.ConfigTemplate).forEach((entry) => {
         const skey = entry[0] as keyof ChooseFontWinState;
         const ckey = entry[0] as keyof ConfigType;
-        if (entry[1].CSS) {
-          let v = (state[skey] || null) as any;
-          if (v && typeof v === 'object' && 'r' in v)
+        if (entry[1].CSS && skey in state) {
+          let v = state[skey] as any;
+          // Skip unset values (slider value 0 is a set value).
+          if (v === null || v === undefined || v === '') return;
+          if (typeof v === 'object' && 'r' in v)
             v = `rgba(${v.r}, ${v.g}, ${v.b}, ${v.a})`;
           if (Object.keys(sliders).includes(skey)) {
             const lkey = skey as keyof typeof sliders;
@@ -108,10 +111,11 @@ export function stateToStyle(state: ChooseFontWinState): StyleType {
             const vpercent = Math.round((v * steps) / 100) / steps;
             v = [min + vpercent * (max - min), unit].join('');
           }
-          config[ckey] = v;
+          (config as any)[ckey] = v;
         }
       });
-      style.module[modname] = config;
+      if (Object.keys(config).length) style.module[modname] = config;
+      else delete style.module[modname];
     }
   }
   if (removeAllUserStyles) {

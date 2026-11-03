@@ -99,9 +99,12 @@ select is only the plus icon, so it shows no arrow. */
   overflow: auto;
   transform: unset;
 }
+/* Needs its own transform: unset, since the #root[dir='rtl'] .menupopup
+transform outranks the one above. */
 #root[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
   right: unset;
   left: 0px;
+  transform: unset;
 }
 .tabs .mts-tab > div > .tab-label {
   max-width: calc(100% - 12px);

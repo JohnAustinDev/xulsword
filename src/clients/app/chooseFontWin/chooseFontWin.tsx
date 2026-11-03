@@ -31,10 +31,13 @@ import handlerH, {
 import '../app.css';
 import './chooseFontWin.css';
 
-import type { ColorResult } from 'react-color';
+import type { ColorResult, RGBColor } from 'react-color';
 import type { XulProps } from '../../components/libxul/xul.tsx';
 
 const nocolor = { r: 128, g: 128, b: 128, a: 128 };
+
+// Unset sliders are shown at their middle position.
+const sliderMiddle = 50;
 
 type ChooseFontWinProps = XulProps;
 
@@ -44,8 +47,6 @@ export default class ChooseFontWin extends React.Component<
   ChooseFontWinProps,
   ChooseFontWinState
 > {
-  value: ChooseFontWinState;
-
   handler: (e: React.SyntheticEvent) => void;
 
   setStateValue: (key: keyof ChooseFontWinState, value?: any) => void;
@@ -59,8 +60,6 @@ export default class ChooseFontWin extends React.Component<
       ...startingState,
       ...styleToState(startingState.style, module),
     };
-
-    this.value = {} as ChooseFontWin['value'];
 
     this.handler = handlerH.bind(this);
     this.setStateValue = setStateValueH.bind(this);
@@ -85,13 +84,10 @@ export default class ChooseFontWin extends React.Component<
       G.Window.reset('dynamic-stylesheet-reset', 'all');
       log.debug('componentDidUpdate style:', state.style);
     }
-    const { value } = this;
-    const d = diff(state, value);
-    if (d) this.setState(d);
   }
 
   render() {
-    const { state, value, handler, setStateValue } = this;
+    const { state, handler, setStateValue } = this;
     const {
       module,
       makeDefault,
@@ -127,20 +123,19 @@ export default class ChooseFontWin extends React.Component<
     const disableMD = Boolean(removeModuleUserStyles || removeAllUserStyles);
     const disableAD = Boolean(removeModuleUserStyles || makeDefault);
 
-    const compute: Array<keyof ChooseFontWinState> = [
-      'fontFamily',
-      'color',
-      'background',
-    ];
-    const computed = {} as ChooseFontWinState;
-    compute.forEach((key) => {
-      const x = computed as any;
-      x[key] = state[key] || computedStyle(module, key) || startingState[key];
-    });
-    value.fontFamily = normalizeFontFamily(computed.fontFamily);
-    value.color = computed.color || nocolor;
-    value.background = null; // disable background, who would use it?
-    const { fontFamily, color, background } = value;
+    // Unset values display the text's current computed style. These display
+    // values must never be copied into state, or saving would record them as
+    // user styles (and the text would then stop following the theme).
+    const fontFamily = normalizeFontFamily(
+      state.fontFamily ||
+        (computedStyle(module, 'fontFamily') as string | null) ||
+        startingState.fontFamily,
+    );
+    const color =
+      state.color ||
+      (computedStyle(module, 'color') as RGBColor | null) ||
+      nocolor;
+    const background = null as RGBColor | null; // disable background, who would use it?
     let colorCSS;
     if (color) {
       const { r: cr, g: cg, b: cb, a: ca } = disabled ? nocolor : color;
@@ -234,7 +229,7 @@ export default class ChooseFontWin extends React.Component<
                 <Slider
                   min={0}
                   max={100}
-                  value={fontSize}
+                  value={fontSize ?? sliderMiddle}
                   disabled={disabled}
                   onChange={(val) => {
                     setStateValue('fontSize', val);
@@ -252,7 +247,7 @@ export default class ChooseFontWin extends React.Component<
                 <Slider
                   min={0}
                   max={100}
-                  value={lineHeight}
+                  value={lineHeight ?? sliderMiddle}
                   disabled={disabled}
                   onChange={(val) => {
                     setStateValue('lineHeight', val);
@@ -278,7 +273,7 @@ export default class ChooseFontWin extends React.Component<
                       <ColorPicker
                         color={disabled ? nocolor : color}
                         onChange={(c: ColorResult) => {
-                          this.setState({ color: c.rgb });
+                          setStateValue('color', c.rgb);
                         }}
                       />
                     )}
@@ -304,7 +299,7 @@ export default class ChooseFontWin extends React.Component<
                         <ColorPicker
                           color={disabled ? nocolor : background}
                           onChange={(c: ColorResult) => {
-                            this.setState({ background: c.rgb });
+                            setStateValue('background', c.rgb);
                           }}
                         />
                       )}
