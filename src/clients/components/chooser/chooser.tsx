@@ -356,7 +356,11 @@ class Chooser
                   <Spacer orient="horizontal" flex="1" />
                   {!useLabelImage[bg] &&
                     [...label[bg]].map((l, i) => {
-                      return <div key={i}>{l}</div>;
+                      return (
+                        <div key={i} className={l.trim() ? 'char' : 'space'}>
+                          {l}
+                        </div>
+                      );
                     })}
                   <Spacer orient="horizontal" flex="1" />
                 </Vbox>

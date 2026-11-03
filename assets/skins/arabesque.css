@@ -46,19 +46,17 @@ and panels. */
   background-image: var(--bg-image);
 }
 
+/* Fixed attachment lines the fades' pattern up with #root's (which fills the
+window), wherever the chooser's top and bottom are. */
 .chooser .fadetop,
 .chooser .fadebot {
   background-image: var(--bg-image);
+  background-attachment: fixed;
   opacity: 0.8;
 }
 .chooser .fadetop {
   height: 35px;
-  background-position: -15px 35px;
   margin-top: -10px;
-}
-.chooser .fadebot {
-  background-position: -15px 0;
-  margin-bottom: -25px;
 }
 
 /* Slim scrollbars. The standard properties are used where supported (they

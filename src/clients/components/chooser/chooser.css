@@ -56,6 +56,17 @@
   border-bottom-left-radius: 8px;
   padding: 8px 0px 8px 0px;
 }
+/* Label letters are spaced closer together when the label does not fit */
+.chooser .bookgroup .char {
+  min-height: 0.8em;
+  display: flex;
+  align-items: center;
+}
+/* A small gap between words, which shrinks along with the letters. */
+.chooser .bookgroup .space {
+  height: 0.5em;
+  min-height: 0.3em;
+}
 #root[dir='rtl'] .chooser .bookgroup:first-child {
   border-top-left-radius: 0;
   border-top-right-radius: 8px;
