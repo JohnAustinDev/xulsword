@@ -137,10 +137,12 @@ class Tabs
   ) {
     const { panelIndex: i } = this.props;
     const tabType = !m || type === 'ilt-tab' ? 'Texts' : G.Tab[m].tabType;
-    const label =
-      !m || type === 'ilt-tab'
-        ? GI.i18n.t('', renderPromise, 'ORIGLabelTab')
-        : G.Tab[m].label;
+    const isModuleLabel = !!m && type !== 'ilt-tab';
+    const label = isModuleLabel
+      ? G.Tab[m].label
+      : GI.i18n.t('', renderPromise, 'ORIGLabelTab');
+    // Module labels get their module's font, not the locale's.
+    const labelClass = isModuleLabel ? ` ${G.Tab[m].labelClass}` : '';
     return (
       <div
         key={`${type}_${i}_${m}`}
@@ -150,7 +152,7 @@ class Tabs
         title={(m && m in G.Tab && G.Tab[m].description.locale) || undefined}
       >
         <div className="border">
-          <div className="tab-label">{label}</div>
+          <div className={`tab-label${labelClass}`}>{label}</div>
           {children}
         </div>
       </div>

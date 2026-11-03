@@ -258,6 +258,10 @@ const C = {
     color: 'rgb(40, 40, 40)',
   } as { [key in keyof ConfigType]: string },
 
+  // Font for module text when the module's config gives none. It must not
+  // come from the locale, so module text looks the same in every locale.
+  ModuleDefaultFont: 'arial',
+
   // [code, name, direction, webapp].
   Locales: [
     ['en', 'English', 'ltr', true],

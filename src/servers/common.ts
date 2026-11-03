@@ -757,6 +757,12 @@ export function getModuleConfig(mod: string): ConfigType {
       moduleConfig[prop] = r;
     });
 
+    // A font-size-adjust value only suits the font it was chosen for, and it
+    // is inherited. So without this, module text would inherit the locale's
+    // value (ky-Arab uses 0.7) and look larger or smaller depending on the
+    // locale, while its computed font-size stays the same.
+    if (!moduleConfig.fontSizeAdjust) moduleConfig.fontSizeAdjust = 'none';
+
     // Make any PreferredCSSXHTML into a full path
     if (moduleConfig.PreferredCSSXHTML) {
       const p = LibSword.getModuleInformation(mod, 'AbsoluteDataPath').replace(
@@ -794,6 +800,9 @@ export function getModuleConfig(mod: string): ConfigType {
       moduleConfig.fontFamily = fontFamily.replace(/"/g, "'");
       if (!/'.*'/.test(moduleConfig.fontFamily))
         moduleConfig.fontFamily = `'${moduleConfig.fontFamily}'`;
+    } else {
+      // Otherwise module text would inherit the unrelated locale font.
+      moduleConfig.fontFamily = `'${C.ModuleDefaultFont}'`;
     }
     Cache.write(moduleConfig, `moduleConfig${mod}`);
   }

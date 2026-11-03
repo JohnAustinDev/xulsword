@@ -65,3 +65,17 @@
 .bookselect select:focus-visible {
   outline: transparent;
 }
+/* A customized select (see global-htm.css) has no padding and a narrower arrow
+than the spacer, so its label would show around the textbox. The label is
+hidden instead, but not in its menu. The text fill is used rather than color,
+since the menu inherits it and the text color depends on the skin. */
+@media (hover: hover) and (pointer: fine) {
+  @supports (appearance: base-select) {
+    #root .bookselect select:not([multiple]):not([size]):not([data-measuring]) {
+      -webkit-text-fill-color: transparent;
+    }
+    #root .bookselect select:not([multiple]):not([size])::picker(select) {
+      -webkit-text-fill-color: initial;
+    }
+  }
+}
