@@ -3,8 +3,11 @@
   display: none;
 }
 
-.selectany .selector .select-module + .menulist:not(.hide) {
+.selectany .selector .select-module ~ .menulist:not(.hide) {
   margin-top: 0;
+}
+.selectany .selector .select-module ~ .menulist:not(.hide) ~ .menulist:not(.hide) {
+  margin-top: 5px;
 }
 
 .selectany .selector {
