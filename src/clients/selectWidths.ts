@@ -7,7 +7,9 @@ import { getRootElement } from './rootNode.ts';
 // To keep the native layout, each select is measured as a native select (CSS
 // does not customize a select while it has data-measuring) and given that
 // width as its min-width. This is repeated whenever a select's options, the
-// size of a select, the fonts, or the window size change.
+// size of a select, the fonts, or the window size change. An open select is
+// not measured, since making it native closes its menu (opening a menu can
+// itself load an option's font), so it is measured after it closes.
 
 const CustomSelectMedia = '(hover: hover) and (pointer: fine)';
 
@@ -20,15 +22,27 @@ function customSelectsActive(): boolean {
   );
 }
 
-function fitSelects(root: HTMLElement, resizeObserver: ResizeObserver) {
-  const selects = Array.from(
+function isOpen(select: HTMLSelectElement): boolean {
+  try {
+    return select.matches(':open');
+  } catch {
+    return false;
+  }
+}
+
+// Returns the open selects, which were left as they were.
+function fitSelects(
+  root: HTMLElement,
+  resizeObserver: ResizeObserver,
+): HTMLSelectElement[] {
+  const all = Array.from(
     root.querySelectorAll(SelectQuery),
   ) as HTMLSelectElement[];
-  selects.forEach((s) => {
-    resizeObserver.observe(s);
-    s.style.removeProperty('min-width');
-  });
-  if (!customSelectsActive()) return;
+  all.forEach((s) => resizeObserver.observe(s));
+  const open = all.filter(isOpen);
+  const selects = all.filter((s) => !open.includes(s));
+  selects.forEach((s) => s.style.removeProperty('min-width'));
+  if (!customSelectsActive()) return open;
   // Measure all selects in one layout, as native selects.
   selects.forEach((s) => s.setAttribute('data-measuring', ''));
   const widths = selects.map((s) => parseFloat(getComputedStyle(s).width));
@@ -37,6 +51,7 @@ function fitSelects(root: HTMLElement, resizeObserver: ResizeObserver) {
     // A hidden select has no width; it is measured when it is shown.
     if (widths[i] > 0) s.style.minWidth = `${widths[i]}px`;
   });
+  return open;
 }
 
 // True if a mutation may have changed a select or its options.
@@ -62,14 +77,18 @@ export default function keepNativeSelectWidths(): () => void {
   if (!root || !CSS.supports('appearance', 'base-select')) return () => {};
 
   let frame: number | null = null;
+  let openSelects: HTMLSelectElement[] = [];
   const resizeObserver = new ResizeObserver(() => schedule());
-  function schedule() {
-    if (frame === null) {
-      frame = requestAnimationFrame(() => {
-        frame = null;
-        fitSelects(root as HTMLElement, resizeObserver);
-      });
+  function update() {
+    frame = null;
+    // While a select skipped by the last fit is open, check again each frame.
+    if (!openSelects.some(isOpen)) {
+      openSelects = fitSelects(root as HTMLElement, resizeObserver);
     }
+    if (openSelects.length) schedule();
+  }
+  function schedule() {
+    if (frame === null) frame = requestAnimationFrame(update);
   }
 
   const mutationObserver = new MutationObserver((records) => {
