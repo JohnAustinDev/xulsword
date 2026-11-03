@@ -13,8 +13,10 @@ import RenderPromise from '../../renderPromise.ts';
 import { getRootElement, getRootNode, getShadowHost } from '../../rootNode.ts';
 import log from '../../log.ts';
 import {
+  audioConfigs,
   audioSelections,
   clearPending,
+  remoteAudioConfigs,
   remoteAudioSelections,
 } from '../../common.ts';
 import { addClass, topHandle } from '../libxul/xul.tsx';
@@ -552,11 +554,22 @@ export default class Viewport
 
     const numPanels = panels.filter((m) => m || m === '').length;
 
-    const chooser = panels
-      .filter((m, i) => m && panelWidths[i] && columns[i])
-      .some((m) => m && G.Tab[m].type === C.GENBOOK)
+    const visiblePanels = panels.filter(
+      (m, i) => m && panelWidths[i] && columns[i],
+    );
+
+    const chooser = visiblePanels.some((m) => m && G.Tab[m].type === C.GENBOOK)
       ? 'genbook'
       : 'bible';
+
+    // The chooser leaves room for audio icons if any visible Bible has audio,
+    // so its width does not change when panels are pinned or unpinned.
+    const chooserAudioSpace = visiblePanels.some(
+      (m) =>
+        m &&
+        G.Tab[m].type === C.BIBLE &&
+        (audioConfigs(m, renderPromise).length || remoteAudioConfigs(m).length),
+    );
 
     // Web-app always shows the chooser unless width <= mobileW in which case
     // it is never shown: the showChooser prop adds a CSS class by which it is
@@ -719,6 +732,7 @@ export default class Viewport
             selection={location?.book || ''}
             v11n={chooserV11n as V11nType}
             headingsModule={firstUnpinnedBible}
+            audioSpace={chooserAudioSpace}
             bookGroups={bookGroups}
             availableBooks={availableBooks}
             viewportParentHandler={eHandler}

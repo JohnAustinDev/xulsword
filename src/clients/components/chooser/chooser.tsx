@@ -3,12 +3,7 @@ import { dString } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
-import {
-  audioConfigs,
-  clearPending,
-  getMaxChapter,
-  remoteAudioConfigs,
-} from '../../common.ts';
+import { clearPending, getMaxChapter } from '../../common.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import {
@@ -40,6 +35,7 @@ export type ChooserProps = {
   availableBooks?: Set<string>;
   hideUnavailableBooks?: boolean;
   headingsModule?: string | null;
+  audioSpace?: boolean;
   v11n: V11nType;
   viewportParentHandler: Xulsword['viewportParentHandler'];
   onAudioClick: (
@@ -302,6 +298,7 @@ class Chooser
       listRef,
     } = this;
     const {
+      audioSpace,
       availableBooks,
       headingsModule,
       selection,
@@ -373,12 +370,7 @@ class Chooser
               // chooser width according to the longest book name of all bookGroups.
             }
             <BookGroupList
-              className={`sizer${
-                ((audioConfigs(headingsModule || '', renderPromise).length ||
-                  remoteAudioConfigs(headingsModule || '').length) &&
-                  ' audio') ||
-                ''
-              }`}
+              className={`sizer${audioSpace ? ' audio' : ''}`}
               availableBooks={new Set([longestBook])}
               headingsModule={headingsModule}
               hideUnavailableBooks
