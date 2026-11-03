@@ -1,5 +1,5 @@
 import React from 'react';
-import { Intent } from '@blueprintjs/core';
+import { Intent, MenuItem } from '@blueprintjs/core';
 import { Utils } from '@blueprintjs/table';
 import {
   clone,
@@ -29,6 +29,7 @@ import { forEachNode } from '../../../components/libxul/treeview.tsx';
 import { isRepoBuiltIn } from '../../common.ts';
 
 import type { ReactNode } from 'react';
+import type { ItemRendererProps } from '@blueprintjs/select';
 import type {
   Download,
   Repository,
@@ -409,6 +410,71 @@ export function onLangCellClick(
   this.loadModuleTable(newstate);
   tableUpdate(newstate, ['language', 'module'], 'rowmap');
   this.setState(newstate);
+}
+
+// Language Suggest box: return languages whose name or code contains the
+// query, best matches first: exact matches, then names or codes that start
+// with the query, then names having a word that starts with it, then the rest.
+export function langItemListPredicate(
+  query: string,
+  rows: TLanguageTableRow[],
+): TLanguageTableRow[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return rows;
+  const rank = (row: TLanguageTableRow): number => {
+    const name = row[LanCol.iName].toLowerCase();
+    const code = row[LanCol.iInfo].code.toLowerCase();
+    if (name === q || code === q) return 0;
+    if (name.startsWith(q)) return 1;
+    if (code.startsWith(q)) return 2;
+    if (name.split(/[\s(-]+/).some((w) => w.startsWith(q))) return 3;
+    if (name.includes(q) || code.includes(q)) return 4;
+    return -1;
+  };
+  return rows
+    .map((row) => ({ row, r: rank(row) }))
+    .filter((x) => x.r !== -1)
+    .sort((a, b) => a.r - b.r)
+    .map((x) => x.row);
+}
+
+export function langItemRenderer(
+  row: TLanguageTableRow,
+  itemProps: ItemRendererProps,
+): React.JSX.Element | null {
+  const { handleClick, handleFocus, modifiers, ref } = itemProps;
+  if (!modifiers.matchesPredicate) return null;
+  const { code } = row[LanCol.iInfo];
+  return (
+    <MenuItem
+      key={code}
+      ref={ref}
+      text={row[LanCol.iName]}
+      label={code}
+      active={modifiers.active}
+      disabled={modifiers.disabled}
+      roleStructure="listoption"
+      onClick={handleClick}
+      onFocus={handleFocus}
+    />
+  );
+}
+
+export function langInputValueRenderer(row: TLanguageTableRow): string {
+  return row[LanCol.iName];
+}
+
+// Selecting a language from the Suggest box replaces the language selection.
+export function onLangSuggestSelect(
+  this: ModuleManager,
+  row: TLanguageTableRow,
+) {
+  const newstate = { ...this.state };
+  newstate.language.selection = [row[LanCol.iInfo].code];
+  this.loadModuleTable(newstate);
+  tableUpdate(newstate, ['language', 'module'], 'rowmap');
+  this.setState(newstate);
+  scrollToSelection(this, newstate, 'language');
 }
 
 export function onModCellClick(
@@ -2291,18 +2357,16 @@ export function scrollToSelection(
   if (selection.length) {
     setTimeout(() => {
       const { current } = xthis.tableComponentRefs[tableName];
-      try {
-        current?.scrollToRegion(selectionToBPSelection(state, tableName)[0]);
-      } catch (er) {
-        // ok
-      }
-      setTimeout(() => {
+      const [first] = selectionToBPSelection(state, tableName);
+      if (current && first) {
+        // Scroll a few rows above the selection, so it isn't at the very top.
+        const row = Math.max(0, first.rows[0] - 5);
         try {
-          current?.scrollByOffset({ top: -100, left: 0 });
+          current.scrollToRegion({ rows: [row, row] });
         } catch (er) {
           // ok
         }
-      }, 1);
+      }
     }, 1);
   }
 }

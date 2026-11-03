@@ -79,3 +79,18 @@
 .module-toast .module-info {
   font-weight: bold;
 }
+
+/* The language search box covers the language table's empty column header. */
+.langsmods .language-table {
+  position: relative;
+}
+.langsmods .language-table > .language-suggest {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 25;
+}
+.langsmods .language-suggest input:focus::placeholder {
+  color: transparent;
+}

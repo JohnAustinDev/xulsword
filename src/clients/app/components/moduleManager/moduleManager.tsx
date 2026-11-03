@@ -1,11 +1,14 @@
 import React from 'react';
 import {
   Intent,
+  MenuItem,
   OverlayToaster,
   Position,
   ProgressBar,
 } from '@blueprintjs/core';
+import { Suggest } from '@blueprintjs/select';
 import {
+  clone,
   downloadKey,
   isRepoLocal,
   repositoryKey,
@@ -146,6 +149,8 @@ export default class ModuleManager
 
   onLangCellClick: TableProps['onCellClick'];
 
+  onLangSuggestSelect: OmitThisParameter<typeof H.onLangSuggestSelect>;
+
   onModCellClick: TableProps['onCellClick'];
 
   onCustomRepositoryEdited: TableProps['onEditableCellChanged'];
@@ -212,6 +217,7 @@ export default class ModuleManager
     this.loadModuleTable = this.loadModuleTable.bind(this);
     this.onRepoCellClick = H.onRepoCellClick.bind(this);
     this.onLangCellClick = H.onLangCellClick.bind(this);
+    this.onLangSuggestSelect = H.onLangSuggestSelect.bind(this);
     this.onModCellClick = H.onModCellClick.bind(this);
     this.onCustomRepositoryEdited = H.onCustomRepositoryCellEdited.bind(this);
     this.eventHandler = H.eventHandler.bind(this);
@@ -251,8 +257,11 @@ export default class ModuleManager
       });
     // Using prevState in setStatePref requires that prevState is never
     // modified during updates, which requires slow cloning of state
-    // objects. Using lastStatePref allows prevState to be modified.
-    this.lastStatePref = setStatePref('prefs', id, this.lastStatePref, state);
+    // objects. Using lastStatePref allows prevState to be modified. It must
+    // be a deep copy, since state pref objects are modified in place (such
+    // as language.selection), and is only replaced when prefs were saved.
+    const saved = setStatePref('prefs', id, this.lastStatePref, state);
+    if (saved) this.lastStatePref = clone(saved);
     ModuleManagerUnmountState = {
       ...this.state,
     };
@@ -743,6 +752,7 @@ export default class ModuleManager
       modinfoParentHandler,
       onCustomRepositoryEdited,
       onLangCellClick,
+      onLangSuggestSelect,
       onModCellClick,
       onRepoCellClick,
       handleColumns,
@@ -915,7 +925,29 @@ export default class ModuleManager
                   orient="vertical"
                   width={language.width}
                 >
-                  <Box flex="1">
+                  <Box className="language-table" flex="1">
+                    <Suggest<TLanguageTableRow>
+                      className="language-suggest"
+                      items={langtable.data}
+                      selectedItem={null}
+                      resetOnClose
+                      itemsEqual={(a, b) =>
+                        a[H.LanCol.iInfo].code === b[H.LanCol.iInfo].code
+                      }
+                      itemListPredicate={H.langItemListPredicate}
+                      itemRenderer={H.langItemRenderer}
+                      inputValueRenderer={H.langInputValueRenderer}
+                      inputProps={{ placeholder: G.i18n.t('choose.label') }}
+                      noResults={
+                        <MenuItem
+                          disabled
+                          roleStructure="listoption"
+                          text={G.i18n.t('searchStatusAll', { v1: 0 })}
+                        />
+                      }
+                      popoverProps={{ minimal: true, matchTargetWidth: false }}
+                      onItemSelect={onLangSuggestSelect}
+                    />
                     <Table
                       id="language"
                       key={[langtable.data.length, langtable.remount].join('.')}
