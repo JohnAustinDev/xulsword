@@ -51,7 +51,6 @@
 }
 .chooser .bookgroup:first-child {
   border-top-left-radius: 8px;
-  padding: 26px 0px 8px 0px;
 }
 .chooser .bookgroup:last-child {
   border-bottom-left-radius: 8px;

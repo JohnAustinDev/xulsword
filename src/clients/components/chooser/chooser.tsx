@@ -343,7 +343,7 @@ class Chooser
                 <Vbox
                   key={bg}
                   className={`bookgroup ${selected} ${other}`}
-                  flex="1"
+                  flex={other ? '0.85' : '1'}
                   pack="start"
                   align="center"
                   onPointerEnter={handler}
