@@ -107,9 +107,9 @@ export const TabTypeColors: Record<
   // eslint-disable-next-line @typescript-eslint/naming-convention
   '': {
     Texts: '#2d72d2',
-    Comms: '#462476',
-    Dicts: '#f0b12e',
-    Genbks: '#a8a78f',
+    Comms: '#9d3f9d',
+    Dicts: '#d1980b',
+    Genbks: '#238551',
   },
   arabesque: {
     Texts: '#2e5cd1',

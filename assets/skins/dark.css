@@ -216,22 +216,18 @@ hover and while dragging. */
 /* Tabs: each module type has its color as a top bar, which glows down into
 the tab, more so on the active tab. */
 .tabs .tabTexts {
-  --dk-tab-color: var(--color-primary);
   --dk-tab-glow: rgba(138, 187, 255, 0.55);
   --dk-tab-glow-soft: rgba(138, 187, 255, 0.3);
 }
 .tabs .tabComms {
-  --dk-tab-color: var(--color-secondary2);
   --dk-tab-glow: rgba(187, 156, 242, 0.55);
   --dk-tab-glow-soft: rgba(187, 156, 242, 0.3);
 }
 .tabs .tabDicts {
-  --dk-tab-color: var(--color-secondary);
   --dk-tab-glow: rgba(232, 184, 79, 0.55);
   --dk-tab-glow-soft: rgba(232, 184, 79, 0.3);
 }
 .tabs .tabGenbks {
-  --dk-tab-color: var(--color-secondary3);
   --dk-tab-glow: rgba(111, 208, 168, 0.55);
   --dk-tab-glow-soft: rgba(111, 208, 168, 0.3);
 }
@@ -257,20 +253,8 @@ filter cannot be used to lighten the light skin's arrow image.) */
 #root:not(.printing) .tabs .mts-tab .anchorbutton {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23d9dde3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
-/* Its menu lists the tabs, each with its type color as a left bar. */
-#root:not(.printing) .tabs .mts-tab .menupopup {
-  padding: 4px 0;
-}
-#root:not(.printing) .tabs .mts-tab .menupopup .mto-tab {
-  margin: 0;
-  padding: 0;
-  border-inline-start: 3px solid var(--dk-tab-color);
-}
-#root:not(.printing) .tabs .mts-tab .menupopup .mto-tab > .border {
-  border-top: none;
-  padding: 4px 10px;
-}
-#root:not(.printing) .tabs .mts-tab .menupopup .mto-tab:hover {
+#root:not(.printing) .tabs .mts-tab .menupopup .mto-tab:hover,
+.tabs .mts-tab .mto-heading {
   color: var(--dk-text);
 }
 .tabs .ilt-tab.disabled {

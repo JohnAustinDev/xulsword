@@ -117,15 +117,45 @@ select is only the plus icon, so it shows no arrow. */
 a.anchorbutton .tab:hover {
   background-color: var(--bg-interface-selection);
 }
-.tabs .mto-tab {
+.tabs .mts-tab .menupopup {
+  padding: 4px 0;
+}
+.tabs .mts-tab .mto-tab {
   display: block;
-  margin: 1px 2px;
-  padding: 0 0 4px 0;
+  margin: 0;
+  padding: 0;
   font-size: 1em;
   box-sizing: content-box;
+  border-inline-start: 3px solid transparent;
 }
-.tabs .mto-tab.selected {
+.tabs .mts-tab .mto-tab > .border {
+  border-top: none;
+  padding: 4px 10px;
+}
+.tabs .mts-tab .mto-tab.tabTexts {
+  border-inline-start-color: var(--color-primary);
+}
+.tabs .mts-tab .mto-tab.tabComms {
+  border-inline-start-color: var(--color-secondary2);
+}
+.tabs .mts-tab .mto-tab.tabDicts {
+  border-inline-start-color: var(--color-secondary);
+}
+.tabs .mts-tab .mto-tab.tabGenbks {
+  border-inline-start-color: var(--color-secondary3);
+}
+.tabs .mts-tab .mto-tab.selected {
   display: none;
+}
+.tabs .mts-tab .mto-heading {
+  flex: none;
+  padding: 6px 10px 2px 4px;
+  font-weight: bold;
+  color: black;
+  cursor: default;
+}
+.tabs .mts-tab .menupopup > .mto-heading:hover {
+  background-color: transparent;
 }
 .tabs .tab.active {
   background-color: var(--bg-text-light);

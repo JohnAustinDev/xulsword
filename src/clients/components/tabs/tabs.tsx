@@ -1,4 +1,5 @@
 import React, { ChangeEvent } from 'react';
+import C from '../../../constant.ts';
 import { setXulswordTabs } from '../../../commands.ts';
 import { ofClass } from '../../../common.ts';
 import { getRootNode } from '../../rootNode.ts';
@@ -36,7 +37,8 @@ type TabsProps = {
 
 type TabsState = RenderPromiseState & {
   multiTabs: string[];
-  multiTabMenupopup: any;
+  // Set while the multi-tab's menu is open.
+  multiTabMenupopup: { maxHeight: number | null } | null;
 };
 
 // XUL Tabs
@@ -63,6 +65,7 @@ class Tabs
     this.multiTabButtonClick = this.multiTabButtonClick.bind(this);
     this.getTab = this.getTab.bind(this);
     this.getMultiTabSelection = this.getMultiTabSelection.bind(this);
+    this.getMultiTabMenupopup = this.getMultiTabMenupopup.bind(this);
     this.toggleTab = this.toggleTab.bind(this);
 
     this.loadingRef = React.createRef();
@@ -236,13 +239,14 @@ class Tabs
   }
 
   multiTabButtonClick(e: React.SyntheticEvent) {
-    const { renderPromise } = this;
     const { multiTabMenupopup } = this.state;
     // The menu is inside this button, so a pointerdown on the menu itself
-    // (such as on its scrollbar, to drag it) must not close it.
+    // (such as on its scrollbar, to drag it) or on one of its headings must
+    // not close it.
     if (
       multiTabMenupopup &&
-      (e.target as HTMLElement).classList?.contains('menupopup')
+      ((e.target as HTMLElement).classList?.contains('menupopup') ||
+        ofClass('mto-heading', e.target))
     ) {
       e.stopPropagation();
       return;
@@ -253,27 +257,43 @@ class Tabs
     )
       e.stopPropagation();
     this.setState((prevState) => {
-      let newpup = null;
-      if (!prevState.multiTabMenupopup) {
-        const { multiTabs } = prevState;
-        const textrow = getRootNode().querySelectorAll('.textrow');
-        const height = textrow.length ? textrow[0].clientHeight : null;
-        newpup = (
-          <Menupopup style={height ? { maxHeight: `${height}px` } : undefined}>
-            {multiTabs.map((m) => {
-              return this.getTab(
+      if (prevState.multiTabMenupopup) return { multiTabMenupopup: null };
+      const textrow = getRootNode().querySelectorAll('.textrow');
+      const maxHeight = textrow.length ? textrow[0].clientHeight : null;
+      return { multiTabMenupopup: { maxHeight } };
+    });
+  }
+
+  getMultiTabMenupopup(renderPromise: RenderPromise) {
+    const { multiTabs, multiTabMenupopup } = this.state;
+    if (!multiTabMenupopup) return null;
+    const { maxHeight } = multiTabMenupopup;
+    const selection = this.getMultiTabSelection(multiTabs);
+    return (
+      <Menupopup style={maxHeight ? { maxHeight: `${maxHeight}px` } : undefined}>
+        {Object.values(C.SupportedTabTypes).map((tabType) => {
+          const group = multiTabs.filter(
+            (m) => m in G.Tab && G.Tab[m].tabType === tabType,
+          );
+          // The selected tab is not listed, so its heading may not be either.
+          if (!group.some((m) => m !== selection)) return null;
+          return [
+            <div key={`mto-heading_${tabType}`} className="mto-heading">
+              {GI.i18n.t('', renderPromise, tabType)}
+            </div>,
+            ...group.map((m) =>
+              this.getTab(
                 m,
                 'mto-tab',
-                m === this.getMultiTabSelection(multiTabs) ? 'selected' : '',
+                m === selection ? 'selected' : '',
                 null,
                 renderPromise,
-              );
-            })}
-          </Menupopup>
-        );
-      }
-      return { multiTabMenupopup: newpup };
-    });
+              ),
+            ),
+          ];
+        })}
+      </Menupopup>
+    );
   }
 
   render() {
@@ -361,7 +381,7 @@ class Tabs
             'mts-tab',
             module === mtMod ? 'active' : '',
             <AnchorButton onPointerDown={this.multiTabButtonClick}>
-              {multiTabMenupopup}
+              {this.getMultiTabMenupopup(renderPromise)}
             </AnchorButton>,
             renderPromise,
           )}

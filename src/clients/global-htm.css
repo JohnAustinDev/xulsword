@@ -5,9 +5,9 @@ so that it keeps the light look of paper whatever the skin of #root. */
   /* Module type colors: Bibles, dictionaries, commentaries and general books.
   The View menu's icons copy them (see TabTypeColors in nativeChrome.ts). */
   --color-primary: #2d72d2;
-  --color-secondary: #f0b12e;
-  --color-secondary2: #462476;
-  --color-secondary3: #a8a78f;
+  --color-secondary: #d1980b;
+  --color-secondary2: #9d3f9d;
+  --color-secondary3: #238551;
 
   --bg-interface-dark: hsl(0 0% 92% / 1);
   --bg-interface-light: #f9f6f3;
@@ -57,7 +57,7 @@ host's html element onto the shadow #root element. */
 #root:not(.ownsDocument) .print .content {
   --color-primary: #8d3524;
   --color-secondary: #a7bd43;
-  --color-secondary2: #813c34;
+  --color-secondary2: #1f7a6d;
   --color-secondary3: #0f65d6;
   --bg-interface-light: #f9f6f3;
 }
