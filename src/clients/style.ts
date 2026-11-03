@@ -65,6 +65,65 @@ function createStyleRule(
   return rule;
 }
 
+const fontAvailableCache = new Map<string, boolean>();
+
+// Return true if the first font of a CSS font-family list is available to
+// this browser: either one of xulsword's own fonts (which are loaded with
+// @font-face rules) or a font the browser can find on the system. System fonts
+// are detected by measuring text in the font against generic fallback fonts.
+function isFontAvailable(fontFamily: string): boolean {
+  const name = fontFamily
+    .split(',')[0]
+    .trim()
+    .replace(/^['"](.*)['"]$/, '$1');
+  if (['inherit', 'initial', 'unset', ''].includes(name)) return true;
+  const cached = fontAvailableCache.get(name);
+  if (cached !== undefined) return cached;
+  let available = G.ModuleFonts.some(
+    (f) => f.fontFamily.toLowerCase() === name.toLowerCase(),
+  );
+  if (!available) {
+    const ctx = document.createElement('canvas').getContext('2d');
+    if (!ctx) available = true; // can't tell, so assume it is
+    else {
+      // Latin, Cyrillic and Arabic, so fonts for any of these scripts are found.
+      const text = 'mmmwwwlli10WQ@ДЖжщ ابپژگ';
+      available = ['monospace', 'serif', 'sans-serif'].some((generic) => {
+        ctx.font = `72px ${generic}`;
+        const fallbackWidth = ctx.measureText(text).width;
+        ctx.font = `72px ${normalizeFontFamily(name)}, ${generic}`;
+        return ctx.measureText(text).width !== fallbackWidth;
+      });
+    }
+  }
+  fontAvailableCache.set(name, available);
+  return available;
+}
+
+// A locale's FontSize, FontSizeAdjust and LineHeight are chosen for its font.
+// So if that font is not available, they would only distort whatever fallback
+// font is used instead, and are dropped.
+function localeFontCheck(
+  instance: string,
+  config: Partial<ConfigType>,
+): Partial<ConfigType> {
+  const { fontFamily } = config;
+  if (!fontFamily || isFontAvailable(fontFamily)) return config;
+  const checked = { ...config };
+  (['fontSize', 'fontSizeAdjust', 'lineHeight'] as const).forEach((prop) => {
+    // The current locale rule (instance 'locale') must still set every CSS
+    // property, so it overrides those of any ancestor module rule.
+    checked[prop] =
+      instance === 'locale'
+        ? C.LocaleDefaultConfigCSS[prop] || 'inherit'
+        : null;
+  });
+  log.debug(
+    `Locale ${instance} font ${fontFamily} is not available, so its size settings are ignored.`,
+  );
+  return checked;
+}
+
 function insertRule(
   sheet: CSSStyleSheet,
   prefix: string,
@@ -203,7 +262,12 @@ export default class DynamicStyleSheet {
                 getConfig(style, type, 'default'),
               );
               // Config for this type and instance (particular module or locale config)
-              insertRule(sheet, prefix, instance, config);
+              insertRule(
+                sheet,
+                prefix,
+                instance,
+                type === 'locale' ? localeFontCheck(instance, config) : config,
+              );
               // This module's PreferredCSSXHTML if provided.
               if (type === 'module' && config.PreferredCSSXHTML) {
                 insertModuleCSS(
