@@ -18,6 +18,9 @@
 .scale {
   transform-origin: top left;
 }
+#root[dir='rtl'] .scale {
+  transform-origin: top right;
+}
 
 .content {
   position: relative; /* for overlay */

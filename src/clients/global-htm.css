@@ -190,6 +190,14 @@ host's html element onto the shadow #root element. */
   margin-bottom: 4px;
 }
 
+/* Blueprint spaces a button's children (icon, text) with margin-right, which
+in RTL puts the gap at the button's edge instead of between them. Mirror it.
+Single children aren't matched, so icon-only buttons keep their margins. */
+#root[dir='rtl'] .bp6-button > :not(:last-child) {
+  margin-right: 0;
+  margin-left: 8px;
+}
+
 /* Module post-install dialogs */
 .cipher-prompt {
   text-align: center;
