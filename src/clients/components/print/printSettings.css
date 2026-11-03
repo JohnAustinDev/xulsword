@@ -1,6 +1,10 @@
 .printsettings-container {
   margin-inline-end: -5px;
 }
+#root.isElectron .printsettings-container {
+  max-width: 50vw;
+  min-width: min-content;
+}
 .printsettings {
   width: fit-content;
 }

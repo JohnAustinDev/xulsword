@@ -52,9 +52,11 @@ import type { XulProps } from '../libxul/xul.tsx';
 // - DIALOG BUTTONS are rendered for print, close or cancel. If used in an
 //   Electron app, then PDF and print preview buttons are also provided.
 // These parts are arranged in one of two orientations, one for wide screen and
-// another for mid to narrow screens. Since print layout is controlled by
-// user settings via Javascript, the print container is also sized by
-// Javascript.
+// another for mid to narrow screens, where the print container is stacked
+// above the print settings. The stacked layout is only used by the web-app,
+// whose viewports are often much taller than they are wide. Since print layout
+// is controlled by user settings via Javascript, the print container is also
+// sized by Javascript.
 
 const WidePrintWidth = 1000;
 
@@ -530,7 +532,8 @@ export default class PrintSettings extends React.Component<
       '#root .printsettings-container',
     );
     if (settingsRef && printContainerRef.current) {
-      const isWideScreen = window.innerWidth >= WidePrintWidth;
+      const isWideScreen =
+        !Build.isWebApp || window.innerWidth >= WidePrintWidth;
       const settingsW = settingsRef.clientWidth;
       // initialPageViewW can be anything, but it must have a known value.
       let initialPageViewW =
