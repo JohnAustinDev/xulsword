@@ -52,12 +52,16 @@ export default class Bookselect extends React.Component<
 
   parser: RefParser;
 
+  selectOnMouseUp: boolean;
+
   constructor(props: BookselectProps) {
     super(props);
 
     this.state = { book: props.selection, pattern: /.*/, autocomp: true };
 
     this.textInput = React.createRef();
+
+    this.selectOnMouseUp = false;
 
     // noVariations is important for autocomplete because some
     // variations are short abbreviations.
@@ -98,13 +102,26 @@ export default class Bookselect extends React.Component<
     return books;
   }
 
-  focusChange(e: React.FocusEvent) {
+  // Select the whole value when the textbox gains focus, so typing
+  // replaces it. When focus comes from a click, the browser moves the
+  // caret to the click point after focus (clearing the selection), so
+  // the value is selected again on that click's mouseup.
+  focusChange(e: React.SyntheticEvent) {
     const { selection: book } = this.props;
     const refelem = this.textInput;
     const input = refelem !== null ? refelem.current : null;
     if (e.type === 'pointerdown') {
+      this.selectOnMouseUp = input !== null && document.activeElement !== input;
+    } else if (e.type === 'focus') {
       if (input !== null) input.select();
+    } else if (e.type === 'mouseup') {
+      if (this.selectOnMouseUp && input !== null) {
+        e.preventDefault();
+        input.select();
+      }
+      this.selectOnMouseUp = false;
     } else if (e.type === 'blur') {
+      this.selectOnMouseUp = false;
       this.setState({ book, pattern: /.*/, autocomp: true });
     } else {
       throw Error(`Unhandled focus event: ${e.type}`);
@@ -194,6 +211,8 @@ export default class Bookselect extends React.Component<
               onChange={this.textboxChange}
               onKeyDown={this.textboxKeyDown}
               onPointerDown={this.focusChange}
+              onMouseUpCapture={this.focusChange}
+              onFocus={this.focusChange}
               onBlur={this.focusChange}
               inputRef={this.textInput}
             />
