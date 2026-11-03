@@ -1089,12 +1089,10 @@ class Atext
     showAboutLink = false,
   ) {
     const appIsRTL = G.ProgramConfig?.direction === 'rtl';
-    const prevArrow = appIsRTL
-      ? String.fromCharCode(10095)
-      : String.fromCharCode(10094);
-    const nextArrow = appIsRTL
-      ? String.fromCharCode(10094)
-      : String.fromCharCode(10095);
+    // These arrows are Unicode bidi-mirrored characters, so the browser
+    // flips them itself inside the dir="rtl" div below. Don't swap them here.
+    const prevArrow = String.fromCharCode(10094); // ❮
+    const nextArrow = String.fromCharCode(10095); // ❯
     return (
       `
     <div class="navlink" dir="${appIsRTL ? 'rtl' : 'ltr'}">
