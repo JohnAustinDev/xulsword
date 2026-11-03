@@ -15,6 +15,7 @@ import {
   windowArguments,
   iframeAutoHeightObserver,
   doUntilDone,
+  createResizeObserver,
 } from '../../common.ts';
 import {
   getPortalContainer,
@@ -177,6 +178,14 @@ export default class PrintSettings extends React.Component<
   // is sized by Javascript, so the parent iframe must follow every change.
   printHeightObserver: ReturnType<typeof iframeAutoHeightObserver>;
 
+  // The page view is sized from the settings panel's width, which is measured
+  // during render. But the panel can widen after render, such as when
+  // PrintPassage portals its controls into customSettingsRef, so re-render
+  // whenever that width changes.
+  settingsWidthObserver: ResizeObserver;
+
+  settingsWidth: number;
+
   constructor(props: PrintSettingsProps) {
     super(props);
 
@@ -216,6 +225,14 @@ export default class PrintSettings extends React.Component<
     this.pagebuttons = React.createRef();
     this.iframe = React.createRef();
     this.printHeightObserver = iframeAutoHeightObserver('.print');
+    this.settingsWidth = NaN;
+    this.settingsWidthObserver = createResizeObserver((entries) => {
+      const width = entries[0]?.target.clientWidth ?? NaN;
+      if (width !== this.settingsWidth) {
+        this.settingsWidth = width;
+        this.forceUpdate();
+      }
+    });
 
     this.resetTO = null;
   }
@@ -224,6 +241,13 @@ export default class PrintSettings extends React.Component<
     this.forceUpdate(); // to re-render now with print.settings
     setTimeout(() => this.setPages(), 1);
     this.printHeightObserver.sync();
+    const settings = getRootNode().querySelector(
+      '#root .printsettings-container',
+    );
+    if (settings) {
+      this.settingsWidth = settings.clientWidth;
+      this.settingsWidthObserver.observe(settings);
+    }
   }
 
   componentDidUpdate(
@@ -236,6 +260,7 @@ export default class PrintSettings extends React.Component<
 
   componentWillUnmount() {
     this.printHeightObserver.disconnect();
+    this.settingsWidthObserver.disconnect();
   }
 
   handler(e: React.SyntheticEvent<any, any>) {
