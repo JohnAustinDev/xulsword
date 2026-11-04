@@ -293,6 +293,12 @@ filter cannot be used to lighten the light skin's arrow image.) */
 .x-text-image img {
   border-color: var(--border-dark);
 }
+/* Some module images are are PNGs with a transparent background designed
+for light pages, which would vanish on this skin's dark surfaces. So put
+white behind all images. */
+.image-viewport img:not(.image-not-found) {
+  background-color: #ffffff;
+}
 
 /* Bookmarked text */
 .atext.Texts .bmnote {
