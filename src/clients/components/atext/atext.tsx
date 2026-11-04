@@ -543,7 +543,8 @@ class Atext
   }
 
   // Show the selected key of a dictionary's key list, and ready its key input
-  // for typing.
+  // for typing, unless something else has focus (such as an input the user
+  // clicked, causing the key input's blur to change the key).
   showDictKey(nbe: HTMLElement, modkey: string | null | undefined) {
     const { panelIndex } = this.props;
     const id = `${stringHash(modkey)}.${panelIndex}`;
@@ -551,7 +552,11 @@ class Atext
     if (Build.isElectronApp && keyelem) {
       safeScrollIntoView(keyelem, nbe, undefined, 40);
       const dictlist = keyelem.parentNode?.parentNode as HTMLElement | null;
-      if (dictlist) {
+      const { activeElement } = getRootNode();
+      if (
+        dictlist &&
+        (!activeElement || activeElement === activeElement.ownerDocument.body)
+      ) {
         const dki = dictlist.getElementsByClassName(
           'dictkeyinput',
         ) as unknown as HTMLInputElement[] | null;

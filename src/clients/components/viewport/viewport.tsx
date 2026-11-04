@@ -760,6 +760,7 @@ export default class Viewport
           ].join(' ')}
           flex="1"
           onKeyDown={eHandler}
+          onBlur={eHandler}
         >
           <div className="tabrow">{tabBankElements}</div>
 

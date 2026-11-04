@@ -643,21 +643,46 @@ export default function handler(
       break;
     }
 
+    // A dictionary key input goes to the first matching key when Enter is
+    // pressed or the input loses focus. While typing, it only turns red when
+    // nothing matches.
     case 'keydown': {
       const ek = e as React.KeyboardEvent;
       const targ = ofClass(['dictkeyinput'], target);
       if (targ && targ.element && panel && atext) {
         e.stopPropagation();
+        const enter = ek.key === 'Enter';
         handleDictKeyInput(
           this,
           panel,
           atext,
           targ.element as HTMLInputElement,
+          enter,
           ek.key,
-          ek.key === 'Enter' ? 0 : C.UI.Atext.dictKeyInputDelay,
+          enter ? 0 : C.UI.Atext.dictKeyInputDelay,
         );
+        // Don't call eventHandled(): its preventDefault would stop the key
+        // from reaching the input.
+        return;
       }
       break;
+    }
+
+    case 'blur': {
+      const targ = ofClass(['dictkeyinput'], target);
+      const input = targ?.element as HTMLInputElement | undefined;
+      // Skip an unedited input, and blur caused by the window losing focus
+      // (the input keeps focus for when the window gets it back).
+      if (
+        input &&
+        panel &&
+        atext &&
+        input.value !== input.defaultValue &&
+        document.hasFocus()
+      ) {
+        handleDictKeyInput(this, panel, atext, input, true);
+      }
+      return;
     }
 
     case 'wheel': {
@@ -721,12 +746,15 @@ function elementDataGoTo(xthis: Xulsword | ViewportWin, element: HTMLElement) {
   });
 }
 
+// Find the first dictionary key that starts with the input's value. Go to it
+// if goToKey is set, or else just color the input red if there is none.
 function handleDictKeyInput(
   xthis: Xulsword | ViewportWin,
   module: string,
   atext: HTMLElement,
   targelem: HTMLInputElement,
-  key: string,
+  goToKey: boolean,
+  key = '',
   delay = 0,
 ) {
   doUntilDone((renderPromise2) => {
@@ -741,10 +769,12 @@ function handleDictKeyInput(
             const re = new RegExp(`(^|<nx>)(${escapeRE(value)}[^<]*)<nx>`, 'i');
             const firstMatch = `${keylist.join('<nx>')}<nx>`.match(re);
             if (firstMatch) {
-              setState(xthis, atext, () => {
-                return { modkey: firstMatch[2] };
-              });
-            } else if (key !== 'backspace') {
+              if (goToKey) {
+                setState(xthis, atext, () => {
+                  return { modkey: firstMatch[2] };
+                });
+              }
+            } else if (key !== 'Backspace') {
               // if (Build.isElectronApp) (G as GType).Shell.beep();
               select.style.color = 'red';
             }
