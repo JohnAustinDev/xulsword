@@ -404,7 +404,7 @@ export default class ModuleManager
     Array.from(langs).forEach((code) => {
       let r = H.findTableRow(code, 'language');
       if (!r) {
-        r = H.findTableRow(code, 'language', [getLangReadable(code), { code }]);
+        r = H.findTableRow(code, 'language', [getLangReadable(code, false), { code }]);
       }
       if (r) newTableData.push(r);
     });

@@ -1099,13 +1099,13 @@ export function inlineAudioFile(
   return { audio: '', timing: '' };
 }
 
-export function getLanguageName(code: string): { en: string; local: string } {
-  const result = { en: '', local: '' };
+// Return the name of a language in locale (which must be 'en' or 'ru'), or
+// else the language's name for itself, or else its English name, or else ''.
+// A language's name for itself may list several scripts, like 'кыргызча /
+// Kırgızça', in which case only the first is returned.
+export function getLanguageName(code: string, locale: 'en' | 'ru'): string {
   if (!Cache.has('languageNames')) {
-    let languageNames = {} as {
-      en: Record<string, string>;
-      self: Record<string, string>;
-    };
+    let languageNames = {} as Record<string, Record<string, string>>;
     const path = Dirs.xsAsset.clone();
     path.append('locales');
     path.append('languageNames.json');
@@ -1115,12 +1115,20 @@ export function getLanguageName(code: string): { en: string; local: string } {
     }
     Cache.write(languageNames, 'languageNames');
   }
-  const names = Cache.read('languageNames');
-  const code2 = code.split('-').shift();
-  if (code2 && code2 in names.en) result.en = names.en[code2];
-  if (code2 && code2 in names.self) result.local = names.self[code2];
+  const names = Cache.read('languageNames') as Record<
+    string,
+    Record<string, string>
+  >;
+  const code2 = code.split('-').shift() || '';
+  const name = (map: Record<string, string> | undefined): string =>
+    (map && Object.prototype.hasOwnProperty.call(map, code2) && map[code2]) ||
+    '';
 
-  return result;
+  return (
+    name(names[locale === 'ru' ? 'ru' : 'en']) ||
+    name(names.self).split(' / ')[0] ||
+    name(names.en)
+  );
 }
 
 export function getAllDictionaryKeyList(module: string): string[] {

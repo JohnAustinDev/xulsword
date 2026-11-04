@@ -58,7 +58,7 @@ export default function ModuleMenu({
     labels[t.module] = t.label;
     if (language && t.lang) {
       labels[t.module] =
-        `${getLangReadable(t.lang, renderPromise)}: ${labels[t.module]}`;
+        `${getLangReadable(t.lang, false, renderPromise)}: ${labels[t.module]}`;
     }
     if (prefixes && t.module in prefixes) {
       labels[t.module] = `${prefixes[t.module]}${labels[t.module]}`;

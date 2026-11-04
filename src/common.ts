@@ -976,14 +976,25 @@ export function validateGlobalModulePrefs(
       string[],
     ];
     if (!(f in feature) && Array.isArray(fmods) && fmods.length) {
-      const fbloc: 'en' | 'ru' = Build.isWebApp
-        ? (G().Prefs.getCharPref('global.fallbackLocale') as any)
-        : (C.FallbackLanguage[G().Prefs.getCharPref('global.locale')] as any);
-      const pref = C.LocalePreferredFeature[fbloc]?.[f];
+      const pref = C.LocalePreferredFeature[getFallbackLocale()]?.[f];
       feature[f] = pref?.find((m) => fmods.includes(m)) || fmods[0];
     }
   });
   globalPopup.feature = feature;
+}
+
+// Return the fallback locale of the global locale, which is always 'en' or
+// 'ru'.
+export function getFallbackLocale(): 'en' | 'ru' {
+  const { Prefs } = G();
+  if (Build.isWebApp) {
+    const fbloc = Prefs.getCharPref('global.fallbackLocale');
+    return fbloc === 'ru' ? 'ru' : 'en';
+  }
+  const loc = Prefs.getCharPref('global.locale');
+  if (['en', 'ru'].includes(loc)) return loc as 'en' | 'ru';
+  const fbloc = C.FallbackLanguage[loc];
+  return fbloc === 'ru' ? 'ru' : 'en';
 }
 
 export function noAutoSearchIndex(Prefs: GType['Prefs'], module: string) {

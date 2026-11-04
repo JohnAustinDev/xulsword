@@ -15,6 +15,7 @@ import {
   prefType,
   dString,
   getCSS,
+  getFallbackLocale,
   last,
   pad,
 } from '../common.ts';
@@ -1452,27 +1453,16 @@ export function registerUpdateStateFromPref(
 
 export function getLangReadable(
   code: string,
+  includeSub: boolean,
   renderPromise?: RenderPromise,
 ): string {
-  if (/^en(-*|_*)$/.test(code)) return 'English';
   if (!code || code === '?' || /^\s*$/.test(code)) return '?';
-  const langName = GI.getLanguageName(
-    { en: '', local: '' },
-    renderPromise,
-    code,
-  );
-  let name = '';
-  // Prefer the English language name IF xulsword-language is English or the
-  // code-language is Hebrew or Greek.
-  if (
-    G.i18n.language.split('-').shift() === 'en' ||
-    ['he', 'grc'].includes(code)
-  ) {
-    name = langName.en || langName.local;
-  } else {
-    name = langName.local || langName.en;
-  }
-  return name || code;
+  const cps = code.split('-');
+  const c1 = cps.shift() || '';
+  const c2 = cps.join('-');
+  const name = GI.getLanguageName('', renderPromise, c1, getFallbackLocale());
+  const r = includeSub && c2 ? `${name} (${c2})`: name;
+  return r || code;
 }
 
 // This is useful for making i18n.t() calls having options cacheable!
@@ -1682,9 +1672,7 @@ export function moduleInfoHTML(
             value = GI.i18n.t('', renderPromise, tt || 'Genbks');
           } else if (sf === 'Lang') {
             const v = c[f] as string;
-            const [l, s] = v.split('-');
-            value = getLangReadable(l, renderPromise);
-            if (s) value += ` (${s})`;
+            value = getLangReadable(v, true, renderPromise);
           } else if (sf === 'History') {
             const v = c[f] as Array<[string, SwordConfLocalized]>;
             value = v
