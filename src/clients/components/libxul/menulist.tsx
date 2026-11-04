@@ -56,7 +56,13 @@ export default function Menulist({
         multiple={multiple}
         size={props.size}
         value={value}
-        onChange={() => {}}
+        onChange={(e) => {
+          // A selector gives up focus once a selection is made with the
+          // mouse. Keyboard focus stays, so arrow keys may keep changing it.
+          const select = e.currentTarget;
+          if (!multiple && !props.size && !select.matches(':focus-visible'))
+            setTimeout(() => select.blur(), 0);
+        }}
       >
         {props.options}
         {props.children}

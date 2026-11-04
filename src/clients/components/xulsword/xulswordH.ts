@@ -58,6 +58,9 @@ export default function xulswordHandler(
         }
         case 'historymenu': {
           e.stopPropagation();
+          // eventHandled() cancels pointerdown, so the browser won't focus
+          // the button. Focus it here, as other inputs are when clicked.
+          (currentTarget as HTMLElement).querySelector('button')?.focus();
           this.setState((prevState) => {
             if (!prevState.location) return null;
             return {
@@ -65,7 +68,10 @@ export default function xulswordHandler(
                 ? undefined
                 : this.historyMenu(prevState, (e, index) => {
                     this.setHistory(index, true);
-                    e.stopPropagation();
+                    // Like other selectors, the button gives up focus once
+                    // a selection is made.
+                    eventHandled(e);
+                    (e.currentTarget as HTMLElement).closest('button')?.blur();
                   }),
             };
           });

@@ -260,13 +260,25 @@ native select, which it measures while the select has data-measuring. */
       box-shadow: none;
       background-color: transparent;
     }
-    /* The focus ring is outside the field, like that of .bookselect, and as
-    with BluePrint's focus rings, only for keyboard focus, and not within
-    .bp6-focus-disabled (such as the text panels). A focused select's clip is
-    widened to show it, unless it is in a Menulist, whose ring is on its
-    .xsinput box. */
+    /* The focus ring is outside the field, like that of .bookselect. It shows
+    while the menu is open (whose option, not the select, then has focus) and
+    for keyboard focus, but not within .bp6-focus-disabled (such as the text
+    panels). After a mouse selection, Menulist blurs its select. A select's
+    clip is widened to show the ring, unless it is in a Menulist, whose ring
+    is on its .xsinput box. (:open is safe here: every browser that supports
+    base-select supports it.) */
     #root
-      select:not([multiple]):not([size]):not([data-measuring]):focus-visible {
+      select:not([multiple]):not([size]):not([data-measuring]):not(
+        .bp6-focus-disabled *
+      ):focus-visible {
+      outline: rgba(45, 114, 210, 0.6) auto 2px;
+      outline-offset: 2px;
+      clip-path: inset(-5px);
+    }
+    #root
+      select:not([multiple]):not([size]):not([data-measuring]):not(
+        .bp6-focus-disabled *
+      ):open {
       outline: rgba(45, 114, 210, 0.6) auto 2px;
       outline-offset: 2px;
       clip-path: inset(-5px);
@@ -278,8 +290,21 @@ native select, which it measures while the select has data-measuring. */
       clip-path: inset(0);
     }
     #root
+      .menulist
+      select:not([multiple]):not([size]):not([data-measuring]):open {
+      outline: none;
+      clip-path: inset(0);
+    }
+    #root
       .menulist:not(.bookselect .menulist):not(.bp6-focus-disabled *):has(
         > select:not([multiple]):not([size]):not([data-measuring]):focus-visible
+      ) {
+      outline: rgba(45, 114, 210, 0.6) auto 2px;
+      outline-offset: 2px;
+    }
+    #root
+      .menulist:not(.bookselect .menulist):not(.bp6-focus-disabled *):has(
+        > select:not([multiple]):not([size]):not([data-measuring]):open
       ) {
       outline: rgba(45, 114, 210, 0.6) auto 2px;
       outline-offset: 2px;
