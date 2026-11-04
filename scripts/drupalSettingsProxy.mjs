@@ -3,22 +3,21 @@ import http from 'http';
 import https from 'https';
 
 // Development only: lets webapp.html be tested with the same drupalSettings
-// an IBTSite page would supply. The dev server serves
-// /drupalSettings/<target>.js?<query>, which forwards the query to an IBTSite
+// a host server page would supply. The dev server serves
+// /drupalSettings/<target>.js?<query>, which forwards the query to a server
 // URL and returns a script that sets window.drupalSettings to the settings
-// IBTSite rendered. The target is either:
-//   api - The third-party API (bibleBrowserController's /bible-browser), as
-//         used by test.html and test-fixed.html iframes. Without a query, no
-//         settings are set, so the web-app falls back to defaultSettings.ts.
-//   ibt - An IBTSite page with a Bible Browser block, as used by a top-level
-//         webapp.html to test IBT's own use of the API. Such a page needs no
-//         query. If WEBAPP_IBT_URL is not set, this is the same as api.
+// that were rendered. The target is either:
+//   api - A third-party API URL to /bible-browser to be used by test.html
+//         and test-fixed.html iframes. Without a query, no settings are set,
+//         and the web-app falls back to defaultSettings.ts.
+//   ibt - An IBT server URL to a Bible Browser page, to be used by webapp.html
+//         to test using the host server's API. The query is optional.
 const WEBAPP_API_URL =
   process.env.WEBAPP_API_URL || 'https://localhost:8443/bible-browser';
 const WEBAPP_IBT_URL = process.env.WEBAPP_IBT_URL || '';
 
 // GET a URL, following redirects (/bible-browser redirects to /passage).
-// Certificates are not verified, since the local IBTSite's is self-signed.
+// Certificates are not verified, since the localhost is self-signed.
 function get(url, redirects = 5) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);

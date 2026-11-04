@@ -70,7 +70,6 @@ run('rsync', [
   '--exclude=/build/webapp/release',
   '--exclude=/libxulsword/build',
   '--exclude=/archive',
-  '--exclude=/IBTSite',
   '--exclude=/profile_webapp',
   '--exclude=/.yarn/cache',
   '--exclude=/.yarn/install-state.gz',

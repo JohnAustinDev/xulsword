@@ -20,7 +20,6 @@ setenv
 
 # webapp
 profile_webapp
-IBTSite
 
 node_modules
 # Note: it's not possible to re-include a directory or any file whose parent directory is excluded!

@@ -60,7 +60,7 @@ const C = {
     maxDataStringLength: 1000000, // bytes (search results can be large)
     maxLogJson: 10000, // bytes
     maxDataRecursion: 20, // Some Genbk TOC nodes have at least > 11
-    maxDataArrayLength: 1300, // SHRDICT has 1209 entries (next IBT is KKDLDICT at 526 but StrongsHebrew has 8675)
+    maxDataArrayLength: 1300, // SHRDICT has 1209 entries (next is KKDLDICT at 526 but StrongsHebrew has 8675)
     maxDataObjectKeys: 512,
     // Set the maximum number of points that can be consumed over some duration
     // in seconds. The WebApp server is configured to allocate points for each
