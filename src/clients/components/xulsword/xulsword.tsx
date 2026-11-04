@@ -37,6 +37,7 @@ import {
   addHistory as addHistoryH,
   setHistory as setHistoryH,
   onPopState as onPopStateH,
+  onHistoryKeyOrMouse as onHistoryKeyOrMouseH,
   historyMenu as historyMenuH,
 } from './history.tsx';
 import './xulsword.css';
@@ -82,6 +83,7 @@ export default class Xulsword
   setHistory: typeof setHistoryH;
 
   onPopState: OmitThisParameter<typeof onPopStateH>;
+  onHistoryKeyOrMouse: OmitThisParameter<typeof onHistoryKeyOrMouseH>;
 
   historyMenu: typeof historyMenuH;
 
@@ -122,6 +124,7 @@ export default class Xulsword
     this.addHistory = addHistoryH.bind(this);
     this.setHistory = setHistoryH.bind(this);
     this.onPopState = onPopStateH.bind(this);
+    this.onHistoryKeyOrMouse = onHistoryKeyOrMouseH.bind(this);
     this.historyMenu = historyMenuH.bind(this);
 
     this.destroy = [];
@@ -143,6 +146,17 @@ export default class Xulsword
         window.removeEventListener('popstate', onPopState),
       );
     }
+    // Listening on the root node keeps a web-app embedded in a host page's
+    // shadow root from taking the host page's keys.
+    const { onHistoryKeyOrMouse } = this;
+    const root = getRootNode();
+    const listener = onHistoryKeyOrMouse as EventListener;
+    root.addEventListener('keydown', listener);
+    root.addEventListener('mouseup', listener);
+    this.destroy.push(() => {
+      root.removeEventListener('keydown', listener);
+      root.removeEventListener('mouseup', listener);
+    });
     this.xulswordHeightObserver.sync();
     this.syncRootClasses();
     renderPromise.dispatch();

@@ -10,6 +10,7 @@ import C from '../../../constant.ts';
 import { G } from '../../G.ts';
 import Menupopup from '../libxul/menupopup.tsx';
 import { Box } from '../libxul/boxes.tsx';
+import { getRootElement } from '../../rootNode.ts';
 
 import type { HistoryVKType, LocationVKType } from '../../../type.ts';
 import type Xulsword from './xulsword.tsx';
@@ -137,6 +138,57 @@ export function onPopState(this: Xulsword, e: PopStateEvent): void {
       : null,
     scroll: { verseAt: 'center' },
   });
+}
+
+// Move one step back (-1) or forward (1) in history, if able.
+function historyStep(this: Xulsword, dir: -1 | 1): boolean {
+  const { location, isPinned, panels, historyIndex } = this.state;
+  const navdisabled = !location || isPinned.every((p, i) => p || !panels[i]);
+  if (navdisabled) return false;
+  this.setHistory(historyIndex - dir);
+  return true;
+}
+
+// Keydown and mouseup listener for keyboard and mouse history navigation.
+// The Left and Right arrow keys (swapped for right-to-left locales) move back
+// and forward unless a control that uses them has focus. In the Electron app,
+// Alt+arrow, the keyboard's Back/Forward keys and the mouse's back/forward
+// buttons do too. Browsers already map those to window.history, which the
+// web-app follows with onPopState.
+export function onHistoryKeyOrMouse(
+  this: Xulsword,
+  e: KeyboardEvent | MouseEvent,
+): void {
+  if (e.defaultPrevented) return;
+  let dir: -1 | 1 | 0 = 0;
+  if ('key' in e) {
+    if (e.repeat || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    const [target] = e.composedPath();
+    if (
+      target instanceof HTMLElement &&
+      (target.isContentEditable ||
+        target.closest(
+          'input, textarea, select, [role="slider"], [role="listbox"], [role="menu"], [role="tablist"], [role="dialog"], [role="combobox"]',
+        ))
+    )
+      return;
+    const rtl = getRootElement()?.dir === 'rtl';
+    let { key } = e;
+    if (rtl && key === 'ArrowLeft') key = 'ArrowRight';
+    else if (rtl && key === 'ArrowRight') key = 'ArrowLeft';
+    // In browsers, Alt+arrow is native history navigation.
+    if (e.altKey && !Build.isElectronApp) return;
+    if (key === 'ArrowLeft') dir = -1;
+    else if (key === 'ArrowRight') dir = 1;
+    else if (Build.isElectronApp && !e.altKey) {
+      if (key === 'BrowserBack') dir = -1;
+      else if (key === 'BrowserForward') dir = 1;
+    }
+  } else if (Build.isElectronApp) {
+    if (e.button === 3) dir = -1;
+    else if (e.button === 4) dir = 1;
+  }
+  if (dir && historyStep.call(this, dir)) e.preventDefault();
 }
 
 // Build and return a history menupopup from state.

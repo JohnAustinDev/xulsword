@@ -665,7 +665,9 @@ export default function handler(
         // from reaching the input.
         return;
       }
-      break;
+      // Other keys are left alone, so that they reach document listeners
+      // such as keyboard history navigation.
+      return;
     }
 
     case 'blur': {
