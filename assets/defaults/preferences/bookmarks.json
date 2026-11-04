@@ -1,0 +1,313 @@
+{
+  "rootfolder": {
+    "type": "folder",
+    "id": "bmroot",
+    "label": "i18n:rootBookmark.label",
+    "labelLocale": "",
+    "note": "",
+    "noteLocale": "",
+    "creationDate": 1679191337814,
+    "hasCaret": true,
+    "childNodes": [
+    {
+     "id": "xcl1efif7xsa",
+     "label": "i18n:label",
+     "labelLocale": "",
+     "note": "i18n:bookmarks.example.note",
+     "noteLocale": "",
+     "creationDate": 1679295600000,
+     "type": "bookmark",
+     "tabType": "Texts",
+     "location": {
+      "vkMod": "",
+      "book": "Gen",
+      "chapter": 1,
+      "verse": 1,
+      "lastverse": 1,
+      "v11n": "SynodalProt"
+     },
+     "sampleText": "",
+     "hasCaret": false
+    },
+    {
+     "id": "xsq7me5496m9",
+     "label": "i18n:bookmarks.example.folder",
+     "labelLocale": "",
+     "note": "i18n:bookmarks.example.note",
+     "noteLocale": "",
+     "creationDate": 1679295600000,
+     "type": "folder",
+     "hasCaret": true,
+     "isExpanded": false,
+     "childNodes": [
+      {
+       "id": "xtngdj15o2t",
+       "label": "i18n:bookmarks.example.folder1",
+       "labelLocale": "",
+       "note": "",
+       "noteLocale": "",
+       "creationDate": 1679295600000,
+       "type": "folder",
+       "hasCaret": true,
+       "isExpanded": false,
+       "childNodes": [
+        {
+         "id": "xnnij0mh7pkm",
+         "label": "i18n:label",
+         "labelLocale": "",
+         "note": "",
+         "noteLocale": "",
+         "creationDate": 1679295600000,
+         "type": "bookmark",
+         "tabType": "Texts",
+         "location": {
+          "vkMod": "",
+          "book": "Exod",
+          "chapter": 6,
+          "verse": 3,
+          "lastverse": 3,
+          "v11n": "SynodalProt"
+         },
+         "sampleText": "",
+         "hasCaret": false
+        },
+        {
+         "id": "xz2gvl46h4g",
+         "label": "i18n:label",
+         "labelLocale": "",
+         "note": "",
+         "noteLocale": "",
+         "creationDate": 1679295600000,
+         "type": "bookmark",
+         "tabType": "Texts",
+         "location": {
+          "vkMod": "",
+          "book": "Prov",
+          "chapter": 2,
+          "verse": 1,
+          "lastverse": 5,
+          "v11n": "SynodalProt"
+         },
+         "sampleText": "",
+         "hasCaret": false
+        },
+        {
+         "id": "xd0kajhfrdfh",
+         "label": "i18n:label",
+         "labelLocale": "",
+         "note": "",
+         "noteLocale": "",
+         "creationDate": 1679295600000,
+         "type": "bookmark",
+         "tabType": "Texts",
+         "location": {
+          "vkMod": "",
+          "book": "1Sam",
+          "chapter": 2,
+          "verse": 12,
+          "lastverse": 12,
+          "v11n": "SynodalProt"
+         },
+         "sampleText": "",
+         "hasCaret": false
+        },
+        {
+         "id": "xmtnw86hzaan",
+         "label": "i18n:label",
+         "labelLocale": "",
+         "note": "",
+         "noteLocale": "",
+         "creationDate": 1679295600000,
+         "type": "bookmark",
+         "tabType": "Texts",
+         "location": {
+          "vkMod": "",
+          "book": "1Sam",
+          "chapter": 3,
+          "verse": 7,
+          "lastverse": 7,
+          "v11n": "SynodalProt"
+         },
+         "sampleText": "",
+         "hasCaret": false
+        },
+        {
+         "id": "xiusih3zbl3b",
+         "label": "i18n:label",
+         "labelLocale": "",
+         "note": "",
+         "noteLocale": "",
+         "creationDate": 1679295600000,
+         "type": "bookmark",
+         "tabType": "Texts",
+         "location": {
+          "vkMod": "",
+          "book": "Jer",
+          "chapter": 22,
+          "verse": 16,
+          "lastverse": 16,
+          "v11n": "SynodalProt"
+         },
+         "sampleText": "",
+         "hasCaret": false
+        },
+        {
+         "id": "xckurfa0qgca",
+         "label": "i18n:label",
+         "labelLocale": "",
+         "note": "",
+         "noteLocale": "",
+         "creationDate": 1679295600000,
+         "type": "bookmark",
+         "tabType": "Texts",
+         "location": {
+          "vkMod": "",
+          "book": "1Cor",
+          "chapter": 13,
+          "verse": 12,
+          "lastverse": 12,
+          "v11n": "SynodalProt"
+         },
+         "sampleText": "",
+         "hasCaret": false
+        },
+        {
+         "id": "x4pnba90tlue",
+         "label": "i18n:label",
+         "labelLocale": "",
+         "note": "",
+         "noteLocale": "",
+         "creationDate": 1679295600000,
+         "type": "bookmark",
+         "tabType": "Texts",
+         "location": {
+          "vkMod": "",
+          "book": "John",
+          "chapter": 14,
+          "verse": 6,
+          "lastverse": 7,
+          "v11n": "SynodalProt"
+         },
+         "sampleText": "",
+         "hasCaret": false
+        },
+        {
+         "id": "x9o5oyjr5ag",
+         "label": "i18n:label",
+         "labelLocale": "",
+         "note": "",
+         "noteLocale": "",
+         "creationDate": 1679295600000,
+         "type": "bookmark",
+         "tabType": "Texts",
+         "location": {
+          "vkMod": "",
+          "book": "John",
+          "chapter": 17,
+          "verse": 3,
+          "lastverse": 3,
+          "v11n": "SynodalProt"
+         },
+         "sampleText": "",
+         "hasCaret": false
+        }
+       ]
+      },
+      {
+       "id": "xi8r6uwzrn",
+       "label": "i18n:bookmarks.example.folder2",
+       "labelLocale": "",
+       "note": "",
+       "noteLocale": "",
+       "creationDate": 1679295600000,
+       "type": "folder",
+       "hasCaret": true,
+       "isExpanded": false,
+       "childNodes": [
+        {
+         "id": "xirz3bk43obe",
+         "label": "i18n:label",
+         "labelLocale": "",
+         "note": "",
+         "noteLocale": "",
+         "creationDate": 1679295600000,
+         "type": "bookmark",
+         "tabType": "Texts",
+         "location": {
+          "vkMod": "",
+          "book": "John",
+          "chapter": 3,
+          "verse": 1,
+          "lastverse": 21,
+          "v11n": "SynodalProt"
+         },
+         "sampleText": "",
+         "hasCaret": false
+        },
+        {
+         "id": "x7h19s4zf6u",
+         "label": "i18n:label",
+         "labelLocale": "",
+         "note": "",
+         "noteLocale": "",
+         "creationDate": 1679295600000,
+         "type": "bookmark",
+         "tabType": "Texts",
+         "location": {
+          "vkMod": "",
+          "book": "Titus",
+          "chapter": 3,
+          "verse": 4,
+          "lastverse": 7,
+          "v11n": "SynodalProt"
+         },
+         "sampleText": "",
+         "hasCaret": false
+        },
+        {
+         "id": "x439cej2chql",
+         "label": "i18n:label",
+         "labelLocale": "",
+         "note": "",
+         "noteLocale": "",
+         "creationDate": 1679295600000,
+         "type": "bookmark",
+         "tabType": "Texts",
+         "location": {
+          "vkMod": "",
+          "book": "1Pet",
+          "chapter": 1,
+          "verse": 23,
+          "lastverse": 23,
+          "v11n": "SynodalProt"
+         },
+         "sampleText": "",
+         "hasCaret": false
+        },
+        {
+         "id": "xfsbiovus936",
+         "label": "i18n:label",
+         "labelLocale": "",
+         "note": "",
+         "noteLocale": "",
+         "creationDate": 1679295600000,
+         "type": "bookmark",
+         "tabType": "Texts",
+         "location": {
+          "vkMod": "",
+          "book": "1Pet",
+          "chapter": 1,
+          "verse": 3,
+          "lastverse": 3,
+          "v11n": "SynodalProt"
+         },
+         "sampleText": "",
+         "hasCaret": false
+        }
+       ]
+      }
+     ]
+    }
+    ]
+  }
+}

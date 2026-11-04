@@ -2,7 +2,6 @@
 archive
 archive.tgz
 branding.json
-assets/defaults/preferences/
 assets/**/*missing.json
 Cpp/lib*
 !Cpp/libxulsword-build.sh
