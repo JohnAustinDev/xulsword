@@ -314,6 +314,11 @@ export default function (opts) {
         ...(!builds[build][0].startsWith('electron')
           ? { electron: 'return {};' }
           : {}),
+        // Optional native add-ons that ws (used by socket.io) tries to
+        // require inside a try/catch. Bundled, their native code can never
+        // load, so leave them out and let ws use its built-in JS instead.
+        bufferutil: 'commonjs bufferutil',
+        'utf-8-validate': 'commonjs utf-8-validate',
       },
 
       entry: builds[build][1].reduce((entries, entry) => {

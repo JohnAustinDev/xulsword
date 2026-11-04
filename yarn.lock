@@ -3940,16 +3940,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bufferutil@npm:^4.1.0":
-  version: 4.1.0
-  resolution: "bufferutil@npm:4.1.0"
-  dependencies:
-    node-gyp: "npm:latest"
-    node-gyp-build: "npm:^4.3.0"
-  checksum: 10c0/12d63bbc80a3b6525bc62a28387fca0a5aed09e41b74375c500e60721b6a1ab2960b82e48f1773eddea2b14e490f129214b8b57bd6e1a5078b6235857d658508
-  languageName: node
-  linkType: hard
-
 "builder-util-runtime@npm:9.7.0":
   version: 9.7.0
   resolution: "builder-util-runtime@npm:9.7.0"
@@ -8166,17 +8156,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-gyp-build@npm:^4.3.0":
-  version: 4.8.1
-  resolution: "node-gyp-build@npm:4.8.1"
-  bin:
-    node-gyp-build: bin.js
-    node-gyp-build-optional: optional.js
-    node-gyp-build-test: build-test.js
-  checksum: 10c0/e36ca3d2adf2b9cca316695d7687207c19ac6ed326d6d7c68d7112cebe0de4f82d6733dff139132539fcc01cf5761f6c9082a21864ab9172edf84282bc849ce7
-  languageName: node
-  linkType: hard
-
 "node-gyp@npm:^12.2.0":
   version: 12.4.0
   resolution: "node-gyp@npm:12.4.0"
@@ -10993,16 +10972,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"utf-8-validate@npm:^6.0.6":
-  version: 6.0.6
-  resolution: "utf-8-validate@npm:6.0.6"
-  dependencies:
-    node-gyp: "npm:latest"
-    node-gyp-build: "npm:^4.3.0"
-  checksum: 10c0/88c3581c43b9f824f0939b0da0ecf0cf092ff944ace7be517a5459bc18fe1884fc4acda3502ed369b4ce44baf40590a8f1e820c43a425df0758f2ba76b055f77
-  languageName: node
-  linkType: hard
-
 "utf8-byte-length@npm:^1.0.1":
   version: 1.0.5
   resolution: "utf8-byte-length@npm:1.0.5"
@@ -11501,7 +11470,6 @@ __metadata:
     "@types/toobusy-js": "npm:^0.5.4"
     adm-zip: "npm:^0.6.1"
     babel-loader: "npm:^10.1.1"
-    bufferutil: "npm:^4.1.0"
     chalk: "npm:^6.0.1"
     classnames: "npm:^2.5.1"
     compression-webpack-plugin: "npm:^12.0.0"
@@ -11554,7 +11522,6 @@ __metadata:
     toobusy-js: "npm:^0.5.1"
     typescript: "npm:^6.0.3"
     typescript-eslint: "npm:^8.72.1"
-    utf-8-validate: "npm:^6.0.6"
     webpack: "npm:^5.112.2"
     webpack-bundle-analyzer: "npm:^5.4.0"
     webpack-cli: "npm:^7.3.1"
