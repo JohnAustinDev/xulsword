@@ -245,6 +245,7 @@ class Popup
                 'dt',
                 'dtl',
                 'introlink',
+                'image-viewport',
               ],
               handler,
             );

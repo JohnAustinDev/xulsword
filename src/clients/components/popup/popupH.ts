@@ -11,6 +11,7 @@ import { G, GI } from '../../G.ts';
 import { eventHandled, isBlockedEvent, moduleInfoHTML } from '../../common.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.tsx';
 import { getElementData } from '../../htmlData.ts';
+import { imageZoomCursor, imageZoomToggle } from '../../imageZoom.ts';
 import log from '../../log.ts';
 import analytics from '../../analytics.ts';
 import { getDictEntryHTML, getLemmaHTML } from '../atext/zdictionary.ts';
@@ -320,6 +321,7 @@ export default function handler(
           'dtl',
           'aboutlink',
           'introlink',
+          'image-viewport',
         ],
         target,
       );
@@ -327,6 +329,10 @@ export default function handler(
       const { element, type } = oc;
       if (!element) return;
       if (type === 'npopup') return;
+      if (type === 'image-viewport') {
+        imageZoomCursor(element);
+        break;
+      }
       if (
         !getPopupHTML(
           getElementData(element),
@@ -358,6 +364,11 @@ export default function handler(
           drag.dragging = true;
           return { drag };
         });
+        if (e.cancelable) e.preventDefault();
+      }
+      const viewport = ofClass(['image-viewport'], ep.target);
+      if (viewport) {
+        imageZoomToggle(viewport.element, ep);
         if (e.cancelable) e.preventDefault();
       }
 
