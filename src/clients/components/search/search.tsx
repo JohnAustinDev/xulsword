@@ -562,6 +562,7 @@ export default class Search
                         title={searchboxTooltip}
                         maxLength="60"
                         onChange={handler}
+                        onKeyDown={handler}
                       />
                       <ModuleMenu
                         id="module"

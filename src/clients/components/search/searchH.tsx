@@ -1,4 +1,5 @@
 import React from 'react';
+import DOMPurify from 'dompurify';
 import { dString, last, ofClass } from '../../../common.ts';
 import VerseKey from '../../../verseKey.ts';
 import Subscription from '../../../subscription.ts';
@@ -913,6 +914,26 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
         }
         default:
           throw Error(`Unhandled searchH change on id '${target.id}'`);
+      }
+      break;
+    }
+    case 'keydown': {
+      const ke = e as React.KeyboardEvent;
+      if (
+        currentTarget.id === 'searchtext' &&
+        ke.key === 'Enter' &&
+        !ke.nativeEvent.isComposing
+      ) {
+        e.preventDefault();
+        // The Textbox reports changes after a delay, so read the input
+        // directly to include the last keystroke.
+        const input = target as HTMLInputElement;
+        const searchtext = DOMPurify.sanitize(input.value);
+        this.setState({ searchtext }, () => {
+          search(this).catch((er) => {
+            log.error(er);
+          });
+        });
       }
       break;
     }
