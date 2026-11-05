@@ -2087,17 +2087,17 @@ export function resolveTemplateURL(
 
 // Compare \d.\d.\d type version numbers (like SWORD modules).
 // Returns -1 if v1 < v2, 1 of v1 > v2 and 0 if they are the same.
+// Parts that are both numbers are compared as numbers (so 3.10 > 3.9),
+// other parts as strings. A missing part is 0.
 export function versionCompare(v1: string | number, v2: string | number) {
-  const p1 = String(v1).split('.');
-  const p2 = String(v2).split('.');
+  const p1 = String(v1).trim().split('.');
+  const p2 = String(v2).trim().split('.');
   do {
-    let n1: any = p1.shift();
-    let n2: any = p2.shift();
-    if (!n1) n1 = 0;
-    if (!n2) n2 = 0;
-    if (Number(n1) && Number(n2)) {
-      if (n1 < n2) return -1;
-      if (n1 > n2) return 1;
+    const n1 = p1.shift() || '0';
+    const n2 = p2.shift() || '0';
+    if (/^\d+$/.test(n1) && /^\d+$/.test(n2)) {
+      if (Number(n1) < Number(n2)) return -1;
+      if (Number(n1) > Number(n2)) return 1;
     } else if (n1 < n2) {
       return -1;
     } else if (n1 > n2) {
