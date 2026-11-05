@@ -82,6 +82,7 @@ export { default as Plus } from '@blueprintjs/icons/lib/esm/generated/20px/paths
 export { default as Print } from '@blueprintjs/icons/lib/esm/generated/20px/paths/print.js';
 export { default as Properties } from '@blueprintjs/icons/lib/esm/generated/20px/paths/properties.js';
 export { default as Redo } from '@blueprintjs/icons/lib/esm/generated/20px/paths/redo.js';
+export { default as Refresh } from '@blueprintjs/icons/lib/esm/generated/20px/paths/refresh.js';
 export { default as RemoveColumnRight } from '@blueprintjs/icons/lib/esm/generated/20px/paths/remove-column-right.js';
 export { default as Search } from '@blueprintjs/icons/lib/esm/generated/20px/paths/search.js';
 export { default as SmallCross } from '@blueprintjs/icons/lib/esm/generated/20px/paths/small-cross.js';

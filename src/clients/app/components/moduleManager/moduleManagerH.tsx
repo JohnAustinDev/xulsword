@@ -195,6 +195,9 @@ export const RepCol = {
 export const Downloads = {
   promises: [] as Array<Promise<Array<DownloadRecordType>>>,
   dl2mrkeyMap: {} as { [dlkey: string]: string },
+  // The last download of each module (by modrepkey), including any audio
+  // chapter selection, so it can be downloaded again by a refresh.
+  dlobjs: {} as { [modrepkey: string]: Download },
   finished: [] as string[],
   cancelled: [] as string[],
 };
@@ -827,6 +830,10 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             }).catch((er) => log.error(er));
             tableUpdate(newstate, 'repository');
             this.setState(newstate);
+            break;
+          }
+          case 'repoRefresh': {
+            this.refresh().catch((er) => log.error(er));
             break;
           }
           case 'moduleCancel': {
@@ -1680,18 +1687,24 @@ async function promptAudioChapters(
 }
 
 // Perform async repository module downloads corresponding to a given
-// set of module configs.
+// set of module configs. If redownload is set, audio chapters that were
+// chosen for a previous download of a module are used again.
 export async function download(
   xthis: ModuleManager,
   state: ManagerState,
   configs: SwordConfType[],
+  redownload = false,
 ): Promise<void> {
   if (!configs.length) return;
 
   // Prepare download objects.
   const dlobjs = configs.map((conf) => {
     const modkey = repositoryModuleKey(conf);
-    return getModuleDownload(modkey);
+    const dl = getModuleDownload(modkey);
+    const prev = redownload ? Downloads.dlobjs[modkey] : undefined;
+    if (dl && 'http' in dl && prev && 'http' in prev && prev.data)
+      dl.data = clone(prev.data);
+    return dl;
   });
   const dlkeys = dlobjs.map((dlobj) => downloadKey(dlobj));
 
@@ -1699,7 +1712,7 @@ export async function download(
   const audioPrompts = dlobjs.map((dlobj, i) => {
     if (dlobj) {
       const conf = configs[i];
-      if (conf.xsmType === 'XSM_audio' && 'http' in dlobj) {
+      if (conf.xsmType === 'XSM_audio' && 'http' in dlobj && !dlobj.data) {
         return promptAudioChapters(state, conf);
       }
     }
@@ -1717,6 +1730,10 @@ export async function download(
       log.error(er);
     }
   }
+
+  dlobjs.forEach((dlobj, i) => {
+    if (dlobj) Downloads.dlobjs[repositoryModuleKey(configs[i])] = dlobj;
+  });
 
   // Show downloads as loading.
   if (dlobjs.filter(Boolean).length) {
@@ -1962,6 +1979,15 @@ const tableRows: {
   module: {},
   repository: {},
 };
+// Forget the module table rows of remote modules, so a refresh will show the
+// latest information. Local module rows keep the user's changes.
+export function forgetRemoteModuleRows() {
+  Object.entries(tableRows.module).forEach(([modrepkey, row]) => {
+    if (!isRepoLocal(row[ModCol.iInfo].conf.sourceRepository))
+      delete tableRows.module[modrepkey];
+  });
+}
+
 export function findTableRow(
   key: string,
   tableName: 'language',

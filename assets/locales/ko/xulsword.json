@@ -61,6 +61,7 @@
    "dictButton.tooltip" : "사전 표시/감춤",
    "dlgFrom" : "원본 오디오파일 위치",
    "dlgTo" : "오디어 파일 저장 위치",
+   "downloadTimeout.message" : "{{v1}} 서버가 {{v2}}초 동안 응답하지 않습니다. 나중에 다시 시도하십시오.",
    "error-detected" : "프로그램 오류가 발견되었습니다. 이 문제를 개발자에게 알리려면 \"{{v1}}\"를 누르세요.",
    "from.label" : "시작지점",
    "gospel.label" : "복음",

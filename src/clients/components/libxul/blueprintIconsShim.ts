@@ -285,6 +285,10 @@ export {
   RedoIcon,
 } from '@blueprintjs/icons/lib/esm/generated/components/redo.js';
 export {
+  Refresh,
+  RefreshIcon,
+} from '@blueprintjs/icons/lib/esm/generated/components/refresh.js';
+export {
   RemoveColumnRight,
   RemoveColumnRightIcon,
 } from '@blueprintjs/icons/lib/esm/generated/components/remove-column-right.js';

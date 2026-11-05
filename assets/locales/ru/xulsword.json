@@ -81,6 +81,7 @@
    "dictButton.tooltip" : "Показать ссылки словарей",
    "dlgFrom" : "Сохранение из",
    "dlgTo" : "В",
+   "downloadTimeout.message" : "Сервер {{v1}} не отвечает уже {{v2}} секунд. Попробуйте позже.",
    "error-detected" : "Обнаружена проблема.\nСообщить об этой проблеме нажмите “{{v1}}”.",
    "fontsAndColors.label" : "Шрифты и цвета",
    "from.label" : "с",

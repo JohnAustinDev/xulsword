@@ -81,6 +81,7 @@
    "dictButton.tooltip" : "Prikaži povezave do slovarja.",
    "dlgFrom" : "Uvozi zvok iz",
    "dlgTo" : "Shrani uvoženi zvok v",
+   "downloadTimeout.message" : "Strežnik {{v1}} se ne odziva že {{v2}} sekund. Poskusite znova pozneje.",
    "error-detected" : "Morda je bila zaznana težava.\nČe želite prijaviti to težavo, pritisnite \"{{v1}}\".",
    "fontsAndColors.label" : "Pisave in barve",
    "from.label" : "od",

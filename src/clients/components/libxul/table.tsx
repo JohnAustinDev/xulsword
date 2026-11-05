@@ -58,8 +58,10 @@ export type TableProps = XulProps & {
   onColumnsReordered?: (tableColumns: TableColumnInfo[]) => void;
   onColumnWidthChanged?: (tableColumns: TableColumnInfo[]) => void;
   onColumnHide?: (tableColumns: TableColumnInfo[]) => void;
-  // Called on mount, and whenever the vertical scrollbar appears or goes away.
-  onVerticalScrollbar?: (shown: boolean) => void;
+  // Called on mount, and whenever the width of the vertical scrollbar changes:
+  // as it appears or goes away, or when the skin changes its width. The width
+  // is 0 when there is no scrollbar, or it overlays the content.
+  onVerticalScrollbar?: (width: number) => void;
 
   tableCompRef?: React.RefObject<Table2 | null>;
 };
@@ -163,7 +165,7 @@ export default class Table
 
   scrollbarObserver: ResizeObserver | null;
 
-  scrollbarShown: boolean | null;
+  scrollbarWidth: number | null;
 
   constructor(props: TableProps) {
     super(props);
@@ -173,7 +175,7 @@ export default class Table
     this.tableDomRef = React.createRef();
 
     this.scrollbarObserver = null;
-    this.scrollbarShown = null;
+    this.scrollbarWidth = null;
 
     this.cellRenderer = this.cellRenderer.bind(this);
     this.menuRenderer = this.menuRenderer.bind(this);
@@ -272,10 +274,17 @@ export default class Table
     const { onVerticalScrollbar } = this.props;
     const scroller = this.mainScrollContainer();
     if (onVerticalScrollbar && scroller) {
-      const shown = scroller.scrollHeight > scroller.clientHeight;
-      if (shown !== this.scrollbarShown) {
-        this.scrollbarShown = shown;
-        onVerticalScrollbar(shown);
+      const { borderLeftWidth, borderRightWidth } = getComputedStyle(scroller);
+      const width = Math.max(
+        0,
+        scroller.offsetWidth -
+          scroller.clientWidth -
+          (parseFloat(borderLeftWidth) || 0) -
+          (parseFloat(borderRightWidth) || 0),
+      );
+      if (width !== this.scrollbarWidth) {
+        this.scrollbarWidth = width;
+        onVerticalScrollbar(width);
       }
     }
   }

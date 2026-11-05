@@ -81,6 +81,7 @@
    "dictButton.tooltip" : "Show dictionary links.",
    "dlgFrom" : "Import audio from",
    "dlgTo" : "Save imported audio to",
+   "downloadTimeout.message" : "The server {{v1}} has not responded for {{v2}} seconds. Please try again later.",
    "error-detected" : "A problem may have been detected.\nTo report this problem press \"{{v1}}\".",
    "fontsAndColors.label" : "Fonts & Colors",
    "from.label" : "from",

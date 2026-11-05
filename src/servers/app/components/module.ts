@@ -42,7 +42,9 @@ import {
   logid,
   httpThrowIfCanceled,
   resetAll,
+  DownloadTimeoutError,
 } from '../ftphttp.ts';
+import DownloadCache from '../downloadCache.ts';
 import Window, { getBrowserWindows, publishSubscription } from './window.ts';
 import Prefs from '../prefs.ts';
 
@@ -1212,6 +1214,7 @@ const Module = {
         dlx = await downloadPromise;
       } catch (er) {
         log.error(er);
+        if (er instanceof DownloadTimeoutError) return er.message;
         return C.UI.Manager.cancelMsg;
       }
       if (typeof dlx === 'string') return dlx;
@@ -1285,6 +1288,8 @@ const Module = {
           const pkg = single ? 'none' : 'zip';
           const audioURL = resolveTemplateURL(http, data, pkg, '1');
           const timingURL = resolveTemplateURL(http, data, pkg, '1', true);
+          log.verbose(`Audio URL: ${audioURL}`);
+          log.verbose(`Timing URL: ${timingURL}`);
           let files = 1;
           if ('keys' in data) files = data.keys.length;
           else if ('lastchapter' in data && data.lastchapter)
@@ -1522,6 +1527,12 @@ const Module = {
       );
     }
     return cancelled;
+  },
+
+  // Forget all cached downloads, so that everything is downloaded again.
+  async clearDownloadCache(): Promise<void> {
+    DownloadCache.clear();
+    return await Promise.resolve();
   },
 
   // Cancel all or some downloads, current AND previous. This function returns

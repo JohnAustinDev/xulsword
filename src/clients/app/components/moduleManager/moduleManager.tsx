@@ -91,6 +91,7 @@ export function onunload() {
 }
 
 let MasterRepoListDownloaded = false;
+let Refreshing = false;
 let resetOnResize = false;
 
 export type ManagerProps = XulProps & {
@@ -101,7 +102,7 @@ const notStatePref = {
   infoConfigs: [] as SwordConfType[],
   progress: null as number[] | null,
   showAudioDialog: [] as Array<H.VersekeyDialog | H.GenBookDialog>,
-  languageScrollbar: false,
+  languageScrollbar: 0, // width of the language table's vertical scrollbar
   tables: {
     language: {
       data: [] as TLanguageTableRow[],
@@ -333,9 +334,57 @@ export default class ModuleManager
       this.loadRepositoryTable(newstate, allrepos);
       this.setState(newstate);
 
-      H.readReposAndUpdateTables(this, newstate, allrepos, true).catch((er) =>
-        log.error(er),
+      await H.readReposAndUpdateTables(this, newstate, allrepos, true).catch(
+        (er) => log.error(er),
       );
+    }
+  }
+
+  // Download everything again, ignoring the download cache: the master
+  // repository list, every repository listing and any modules that are
+  // downloaded or downloading (with the same audio chapters as before).
+  async refresh(): Promise<void> {
+    if (Refreshing) return;
+    Refreshing = true;
+    this.forceUpdate();
+    try {
+      const { module: modtable } = this.state.tables;
+      const redownload = new Set(H.Downloads.finished);
+      modtable.data.forEach((r) => {
+        if (r[H.ModCol.iInfo].loading)
+          redownload.add(repositoryModuleKey(r[H.ModCol.iInfo].conf));
+      });
+      const modrepkeys = Array.from(redownload).filter(
+        (k) => k in H.Downloads.dlobjs,
+      );
+
+      // Cancel and forget all downloads, then wait for them to finish.
+      await G.Module.cancel();
+      await Promise.allSettled(H.Downloads.promises);
+      H.Downloads.promises = [];
+      H.Downloads.finished = [];
+      await G.Module.clearDownloadCache();
+
+      const newstate = { ...this.state };
+      const { repository: repotable, module: modtable2 } = newstate.tables;
+      repotable.repositoryListings = [];
+      modtable2.data = [];
+      modtable2.modules = null;
+      H.forgetRemoteModuleRows();
+      MasterRepoListDownloaded = false;
+      this.setState(newstate);
+      await this.loadTables();
+
+      // Download the modules again, if they are still offered.
+      const configs = modrepkeys
+        .map((k) => H.findTableRow(k, 'module')?.[H.ModCol.iInfo].conf)
+        .filter(Boolean) as SwordConfType[];
+      if (configs.length) {
+        await H.download(this, { ...this.state }, configs, true);
+      }
+    } finally {
+      Refreshing = false;
+      this.forceUpdate();
     }
   }
 
@@ -412,7 +461,10 @@ export default class ModuleManager
     Array.from(langs).forEach((code) => {
       let r = H.findTableRow(code, 'language');
       if (!r) {
-        r = H.findTableRow(code, 'language', [getLangReadable(code, false), { code }]);
+        r = H.findTableRow(code, 'language', [
+          getLangReadable(code, false),
+          { code },
+        ]);
       }
       if (r) newTableData.push(r);
     });
@@ -819,6 +871,7 @@ export default class ModuleManager
         (typeof selectedRepoDataRows[0] !== 'undefined' &&
           !H.isRepoCustom(state, selectedRepoDataRows[0][H.RepCol.iInfo].repo)),
       repoCancel: numReposLoading === 0,
+      repoRefresh: Refreshing || numReposLoading > 0 || !H.Permission.internet,
     };
 
     // Accurate repository total progress is unnecessary and problematic,
@@ -934,11 +987,14 @@ export default class ModuleManager
                   orient="vertical"
                   width={language.width}
                 >
-                  <Box className="language-table" flex="1">
+                  <Box
+                    className="language-table"
+                    flex="1"
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    style={{ '--scrollbar-width': `${languageScrollbar}px` }}
+                  >
                     <Suggest<TLanguageTableRow>
-                      className={`language-suggest${
-                        languageScrollbar ? ' beside-scrollbar' : ''
-                      }`}
+                      className="language-suggest"
                       items={langtable.data}
                       selectedItem={null}
                       resetOnClose
@@ -978,9 +1034,9 @@ export default class ModuleManager
                       onCellClick={onLangCellClick}
                       onRowsReordered={onRowsReordered.language}
                       onColumnWidthChanged={handleColumns('language')}
-                      onVerticalScrollbar={(shown) => {
-                        if (shown !== languageScrollbar)
-                          this.setState({ languageScrollbar: shown });
+                      onVerticalScrollbar={(width) => {
+                        if (width !== languageScrollbar)
+                          this.setState({ languageScrollbar: width });
                       }}
                       domref={tableDomRefs.language}
                       tableCompRef={tableComponentRefs.language}
@@ -1170,6 +1226,16 @@ export default class ModuleManager
                       disabled={disable.repoDelete}
                       onPointerDown={eventHandler}
                     />
+                    {id === 'moduleManager' && (
+                      <Button
+                        id="repoRefresh"
+                        icon="refresh"
+                        intent="primary"
+                        fill="x"
+                        disabled={disable.repoRefresh}
+                        onPointerDown={eventHandler}
+                      />
+                    )}
                     <Button
                       id="repoCancel"
                       intent="primary"
