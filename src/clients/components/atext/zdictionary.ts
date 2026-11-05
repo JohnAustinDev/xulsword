@@ -362,11 +362,27 @@ export function getStrongsModAndKey(
     }
 
     case 'SM': {
-      // no lookup module available for these yet...
+      // Other morphology schemes (like packard: used by LXX) all become SM,
+      // so the scheme is unknown. Try the preferred GreekParse module first,
+      // then any other GreekParse module that has the key.
       const f = G.Prefs.getComplexValue(
         'global.popup.feature',
       ) as typeof S.prefs.global.popup.feature;
-      mod = f.GreekParse || G.FeatureModules.GreekParse[0] || null;
+      const pref = f.GreekParse || G.FeatureModules.GreekParse[0] || null;
+      mod = pref;
+      const mods = [pref, ...G.FeatureModules.GreekParse].filter(
+        (m, i, a): m is string => !!m && m in G.Tab && a.indexOf(m) === i,
+      );
+      if (mods.length > 1 && key) {
+        const r = GI.LibSword.getFirstDictionaryEntry(
+          { mod: '', key: '', text: C.NOTFOUND, notes: '' },
+          renderPromise,
+          mods,
+          [key],
+          getSwordOptions(G, C.DICTIONARY),
+        );
+        if (r.mod && r.text !== C.NOTFOUND) ({ mod } = r);
+      }
       if (!mod && reason) {
         reason.reason = `${snclass} (SM?)`;
       }
