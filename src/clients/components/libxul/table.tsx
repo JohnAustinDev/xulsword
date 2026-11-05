@@ -58,6 +58,8 @@ export type TableProps = XulProps & {
   onColumnsReordered?: (tableColumns: TableColumnInfo[]) => void;
   onColumnWidthChanged?: (tableColumns: TableColumnInfo[]) => void;
   onColumnHide?: (tableColumns: TableColumnInfo[]) => void;
+  // Called on mount, and whenever the vertical scrollbar appears or goes away.
+  onVerticalScrollbar?: (shown: boolean) => void;
 
   tableCompRef?: React.RefObject<Table2 | null>;
 };
@@ -159,12 +161,19 @@ export default class Table
 
   loadingRef: React.RefObject<HTMLElement | null>;
 
+  scrollbarObserver: ResizeObserver | null;
+
+  scrollbarShown: boolean | null;
+
   constructor(props: TableProps) {
     super(props);
 
     this.state = {};
 
     this.tableDomRef = React.createRef();
+
+    this.scrollbarObserver = null;
+    this.scrollbarShown = null;
 
     this.cellRenderer = this.cellRenderer.bind(this);
     this.menuRenderer = this.menuRenderer.bind(this);
@@ -175,6 +184,7 @@ export default class Table
     this.onCellClick = this.onCellClick.bind(this);
     this.onColumnsReordered = this.onColumnsReordered.bind(this);
     this.onColumnWidthChanged = this.onColumnWidthChanged.bind(this);
+    this.checkScrollbar = this.checkScrollbar.bind(this);
 
     this.loadingRef = this.tableDomRef;
     this.renderPromise = new RenderPromise(this, this.loadingRef);
@@ -198,6 +208,18 @@ export default class Table
       }
       resizeColumns();
     }
+
+    // The scrollbar comes and goes as the table, or its rows, change height.
+    const { checkScrollbar } = this;
+    const scroller = this.mainScrollContainer();
+    if (scroller && props.onVerticalScrollbar) {
+      this.scrollbarObserver = new ResizeObserver(checkScrollbar);
+      this.scrollbarObserver.observe(scroller);
+      Array.from(scroller.children).forEach((c) =>
+        this.scrollbarObserver?.observe(c),
+      );
+      checkScrollbar();
+    }
   }
 
   componentDidUpdate() {
@@ -215,9 +237,12 @@ export default class Table
       if (tableWidth < columnsWidth - margin) resizeColumns();
       if (tableWidth > columnsWidth + margin) resizeColumns();
     }
+    this.checkScrollbar();
   }
 
   componentWillUnmount() {
+    this.scrollbarObserver?.disconnect();
+    this.scrollbarObserver = null;
     const { id, domref } = this.props;
     // Save scroll position.
     const tableRef = domref || this.tableDomRef;
@@ -228,6 +253,29 @@ export default class Table
       );
       if (parent && id) {
         Table.scrollTop[id] = parent.scrollTop;
+      }
+    }
+  }
+
+  // The main quadrant's scroll container holds the table's vertical scrollbar.
+  mainScrollContainer(): HTMLElement | null {
+    const { domref } = this.props;
+    const table: HTMLElement | null = (domref || this.tableDomRef).current;
+    return (
+      table?.querySelector<HTMLElement>(
+        '.bp6-table-quadrant-main .bp6-table-quadrant-scroll-container',
+      ) ?? null
+    );
+  }
+
+  checkScrollbar() {
+    const { onVerticalScrollbar } = this.props;
+    const scroller = this.mainScrollContainer();
+    if (onVerticalScrollbar && scroller) {
+      const shown = scroller.scrollHeight > scroller.clientHeight;
+      if (shown !== this.scrollbarShown) {
+        this.scrollbarShown = shown;
+        onVerticalScrollbar(shown);
       }
     }
   }

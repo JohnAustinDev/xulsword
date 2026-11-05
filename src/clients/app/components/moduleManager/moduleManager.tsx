@@ -81,6 +81,13 @@ export function onunload() {
   G.Module.cancel().catch((er) => {
     log.error(er);
   });
+  // The indexer was stopped when this window opened, so restart it. This runs
+  // however the window closes, including the title-bar close button.
+  G.LibSword.startBackgroundSearchIndexer(
+    C.UI.Search.backgroundIndexerStartupWait,
+  ).catch((er) => {
+    log.error(er);
+  });
 }
 
 let MasterRepoListDownloaded = false;
@@ -94,6 +101,7 @@ const notStatePref = {
   infoConfigs: [] as SwordConfType[],
   progress: null as number[] | null,
   showAudioDialog: [] as Array<H.VersekeyDialog | H.GenBookDialog>,
+  languageScrollbar: false,
   tables: {
     language: {
       data: [] as TLanguageTableRow[],
@@ -773,6 +781,7 @@ export default class ModuleManager
       editConf,
       showAudioDialog,
       progress,
+      languageScrollbar,
     } = state;
     const { id } = props;
     const {
@@ -927,7 +936,9 @@ export default class ModuleManager
                 >
                   <Box className="language-table" flex="1">
                     <Suggest<TLanguageTableRow>
-                      className="language-suggest"
+                      className={`language-suggest${
+                        languageScrollbar ? ' beside-scrollbar' : ''
+                      }`}
                       items={langtable.data}
                       selectedItem={null}
                       resetOnClose
@@ -966,6 +977,11 @@ export default class ModuleManager
                       )}
                       onCellClick={onLangCellClick}
                       onRowsReordered={onRowsReordered.language}
+                      onColumnWidthChanged={handleColumns('language')}
+                      onVerticalScrollbar={(shown) => {
+                        if (shown !== languageScrollbar)
+                          this.setState({ languageScrollbar: shown });
+                      }}
                       domref={tableDomRefs.language}
                       tableCompRef={tableComponentRefs.language}
                     />

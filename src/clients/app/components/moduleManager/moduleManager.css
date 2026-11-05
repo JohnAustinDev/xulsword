@@ -80,7 +80,8 @@
   font-weight: bold;
 }
 
-/* The language search box covers the language table's empty column header. */
+/* The language search box covers the language table's empty column header.
+When the table has a vertical scrollbar, the box stops short of it. */
 .langsmods .language-table {
   position: relative;
 }
@@ -90,6 +91,9 @@
   left: 0;
   right: 0;
   z-index: 25;
+}
+.langsmods .language-table > .language-suggest.beside-scrollbar {
+  right: 16px;
 }
 .langsmods .language-suggest input:focus::placeholder {
   color: transparent;

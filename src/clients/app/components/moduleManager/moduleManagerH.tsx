@@ -877,12 +877,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
 }
 
 function closeWindow() {
-  // Indexer was stopped when this window opened, so restart it.
-  G.LibSword.startBackgroundSearchIndexer(
-    C.UI.Search.backgroundIndexerStartupWait,
-  )
-    .then(() => G.Window.close())
-    .catch((er) => log.error(er));
+  G.Window.close();
 }
 
 // Install a new custom repository (if repoDataIndex is -1) or update the
