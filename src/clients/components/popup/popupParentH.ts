@@ -262,7 +262,6 @@ export function popupHandler(
           'popupCloseLink',
           'popupBackLink',
           'towindow',
-          'pupselect',
           'snbut',
           'npopup',
           'requiremod',

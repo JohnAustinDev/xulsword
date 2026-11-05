@@ -5,6 +5,7 @@ import FTP from 'ftp';
 import GUNZIP from 'gunzip-maybe';
 import TAR from 'tar-stream';
 import { Readable } from 'stream';
+import i18n from 'i18next';
 import {
   downloadKey,
   keyToDownload,
@@ -14,12 +15,57 @@ import {
 } from '../../common.ts';
 import C from '../../constant.ts';
 import LocalFile from '../components/localFile.ts';
+import DownloadCache from './downloadCache.ts';
 
 import type { ListingElement } from 'ftp';
 import type { Stream } from 'stream';
 import type { Download, HTTPDownload } from '../../type.ts';
 
 export type ListingElementR = ListingElement & { subdir: string };
+
+// A download failed because no data was received for C.DownloadStallTimeout.
+export class DownloadTimeoutError extends Error {
+  constructor(url: string, ms = C.DownloadStallTimeout) {
+    let host = url;
+    try {
+      host = new URL(url).host || url;
+    } catch {
+      // keep url
+    }
+    super(
+      i18n.t('downloadTimeout.message', {
+        v1: host,
+        v2: Math.round(ms / 1000),
+      }),
+    );
+    this.name = 'DownloadTimeoutError';
+  }
+}
+
+// Run onStall if poke() is not called for C.DownloadStallTimeout. Call stop()
+// when the download is finished.
+function stallTimer(onStall: () => void): {
+  poke: () => void;
+  stop: () => void;
+} {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let stopped = false;
+  const stop = () => {
+    stopped = true;
+    if (timer) clearTimeout(timer);
+    timer = undefined;
+  };
+  const poke = () => {
+    if (stopped) return;
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      stop();
+      onStall();
+    }, C.DownloadStallTimeout);
+  };
+  poke();
+  return { poke, stop };
+}
 
 const OperationTimeoutFTP = 20000;
 
@@ -425,7 +471,11 @@ async function createActiveConnection(
           resolve('no secure connection');
         } else {
           log.verbose(`ftp connect on-error ${domain}: '${er.toString()}'.`);
-          reject(er);
+          if (/timeout/i.test(er.message))
+            reject(
+              new DownloadTimeoutError(`ftp://${domain}`, C.FTPConnectTimeout),
+            );
+          else reject(er);
         }
       });
       cc.on('close', (er: boolean) => {
@@ -621,14 +671,23 @@ async function abortP(c: FTP): Promise<void> {
 }
 
 // Convert the callback FTP API to promise.
-async function listP(c: FTP, dirpath: string): Promise<ListingElement[]> {
+async function listP(
+  c: FTP,
+  domain: string,
+  dirpath: string,
+): Promise<ListingElement[]> {
   return await new Promise((resolve, reject) => {
     log.silly(`START listP=${dirpath}`);
     const to = setTimeout(() => {
       abortP(c).catch((err) => {
         log.verbose(err);
       });
-      reject(new Error('listP timeout'));
+      reject(
+        new DownloadTimeoutError(
+          ftpURL(domain, dirpath, true),
+          OperationTimeoutFTP,
+        ),
+      );
     }, OperationTimeoutFTP);
     c.list(dirpath, false, (er: Error, listing: ListingElement[]) => {
       clearTimeout(to);
@@ -648,13 +707,19 @@ async function listP(c: FTP, dirpath: string): Promise<ListingElement[]> {
 }
 
 // Convert the callback FTP API to promise.
-async function sizeP(c: FTP, filepath: string): Promise<number> {
+async function sizeP(
+  c: FTP,
+  domain: string,
+  filepath: string,
+): Promise<number> {
   return await new Promise((resolve, reject) => {
     const to = setTimeout(() => {
       abortP(c).catch((err) => {
         log.verbose(err);
       });
-      reject(new Error('sizeP timeout'));
+      reject(
+        new DownloadTimeoutError(ftpURL(domain, filepath), OperationTimeoutFTP),
+      );
     }, OperationTimeoutFTP);
     c.size(filepath, (er: unknown, size: number) => {
       clearTimeout(to);
@@ -666,13 +731,19 @@ async function sizeP(c: FTP, filepath: string): Promise<number> {
 }
 
 // Convert the callback FTP API to promise.
-async function getP(c: FTP, filepath: string): Promise<NodeJS.ReadableStream> {
+async function getP(
+  c: FTP,
+  domain: string,
+  filepath: string,
+): Promise<NodeJS.ReadableStream> {
   return await new Promise((resolve, reject) => {
     const to = setTimeout(() => {
       abortP(c).catch((err) => {
         log.verbose(err);
       });
-      reject(new Error('getP timeout'));
+      reject(
+        new DownloadTimeoutError(ftpURL(domain, filepath), OperationTimeoutFTP),
+      );
     }, OperationTimeoutFTP);
     c.get(filepath, (er: Error, stream: NodeJS.ReadableStream) => {
       clearTimeout(to);
@@ -689,6 +760,7 @@ async function getP(c: FTP, filepath: string): Promise<NodeJS.ReadableStream> {
 // and size is provided.
 async function getFileP(
   c: FTP,
+  domain: string,
   filepath: string,
   cancelkey: string,
   progress?: (prog: number) => void,
@@ -714,7 +786,7 @@ async function getFileP(
   const id = ftpThrowIfCanceled(cancelkey);
   log.silly(`START getFileP=${filepath} FTP=${logid(cancelkey, id)}`);
   try {
-    stream = await getP(c, filepath);
+    stream = await getP(c, domain, filepath);
     log.silly(`START stream=${filepath} FTP=${logid(cancelkey)}`);
   } catch (er: unknown) {
     const cause: Error | 'canceled' | undefined =
@@ -737,11 +809,14 @@ async function getFileP(
   let buf: Buffer;
   try {
     buf = await new Promise((resolve, reject) => {
+      let stall: ReturnType<typeof stallTimer> | null = null;
       const resolve2 = (v: Buffer | PromiseLike<Buffer>) => {
+        stall?.stop();
         log.silly(`END stream=${filepath} FTP=${logid(cancelkey)}`);
         resolve(v);
       };
       const reject2 = (v: unknown) => {
+        stall?.stop();
         log.silly(
           `END (fail:${unknown2String(v)}) stream=${filepath} FTP=${logid(cancelkey)}`,
         );
@@ -754,7 +829,14 @@ async function getFileP(
           });
           reject2(er);
         });
+        stall = stallTimer(() => {
+          reject2(new DownloadTimeoutError(ftpURL(domain, filepath)));
+          killstream(stream).catch((er) => {
+            log.error(er);
+          });
+        });
         stream.on('data', () => {
+          stall?.poke();
           try {
             ftpThrowIfCanceled(cancelkey);
           } catch (er) {
@@ -799,6 +881,12 @@ async function getFileP(
   return buf;
 }
 
+// The download cache key of an FTP file or directory (dirs end with '/').
+function ftpURL(domain: string, path: string, isDir = false): string {
+  const p = fpath.posix.join('/', path);
+  return `ftp://${domain}${p}${isDir && !p.endsWith('/') ? '/' : ''}`;
+}
+
 // Return a buffer promise for the FTP download of domain/filepath.
 // Progress is reported if a progress function is provided.
 export async function getFile(
@@ -807,6 +895,17 @@ export async function getFile(
   cancelkey: string,
   progress?: (p: number) => void,
 ): Promise<Buffer> {
+  const url = ftpURL(domain, filepath);
+  const cached = DownloadCache.read(url);
+  if (cached) {
+    ftpThrowIfCanceled(cancelkey);
+    if (progress) {
+      progress(0);
+      progress(1);
+      progress(-1);
+    }
+    return cached.buffer;
+  }
   log.silly(`START getFile=${filepath} FTP=${logid(cancelkey)}`);
   const bufferPromise = await ftp(
     domain,
@@ -814,7 +913,7 @@ export async function getFile(
       let size;
       if (progress) {
         try {
-          size = await sizeP(c, filepath);
+          size = await sizeP(c, domain, filepath);
         } catch (er: unknown) {
           const cause: Error | 'canceled' | undefined =
             (er as Error | 'canceled') ?? undefined;
@@ -827,7 +926,7 @@ export async function getFile(
           return await Promise.reject(er);
         }
       }
-      const r = await getFileP(c, filepath, cancelkey, progress, size);
+      const r = await getFileP(c, domain, filepath, cancelkey, progress, size);
       try {
         ftpThrowIfCanceled(cancelkey);
       } catch (er) {
@@ -838,6 +937,7 @@ export async function getFile(
     cancelkey,
   );
   log.silly(`END getFile=${filepath} FTP=${logid(cancelkey)}`);
+  DownloadCache.write(url, bufferPromise);
   return bufferPromise;
 }
 
@@ -907,15 +1007,24 @@ export async function getListing(
 ): Promise<ListingElementR[]> {
   const promises: Array<Promise<ListingElementR[]>> = [];
   let listing: ListingElement[];
+  const url = ftpURL(domain, dirpath, true);
   try {
-    listing = await ftp(
-      domain,
-      async (c: FTP) => {
-        log.silly(`START getListing: ${dirpath} FTP=${logid(cancelkey)}`);
-        return await listP(c, dirpath);
-      },
-      cancelkey,
-    );
+    const cached = DownloadCache.read(url);
+    if (cached) {
+      listing = (
+        JSON.parse(cached.buffer.toString('utf8')) as ListingElement[]
+      ).map((l) => ({ ...l, date: new Date(l.date) }));
+    } else {
+      listing = await ftp(
+        domain,
+        async (c: FTP) => {
+          log.silly(`START getListing: ${dirpath} FTP=${logid(cancelkey)}`);
+          return await listP(c, domain, dirpath);
+        },
+        cancelkey,
+      );
+      DownloadCache.write(url, Buffer.from(JSON.stringify(listing), 'utf8'));
+    }
   } catch (er: unknown) {
     const cause: Error | 'canceled' | undefined =
       (er as Error | 'canceled') ?? undefined;
@@ -1070,6 +1179,16 @@ export async function fetchHTTP(
   cancelkey?: string,
   progress?: ((received: number, total: number) => void) | null,
 ): Promise<{ buffer: Buffer; headers: Headers; url: string }> {
+  const cached = DownloadCache.read(url);
+  if (cached) {
+    const { buffer, info } = cached;
+    if (progress) progress(buffer.length, buffer.length);
+    return {
+      buffer,
+      headers: new Headers(info.headers),
+      url: info.finalURL || url,
+    };
+  }
   const controller = new AbortController();
   if (cancelkey) {
     HttpCancelable[cancelkey] = {
@@ -1081,16 +1200,24 @@ export async function fetchHTTP(
     cancelkey &&
     cancelkey in HttpCancelable &&
     HttpCancelable[cancelkey].canceled;
+  let timedOut = false;
+  const start = Date.now();
+  const stall = stallTimer(() => {
+    timedOut = true;
+    controller.abort();
+  });
   try {
     const response = await net.fetch(url, {
       cache: 'no-store',
       signal: controller.signal,
     });
+    stall.poke();
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} for ${url}`);
     }
     let buffer: Buffer;
-    if (progress && response.body) {
+    if (response.body) {
+      // Read in chunks, so a stalled download can time out.
       const total = Number(response.headers.get('Content-Length')) || 0;
       const reader = response.body.getReader();
       const chunks: Uint8Array[] = [];
@@ -1098,18 +1225,30 @@ export async function fetchHTTP(
       for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
+        stall.poke();
         chunks.push(value);
         received += value.length;
-        progress(received, total);
+        if (progress) progress(received, total);
       }
       buffer = Buffer.concat(chunks);
     } else buffer = Buffer.from(await response.arrayBuffer());
+    stall.stop();
     if (canceled()) throw { message: C.UI.Manager.cancelMsg };
-    return { buffer, headers: response.headers, url: response.url || url };
+    const finalURL = response.url || url;
+    DownloadCache.write(url, buffer, {
+      headers: Array.from(response.headers.entries()),
+      finalURL,
+    });
+    return { buffer, headers: response.headers, url: finalURL };
   } catch (er) {
     if (canceled()) throw { message: C.UI.Manager.cancelMsg };
+    if (timedOut) throw new DownloadTimeoutError(url);
+    // Chromium's network stack may time out first.
+    if (/ERR_(CONNECTION_)?TIMED_OUT/.test(unknown2String(er, ['message'])))
+      throw new DownloadTimeoutError(url, Date.now() - start);
     throw er;
   } finally {
+    stall.stop();
     if (cancelkey) delete HttpCancelable[cancelkey];
   }
 }
@@ -1122,14 +1261,32 @@ export async function getFileHTTP(
   cancelkey?: string,
   progress?: ((received: number, total: number) => void) | null,
 ): Promise<LocalFile> {
+  const destpath = typeof dest === 'string' ? dest : dest.path;
+  if (DownloadCache.readToFile(url, destpath)) {
+    const destFile = new LocalFile(destpath);
+    if (progress) {
+      const size = Number(destFile.stats()?.size) || 0;
+      progress(size, size);
+    }
+    return destFile;
+  }
   return await new Promise((resolve, reject) => {
     let rejected = false;
+    let downloadItem: Electron.DownloadItem | null = null;
+    let stall: ReturnType<typeof stallTimer> | null = null;
     const rejectme = (er: unknown) => {
+      stall?.stop();
       if (!rejected) {
         reject(er);
       }
       rejected = true;
     };
+    // Reject before canceling, so the timeout (not a cancel) is reported.
+    stall = stallTimer(() => {
+      rejectme(new DownloadTimeoutError(url));
+      if (cancelkey) delete HttpCancelable[cancelkey];
+      downloadItem?.cancel();
+    });
     const canceled = () => {
       if (
         cancelkey &&
@@ -1143,9 +1300,25 @@ export async function getFileHTTP(
     };
     if (!canceled()) {
       const ses = session.fromPartition(randomID(), { cache: false });
-      const destpath = typeof dest === 'string' ? dest : dest.path;
       const destFile = new LocalFile(destpath);
+      // Until the server responds there is no download item, but the request
+      // must still be cancelable.
+      if (cancelkey) {
+        HttpCancelable[cancelkey] = {
+          canceled: false,
+          callback: () => {
+            rejectme({ message: C.UI.Manager.cancelMsg });
+          },
+        };
+      }
       ses.on('will-download', (ev, item) => {
+        downloadItem = item;
+        // The download was canceled or timed out before the server responded.
+        if (rejected) {
+          item.cancel();
+          return;
+        }
+        stall?.poke();
         if (cancelkey) {
           HttpCancelable[cancelkey] = {
             canceled: false,
@@ -1157,6 +1330,7 @@ export async function getFileHTTP(
           };
         }
         item.setSavePath(destpath);
+        let lastReceived = -1;
         item.on('updated', (ev2, state) => {
           if (state === 'interrupted') {
             item.cancel();
@@ -1166,15 +1340,22 @@ export async function getFileHTTP(
               item.cancel();
               ev2.preventDefault();
               rejectme(new Error('Download was paused'));
-            } else if (progress) {
-              progress(item.getReceivedBytes(), item.getTotalBytes());
+            } else {
+              const received = item.getReceivedBytes();
+              if (received !== lastReceived) {
+                lastReceived = received;
+                stall?.poke();
+              }
+              if (progress) progress(received, item.getTotalBytes());
             }
           }
         });
         item.once('done', (_e, state) => {
+          stall?.stop();
           if (cancelkey) delete HttpCancelable[cancelkey];
           if (state === 'completed') {
             if (!canceled()) {
+              DownloadCache.writeFromFile(url, destpath);
               resolve(destFile);
             }
           } else if (state === 'cancelled') {

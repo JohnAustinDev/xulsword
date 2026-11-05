@@ -15,6 +15,7 @@ const dirs = {
   xsPrefD: '',
   xsResD: '',
   xsCache: '',
+  xsDownloadCache: '',
   xsModsUser: '',
   xsFonts: '',
   xsAudio: '',
@@ -89,6 +90,8 @@ const Dirs = {
 
       Dirs.path.xsCache = path.join(profD, 'cache');
 
+      Dirs.path.xsDownloadCache = path.join(profD, 'downloadCache');
+
       Dirs.path.xsModsUser =
         (Build.isWebApp && process.env.XSModsUser_DIR) || Dirs.path.xsResD;
 
@@ -142,6 +145,7 @@ const Dirs = {
             'xsPrefD',
             'xsResD',
             'xsCache',
+            'xsDownloadCache',
             'xsModsUser',
             'xsFonts',
             'xsAudio',

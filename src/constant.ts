@@ -49,6 +49,8 @@ const C = {
 
   FTPMaxConnections: 48,
   FTPConnectTimeout: 20000, // ms for an ftp server to respond
+  DownloadCacheTime: 3600000, // ms that downloaded files are reused
+  DownloadStallTimeout: 60000, // ms without receiving data before a download fails
   FTPPassword: 'xulsword4@xulsword.org',
   HTTPUserAgent: `xulsword/${Build.xulswordVersion} (xulsword4@xulsword.org)`,
 
