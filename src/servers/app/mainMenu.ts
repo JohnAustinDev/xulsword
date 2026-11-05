@@ -87,6 +87,51 @@ function panelLabels() {
   return labels;
 }
 
+// Each 'Show all' and 'Show none' item is enabled only when clicking it would
+// change some window's tabs, so these must be re-evaluated whenever
+// xulsword.tabs or xulsword.panels changes.
+function updateShowHideAllMenus(menu: Menu) {
+  const panels = G.Prefs.getComplexValue(
+    'xulsword.panels',
+  ) as typeof S.prefs.xulsword.panels;
+  const tabs = G.Prefs.getComplexValue(
+    'xulsword.tabs',
+  ) as typeof S.prefs.xulsword.tabs;
+  // This mirrors which tabs getTabChange() would add or remove.
+  const wouldChange = (
+    pl: string,
+    type: TabTypes | 'all',
+    show: boolean,
+  ): boolean => {
+    let panelIndexes = panels.map((_p, i) => i);
+    if (pl !== 'menu.view.allwindows') {
+      const pi = Number(pl.substring(pl.length - 1)) - 1;
+      // A closed window's items stay disabled.
+      panelIndexes = panels[pi] === null ? [] : [pi];
+    }
+    const typeTabs = G.Tabs.filter(
+      (t) => !t.noTab && (type === 'all' || t.tabType === type),
+    );
+    return panelIndexes.some((pi) => {
+      const bank = tabs[pi] === undefined ? [] : tabs[pi];
+      if (!bank) return false;
+      return typeTabs.some((t) => bank.includes(t.module) !== show);
+    });
+  };
+  const setEnabled = (id: string, enabled: boolean) => {
+    const item = menu.getMenuItemById(id);
+    if (item) item.enabled = enabled;
+  };
+  panelLabels().forEach((pl) => {
+    showtabs.forEach(([typekey, type]) => {
+      setEnabled(`showAll_${typekey}_${pl}`, wouldChange(pl, type, true));
+      setEnabled(`hideAll_${typekey}_${pl}`, wouldChange(pl, type, false));
+    });
+    setEnabled(`menu_showAll_${pl}`, wouldChange(pl, 'all', true));
+    setEnabled(`menu_hideAll_${pl}`, wouldChange(pl, 'all', false));
+  });
+}
+
 function updateModuleMenus(menux?: Menu) {
   const menu = menux || Menu.getApplicationMenu();
   if (menu) {
@@ -108,7 +153,7 @@ function updateModuleMenus(menux?: Menu) {
         const { items } = submenu;
         // Menu items cannot be removed!! They can only be added or disabled.
         items.forEach((item) => {
-          if (item.id !== `showAll_${typekey}_${pl}`) item.enabled = false;
+          item.enabled = false;
         });
         rgtabs.forEach((t) => {
           if (t.tabType === type) {
@@ -133,6 +178,7 @@ function updateModuleMenus(menux?: Menu) {
                     },
                     null,
                     -1,
+                    () => updateCheckboxAndRadiosFromPref(),
                   );
                 }),
               });
@@ -142,8 +188,6 @@ function updateModuleMenus(menux?: Menu) {
         });
         if (panelIndex !== -1) {
           const winMenuIds = showtabs.map((tk) => `menu_${tk[0]}_${pl}`);
-          winMenuIds.push(`menu_showAll_${pl}`);
-          winMenuIds.push(`menu_hideAll_${pl}`);
           winMenuIds.forEach((id) => {
             const item = menu.getMenuItemById(id);
             if (item) item.enabled = ps[panelIndex] !== null;
@@ -154,6 +198,7 @@ function updateModuleMenus(menux?: Menu) {
       const parent = menu.getMenuItemById(`parent_${typekey}`);
       if (parent) parent.enabled = !disableParent;
     });
+    updateShowHideAllMenus(menu);
   }
 }
 
@@ -211,7 +256,10 @@ function updateCheckboxAndRadiosFromPref(menux?: Menu | null) {
     });
   }
   const menu = menux || Menu.getApplicationMenu();
-  if (menu) recurseMenu(menu);
+  if (menu) {
+    recurseMenu(menu);
+    updateShowHideAllMenus(menu);
+  }
   // To make menuPref available to pref callbacks without dependency cycles.
   G.Data.write(Array.from(menuPref), 'menuPref');
 }
