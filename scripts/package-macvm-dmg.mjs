@@ -83,12 +83,15 @@ run('rsync', [
 ]);
 
 // 2. Build. build/release is removed first so that only the new DMG is
-// there to copy back.
+// there to copy back. nvm keeps global packages per Node version, so when
+// setenv's NODE_VERSION changes, yarn must be installed again (with corepack,
+// since Node 24 has none).
 remote(
   [
     `cd ${quote(remoteDir)}`,
     'rm -rf build/release',
     'source ./setenv > /dev/null',
+    '{ command -v yarn > /dev/null || { npm i -g corepack && corepack enable; }; }',
     'yarn install --immutable',
     'yarn package-mac-dmg',
   ].join(' && '),
