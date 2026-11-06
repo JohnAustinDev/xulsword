@@ -587,7 +587,8 @@ const init = async () => {
 
   ProgramTitle = localizeString('i18n:program.title', null);
 
-  if (Prefs.getBoolPref('global.InternetPermission')) {
+  // The Microsoft Store updates its own installs (process.windowsStore).
+  if (Prefs.getBoolPref('global.InternetPermission') && !process.windowsStore) {
     autoUpdater.logger = log;
     autoUpdater
       .checkForUpdatesAndNotify({

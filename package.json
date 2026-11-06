@@ -29,6 +29,7 @@
     "package-mac": "cross-env PKLIB=darwin yarn install-libxulsword && yarn package --mac zip --x64 --arm64 && cross-env PKLIB=linux yarn install-libxulsword",
     "package-mac-dmg": "cross-env PKLIB=darwin yarn install-libxulsword && yarn package --mac dmg --universal && node ./scripts/dmgCompress.mjs",
     "package-macvm-dmg": "node ./scripts/package-macvm-dmg.mjs",
+    "package-winvm-appx": "node ./scripts/package-winvm-appx.mjs",
     "release": "node ./scripts/clean.mjs release && yarn release-linux && yarn release-32win && yarn release-mac",
     "release-linux": "yarn && cross-env PKLIB=linux yarn install-libxulsword && yarn package-publish --linux",
     "release-32win": "yarn && cross-env PKLIB=32win yarn install-libxulsword && yarn package-publish --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
@@ -56,6 +57,7 @@
     "extraResources": [
       "./assets/**",
       "!assets/dmg/**",
+      "!assets/appx/**",
       "LICENSE"
     ],
     "linux": {
@@ -76,6 +78,21 @@
       "target": [
         "nsis"
       ]
+    },
+    "appx": {
+      "identityName": "JohnAustinDev.xulsword",
+      "publisher": "CN=ABDA6D4A-6F89-4475-8D6C-B7131BA8704D",
+      "publisherDisplayName": "JohnAustinDev",
+      "displayName": "xulsword",
+      "applicationId": "MK",
+      "backgroundColor": "#0F0F0F",
+      "languages": [
+        "en-US",
+        "ru-RU"
+      ],
+      "minVersion": "10.0.17763.0",
+      "maxVersionTested": "10.0.19045.0",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "mac": {
       "type": "distribution",
