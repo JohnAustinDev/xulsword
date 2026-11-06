@@ -5,6 +5,7 @@ import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import log from '../../log.ts';
 import analytics from '../../analytics.ts';
+import hebrewTVM from './hebrewTVM.ts';
 
 import type RenderPromise from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
@@ -252,162 +253,276 @@ export function getDictEntryHTML(
   return html;
 }
 
+type StrongsInfo = {
+  mod: string | null;
+  key: string | null;
+  text?: string; // an entry that does not come from a module
+};
+
+// Look up a morphology (parse) code. Only Robinson links keep their scheme
+// (as RM_): packard, oshm, strongMorph and others all become SM_, and some
+// texts put parse codes in lemma attributes. So try every parse module,
+// starting with those in first, until one has the key. The modules' keys
+// don't clash (shared Robinson and Packard codes mean the same thing), so no
+// user preference is involved.
+function lookupParseCode(
+  code: string,
+  first: string[],
+  features: Array<'GreekParse' | 'HebrewParse'>,
+  renderPromise: RenderPromise,
+  reason?: FailReason,
+): StrongsInfo {
+  const mods = [
+    ...first,
+    ...features.flatMap((f) => G.FeatureModules[f]),
+  ].filter((m, i, a) => m in G.Tab && a.indexOf(m) === i);
+  const options = getSwordOptions(G, C.DICTIONARY);
+  const findKey = (ms: string[], key: string) =>
+    GI.LibSword.getFirstDictionaryEntry(
+      { mod: '', key: '', text: C.NOTFOUND, notes: '' },
+      renderPromise,
+      ms,
+      // SWORD upper-cases the keys of most dictionaries (OSHM: HVqp3ms).
+      [key, key.toUpperCase()].filter((k, i, a) => a.indexOf(k) === i),
+      options,
+    );
+
+  const r = mods.length ? findKey(mods, code) : null;
+  if (!r?.mod || !r.text || r.text === C.NOTFOUND) {
+    // Suggest the module of the code's scheme, if it isn't installed.
+    if (reason && first[0] && !(first[0] in G.Tab)) {
+      reason.requires.push(first[0]);
+    } else if (Build.isDevelopment) {
+      log.debug(`Parse code '${code}' was not found in: ${mods.join(', ')}`);
+    }
+    return { mod: null, key: null };
+  }
+
+  // Some entries only point to another entry: Robinson's G5656 entry is a
+  // link to V-AAI. Show the target entry instead.
+  const { mod } = r;
+  let { key } = r;
+  const target = r.text
+    .replace(/<[^>]*>/g, ' ')
+    .replace(key, '')
+    .trim();
+  if (target && target !== key && /^\S+$/.test(target)) {
+    const t = findKey([mod], target);
+    if (t.mod && t.text && t.text !== C.NOTFOUND) ({ key } = t);
+  }
+  return { mod, key };
+}
+
+// Strong's Hebrew TVM codes are not in any module.
+function hebrewTVMInfo(code: string): StrongsInfo {
+  const text = hebrewTVM(code);
+  return text ? { mod: null, key: code, text } : { mod: null, key: null };
+}
+
+// Strong's Greek tense codes (G5656) are keys of the Robinson module.
+function greekTVMInfo(
+  num: number,
+  renderPromise: RenderPromise,
+  reason?: FailReason,
+): StrongsInfo {
+  return lookupParseCode(
+    `G${num}`,
+    ['Robinson'],
+    ['GreekParse'],
+    renderPromise,
+    reason,
+  );
+}
+
+function lookupStrongsNumber(
+  styp: 'G' | 'H',
+  snum: number,
+  snclass: string,
+  renderPromise: RenderPromise,
+  reason?: FailReason,
+  noAnalytics = false,
+): StrongsInfo {
+  // Strong's numbers stop at H8674 and G5624. Higher numbers are tense codes.
+  if (styp === 'H' && snum > 8674) return hebrewTVMInfo(`TH${snum}`);
+  if (styp === 'G' && snum > 5624) {
+    return greekTVMInfo(snum, renderPromise, reason);
+  }
+
+  const feature = styp === 'H' ? 'HebrewDef' : 'GreekDef';
+  const f = G.Prefs.getComplexValue(
+    'global.popup.feature',
+  ) as typeof S.prefs.global.popup.feature;
+  const mod = (feature in f && f[feature]) || null;
+  if (!mod) {
+    if (reason) {
+      const requires =
+        C.LocalePreferredFeature[G.i18n.language === 'en' ? 'en' : 'ru'][
+          feature
+        ];
+      if (requires?.length) reason.requires.push(...requires);
+    }
+    return { mod: null, key: null };
+  }
+  if (!(mod in G.Tab)) {
+    if (reason) reason.requires.push(mod);
+    return { mod: null, key: null };
+  }
+
+  const pad4 =
+    String('000').substring(0, 3 - (String(snum).length - 1)) + String(snum);
+
+  // possible keys in order of likelyhood
+  const keys = [
+    `0${pad4}`,
+    `${styp}${pad4}`,
+    `${pad4}`,
+    `${styp}${snum}`,
+    `${snum}`,
+    `${styp}0${pad4}`,
+  ];
+
+  // Try out key possibilities until we find a correct key. Some modules lack
+  // some numbers (StrongsGreek has no 3778) so then try the feature's other
+  // modules, preferring those of the locale.
+  const locale = G.i18n.language === 'en' ? 'en' : 'ru';
+  const mods = [
+    mod,
+    ...(C.LocalePreferredFeature[locale][feature] ?? []),
+    ...G.FeatureModules[feature],
+  ].filter((m, i, a) => m in G.Tab && a.indexOf(m) === i);
+  const r = GI.LibSword.getFirstDictionaryEntry(
+    { mod: '', key: '', text: C.NOTFOUND, notes: '' },
+    renderPromise,
+    mods,
+    keys,
+    getSwordOptions(G, C.DICTIONARY),
+  );
+  if (!r.mod || !r.key || !r.text || r.text === C.NOTFOUND) {
+    if (reason) reason.reason = `${snclass}? (${snum})`;
+    return { mod: null, key: null };
+  }
+  if (!noAnalytics) {
+    analytics.record({
+      event: 'glossary',
+      module: r.mod,
+      locationky: r.key,
+    });
+  }
+  return { mod: r.mod, key: r.key };
+}
+
+// Return the module and key for one class of a Strong's span (or a ready
+// entry when no module defines the code). The classes are written by the Cpp
+// xhtml filters from the lemma and morph attributes of OSIS <w> elements:
+// lemma values become S_, robinson: morph values RM_ and other morph values
+// SM_. Texts use these attributes in many ways. For example:
+// S_H07225 S_G976 (KJVA)            Strong's numbers
+// S_H1254a (NASB)                   Strong's number; the letter marks a sense
+// S_TH8804 S_SMTG5656 (RSP)         Strong's Hebrew and Greek tense codes
+// S_H S_G (RSP, TR)                 empty Strong's numbers
+// S_GN-ASF (LXX)                    a Packard parse code
+// S_βιβλος (KJVA lemma.TR)          a Greek word, no module defines these
+// S_b S_c/l (OSHB)                  prefixes, no module defines these
+// RM_V-AAI-3S (KJVA, TR, WHNU)      a Robinson parse code
+// SM_N-DSF (LXX)                    a Packard parse code
+// SM_V-2ADP-GSF (KJVA)              a Robinson parse code without its scheme
+// SM_TH8804 (KJVA strongMorph)      a Strong's Hebrew tense code
+// SM_G5656 (WHNU strongsMorph)      a Strong's Greek tense code
+// SM_HR/Ncfsa (OSHB oshm)           an OSHM Hebrew parse code
 export function getStrongsModAndKey(
   snclass: string,
   renderPromise: RenderPromise,
   reason?: FailReason,
   noAnalytics = false, // true when only testing whether a popup would render
-): {
-  mod: string | null;
-  key: string | null;
-} {
-  let type = null;
-  let key = null;
-  let mod = null;
-  const parts = snclass.split('_');
-  if (!parts?.[1]) {
+): StrongsInfo {
+  const none = { mod: null, key: null };
+  const i = snclass.indexOf('_');
+  if (i === -1) {
     if (reason) reason.reason = `${snclass}?`;
-    return { mod: null, key: null };
+    return none;
   }
-
-  [type, key] = parts;
-  key = key.replace(/ /g, ''); // why?
+  const type = snclass.substring(0, i);
+  const key = snclass.substring(i + 1).replace(/ /g, '');
+  if (!key) return none;
 
   switch (type) {
     case 'S': {
-      // Strongs Hebrew or Greek tags
-      let feature: 'HebrewDef' | 'GreekDef' | null = null;
-      if (key.charAt(0) === 'H') {
-        feature = 'HebrewDef';
-      } else if (key.charAt(0) === 'G') {
-        if (Number(key.substring(1)) >= 5627) {
-          if (reason) reason.reason = `${key.substring(1)} >= 5627?`;
-          return { mod, key }; // SWORD filters these out- not valid it says
-        }
-        feature = 'GreekDef';
-      }
-      if (feature) {
-        const f = G.Prefs.getComplexValue(
-          'global.popup.feature',
-        ) as typeof S.prefs.global.popup.feature;
-        mod = (feature in f && f[feature]) || null;
-      }
-      if (!mod) {
-        if (reason) {
-          if (feature) {
-            const requires =
-              C.LocalePreferredFeature[G.i18n.language === 'en' ? 'en' : 'ru'][
-                feature
-              ];
-            if (requires?.length) reason.requires.push(...requires);
-          } else reason.reason = `${snclass}?`;
-        }
-        return { mod, key };
-      }
-
-      const styp = feature === 'HebrewDef' ? 'H' : 'G';
-      const snum = Number(key.substring(1));
-      if (!snum || Number.isNaN(Number(snum))) {
-        if (reason) reason.reason = `${snclass}? (${snum} isNaN)`;
-        key = null;
-        mod = null;
-        return { mod, key };
-      }
-      const pad4 =
-        String('000').substring(0, 3 - (String(snum).length - 1)) +
-        String(snum);
-
-      // possible keys in order of likelyhood
-      const keys = [
-        `0${pad4}`,
-        `${styp}${pad4}`,
-        `${pad4}`,
-        `${styp}${snum}`,
-        `${snum}`,
-        `${styp}0${pad4}`,
-      ];
-
-      // try out key possibilities until we find a correct key for this mod
-      const options = getSwordOptions(G, C.DICTIONARY);
-      if (mod && mod in G.Tab) {
-        const r = GI.LibSword.getFirstDictionaryEntry(
-          { mod: '', key: '', text: C.NOTFOUND, notes: '' },
+      if (/^TH\d+$/.test(key)) return hebrewTVMInfo(key);
+      const tg = key.match(/^(?:SMT|T)G(\d+)$/);
+      if (tg) return greekTVMInfo(Number(tg[1]), renderPromise, reason);
+      const sn = key.match(/^([GH])(\d+)[a-z]*$/);
+      if (sn) {
+        const snum = Number(sn[2]);
+        if (!snum) return none;
+        return lookupStrongsNumber(
+          sn[1] as 'G' | 'H',
+          snum,
+          snclass,
           renderPromise,
-          [mod],
-          keys,
-          options,
+          reason,
+          noAnalytics,
         );
-        if (r.text === C.NOTFOUND) mod = null;
-        if (mod && r.key) {
-          if (!noAnalytics) {
-            analytics.record({
-              event: 'glossary',
-              module: mod,
-              locationky: r.key,
-            });
-          }
-          ({ key } = r);
-        }
-        if ((!mod || !key) && reason) {
-          reason.reason = `${snclass}? (${snum})`;
-        }
       }
-      break;
+      const pc = key.match(/^G([A-Z].*)$/);
+      if (pc) {
+        return lookupParseCode(
+          pc[1],
+          ['Packard', 'Robinson'],
+          ['GreekParse'],
+          renderPromise,
+          reason,
+        );
+      }
+      // Empty numbers, words and prefixes: no module defines these.
+      return none;
     }
 
     case 'RM': {
-      // Robinson's Greek parts of speech tags (used by KJV)
-      if (G.FeatureModules.GreekParse.includes('Robinson')) mod = 'Robinson';
-      break;
+      return lookupParseCode(
+        key,
+        ['Robinson', 'Packard'],
+        ['GreekParse', 'HebrewParse'],
+        renderPromise,
+        reason,
+      );
     }
 
     case 'SM': {
-      // Other morphology schemes (like packard: used by LXX) all become SM,
-      // so the scheme is unknown. Try the preferred GreekParse module first,
-      // then any other GreekParse module that has the key.
-      const f = G.Prefs.getComplexValue(
-        'global.popup.feature',
-      ) as typeof S.prefs.global.popup.feature;
-      const pref = f.GreekParse || G.FeatureModules.GreekParse[0] || null;
-      mod = pref;
-      const mods = [pref, ...G.FeatureModules.GreekParse].filter(
-        (m, i, a): m is string => !!m && m in G.Tab && a.indexOf(m) === i,
-      );
-      if (mods.length > 1 && key) {
-        const r = GI.LibSword.getFirstDictionaryEntry(
-          { mod: '', key: '', text: C.NOTFOUND, notes: '' },
+      if (/^TH\d+$/.test(key)) return hebrewTVMInfo(key);
+      const tg = key.match(/^T?G(\d+)$/);
+      if (tg) return greekTVMInfo(Number(tg[1]), renderPromise, reason);
+      // OSHM codes: language (H or A), then part of speech and its lower-case
+      // details, for each '/' separated part. Greek codes are upper-case.
+      if (/^[HA][A-Z][a-z0-9]*(\/[A-Z][a-z0-9]*)*$/.test(key)) {
+        return lookupParseCode(
+          key,
+          ['OSHM'],
+          ['HebrewParse', 'GreekParse'],
           renderPromise,
-          mods,
-          [key],
-          getSwordOptions(G, C.DICTIONARY),
+          reason,
         );
-        if (r.mod && r.text !== C.NOTFOUND) ({ mod } = r);
       }
-      if (!mod && reason) {
-        reason.reason = `${snclass} (SM?)`;
-      }
-      break;
+      return lookupParseCode(
+        key,
+        ['Packard', 'Robinson'],
+        ['GreekParse', 'HebrewParse'],
+        renderPromise,
+        reason,
+      );
     }
 
     default: {
       // meaning of tag is unknown
       if (reason) reason.reason = `${snclass}? (${type})`;
       if (Build.isDevelopment) log.warn(`Unknown Strongs type: '${type}'`);
-      key = null;
     }
   }
-
-  if (mod && !(mod in G.Tab)) {
-    if (reason) reason.requires.push(mod);
-    mod = null;
-    return { mod, key };
-  }
-  return { mod, key };
+  return none;
 }
 
-// Builds HTML text which displays lemma information from numberList.
-// numberList form: (S|WT|SM|RM)_(G|H)#. If information cannot be
-// found, a preferred required module will be returned as the reason.
+// Builds HTML text which displays lemma information from a Strong's span's
+// classes (see getStrongsModAndKey). If information cannot be found, a
+// preferred required module may be returned as the reason.
 export function getLemmaHTML(
   strongsClassArray: string[],
   matchingPhrase: string,
@@ -419,63 +534,64 @@ export function getLemmaHTML(
   // Start building html
   let html = '';
   let sep = '';
-  let info;
-  for (let i = 0; i < strongsClassArray.length; i += 1) {
-    info = getStrongsModAndKey(
-      strongsClassArray[i],
+  let csmod = '';
+  const shown: string[] = [];
+  const options = getSwordOptions(G, C.DICTIONARY);
+  strongsClassArray.forEach((sclass) => {
+    const info = getStrongsModAndKey(
+      sclass,
       renderPromise,
       reason,
       noAnalytics,
     );
-    if (!info.mod) continue;
+    if (!info.key || (!info.mod && !info.text)) return;
 
-    // add a button to search for this Strong's number
-    let buttonHTML = '';
-    if (
-      /^S_/.test(strongsClassArray[i]) &&
-      !/^S_(DSS|MT)/.test(strongsClassArray[i])
-    ) {
-      // DSS|MT for SPVar module
-      const code = strongsClassArray[i].replace(/^[^_]+_/, '');
-      const data: HTMLData = {
-        type: 'snbut',
-        reflist: [code],
-        context: sourcemod,
-      };
-      const d = JSON_attrib_stringify(data);
-      // A BluePrint button with the search icon (see .snbut in popup.css).
-      buttonHTML += `<button type="button" class="bp6-button snbut" data-data="${d}"><span class="bp6-icon snbut-icon" aria-hidden="true"></span><span class="bp6-button-text">${code}</span></button>`;
-    }
+    // Texts may give the same code twice (LXX has strong:GN-ASF and
+    // packard:N-ASF on one word), so show each entry only once.
+    const id = `${info.mod ?? ''}:${info.key}`;
+    if (shown.includes(id)) return;
+    shown.push(id);
 
-    const options = getSwordOptions(G, C.DICTIONARY);
-    if (info.key && info.mod && info.mod in G.Tab) {
-      if (Number(info.key) === 0) continue; // skip G tags with no number
-      const { text } = GI.LibSword.getDictionaryEntry(
+    let { text } = info;
+    if (info.mod) {
+      ({ text } = GI.LibSword.getDictionaryEntry(
         { text: '', notes: '' },
         renderPromise,
         info.mod,
         info.key,
         options,
-      );
-      if (text) {
-        html +=
-          sep +
-          buttonHTML +
-          markup2html(replaceLinks(text, info.mod, renderPromise), info.mod);
-      } else if (reason) {
-        reason.reason = `${info.mod}:${info.key}?`;
+      ));
+      if (!text) {
+        if (reason) reason.reason = `${info.mod}:${info.key}?`;
+        return;
       }
-    } else
-      html +=
-        sep + buttonHTML + strongsClassArray[i].replace(/S_(DSS|MT)_/g, '$1: '); // DSS|MT for SPVar module
+      text = markup2html(replaceLinks(text, info.mod, renderPromise), info.mod);
+      csmod = info.mod;
+    }
 
+    // add a button to search for this Strong's number
+    let buttonHTML = '';
+    const sn = sclass.match(/^S_([GH]\d+[a-z]*)$/);
+    const { GreekDef, HebrewDef } = G.FeatureModules;
+    if (sn && info.mod && [...GreekDef, ...HebrewDef].includes(info.mod)) {
+      const data: HTMLData = {
+        type: 'snbut',
+        reflist: [sn[1]],
+        context: sourcemod,
+      };
+      const d = JSON_attrib_stringify(data);
+      // A BluePrint button with the search icon (see .snbut in popup.css).
+      buttonHTML += `<button type="button" class="bp6-button snbut" data-data="${d}"><span class="bp6-icon snbut-icon" aria-hidden="true"></span><span class="bp6-button-text">${sn[1]}</span></button>`;
+    }
+
+    html += sep + buttonHTML + text;
     sep = '<div class="lemma-sep"></div>';
-  }
+  });
   if (!html) return html;
 
   // Add heading now that we know module styling
   return `
-    <div class="lemma-html cs-${info?.mod ? info.mod : 'Program'}">
+    <div class="lemma-html cs-${csmod || 'Program'}">
       <div class="lemma-header">${matchingPhrase}</div>
       ${html}
     <div>`;

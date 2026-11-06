@@ -548,8 +548,8 @@ export function iframeAutoHeightObserver(selector: string): {
 
 type StrongsHilightType = 'GH' | 'M' | 'P' | 'L';
 
-// Strong's numbers: S_G976, S_H07225
-const StrongsNumberRE = /^S_[GH]\d+$/;
+// Strong's numbers: S_G976, S_H07225, S_H1254a (a letter marks a sense)
+const StrongsNumberRE = /^S_[GH]\d+[a-z]*$/;
 
 // The Greek definite article 'the', in any padding.
 const GreekArticleRE = /^S_G0*3588$/;
@@ -558,8 +558,8 @@ const GreekArticleRE = /^S_G0*3588$/;
 // classes are written by the Cpp xhtml filters (see osisxhtml_xs.cpp).
 const StrongsClassTypes: [StrongsHilightType, RegExp][] = [
   ['GH', StrongsNumberRE],
-  // Strong's numbered morphology: SM_TH8804, SM_G5656
-  ['M', /^SM_[A-Z]*\d+$/],
+  // Strong's numbered morphology: SM_TH8804, SM_G5656, S_TH8804, S_SMTG5656
+  ['M', /^(SM_[A-Z]*\d+|S_(TH|SMTG)\d+)$/],
   // Parse codes: RM_V-AAI-3S (Robinson), SM_N-DSF (Packard)
   ['P', /^(RM|SM)_/],
   // Other lemmas: S_εγεννησεν (lemma.TR), S_DSS_*, S_MT_*
@@ -576,13 +576,20 @@ const Hilight: {
 } = { style: null, declarations: {} };
 
 // Each Strong's module pads its numbers differently, so match every padding
-// for situations such as parallel texts or interlinear.
+// for situations such as parallel texts or interlinear. A number without a
+// sense letter (S_H1254) also matches its senses (S_H1254a), and a number
+// with one also matches the number without it.
 function strongsNumberPaddings(sclass: string): string[] {
-  const m = sclass.match(/^(S_[GH])(\d+)$/);
+  const m = sclass.match(/^(S_[GH])(\d+)([a-z]*)$/);
   if (!m) return [sclass];
   const n = Number(m[2]);
+  const senses = m[3] ? ['', m[3]] : ['', 'a', 'b', 'c', 'd'];
   return Array.from(
-    new Set([1, 2, 3, 4, 5].map((len) => `${m[1]}${pad(n, len, 0)}`)),
+    new Set(
+      [1, 2, 3, 4, 5].flatMap((len) =>
+        senses.map((s) => `${m[1]}${pad(n, len, 0)}${s}`),
+      ),
+    ),
   );
 }
 

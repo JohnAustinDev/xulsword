@@ -31,14 +31,14 @@
 # CLucene that xulsword searches with, and the addon must be built and
 # installed first (see Cpp/libxulsword-build.sh and 'yarn install-libxulsword').
 
-MODULES_EN=(KJVA Robinson StrongsGreek StrongsHebrew)
+MODULES_EN=(KJVA StrongsGreek StrongsHebrew Robinson Packard OSHM)
 MODULES_RU=(RSP StrongsGreekRU StrongsHebrewRU)
 MODULES_ORIG=(LXX OSHB TR WHNU)
 
 # shellcheck disable=SC2034 # used by name, as SUGGESTED_$lang
-SUGGESTED_EN=(SBLGNT Packard NASB NETfree engNET2016eb NETmaps BDBGlosses_Strongs AbbottSmithStrongs)
+SUGGESTED_EN=(SBLGNT NASB NETfree engNET2016eb NETmaps BDBGlosses_Strongs AbbottSmithStrongs)
 # shellcheck disable=SC2034
-SUGGESTED_RU=(SBLGNT Packard RusCARS RusCARSDict RUSCB RusSynodalLIO RusVZh)
+SUGGESTED_RU=(SBLGNT RusCARS RusCARSDict RUSCB RusSynodalLIO RusVZh)
 
 set -euo pipefail
 

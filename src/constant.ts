@@ -573,10 +573,11 @@ const C = {
     XSM_audio: [],
   } as { [key in ModTypes]: SwordFilterType[] },
 
+  // Popups for these classes offer a choice of the feature's modules. Parse
+  // codes have no choice: every parse module is tried (see zdictionary.ts).
   SwordFeatureClasses: {
     HebrewDef: /S_H/,
     GreekDef: /S_G/,
-    GreekParse: /SM_G/,
   } as { [key in keyof FeatureMods]?: RegExp },
 
   LocalePreferredFeature: {
