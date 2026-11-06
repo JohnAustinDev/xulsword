@@ -118,7 +118,3 @@ Project, which is also licensed under GPL-2.0.
 Any fonts and SWORD modules bundled with xulsword are distributed under their
 own licenses.
 
----
-
-Free code signing provided by SignPath.io, certificate by SignPath Foundation.
-
