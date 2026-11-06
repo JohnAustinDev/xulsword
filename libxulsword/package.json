@@ -7,5 +7,5 @@
     "node-addon-api": "^4.2.0"
   },
   "main": "libxulsword.mjs",
-  "license": "MIT"
+  "license": "GPL-2.0-only"
 }

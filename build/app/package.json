@@ -10,7 +10,7 @@
     "email": "gpl.programs.info@gmail.com",
     "url": "https://github.com/JohnAustinDev/xulsword"
   },
-  "license": "MIT",
+  "license": "GPL-2.0-only",
   "dependencies": {
     "libxulsword": "portal:../../libxulsword"
   }

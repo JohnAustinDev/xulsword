@@ -108,3 +108,17 @@ Finally, to access phpsword from PHP, do something like this:
     $Sword = new phpsword($repository_path);
 
     $My_modlist = $Sword->getModuleList();
+
+# License
+
+xulsword is free software, licensed under the GNU General Public License
+version 2 (GPL-2.0). See [LICENSE](LICENSE). It links with The SWORD
+Project, which is also licensed under GPL-2.0.
+
+Any fonts and SWORD modules bundled with xulsword are distributed under their
+own licenses.
+
+---
+
+Free code signing provided by SignPath.io, certificate by SignPath Foundation.
+

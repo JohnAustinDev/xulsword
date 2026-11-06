@@ -55,7 +55,8 @@
     },
     "extraResources": [
       "./assets/**",
-      "!assets/dmg/**"
+      "!assets/dmg/**",
+      "LICENSE"
     ],
     "linux": {
       "target": [
@@ -115,7 +116,7 @@
       "name": "Tom Roth"
     }
   ],
-  "license": "MIT",
+  "license": "GPL-2.0-only",
   "bugs": {
     "url": "https://github.com/JohnAustinDev/xulsword/issues"
   },
