@@ -1307,20 +1307,42 @@ export function checkForSuggestions(xthis: ModuleManager, state: ManagerState) {
     const locale = G.i18n.language;
     const nextSuggested = new Set(suggested?.[locale]);
     if (nextSuggested.size) {
+      const installedConfs = repositoryListings
+        .filter((l) => l?.[0] && isRepoBuiltIn(l[0].sourceRepository))
+        .flat() as SwordConfType[];
+      // An XSM bundle may include other modules (RUSCB.xsm includes RSP).
+      // Avoid a bundle that would try to replace an installed module with
+      // an older version, since the install would report an error. It is
+      // only used if no other repository has the module.
+      const xsmDowngrades = (rc: SwordConfType): boolean =>
+        rc.xsmType === 'XSM' &&
+        !!rc.SwordModules?.some((swm, i) =>
+          installedConfs.some(
+            (ic) =>
+              ic.module === swm &&
+              versionCompare(ic.Version || 0, rc.SwordVersions?.[i] || 0) === 1,
+          ),
+        );
       // Get a list of suggested modules (choosing the latest version found
       // in any currently loaded qualifying repository).
       let suggestions: ModuleUpdatesType[] = [];
       nextSuggested.forEach((m) => {
-        let conf: SwordConfType | null = null;
+        // best[0] is the latest good candidate, best[1] the latest bundle
+        // that would downgrade an installed module.
+        const best: [SwordConfType | null, SwordConfType | null] = [null, null];
         repositoryListings.forEach((l: RepositoryListing) => {
           const rc = l?.find((r) => r.module === m);
-          if (
-            rc &&
-            !isRepoBuiltIn(rc.sourceRepository) &&
-            (!conf || versionCompare(rc.Version || 0, conf.Version || 0) === 1)
-          )
-            conf = rc;
+          if (rc && !isRepoBuiltIn(rc.sourceRepository)) {
+            const i = xsmDowngrades(rc) ? 1 : 0;
+            const prev = best[i];
+            if (
+              !prev ||
+              versionCompare(rc.Version || 0, prev.Version || 0) === 1
+            )
+              best[i] = rc;
+          }
         });
+        const conf = best[0] ?? best[1];
         if (conf) {
           suggestions.push({
             permissionGiven: null,
@@ -1341,17 +1363,10 @@ export function checkForSuggestions(xthis: ModuleManager, state: ManagerState) {
           // Filter out if it's already installed into a builtin repo.
           suggestions = suggestions.filter(
             (mud) =>
-              !repositoryListings.find(
-                (l) =>
-                  l &&
-                  l[0] &&
-                  isRepoBuiltIn(l[0].sourceRepository) &&
-                  !!l.find(
-                    (c) =>
-                      c.module === mud.conf.module &&
-                      versionCompare(c.Version || 0, mud.conf.Version || 0) >=
-                        0,
-                  ),
+              !installedConfs.some(
+                (c) =>
+                  c.module === mud.conf.module &&
+                  versionCompare(c.Version || 0, mud.conf.Version || 0) >= 0,
               ),
           );
           if (suggestions.length) promptAndInstall(xthis, state, suggestions);

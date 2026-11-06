@@ -4,8 +4,8 @@
   },
   "moduleManager": {
     "suggested": {
-      "en":["SBLGNT", "NASB", "NETfree", "engNET2016eb", "NETmaps", "BDBGlosses_Strongs", "AbbottSmithStrongs"],
-      "ru":["SBLGNT", "RusCARS", "RusCARSDict", "RUSCB", "RusSynodalLIO", "RusVZh"]
+      "en":["NASB", "NETfree", "engNET2016eb", "NETmaps", "BDBGlosses_Strongs", "AbbottSmithStrongs"],
+      "ru":["RusCARS", "RusCARSDict", "RUSCB", "RusSynodalLIO", "RusVZh"]
     }
   }
 }

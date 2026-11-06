@@ -36,9 +36,9 @@ MODULES_RU=(RSP StrongsGreekRU StrongsHebrewRU)
 MODULES_ORIG=(LXX OSHB TR WHNU)
 
 # shellcheck disable=SC2034 # used by name, as SUGGESTED_$lang
-SUGGESTED_EN=(SBLGNT NASB NETfree engNET2016eb NETmaps BDBGlosses_Strongs AbbottSmithStrongs)
+SUGGESTED_EN=(NASB NETfree engNET2016eb NETmaps BDBGlosses_Strongs AbbottSmithStrongs)
 # shellcheck disable=SC2034
-SUGGESTED_RU=(SBLGNT RusCARS RusCARSDict RUSCB RusSynodalLIO RusVZh)
+SUGGESTED_RU=(RusCARS RusCARSDict RUSCB RusSynodalLIO RusVZh)
 
 set -euo pipefail
 
