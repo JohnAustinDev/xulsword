@@ -5,9 +5,9 @@ import log from 'electron-log';
 import C from '../../constant.ts';
 import Dirs from '../components/dirs.ts';
 
-// Files obtained by URL are cached on disk for C.DownloadCacheTime, so that
-// opening the Module Manager again does not download masterRepoList.conf and
-// every repository manifest again. Each URL has a data file and a JSON info
+// Files obtained by URL are cached on disk for C.DownloadCacheTime hours, so
+// that opening the Module Manager again does not download masterRepoList.conf
+// and every repository manifest again. Each URL has a data file and a JSON info
 // file in Dirs.xsDownloadCache. The info file is written last, so its
 // modification time is the time the entry was cached, and an entry without
 // one is ignored. Errors and canceled downloads are never cached.
@@ -23,6 +23,8 @@ export type DownloadCacheInfo = {
 const PruneInterval = 60000;
 let LastPrune = 0;
 
+const CacheTimeMs = C.DownloadCacheTime * 3600000;
+
 function entryPaths(url: string): { data: string; info: string } {
   const hash = createHash('sha256').update(url).digest('hex');
   const dir = Dirs.path.xsDownloadCache;
@@ -36,7 +38,7 @@ function isFresh(infoPath: string): boolean {
   try {
     const { mtimeMs } = fs.statSync(infoPath);
     const age = Date.now() - mtimeMs;
-    return age >= 0 && age < C.DownloadCacheTime;
+    return age >= 0 && age < CacheTimeMs;
   } catch {
     return false;
   }
@@ -77,7 +79,7 @@ function prune() {
     } else {
       // Temporary files of an interrupted write.
       try {
-        if (now - fs.statSync(p).mtimeMs > C.DownloadCacheTime)
+        if (now - fs.statSync(p).mtimeMs > CacheTimeMs)
           fs.rmSync(p, { force: true });
       } catch {
         // ignore

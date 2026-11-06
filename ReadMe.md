@@ -17,14 +17,16 @@ Modules may be installed from the Internet however.
 - **Original language study features**. Gain deeper understanding of any Bible
   translation through comparison to ancient original language texts and
   instant concordance lookup.
-- **Comprehensive and lightning fast search capability**. The indexed C++ search
-  engine works without Internet and enables you to dig deep into God's Word.
+- **Comprehensive and lightning fast search capability**. The indexed C++
+  search engine works without Internet and enables you to dig deep into God's
+  Word.
 - **Complete internationalization** including right-to-left languages.
-- **Very readable texts**. Formatted texts are displayed on screen the way they look
-  in printed form. Text flows from column to column. Font, font size, line
-  spacing etc. are adjustable for each text.
-- **Easy Bible browsing**. Instantly jump to any heading in the entire Bible with a
-  single click using a Bible navigator widget which also gives a visual
+- **Very readable texts**. Formatted texts are displayed on screen the way they
+  look in printed form. Text flows from column to column. Font, font size, line
+  spacing etc. are adjustable for each text. Dark, Light and Classic themes are
+  available.
+- **Easy Bible browsing**. Instantly jump to any heading in the entire Bible
+  with a single click using a Bible navigator widget which also gives a visual
   representation of the Bible.
 - **Print capability**. Powerful print features allow Bible texts and
   related information to be easily printed, and includes print preview.
@@ -34,12 +36,12 @@ Modules may be installed from the Internet however.
 - **Bible texts and footnotes include quick links** to associated dictionaries,
   including pictures, maps and tables.
 - **Bookmark and personal annotation features**.
-- **Integrated audio**. Allows you to listen to the Bible and read along. Export
-  audio for other uses, such as mp3 players.
+- **Integrated audio**. Allows you to listen to the Bible and read along. Text
+  highlights along with the reading when audio files support it. Export audio
+  for other uses, such as mp3 players.
 - **Secure texts**. Texts can be encrypted to prevent tampering.
-- **Open Source software technology**. Xulsword was developed using the most popular
-  Open Source technologies as of 2023, to make it freely available for years to
-  come.
+- **Open Source software technology**. Xulsword was developed using popular
+  Open Source technologies, to make it freely available for years to come.
 
 ---
 
