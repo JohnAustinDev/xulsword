@@ -2,7 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { execFileSync } from 'child_process';
+import { execFileSync, spawn } from 'child_process';
 
 // electron-builder can only sign MacOS apps on MacOS. When packaging the
 // MacOS app on Linux, this signs it with rcodesign instead, and also
@@ -71,6 +71,49 @@ async function getRcodesign(projectDir) {
   return local;
 }
 
+// Run rcodesign, showing its output as it runs, and return that output.
+function runCapture(rcodesign, args) {
+  console.log(`rcodesign ${args.join(' ')}`);
+  return new Promise((resolve, reject) => {
+    const child = spawn(rcodesign, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    let output = '';
+    child.stdout.on('data', (d) => {
+      process.stdout.write(d);
+      output += d;
+    });
+    child.stderr.on('data', (d) => {
+      process.stderr.write(d);
+      output += d;
+    });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) resolve(output);
+      else {
+        const er = new Error(`rcodesign ${args[0]} exited with code ${code}`);
+        er.output = output;
+        reject(er);
+      }
+    });
+  });
+}
+
+// Call fn until it succeeds, waiting between tries, so that a dropped
+// connection to Apple does not fail the whole build. Errors whose output
+// matches noRetry (such as a rejected notarization) are thrown at once.
+async function retry(fn, noRetry, tries = 5, delaySeconds = 30) {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn();
+    } catch (er) {
+      if (i >= tries || (noRetry && noRetry.test(er.output || ''))) throw er;
+      console.log(
+        `${er.message}; trying again in ${delaySeconds}s (${i}/${tries - 1})`,
+      );
+      await new Promise((r) => setTimeout(r, delaySeconds * 1000));
+    }
+  }
+}
+
 export default async function macSign(context) {
   const { appOutDir, packager } = context;
   const { projectDir } = packager;
@@ -123,13 +166,19 @@ export default async function macSign(context) {
   run(args);
 
   if (MAC_SIGN_P12 && MAC_NOTARY_API_KEY) {
-    run([
-      'notary-submit',
-      '--api-key-file',
-      MAC_NOTARY_API_KEY,
-      '--staple',
-      appPath,
-    ]);
+    // Upload, wait and staple are separate steps, so a network error while
+    // waiting or stapling retries that step instead of uploading again.
+    const auth = ['--api-key-file', MAC_NOTARY_API_KEY];
+    const submitted = await retry(() =>
+      runCapture(rcodesign, ['notary-submit', ...auth, appPath]),
+    );
+    const id = submitted.match(/created submission ID: ([0-9a-f-]+)/i)?.[1];
+    if (!id) throw new Error('Could not find the notarization submission ID.');
+    await retry(
+      () => runCapture(rcodesign, ['notary-wait', ...auth, id]),
+      /notarization rejected|package is invalid/i,
+    );
+    await retry(() => runCapture(rcodesign, ['staple', appPath]));
   } else if (MAC_SIGN_P12) {
     console.log(
       'MAC_NOTARY_API_KEY is not set, so the MacOS app will not be notarized.',

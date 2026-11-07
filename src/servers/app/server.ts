@@ -754,10 +754,15 @@ app.on('will-quit', () => {
   }
 });
 
+// True once startup has opened the first xulsword window.
+let started = false;
+
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (!WindowRegistry.some((wd) => wd && wd.type === 'xulswordWin'))
+  // dock icon is clicked and there are no other windows open. But macOS
+  // also sends activate when the dock icon is clicked again during launch,
+  // before init() is done, and opening a window then breaks startup.
+  if (started && !WindowRegistry.some((wd) => wd && wd.type === 'xulswordWin'))
     openXulswordWindow();
 });
 
@@ -789,7 +794,9 @@ app
               },
       });
     }
-    return openXulswordWindow();
+    const xulswordWindow = openXulswordWindow();
+    started = true;
+    return xulswordWindow;
   })
   .catch((e) => {
     throw e.stack;
