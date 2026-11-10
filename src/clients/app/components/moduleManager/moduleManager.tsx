@@ -514,8 +514,10 @@ export default class ModuleManager
             else remoteSWORD.push(c);
           }
           let mtype: string = c.moduleType;
+          const tabType = C.SupportedTabTypes[c.moduleType as ModTypes];
+          if (tabType) mtype = G.i18n.t(tabType);
           if (c.xsmType === 'XSM') {
-            mtype = `XSM ${G.i18n.t(C.SupportedTabTypes[mtype as ModTypes])}`;
+            mtype = `XSM ${mtype}`;
           } else if (c.xsmType === 'XSM_audio') {
             mtype = `XSM ${G.i18n.t('audio.label')}`;
           }
