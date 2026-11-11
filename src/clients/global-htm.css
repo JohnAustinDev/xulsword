@@ -223,21 +223,23 @@ Single children aren't matched, so icon-only buttons keep their margins. */
   padding-inline-start: 4px;
   background-color: var(--bg-bp6-light);
 }
-/* Drop-down selects are customized where the browser supports it (Chromium
-135+), so that their menus look and hover like every other menu (.menupopup).
-Only on devices with a mouse: touch devices keep their native pickers. Other
-browsers ignore these rules and keep native selects. Each rule with a select
-pseudo-element stands alone, since a browser drops a whole rule whose selector
-list has a pseudo-element it does not know. A customized select is only as wide
-as its selected option, so selectWidths.ts gives each one the width it has as a
-native select, which it measures while the select has data-measuring. */
+/* In the Electron app, drop-down selects are customized where the browser
+supports it (Chromium 135+), so that their menus look and hover like every
+other menu (.menupopup). Only on devices with a mouse: touch devices keep their
+native pickers. The web-app always uses native selects, since it runs in many
+browsers where customized selects are hard to test and may misbehave. Each rule
+with a select pseudo-element stands alone, since a browser drops a whole rule
+whose selector list has a pseudo-element it does not know. A customized select
+is only as wide as its selected option, so selectWidths.ts gives each one the
+width it has as a native select, which it measures while the select has data-
+measuring. */
 @media (hover: hover) and (pointer: fine) {
   @supports (appearance: base-select) {
     /* A customized select draws its own field, like .xsinput...
     A label too long for the select is cut off: it runs under the arrow, whose
     box is opaque, and is clipped at the select's edge. Chromium does not allow
     overflow on a customized select, so it is clipped by clip-path. */
-    #root select:not([multiple]):not([size]):not([data-measuring]) {
+    #root.isElectron select:not([multiple]):not([size]):not([data-measuring]) {
       appearance: base-select;
       display: inline-grid;
       grid-template-columns: minmax(0, 1fr) auto;
@@ -254,7 +256,9 @@ native select, which it measures while the select has data-measuring. */
       background-color: var(--bg-bp6-light);
     }
     /* ...except in a Menulist, whose .xsinput box is the field. */
-    #root .menulist select:not([multiple]):not([size]):not([data-measuring]) {
+    #root.isElectron
+      .menulist
+      select:not([multiple]):not([size]):not([data-measuring]) {
       padding: 0;
       border-radius: 0;
       box-shadow: none;
@@ -267,7 +271,7 @@ native select, which it measures while the select has data-measuring. */
     clip is widened to show the ring, unless it is in a Menulist, whose ring
     is on its .xsinput box. (:open is safe here: every browser that supports
     base-select supports it.) */
-    #root
+    #root.isElectron
       select:not([multiple]):not([size]):not([data-measuring]):not(
         .bp6-focus-disabled *
       ):focus-visible {
@@ -275,7 +279,7 @@ native select, which it measures while the select has data-measuring. */
       outline-offset: 2px;
       clip-path: inset(-5px);
     }
-    #root
+    #root.isElectron
       select:not([multiple]):not([size]):not([data-measuring]):not(
         .bp6-focus-disabled *
       ):open {
@@ -283,26 +287,26 @@ native select, which it measures while the select has data-measuring. */
       outline-offset: 2px;
       clip-path: inset(-5px);
     }
-    #root
+    #root.isElectron
       .menulist
       select:not([multiple]):not([size]):not([data-measuring]):focus {
       outline: none;
       clip-path: inset(0);
     }
-    #root
+    #root.isElectron
       .menulist
       select:not([multiple]):not([size]):not([data-measuring]):open {
       outline: none;
       clip-path: inset(0);
     }
-    #root
+    #root.isElectron
       .menulist:not(.bookselect .menulist):not(.bp6-focus-disabled *):has(
         > select:not([multiple]):not([size]):not([data-measuring]):focus-visible
       ) {
       outline: rgba(45, 114, 210, 0.6) auto 2px;
       outline-offset: 2px;
     }
-    #root
+    #root.isElectron
       .menulist:not(.bookselect .menulist):not(.bp6-focus-disabled *):has(
         > select:not([multiple]):not([size]):not([data-measuring]):open
       ) {
@@ -310,7 +314,7 @@ native select, which it measures while the select has data-measuring. */
       outline-offset: 2px;
     }
     /* A chevron like the native one, on the field color (see above) */
-    #root select:not([multiple]):not([size])::picker-icon {
+    #root.isElectron select:not([multiple]):not([size])::picker-icon {
       content: '';
       align-self: stretch;
       width: 18px;
@@ -320,7 +324,7 @@ native select, which it measures while the select has data-measuring. */
         var(--select-chevron) center / 10px 10px no-repeat,
         var(--bg-bp6-light);
     }
-    #root select:not([multiple]):not([size])::picker(select) {
+    #root.isElectron select:not([multiple]):not([size])::picker(select) {
       appearance: base-select;
       padding: 2px 0 0;
       background-color: var(--bg-bp6-light);
@@ -328,15 +332,15 @@ native select, which it measures while the select has data-measuring. */
       box-shadow: var(--menu-shadow);
     }
     /* A select without options opens no menu, as a native one does. */
-    #root select:not([multiple]):not([size]):empty::picker(select) {
+    #root.isElectron select:not([multiple]):not([size]):empty::picker(select) {
       display: none;
     }
-    #root select:not([multiple]):not([size]) option {
+    #root.isElectron select:not([multiple]):not([size]) option {
       min-height: 1.2em;
       padding: 0 20px 1px 4px;
     }
     /* Options in a group are indented under its label, as in native menus. */
-    #root select:not([multiple]):not([size]) optgroup option {
+    #root.isElectron select:not([multiple]):not([size]) optgroup option {
       padding-inline-start: 16px;
     }
     /* The focused option (moved by the keyboard) is shown like a hovered one,
@@ -345,27 +349,29 @@ native select, which it measures while the select has data-measuring. */
     base-select supports it.) The ring is removed from any focused option,
     since opening a menu with the mouse also focuses its selected option, which
     then gets BluePrint's :focus outline, clipped to bars above and below it. */
-    #root select:not([multiple]):not([size]) option:focus {
+    #root.isElectron select:not([multiple]):not([size]) option:focus {
       outline: none;
     }
-    #root select:not([multiple]):not([size]) option:not(:checked):hover,
-    #root
+    #root.isElectron
+      select:not([multiple]):not([size])
+      option:not(:checked):hover,
+    #root.isElectron
       select:not([multiple]):not([size]):not(:has(option:hover))
       option:not(:checked):focus-visible {
       background-color: var(--bg-interface-selection);
     }
     /* The selected option is marked by its colors, like a selected chooser
     book, rather than by a checkmark. */
-    #root select:not([multiple]):not([size]) option:checked {
+    #root.isElectron select:not([multiple]):not([size]) option:checked {
       background-color: var(--color-primary);
       color: var(--bg-bp6-light);
     }
-    #root select:not([multiple]):not([size]) option::checkmark {
+    #root.isElectron select:not([multiple]):not([size]) option::checkmark {
       display: none;
     }
     /* An empty placeholder option (selected when nothing is chosen, see
     ModuleMenu) is not listed. */
-    #root select:not([multiple]):not([size]) option[value='']:empty {
+    #root.isElectron select:not([multiple]):not([size]) option[value='']:empty {
       display: none;
     }
     /* Checkboxes and radio buttons are drawn in the primary color as well, so

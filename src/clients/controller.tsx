@@ -16,7 +16,12 @@ import C from '../constant.ts';
 import DynamicStyleSheet from './style.ts';
 import keepNativeSelectWidths from './selectWidths.ts';
 import ContextData from './contextData.ts';
-import { printSkinClass, setGlobalSkin, windowArguments } from './common.ts';
+import {
+  preventDefault,
+  printSkinClass,
+  setGlobalSkin,
+  windowArguments,
+} from './common.ts';
 import {
   getPortalContainer,
   getRootElement,
@@ -484,7 +489,7 @@ function Controller(props: ControllerProps) {
         align="center"
         {...xulCaptureEvents.reduce((p: any, c) => {
           p[c] = (ev: SyntheticEvent) => {
-            if (ev.cancelable) ev.preventDefault();
+            preventDefault(ev);
             ev.stopPropagation();
           };
           return p;

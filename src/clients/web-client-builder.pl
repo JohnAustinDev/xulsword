@@ -2,6 +2,10 @@
 
 use strict;
 
+# Sourcing for environment variables does not work in Perl, so a wrapper
+# web-client-build.sh must be used to set the environment.
+# doesn't work -> `source ./setenv`;
+
 my $DIST_PARENT_DIR = shift;
 my $IS_DEVELOPMENT = shift;
 
@@ -24,10 +28,6 @@ my $xulsword = `pwd`; chomp $xulsword;
 `mkdir -p "$DIST_PARENT_DIR/dist/webapp"`;
 `mkdir -p "$DIST_PARENT_DIR/dist/widgets"`;
 `chmod 775 "$DIST_PARENT_DIR/dist/*"`;
-
-# Sourcing for environment variables does not work in Perl, so a wrapper
-# web-client-build.sh must be used to set the environment.
-# doesn't work -> `source ./setenv`;
 
 if ("$IS_DEVELOPMENT" eq "1") {
   open(YARN, "yarn webpack --env development --env webapp --env widgets --env library |");

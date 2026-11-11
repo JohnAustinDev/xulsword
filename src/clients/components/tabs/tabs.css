@@ -83,7 +83,7 @@ border ends up a device pixel lower than the panel's border. */
 select is only the plus icon, so it shows no arrow. */
 @media (hover: hover) and (pointer: fine) {
   @supports (appearance: base-select) {
-    .tabs .tabPlus select::picker-icon {
+    #root.isElectron .tabs .tabPlus select::picker-icon {
       display: none;
     }
   }

@@ -778,15 +778,29 @@ export function blockTouchEvents(
   }
 }
 
+// React adds its root listeners for these events as passive, so calling
+// preventDefault() on their synthetic events does nothing except make the
+// browser log an error. Where a default really must be prevented, a non-
+// passive native listener is needed instead (see webapp.tsx and chooser.tsx).
+const ReactPassiveEvents = ['wheel', 'touchstart', 'touchmove'];
+
+// Call preventDefault() on an event unless it can't have any effect.
+export function preventDefault(e: React.SyntheticEvent | Event) {
+  if (!e.cancelable) return;
+  if ('nativeEvent' in e) {
+    if (ReactPassiveEvents.includes(e.type)) return;
+    e.preventDefault(); // also calls nativeEvent.preventDefault()
+  } else e.preventDefault();
+}
+
 // Stop propagation of synthetic and native events, and record
 // PreviousPointerEvent.
 export function eventHandled(e: React.SyntheticEvent | Event) {
-  e.preventDefault();
+  preventDefault(e);
   e.stopPropagation();
   if ('nativeEvent' in e) {
     const { nativeEvent } = e;
     // log.verbose(`Handled native ${nativeEvent.type} event.`);
-    nativeEvent.preventDefault();
     nativeEvent.stopPropagation();
     if (nativeEvent instanceof PointerEvent) {
       PreviousPointerEvent = nativeEvent;

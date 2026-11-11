@@ -1,7 +1,8 @@
 import { getRootElement } from './rootNode.ts';
 
-// Drop-down selects are customized (appearance: base-select) where the browser
-// supports it and the device has a mouse (see global-htm.css). A customized
+// In the Electron app, drop-down selects are customized (appearance:
+// base-select) where the browser supports it and the device has a mouse (see
+// global-htm.css). The web-app always uses native selects. A customized
 // select is only as wide as its selected option, but a native select is as
 // wide as its widest option, so the layout would change with the selection.
 // To keep the native layout, each select is measured as a native select (CSS
@@ -74,7 +75,12 @@ function changesSelect(record: MutationRecord): boolean {
 // that stops it.
 export default function keepNativeSelectWidths(): () => void {
   const root = getRootElement();
-  if (!root || !CSS.supports('appearance', 'base-select')) return () => {};
+  if (
+    !Build.isElectronApp ||
+    !root ||
+    !CSS.supports('appearance', 'base-select')
+  )
+    return () => {};
 
   let frame: number | null = null;
   let openSelects: HTMLSelectElement[] = [];
