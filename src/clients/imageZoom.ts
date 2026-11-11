@@ -49,11 +49,7 @@ export function imageZoomToggle(viewport: HTMLElement, ep: PointerEvent) {
       expandShrink = img.style.width !== `${img.naturalWidth}px`;
     } else if (img.width < img.naturalWidth) {
       expandShrink = true;
-      const viewportS = window.getComputedStyle(viewport, null);
-      const vph = viewportS.height;
-      const vpw = viewportS.width;
-      viewport.style.height = vph;
-      viewport.style.width = vpw;
+      viewport.style.height = window.getComputedStyle(viewport, null).height;
       viewport.style.position = 'relative';
       viewport.style.overflow = 'visible';
       scrollcn.style.position = 'absolute';
