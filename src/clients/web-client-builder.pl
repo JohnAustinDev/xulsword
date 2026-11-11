@@ -63,33 +63,6 @@ if ("$?" eq "0") {
   my $cmd = "node '$DIST_PARENT_DIR/../../../../utils/compileCSS.mjs'";
   print $cmd . "\n";
   `$cmd`;
-  my $libs = "ibt.libraries.yml";
-  chdir "$DIST_PARENT_DIR" || die "ERROR: Could not cd to $DIST_PARENT_DIR.\n:";
-  if (-e "$libs") {
-    my $file;
-    foreach my $dir ('webapp', 'widgets', 'library') {
-      opendir(JSF, "$dist/$dir") || die "ERROR: Could not open directory $dist/$dir.\n";
-      my @files = readdir(JSF);
-      closedir(JSF);
-      foreach my $bundle ('webapp', 'widgets', 'vendors', 'analytics') {
-        foreach my $f (@files) {
-          if ($f =~ /^${bundle}_.*\.(js|css)(\.(gz|br))?$/) {
-            $file = $f;
-            my $ext = $1;
-            open(INF, "<:encoding(UTF-8)", "$libs") || die;
-            open(OUTF, ">:encoding(UTF-8)", "$libs.tmp") || die;
-            while(<INF>) {
-              s/(?<=\bdist\/${dir}\/)${bundle}_.*\.${ext}(\.(gz|br))?(?=:)/$file/;
-              print OUTF $_;
-            }
-            close(INF); close(OUTF); `mv "$libs.tmp" "$libs"`;
-          }
-        }
-      }
-    }
-  } else {
-    die "ERROR: libraries.yml does not exist at $libs.\n";
-  }
 } else {
   die "ERROR: react build failed.\n";
 }
