@@ -519,6 +519,28 @@ const Window = {
       });
       return { action: 'deny' };
     });
+    // Never let an external link replace a xulsword window's content (which
+    // would leave no way back). Open it in the system browser instead.
+    win.webContents.on('will-navigate', (e) => {
+      const { url } = e;
+      let target: URL;
+      let current: URL;
+      try {
+        target = new URL(url);
+        current = new URL(win.webContents.getURL());
+      } catch {
+        return;
+      }
+      if (
+        ['http:', 'https:', 'mailto:'].includes(target.protocol) &&
+        target.origin !== current.origin
+      ) {
+        e.preventDefault();
+        shell.openExternal(url).catch((er) => {
+          log.error(er);
+        });
+      }
+    });
 
     return win.id;
   },
