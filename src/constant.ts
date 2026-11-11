@@ -265,17 +265,18 @@ const C = {
   ModuleDefaultFont: 'arial',
 
   // [code, name, direction, webapp].
+  // TODO!: RTL webapp locale UIs are only partially reversed!
   Locales: [
     ['en', 'English', 'ltr', true],
     ['ru', 'Русский', 'ltr', true],
     ['ru-CA', 'Русский для Востока', 'ltr', false],
     ['crh-Cyrl', 'Русский/Крымскотатарский', 'ltr', true],
-    ['fa', 'فارسی', 'rtl', true],
+    ['fa', 'فارسی', 'rtl', false],
     ['kk', 'Қазақша', 'ltr', true],
     ['ko', '한국어', 'ltr', true],
     ['kum', 'Къумукъ', 'ltr', false],
     ['ky-Cyrl', 'Кыргызча', 'ltr', true],
-    ['ky-Arab', 'قىرعىزچا', 'rtl', true],
+    ['ky-Arab', 'قىرعىزچا', 'rtl', false],
     ['sl', 'Slovenščina', 'ltr', true],
     ['tk-Latn', 'Түркменче', 'ltr', true],
     ['tt-Cyrl', 'Татар теле', 'ltr', false],
