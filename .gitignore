@@ -20,6 +20,8 @@ setenv
 # webapp
 profile_webapp
 
+gh-downloads-*
+
 node_modules
 # Note: it's not possible to re-include a directory or any file whose parent directory is excluded!
 #won't work: !node_modules/libxulsword
