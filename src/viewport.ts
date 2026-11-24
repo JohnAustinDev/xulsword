@@ -266,15 +266,16 @@ export function getPanelChange<T extends PanelChangeState>(
 
   if (modulesUpdated.length) {
     // Insure location will be in the scope of some viewport versekey module.
+    // Pinned panels keep their own location, so only unpinned ones count.
     const { book } = location || {};
+    const isVK = (m: string | null, i: number): m is string =>
+      Boolean(m && m in Tab && Tab[m].isVerseKey && !isPinned[i]);
     if (
       !book ||
-      (panels.some((m) => m && m in Tab && Tab[m].isVerseKey) &&
-        !panels.some(
-          (m) => m && m in Tab && Tab[m].isVerseKey && bims[m].includes(book),
-        ))
+      (panels.some(isVK) &&
+        !panels.some((m, i) => isVK(m, i) && bims[m].includes(book)))
     ) {
-      const mfirst = panels.find((m) => m && m in Tab && Tab[m].isVerseKey);
+      const mfirst = panels.find(isVK);
       if (mfirst) {
         state.location = {
           book: bims[mfirst][0] ?? 'Gen',

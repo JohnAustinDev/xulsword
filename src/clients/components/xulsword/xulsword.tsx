@@ -328,23 +328,32 @@ export default class Xulsword
       audio,
     } = state;
 
-    // Book options for Bookselect dropdown
+    // Book options for the Bookselect dropdown (unpinned panels) and the
+    // web-app SelectVK (all panels, pinned or not, plus the current location's
+    // book so that any location is allowed even if no panel contains it).
     const bookset = new Set<OSISBookType>();
+    const webappBookset = new Set<OSISBookType>();
     panels.forEach((m, i) => {
-      if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
+      if (m && G.Tab[m].isVerseKey) {
         GI.getBooksInVKModule(
           G.getBooks(G.i18n.language).map((b) => b.code),
           renderPromise,
           m,
-        ).forEach((bk) => bookset.add(bk));
+        ).forEach((bk) => {
+          webappBookset.add(bk);
+          if (!isPinned[i]) bookset.add(bk);
+        });
       }
     });
+    if (location?.book) webappBookset.add(location.book);
     const Book = G.getBook(G.i18n.language);
-    const booklist = [...bookset].sort((a: OSISBookType, b: OSISBookType) => {
+    const bookOrder = (a: OSISBookType, b: OSISBookType) => {
       if (Book[a].index < Book[b].index) return -1;
       if (Book[a].index > Book[b].index) return 1;
       return 0;
-    });
+    };
+    const booklist = [...bookset].sort(bookOrder);
+    const webappBooklist = [...webappBookset].sort(bookOrder);
 
     const navdisabled = !location || isPinned.every((p, i) => p || !panels[i]);
 
@@ -358,7 +367,11 @@ export default class Xulsword
       else viewportReset.push(m);
     });
 
-    const vkMod = panels.find((p) => p && G.Tab[p].isVerseKey) ?? undefined;
+    // The location belongs to unpinned panels, so a pinned panel must not
+    // limit the location choices.
+    const vkMod =
+      panels.find((p, i) => p && !isPinned[i] && G.Tab[p].isVerseKey) ??
+      undefined;
 
     const left =
       GI.i18n.t('ltr', renderPromise, 'locale_direction') === 'ltr'
@@ -636,10 +649,14 @@ export default class Xulsword
             id="book"
             flex="1"
             options={{
+              // vkMods [] keeps SelectVK from limiting books to vkMod (and from
+              // then replacing a location that vkMod lacks). The vkMod of
+              // initialVK still sets the v11n.
+              books: webappBooklist,
               verses: [],
               lastchapters: [],
               lastverses: [],
-              vkMods: vkMod ? [vkMod] : undefined,
+              vkMods: [],
             }}
             initialVK={{
               ...(location || { book: 'Gen', chapter: 1, v11n: 'KJV' }),

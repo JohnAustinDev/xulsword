@@ -781,8 +781,13 @@ const Commands = {
     const location = Prefs.getComplexValue(
       'xulsword.location',
     ) as typeof S.prefs.xulsword.location;
+    const isPinned = Prefs.getComplexValue(
+      'xulsword.isPinned',
+    ) as typeof S.prefs.xulsword.isPinned;
     if (panels && location) {
-      const vkMod = panels.find((p) => p && p in tab && tab[p].isVerseKey);
+      const vkMod = panels.find(
+        (p, i) => p && !isPinned[i] && p in tab && tab[p].isVerseKey,
+      );
       const vk11n = (vkMod && tab[vkMod].v11n) || 'KJV';
       const passage: SelectVKType | null =
         location && vkMod
