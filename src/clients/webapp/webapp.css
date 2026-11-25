@@ -121,6 +121,15 @@ Hosted viewport height */
   max-width: 350px;
   flex-wrap: wrap;
 }
+/* The negative margin lets end margins overlap the .controls-animation padding.
+flex-wrap: balance is new, so wrap is the fallback for older browsers (which would
+otherwise get libxul's nowrap). */
+#optionButtons {
+  margin-left: -5px;
+  margin-right: -5px;
+  flex-wrap: wrap;
+  flex-wrap: balance;
+}
 #textnav .vk-book {
   flex-basis: 100%;
 }
