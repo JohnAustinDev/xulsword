@@ -245,6 +245,10 @@ export {
   ManualIcon,
 } from '@blueprintjs/icons/lib/esm/generated/components/manual.js';
 export {
+  Media,
+  MediaIcon,
+} from '@blueprintjs/icons/lib/esm/generated/components/media.js';
+export {
   MenuClosed,
   MenuClosedIcon,
 } from '@blueprintjs/icons/lib/esm/generated/components/menu-closed.js';

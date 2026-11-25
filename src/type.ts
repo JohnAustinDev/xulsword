@@ -225,6 +225,9 @@ export type ShowType = {
   hebcantillation: boolean;
   hebvowelpoints: boolean;
   redwords: boolean;
+  // Images in Bible chapter text. Older prefs lack this key, so undefined
+  // means images are shown.
+  images?: boolean;
 };
 
 export type PlaceType = {

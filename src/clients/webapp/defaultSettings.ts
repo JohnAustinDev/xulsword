@@ -114,6 +114,7 @@ const defaultSettings: AllComponentsData = {
               hebcantillation: true,
               hebvowelpoints: true,
               redwords: true,
+              images: true,
             },
             place: {
               footnotes: 'notebox',

@@ -601,6 +601,25 @@ export default class Xulsword
             disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
           />
         )}
+        <Button
+          id="images"
+          checked={show.images !== false}
+          icon="media"
+          iconSize={webAppIconSize}
+          onPointerDown={xulswordHandler}
+          title={GI.i18n.t('', renderPromise, 'Show or hide images.', {
+            ns: 'xulsword4',
+          })}
+          disabled={
+            !panels.find(
+              (m) =>
+                m &&
+                m in G.Tab &&
+                G.Tab[m].type == C.BIBLE &&
+                G.Tab[m].features.includes('Images'),
+            )
+          }
+        />
       </Hbox>
     );
 

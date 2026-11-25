@@ -1182,6 +1182,7 @@ class Atext
       if (moduleAlwaysVersePerLine) classes.push('always-vpl');
     }
     if (show.headings) classes.push('headings');
+    if (show.images === false) classes.push('hide-images');
     if (showVariantSelect) {
       if (variant === 'Secondary Reading') classes.push('variant');
       else if (variant === 'All Readings') classes.push('both-variants');

@@ -72,6 +72,7 @@ export { default as KeyOption } from '@blueprintjs/icons/lib/esm/generated/20px/
 export { default as KeyShift } from '@blueprintjs/icons/lib/esm/generated/20px/paths/key-shift.js';
 export { default as Link } from '@blueprintjs/icons/lib/esm/generated/20px/paths/link.js';
 export { default as Manual } from '@blueprintjs/icons/lib/esm/generated/20px/paths/manual.js';
+export { default as Media } from '@blueprintjs/icons/lib/esm/generated/20px/paths/media.js';
 export { default as MenuClosed } from '@blueprintjs/icons/lib/esm/generated/20px/paths/menu-closed.js';
 export { default as MenuOpen } from '@blueprintjs/icons/lib/esm/generated/20px/paths/menu-open.js';
 export { default as More } from '@blueprintjs/icons/lib/esm/generated/20px/paths/more.js';

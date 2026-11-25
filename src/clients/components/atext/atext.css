@@ -117,6 +117,23 @@ shows it. */
 .atext:not(.columns1) .sb .npopup .image-viewport img {
   max-height: none;
 }
+/* The images button hides images in Bible chapter text, but not in
+introductions (.introtext) or popups. A popup is placed inside the element
+that opened it, which may be anywhere in the text, and older browsers can't
+exclude an ancestor with :not(), so popup images are shown again by the more
+specific rules that follow (their display values are from libsword.css). */
+.atext.Texts.hide-images > .sb > .image-viewport,
+.atext.Texts.hide-images > .sb > .image-viewport + .caption,
+.atext.Texts.hide-images > .sb > :not(.introtext) .image-viewport,
+.atext.Texts.hide-images > .sb > :not(.introtext) .image-viewport + .caption {
+  display: none;
+}
+.atext.Texts.hide-images > .sb .npopup .npopupTX .image-viewport {
+  display: inline-flex;
+}
+.atext.Texts.hide-images > .sb .npopup .npopupTX .image-viewport + .caption {
+  display: block;
+}
 .atext .sbcontrols {
   position: absolute;
   top: 0px;

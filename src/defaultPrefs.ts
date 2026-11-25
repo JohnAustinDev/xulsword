@@ -138,6 +138,7 @@ const S = {
         hebcantillation: true,
         hebvowelpoints: true,
         redwords: true,
+        images: true,
       } as ShowType,
       place: {
         footnotes: 'notebox',

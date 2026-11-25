@@ -177,12 +177,14 @@ export default function xulswordHandler(
         case 'strongs':
         case 'footnotes':
         case 'crossrefs':
-        case 'dictlinks': {
+        case 'dictlinks':
+        case 'images': {
           this.setState((prevState) => {
             let { show } = prevState;
             show = clone(show);
             const id = currentId as keyof ShowType;
-            show[id] = !show[id];
+            // An undefined images pref means images are shown.
+            show[id] = id === 'images' ? show[id] === false : !show[id];
             // Strong's and morphology switch together, as in the View menu.
             if (currentId === 'strongs') show['morph'] = show[id];
             // Web app uses fewer buttons but that control multiple options.
