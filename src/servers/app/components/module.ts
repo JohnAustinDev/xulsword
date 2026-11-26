@@ -294,8 +294,9 @@ export async function installZIPs(
         module: string;
         repoDir: string;
         CipherKey: string | undefined;
+        shared: boolean; // in the shared (xsModsCommon) repository
       }> = [];
-      const readRepoConfFiles = (modsd: LocalFile) => {
+      const readRepoConfFiles = (modsd: LocalFile, shared: boolean) => {
         if (!modsd.exists() || !modsd.isDirectory()) return;
         const repoDir = fpath.dirname(modsd.path);
         modsd.directoryEntries.forEach((confFile) => {
@@ -304,14 +305,14 @@ export async function installZIPs(
             const conf = parseSwordConf(file);
             if (conf) {
               const { module, CipherKey } = conf;
-              installed.push({ module, CipherKey, repoDir });
+              installed.push({ module, CipherKey, repoDir, shared });
             }
           }
         });
       };
-      readRepoConfFiles(Dirs.xsModsUser.append('mods.d'));
+      readRepoConfFiles(Dirs.xsModsUser.append('mods.d'), false);
       if (Dirs.path.xsModsCommon)
-        readRepoConfFiles(Dirs.xsModsCommon.append('mods.d'));
+        readRepoConfFiles(Dirs.xsModsCommon.append('mods.d'), true);
 
       if (LibSword.isReady()) LibSword.quit();
 
@@ -469,10 +470,12 @@ export async function installZIPs(
                       swmodpath !== 'XSM_audio'
                     ) {
                       // Remove any module(s) obsoleted by this module.
-                      // An obsoleted module may be installed in more than one repository.
+                      // Obsoleted modules are never removed from the shared repository,
+                      // which may be used by other SWORD programs.
                       if (conf.Obsoletes?.length) {
                         const obsoletes = installed.filter(
                           (ins) =>
+                            !ins.shared &&
                             ins.module !== conf.module &&
                             conf.Obsoletes?.includes(ins.module),
                         );
