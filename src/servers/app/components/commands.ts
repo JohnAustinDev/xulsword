@@ -19,6 +19,7 @@ import {
   gbQualifiedPath,
   encodeWindowsNTFSPath,
   modulesOfAudioCode,
+  unknown2String,
 } from '../../../common.ts';
 import RefParser from '../../../refParser.ts';
 import VerseKey from '../../../verseKey.ts';
@@ -881,13 +882,24 @@ const Commands = {
         }
         const file = new LocalFile(path);
         if (file.exists() && !file.isDirectory()) {
-          const content = file.readFile();
-          const fnlc = file.leafName.toLowerCase();
-          if (fnlc.endsWith('.json')) {
-            importBookmarkObject(JSON_parse(content), folder, r);
-          } else if (fnlc.endsWith('.txt') || fnlc.endsWith('.xsb')) {
-            importDeprecatedBookmarks(content, folder, r);
+          try {
+            const content = file.readFile();
+            const fnlc = file.leafName.toLowerCase();
+            if (fnlc.endsWith('.json')) {
+              importBookmarkObject(JSON_parse(content), folder, r);
+            } else if (fnlc.endsWith('.txt') || fnlc.endsWith('.xsb')) {
+              importDeprecatedBookmarks(content, folder, r);
+            }
+          } catch (er) {
+            log.error(er);
+            r.reports.push({
+              error: `(${file.leafName}) Failed to import bookmarks: ${unknown2String(er, ['message'])}`,
+            });
           }
+        } else {
+          r.reports.push({
+            error: `(${file.leafName}) File does not exist.`,
+          });
         }
       });
       Prefs2.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);

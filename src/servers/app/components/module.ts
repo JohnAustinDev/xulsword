@@ -284,6 +284,7 @@ export async function installZIPs(
   zips: ZIP[],
   destdirs?: string | string[],
   callingWinID?: number,
+  names?: string[], // used only in error reports
 ): Promise<NewModulesType> {
   return await new Promise((resolve) => {
     const newmods: NewModulesType = clone(C.NEWMODS);
@@ -295,17 +296,15 @@ export async function installZIPs(
         CipherKey: string | undefined;
       }> = [];
       const readRepoConfFiles = (modsd: LocalFile) => {
+        if (!modsd.exists() || !modsd.isDirectory()) return;
+        const repoDir = fpath.dirname(modsd.path);
         modsd.directoryEntries.forEach((confFile) => {
           const file = modsd.clone().append(confFile);
-          if (!file.isDirectory && file.leafName.endsWith('.conf')) {
+          if (!file.isDirectory() && file.leafName.endsWith('.conf')) {
             const conf = parseSwordConf(file);
             if (conf) {
               const { module, CipherKey } = conf;
-              installed.push({
-                module,
-                CipherKey,
-                repoDir: modsd.append('..').path,
-              });
+              installed.push({ module, CipherKey, repoDir });
             }
           }
         });
@@ -339,358 +338,391 @@ export async function installZIPs(
         } else if (Array.isArray(destdirs)) {
           destdir = destdirs[i];
         }
-        const zipEntries = zip.getEntries();
-        const sortedZipEntries = zipEntries.sort((a, b) => {
-          const ac = a.name.endsWith('.conf');
-          const bc = b.name.endsWith('.conf');
-          if (ac && !bc) return -1;
-          if (!ac && bc) return 1;
-          return 0;
-        });
-        const confs = {} as Record<string, SwordConfType>;
-        sortedZipEntries.forEach((entry) => {
-          const { entryName, name } = normalizeZipEntry(entry);
-          if (!entryName.endsWith(fpath.posix.sep)) {
-            log.silly(`Processing Entry: ${entryName}, ${name}`);
-            const type = entryName.split(fpath.posix.sep).shift();
-            switch (type) {
-              case 'mods.d': {
-                const confstr = entry.getData().toString('utf8');
-                const dest = new LocalFile(
-                  /^ModDrv\s*=\s*audio\b/m.test(confstr)
-                    ? Dirs.path.xsAudio
-                    : destdir,
-                );
-                const conf = parseSwordConf({
-                  confString: confstr,
-                  filename: name,
-                  sourceRepository: dest.path,
-                });
-                const modreports: NewModuleReportType[] = [];
-                if (conf) {
-                  // Look for any problems with the module itself
-                  modreports.push(...clone(conf.reports));
-                  modreports.push(...moduleUnsupported(conf));
-                  const swmodpath =
-                    conf.xsmType === 'XSM_audio'
-                      ? 'XSM_audio'
-                      : conf.DataPath && confModulePath(conf.DataPath);
-                  if (!swmodpath) {
-                    modreports.push({
-                      warning: `(${conf.module}) Has non-standard module path '${conf.DataPath}'.`,
-                    });
-                  }
-                  if (!dest.exists() || !dest.isDirectory()) {
-                    modreports.push({
-                      error: `(${conf.module}) Destination directory does not exist '${dest.path}.`,
-                    });
-                  }
-                  // If the module requires a CipherKey, don't replace an existing encrypted
-                  // module that has a key.
-                  if (
-                    conf.CipherKey === '' &&
-                    installed.find(
-                      (mo) =>
-                        mo.CipherKey !== '' && mo.CipherKey !== C.NOTFOUND,
-                    )
-                  ) {
-                    modreports.push({
-                      error: `(${conf.module}) Will not replace encrypted module; new encrypted module has no encrpytion key.`,
-                    });
-                  }
-                  // If module is ok, prepare target config location and look for problems there
-                  const confdest = dest.clone();
-                  if (!modreports.some((r) => r.error)) {
-                    confdest.append('mods.d');
-                    if (
-                      !confdest.exists() &&
-                      !confdest.create(LocalFile.DIRECTORY_TYPE)
-                    )
+        const zipName = names?.[i] ?? `#${i + 1}`;
+        let entryName = '';
+        let components = 0;
+        try {
+          const zipEntries = zip.getEntries();
+          const sortedZipEntries = zipEntries.sort((a, b) => {
+            const ac = a.name.endsWith('.conf');
+            const bc = b.name.endsWith('.conf');
+            if (ac && !bc) return -1;
+            if (!ac && bc) return 1;
+            return 0;
+          });
+          const confs = {} as Record<string, SwordConfType>;
+          sortedZipEntries.forEach((entry) => {
+            const normalized = normalizeZipEntry(entry);
+            const { name } = normalized;
+            ({ entryName } = normalized);
+            if (!entryName.endsWith(fpath.posix.sep)) {
+              log.silly(`Processing Entry: ${entryName}, ${name}`);
+              const type = entryName.split(fpath.posix.sep).shift();
+              if (
+                type &&
+                ['mods.d', 'modules', 'fonts', 'bookmarks', 'audio'].includes(
+                  type,
+                )
+              ) {
+                components += 1;
+              }
+              switch (type) {
+                case 'mods.d': {
+                  const confstr = entry.getData().toString('utf8');
+                  const dest = new LocalFile(
+                    /^ModDrv\s*=\s*audio\b/m.test(confstr)
+                      ? Dirs.path.xsAudio
+                      : destdir,
+                  );
+                  const conf = parseSwordConf({
+                    confString: confstr,
+                    filename: name,
+                    sourceRepository: dest.path,
+                  });
+                  const modreports: NewModuleReportType[] = [];
+                  if (conf) {
+                    // Look for any problems with the module itself
+                    modreports.push(...clone(conf.reports));
+                    modreports.push(...moduleUnsupported(conf));
+                    const swmodpath =
+                      conf.xsmType === 'XSM_audio'
+                        ? 'XSM_audio'
+                        : conf.DataPath && confModulePath(conf.DataPath);
+                    if (!swmodpath) {
                       modreports.push({
-                        error: `(${conf.module}) Could not create mods.d directory '${confdest.path}' (${confdest.error}).`,
-                      });
-                    confdest.append(name);
-                    if (!modreports.some((r) => r.error) && confdest.exists()) {
-                      if (swmodpath === 'XSM_audio') {
-                        // Audio is not treated as a single module but as an updatable set of audio
-                        // files so just delete the conf file and it will be overwritten by the new.
-                        confdest.remove();
-                      } else {
-                        // Remove any existing module having this name unless it would be downgraded.
-                        const existing = parseSwordConf(confdest);
-                        if (
-                          existing &&
-                          versionCompare(
-                            conf.Version ?? 0,
-                            existing.Version ?? 0,
-                          ) === -1
-                        ) {
-                          modreports.push({
-                            error: `(${conf.module}) ${
-                              conf.Version ?? 0
-                            } Will not overwrite newer module ${
-                              existing.module
-                            }.`,
-                          });
-                        } else if (
-                          !moveRemoveCopyModules(conf.module, destdir)
-                        ) {
-                          modreports.push({
-                            error: `(${conf.module}) Could not remove existing module.`,
-                          });
-                        }
-                      }
-                    }
-                  }
-                  // If module and target is ok, check valid swmodpath, remove obsoletes,
-                  // create module directory path.
-                  if (
-                    !modreports.some((r) => r.error) &&
-                    swmodpath &&
-                    swmodpath !== 'XSM_audio'
-                  ) {
-                    // Remove any module(s) obsoleted by this module.
-                    if (conf.Obsoletes?.length) {
-                      const obsoletes = conf.Obsoletes.filter((m) => {
-                        return installed.find((ins) => ins.module === m);
-                      });
-                      obsoletes.forEach((om) => {
-                        const omdir = installed.find(
-                          (ins) => ins.module === om,
-                        );
-                        if (
-                          omdir &&
-                          !moveRemoveCopyModules(om, omdir.repoDir)
-                        ) {
-                          modreports.push({
-                            warning: `(${conf.module}) Could not remove obsoleted module(s).`,
-                          });
-                        }
+                        warning: `(${conf.module}) Has non-standard module path '${conf.DataPath}'.`,
                       });
                     }
-                    // Make sure module destination directory exists and is empty.
-                    const moddest = dest.clone();
-                    moddest.append(swmodpath);
-                    if (moddest.exists()) {
-                      moddest.remove(true);
-                    }
-                    if (moddest.exists())
+                    if (!dest.exists() || !dest.isDirectory()) {
                       modreports.push({
-                        error: `(${conf.module}) Could not remove directory '${moddest.path}'.`,
+                        error: `(${conf.module}) Destination directory does not exist '${dest.path}.`,
                       });
+                    }
+                    // If the module requires a CipherKey, don't replace an existing encrypted
+                    // module that has a key. (CipherKey is undefined for unencrypted modules
+                    // and '' for encrypted modules without a key.)
                     if (
-                      !moddest.create(LocalFile.DIRECTORY_TYPE, {
-                        recursive: true,
-                      })
+                      conf.CipherKey === '' &&
+                      installed.some(
+                        (mo) =>
+                          mo.module === conf.module &&
+                          mo.CipherKey &&
+                          mo.CipherKey !== C.NOTFOUND,
+                      )
                     ) {
                       modreports.push({
-                        error: `(${conf.module}) Could not create module directory '${moddest.path}' (${moddest.error}).`,
+                        error: `(${conf.module}) Will not replace encrypted module; new encrypted module has no encrpytion key.`,
                       });
                     }
-                  }
-                  // If still ok, copy config file etc.
-                  if (!modreports.some((r) => r.error)) {
-                    confdest.writeFile(confstr);
-                    confs[conf.module] = conf;
-                    newmods.modules.push(conf);
-                    if (conf.CipherKey === '') {
-                      newmods.nokeymods.push(conf);
-                    }
-                  }
-                } else {
-                  modreports.push({
-                    error: `(unknown) Failed to parse config file.`,
-                  });
-                }
-                newmods.reports.push(...modreports);
-                break;
-              }
-
-              case 'modules': {
-                const conf = Object.values(confs).find((c) => {
-                  const swmodpath = confModulePath(c.DataPath);
-                  return (
-                    swmodpath &&
-                    entryName.startsWith(`${swmodpath}${fpath.posix.sep}`)
-                  );
-                });
-                const swmodpath = conf && confModulePath(conf.DataPath);
-                if (conf && swmodpath) {
-                  const moddest = new LocalFile(destdir);
-                  moddest.append(swmodpath);
-                  // If this module is to be installed, the destination directory has already been
-                  // succesfully created, otherwise silently skip.
-                  if (moddest.exists()) {
-                    const parts = entryName
-                      .substring(swmodpath.length + 1)
-                      .split(fpath.posix.sep);
-                    parts.forEach((p, ix) => {
-                      moddest.append(p);
-                      if (ix === parts.length - 1) {
-                        moddest.writeFile(entry.getData());
-                      } else if (!moddest.exists()) {
-                        moddest.create(LocalFile.DIRECTORY_TYPE);
+                    // If module is ok, prepare target config location and look for problems there
+                    const confdest = dest.clone();
+                    if (!modreports.some((r) => r.error)) {
+                      confdest.append('mods.d');
+                      if (
+                        !confdest.exists() &&
+                        !confdest.create(LocalFile.DIRECTORY_TYPE)
+                      )
+                        modreports.push({
+                          error: `(${conf.module}) Could not create mods.d directory '${confdest.path}' (${confdest.error}).`,
+                        });
+                      confdest.append(name);
+                      if (
+                        !modreports.some((r) => r.error) &&
+                        confdest.exists()
+                      ) {
+                        if (swmodpath === 'XSM_audio') {
+                          // Audio is not treated as a single module but as an updatable set of audio
+                          // files so just delete the conf file and it will be overwritten by the new.
+                          confdest.remove();
+                        } else {
+                          // Remove any existing module having this name unless it would be downgraded.
+                          const existing = parseSwordConf(confdest);
+                          if (
+                            existing &&
+                            versionCompare(
+                              conf.Version ?? 0,
+                              existing.Version ?? 0,
+                            ) === -1
+                          ) {
+                            modreports.push({
+                              error: `(${conf.module}) ${
+                                conf.Version ?? 0
+                              } Will not overwrite newer module ${
+                                existing.module
+                              }.`,
+                            });
+                          } else if (
+                            !moveRemoveCopyModules(conf.module, destdir)
+                          ) {
+                            modreports.push({
+                              error: `(${conf.module}) Could not remove existing module.`,
+                            });
+                          }
+                        }
                       }
-                    });
-                    if (!moddest.exists()) {
-                      newmods.reports.push({
-                        error: `(${conf.module}) Failed to create module file '${moddest.path}' (${moddest.error}).`,
-                      });
                     }
-                  } else {
-                    // This error was already reported during config file copy
-                  }
-                  // Silently drop module contents whose config was rejected.
-                }
-                break;
-              }
-
-              case 'fonts': {
-                const fontsdir = Dirs.xsFonts;
-                fontsdir.append(name);
-                fontsdir.writeFile(entry.getData());
-                newmods.fonts.push(name);
-                break;
-              }
-
-              case 'bookmarks': {
-                const bmdir = Dirs.xsBookmarks;
-                bmdir.append(name);
-                bmdir.writeFile(entry.getData());
-                newmods.bookmarks.push(name);
-                break;
-              }
-
-              case 'audio': {
-                // Deprecated paths:
-                // audio/<lang-code>/<audio-code>/<book>/001.mp3
-                // audio/<lang-code>/<audio-code>/001 Title/001.mp3
-                //
-                // Current paths:
-                // audio/<audio-code>/<book>/001.mp3 (000.mp3 is book introduction)
-                // audio/<audio-code>/000 title/.../000 title.mp3
-                //
-                // NOTES:
-                // - Deprecated directory and file names are 3 digit ordinal only, but
-                // new directory and file names are fully qualified paths.
-                // - Deprecated system is detected if <lang-code> is present in the path.
-                // Converting from deprecated to new:
-                // - Verse-key systems are the same, just remove the lang-code.
-                // - General-book also needs lang-code removed from path, plus it needs a
-                // 000 root directory inserted, to match what is actually in Children's
-                // Bible SWORD modules (the only SWORD GenBook audio published so far).
-                //
-                // - Chapter indexes start at 1, with 0 being introduction, except for
-                //   genbk modules WITHOUT ChapterZeroIsIntro = true.
-                // - But for genbk modules WITHOUT ChapterZeroIsIntro = true,
-                //   introduction audio was supposed to be the nnn.mp3 sibling of the
-                //   nnn parent directory, but this has not been implented in xulsword
-                //   since all current audio repos use ChapterZeroIsIntro = true.
-                const audio = Dirs.xsAudio;
-                const pobj = fpath.posix.parse(
-                  encodeWindowsNTFSPath(entryName, true),
-                );
-                const dirs = pobj.dir.split(fpath.posix.sep);
-                const chapter = Number(pobj.name.replace(/^(\d+).*?$/, '$1'));
-                dirs.shift(); // remove ./audio
-                let [audioCode] = dirs;
-                // For some reason path-audioCode case might not always
-                // match what is in the conf file, so use the conf file value.
-                const conf = Object.values(confs).pop();
-                if (conf) audioCode = conf.module;
-                dirs[0] = audioCode;
-                dirs.unshift('modules');
-                const [, , bookOrSub] = dirs;
-                const isVerseKey = Object.values(C.SupportedBooks).some(
-                  (bg: any) => bg.includes(bookOrSub),
-                );
-                // Create parent directories
-                while (dirs.length) {
-                  const subname = dirs.shift() as string;
-                  audio.append(subname);
-                  if (!audio.exists()) {
-                    audio.create(LocalFile.DIRECTORY_TYPE);
-                  }
-                }
-                if (audio.exists()) {
-                  if (isVerseKey && audioCode) {
-                    const book = bookOrSub as OSISBookType;
-                    // VerseKey audio file...
-                    if (audioCode && book && !Number.isNaN(chapter)) {
-                      audio.append(pad(chapter, 3, 0) + pobj.ext);
-                      audio.writeFile(entry.getData());
-                    } else audioCode = '';
-                  } else if (audioCode) {
-                    // GenBook audio file...
-                    audio.append(pobj.base);
-                    audio.writeFile(entry.getData());
-                  }
-                  // Modify the config file to show currently installed audio.
-                  // Timing files (.txt) do not change the installed audio.
-                  if (
-                    audioCode &&
-                    conf &&
-                    C.SupportedAudio.includes(
-                      pobj.ext.substring(1).toLowerCase(),
-                    )
-                  ) {
-                    const confFile = Dirs.xsAudio;
-                    confFile.append('mods.d');
-                    confFile.append(conf.filename);
-                    if (confFile.exists()) {
-                      const dataPath = `./modules/${audioCode}`;
-                      let str = confFile.readFile();
-                      str = str.replace(
-                        /^DataPath\b.*$/m,
-                        `DataPath=${dataPath}`,
-                      );
-                      const audioChapters = scanAudio(
-                        Dirs.xsAudio.path,
-                        dataPath,
-                      );
-                      str = str.replace(
-                        /^AudioChapters\b.*$/m,
-                        `AudioChapters=${JSON_stringify(audioChapters)}`,
-                      );
-                      confFile.writeFile(str);
-                      const nconf = parseSwordConf(confFile);
-                      if (nconf) {
-                        const index = newmods.audio.findIndex(
-                          (c) => c.module === nconf.module,
+                    // If module and target is ok, check valid swmodpath, remove obsoletes,
+                    // create module directory path.
+                    if (
+                      !modreports.some((r) => r.error) &&
+                      swmodpath &&
+                      swmodpath !== 'XSM_audio'
+                    ) {
+                      // Remove any module(s) obsoleted by this module.
+                      // An obsoleted module may be installed in more than one repository.
+                      if (conf.Obsoletes?.length) {
+                        const obsoletes = installed.filter(
+                          (ins) =>
+                            ins.module !== conf.module &&
+                            conf.Obsoletes?.includes(ins.module),
                         );
-                        if (index === -1) newmods.audio.push(nconf);
-                        else newmods.audio[index] = nconf;
-                      } else {
-                        newmods.reports.push({
-                          error: `(${conf.module}) New config file was not parseable: ${confFile.leafName}.`,
+                        obsoletes.forEach((om) => {
+                          if (moveRemoveCopyModules(om.module, om.repoDir)) {
+                            installed.splice(installed.indexOf(om), 1);
+                          } else {
+                            modreports.push({
+                              warning: `(${conf.module}) Could not remove obsoleted module ${om.module}.`,
+                            });
+                          }
+                        });
+                      }
+                      // Make sure module destination directory exists and is empty.
+                      const moddest = dest.clone();
+                      moddest.append(swmodpath);
+                      if (moddest.exists()) {
+                        moddest.remove(true);
+                      }
+                      if (moddest.exists())
+                        modreports.push({
+                          error: `(${conf.module}) Could not remove directory '${moddest.path}'.`,
+                        });
+                      if (
+                        !moddest.create(LocalFile.DIRECTORY_TYPE, {
+                          recursive: true,
+                        })
+                      ) {
+                        modreports.push({
+                          error: `(${conf.module}) Could not create module directory '${moddest.path}' (${moddest.error}).`,
                         });
                       }
                     }
+                    // If still ok, copy config file etc.
+                    if (!modreports.some((r) => r.error)) {
+                      confdest.writeFile(confstr);
+                      confs[conf.module] = conf;
+                      newmods.modules.push(conf);
+                      if (conf.CipherKey === '') {
+                        newmods.nokeymods.push(conf);
+                      }
+                    }
+                  } else {
+                    modreports.push({
+                      error: `(unknown) Failed to parse config file.`,
+                    });
                   }
-                } else {
-                  newmods.reports.push({
-                    error: `(${conf?.module}) Audio path failure: ${audio.error}.`,
-                  });
+                  newmods.reports.push(...modreports);
+                  break;
                 }
-                break;
+
+                case 'modules': {
+                  const conf = Object.values(confs).find((c) => {
+                    const swmodpath = confModulePath(c.DataPath);
+                    return (
+                      swmodpath &&
+                      entryName.startsWith(`${swmodpath}${fpath.posix.sep}`)
+                    );
+                  });
+                  const swmodpath = conf && confModulePath(conf.DataPath);
+                  if (conf && swmodpath) {
+                    const moddest = new LocalFile(destdir);
+                    moddest.append(swmodpath);
+                    // If this module is to be installed, the destination directory has already been
+                    // succesfully created, otherwise silently skip.
+                    if (moddest.exists()) {
+                      const parts = entryName
+                        .substring(swmodpath.length + 1)
+                        .split(fpath.posix.sep);
+                      parts.forEach((p, ix) => {
+                        moddest.append(p);
+                        if (ix === parts.length - 1) {
+                          moddest.writeFile(entry.getData());
+                        } else if (!moddest.exists()) {
+                          moddest.create(LocalFile.DIRECTORY_TYPE);
+                        }
+                      });
+                      if (!moddest.exists()) {
+                        newmods.reports.push({
+                          error: `(${conf.module}) Failed to create module file '${moddest.path}' (${moddest.error}).`,
+                        });
+                      }
+                    } else {
+                      // This error was already reported during config file copy
+                    }
+                    // Silently drop module contents whose config was rejected.
+                  }
+                  break;
+                }
+
+                case 'fonts': {
+                  const fontsdir = Dirs.xsFonts;
+                  fontsdir.append(name);
+                  fontsdir.writeFile(entry.getData());
+                  newmods.fonts.push(name);
+                  break;
+                }
+
+                case 'bookmarks': {
+                  const bmdir = Dirs.xsBookmarks;
+                  bmdir.append(name);
+                  bmdir.writeFile(entry.getData());
+                  newmods.bookmarks.push(name);
+                  break;
+                }
+
+                case 'audio': {
+                  // Deprecated paths:
+                  // audio/<lang-code>/<audio-code>/<book>/001.mp3
+                  // audio/<lang-code>/<audio-code>/001 Title/001.mp3
+                  //
+                  // Current paths:
+                  // audio/<audio-code>/<book>/001.mp3 (000.mp3 is book introduction)
+                  // audio/<audio-code>/000 title/.../000 title.mp3
+                  //
+                  // NOTES:
+                  // - Deprecated directory and file names are 3 digit ordinal only, but
+                  // new directory and file names are fully qualified paths.
+                  // - Deprecated system is detected if <lang-code> is present in the path.
+                  // Converting from deprecated to new:
+                  // - Verse-key systems are the same, just remove the lang-code.
+                  // - General-book also needs lang-code removed from path, plus it needs a
+                  // 000 root directory inserted, to match what is actually in Children's
+                  // Bible SWORD modules (the only SWORD GenBook audio published so far).
+                  //
+                  // - Chapter indexes start at 1, with 0 being introduction, except for
+                  //   genbk modules WITHOUT ChapterZeroIsIntro = true.
+                  // - But for genbk modules WITHOUT ChapterZeroIsIntro = true,
+                  //   introduction audio was supposed to be the nnn.mp3 sibling of the
+                  //   nnn parent directory, but this has not been implented in xulsword
+                  //   since all current audio repos use ChapterZeroIsIntro = true.
+                  const audio = Dirs.xsAudio;
+                  const pobj = fpath.posix.parse(
+                    encodeWindowsNTFSPath(entryName, true),
+                  );
+                  const dirs = pobj.dir.split(fpath.posix.sep);
+                  const chapter = Number(pobj.name.replace(/^(\d+).*?$/, '$1'));
+                  dirs.shift(); // remove ./audio
+                  let [audioCode] = dirs;
+                  // For some reason path-audioCode case might not always
+                  // match what is in the conf file, so use the conf file value.
+                  const conf = Object.values(confs).pop();
+                  if (conf) audioCode = conf.module;
+                  dirs[0] = audioCode;
+                  dirs.unshift('modules');
+                  const [, , bookOrSub] = dirs;
+                  const isVerseKey = Object.values(C.SupportedBooks).some(
+                    (bg: any) => bg.includes(bookOrSub),
+                  );
+                  // Create parent directories
+                  while (dirs.length) {
+                    const subname = dirs.shift() as string;
+                    audio.append(subname);
+                    if (!audio.exists()) {
+                      audio.create(LocalFile.DIRECTORY_TYPE);
+                    }
+                  }
+                  if (audio.exists()) {
+                    if (isVerseKey && audioCode) {
+                      const book = bookOrSub as OSISBookType;
+                      // VerseKey audio file...
+                      if (audioCode && book && !Number.isNaN(chapter)) {
+                        audio.append(pad(chapter, 3, 0) + pobj.ext);
+                        audio.writeFile(entry.getData());
+                      } else audioCode = '';
+                    } else if (audioCode) {
+                      // GenBook audio file...
+                      audio.append(pobj.base);
+                      audio.writeFile(entry.getData());
+                    }
+                    // Modify the config file to show currently installed audio.
+                    // Timing files (.txt) do not change the installed audio.
+                    if (
+                      audioCode &&
+                      conf &&
+                      C.SupportedAudio.includes(
+                        pobj.ext.substring(1).toLowerCase(),
+                      )
+                    ) {
+                      const confFile = Dirs.xsAudio;
+                      confFile.append('mods.d');
+                      confFile.append(conf.filename);
+                      if (confFile.exists()) {
+                        const dataPath = `./modules/${audioCode}`;
+                        let str = confFile.readFile();
+                        str = str.replace(
+                          /^DataPath\b.*$/m,
+                          `DataPath=${dataPath}`,
+                        );
+                        const audioChapters = scanAudio(
+                          Dirs.xsAudio.path,
+                          dataPath,
+                        );
+                        str = str.replace(
+                          /^AudioChapters\b.*$/m,
+                          `AudioChapters=${JSON_stringify(audioChapters)}`,
+                        );
+                        confFile.writeFile(str);
+                        const nconf = parseSwordConf(confFile);
+                        if (nconf) {
+                          const index = newmods.audio.findIndex(
+                            (c) => c.module === nconf.module,
+                          );
+                          if (index === -1) newmods.audio.push(nconf);
+                          else newmods.audio[index] = nconf;
+                        } else {
+                          newmods.reports.push({
+                            error: `(${conf.module}) New config file was not parseable: ${confFile.leafName}.`,
+                          });
+                        }
+                      }
+                    }
+                  } else {
+                    newmods.reports.push({
+                      error: `(${conf?.module}) Audio path failure: ${audio.error}.`,
+                    });
+                  }
+                  break;
+                }
+
+                case 'chrome':
+                case 'locale':
+                case 'video':
+                  // No longer supported, just ignore without error...
+                  break;
+
+                default:
+                  newmods.reports.push({
+                    warning: `Unknown module component ${name}.`,
+                  });
               }
-
-              case 'chrome':
-              case 'locale':
-              case 'video':
-                // No longer supported, just ignore without error...
-                break;
-
-              default:
-                newmods.reports.push({
-                  warning: `Unknown module component ${name}.`,
-                });
             }
+            progNow += 1;
+            const prog = progNow / progTot;
+            if (Math.floor(100 * prog) % 2 === 0) progress(prog);
+          });
+          entryName = '';
+          if (!components) {
+            newmods.reports.push({
+              error: `(${zipName}) Not a xulsword module: no module components were found.`,
+            });
           }
-          progNow += 1;
-          const prog = progNow / progTot;
-          if (Math.floor(100 * prog) % 2 === 0) progress(prog);
-        });
+        } catch (er) {
+          log.error(er);
+          newmods.reports.push({
+            error: `(${zipName}) Failed to install${
+              entryName ? ` '${entryName}'` : ''
+            }: ${unknown2String(er, ['message'])}`,
+          });
+        }
       });
       progress(-1);
     }
@@ -724,25 +756,51 @@ export async function modalInstall(
       { modal: 'transparent', window: 'all' },
       { modal: 'darkened', window: { id: callingWinID } },
     ]);
-    const zips: Array<ZIP | null> = [];
-    zipmods.forEach((zipmod) => {
-      if (typeof zipmod === 'string') {
-        const zipfile = new LocalFile(zipmod);
-        if (zipfile.exists()) {
-          zips.push(new ZIP(zipmod));
+    // Any problem opening or installing a file must be reported rather than
+    // thrown, because the modulesInstalled subscription is what turns the
+    // modal off again.
+    try {
+      const zips: Array<ZIP | null> = [];
+      const names: string[] = [];
+      zipmods.forEach((zipmod, i) => {
+        if (typeof zipmod === 'string') {
+          const zipfile = new LocalFile(zipmod);
+          if (zipfile.exists() && !zipfile.isDirectory()) {
+            try {
+              zips.push(new ZIP(zipmod));
+              names.push(zipfile.leafName);
+            } catch (er) {
+              log.warn(er);
+              r.reports.push({
+                error: `(${zipfile.leafName}) Not a valid module file: ${unknown2String(er, ['message'])}`,
+              });
+              zips.push(null);
+            }
+          } else {
+            log.warn(`Zip module does not exist: '${zipfile.path}'.`);
+            r.reports.push({
+              error: `(${zipfile.leafName}) File does not exist.`,
+            });
+            zips.push(null);
+          }
         } else {
-          log.warn(`Zip module does not exist: '${zipfile.path}'.`);
-          zips.push(null);
+          zips.push(zipmod);
+          names.push(`#${i + 1}`);
         }
-      } else {
-        zips.push(zipmod);
+      });
+      const z = zips.filter(Boolean) as ZIP[];
+      const d = Array.isArray(destdir)
+        ? destdir.filter((_d, i) => zips[i])
+        : destdir;
+      if (z.length) {
+        mergeNewModules(r, await installZIPs(z, d, callingWinID, names));
       }
-    });
-    const z = zips.filter(Boolean) as ZIP[];
-    const d = Array.isArray(destdir)
-      ? destdir.filter((_d, i) => zips[i])
-      : destdir;
-    mergeNewModules(r, await installZIPs(z, d, callingWinID));
+    } catch (er) {
+      log.error(er);
+      r.reports.push({
+        error: `Module installation failed: ${unknown2String(er, ['message'])}`,
+      });
+    }
   }
   if (!result) Subscription.publish.modulesInstalled(r, callingWinID);
   return r;
